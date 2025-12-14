@@ -36,6 +36,7 @@ export const getAllRawMaterial = async (req: CustomRequest, res: Response) => {
             description: rawMaterials.description,
             latestUnitPriceBase: rawMaterials.latestUnitPrice, // Price per g/ml/unit (the stored value)
             createdAt: rawMaterials.createdAt,
+            lastModified: rawMaterials.lastModified,
 
             // Joined Unit Fields
             unitOfMeasurement: {
@@ -87,14 +88,13 @@ export const getAllRawMaterial = async (req: CustomRequest, res: Response) => {
                 // Internal Base Price (optional but useful for debugging)
                 latestUnitPriceBase: item.latestUnitPriceBase,
 
+                // timestamps
                 createdAt: item.createdAt,
+                lastModified: item.lastModified,
             };
         });
 
-        return res.status(StatusCodes.OK).json({
-            count: rawMaterialsWithPresentationPrice.length,
-            data: rawMaterialsWithPresentationPrice,
-        });
+        return res.status(StatusCodes.OK).json(rawMaterialsWithPresentationPrice);
 
     } catch (error: any) {
         return handleError2(
