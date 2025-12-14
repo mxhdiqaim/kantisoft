@@ -9,8 +9,7 @@ import activities from "./activity-routes";
 import inventory from "./inventory-routes";
 import auth from "./auth-routes";
 import unitOfMeasurement from "./unit-of-measurement-routes";
-import rawMaterials from "./raw-material-route";
-import rawMaterialInventory from "./raw-material-inventory-routes";
+import rawMaterials from "./raw-material-routes";
 import billOfMaterial from "./bill-of-material-routes";
 import production from "./production-routes";
 
@@ -55,13 +54,6 @@ router.use(
     "/raw-materials",
     isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
     rawMaterials,
-);
-
-// Raw Material Inventory routes
-router.use(
-    "/raw-material-inventory",
-    isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
-    rawMaterialInventory,
 );
 
 // Bill of Materials routes

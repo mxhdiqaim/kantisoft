@@ -1,5 +1,5 @@
 import Express from "express";
-import * as controller from "../controllers/raw-material-inventory-controller";
+import * as controller from "../../controllers/raw-material-controller/raw-material-inventory-controller";
 
 const router = Express.Router();
 

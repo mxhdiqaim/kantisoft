@@ -1,20 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Response } from 'express';
-import { CustomRequest } from "../types/express";
-import { handleError2 } from "../service/error-handling";
+import { CustomRequest } from "../../types/express";
+import { handleError2 } from "../../service/error-handling";
 import { StatusCodes } from "http-status-codes";
-import db from "../db";
+import db from "../../db";
 import {and, eq, sql} from 'drizzle-orm';
-import {rawMaterialInventory} from "../schema/raw-materials-schema/raw-material-inventory-schema";
-import {rawMaterials} from "../schema/raw-materials-schema";
-import {unitOfMeasurement} from "../schema/unit-of-measurement-schema";
-import {UnitConversionService} from "../service/unit-conversion-service";
+import {rawMaterialInventory} from "../../schema/raw-materials-schema/raw-material-inventory-schema";
+import {rawMaterials} from "../../schema/raw-materials-schema";
+import {unitOfMeasurement} from "../../schema/unit-of-measurement-schema";
+import {UnitConversionService} from "../../service/unit-conversion-service";
 import {
     RawMaterialTransactionSource,
     rawMaterialTransactionSourceEnum
-} from "../schema/raw-materials-schema/raw-material-stock-transaction-schema";
-import {RawMaterialTransactionTypeEnum} from "../types/enums";
-import {InventoryAdjustmentService} from "../service/raw-material-inventory-adjustment-service";
+} from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
+import {RawMaterialTransactionTypeEnum} from "../../types/enums";
+import {InventoryAdjustmentService} from "../../service/raw-material-inventory-adjustment-service";
 
 
 /**
