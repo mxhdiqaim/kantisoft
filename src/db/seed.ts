@@ -1,7 +1,7 @@
 import {
     InsertUnitOfMeasurementSchemaT,
-    UnitFamilyType,
     unitOfMeasurement,
+    UnitOfMeasurementFamilyType,
 } from "../schema/unit-of-measurement-schema";
 import db, { pool } from "./index";
 import { sql } from "drizzle-orm";
@@ -11,7 +11,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
     {
         name: "Gram",
         symbol: "g",
-        unitFamily: "weight" as UnitFamilyType,
+        unitOfMeasurementFamily: "weight" as UnitOfMeasurementFamilyType,
         isBaseUnit: true,
         conversionFactorToBase: 1,
         calculationLogic: "The base unit for all weight calculations.",
@@ -19,7 +19,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
     {
         name: "Kilogram",
         symbol: "kg",
-        unitFamily: "weight" as UnitFamilyType,
+        unitOfMeasurementFamily: "weight" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
         conversionFactorToBase: 1000,
         calculationLogic: "1 kg = 1000 g",
@@ -27,7 +27,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
     {
         name: "Tonne (Metric Ton)",
         symbol: "t",
-        unitFamily: "weight" as UnitFamilyType,
+        unitOfMeasurementFamily: "weight" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
         conversionFactorToBase: 1000000,
         calculationLogic: "1 t = 1,000,000 g (1,000 kg)",
@@ -35,7 +35,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
     {
         name: "Milligram",
         symbol: "mg",
-        unitFamily: "weight" as UnitFamilyType,
+        unitOfMeasurementFamily: "weight" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
         conversionFactorToBase: 0.001,
         calculationLogic: "1 mg = 0.001 g",
@@ -45,7 +45,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
     {
         name: "Milliliter",
         symbol: "ml",
-        unitFamily: "volume" as UnitFamilyType,
+        unitOfMeasurementFamily: "volume" as UnitOfMeasurementFamilyType,
         isBaseUnit: true,
         conversionFactorToBase: 1,
         calculationLogic: "The base unit for all volume calculations.",
@@ -53,7 +53,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
     {
         name: "Liter",
         symbol: "L",
-        unitFamily: "volume" as UnitFamilyType,
+        unitOfMeasurementFamily: "volume" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
         conversionFactorToBase: 1000,
         calculationLogic: "1 L = 1000 ml",
@@ -61,7 +61,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
     {
         name: "Cubic Meter",
         symbol: "m³",
-        unitFamily: "volume" as UnitFamilyType,
+        unitOfMeasurementFamily: "volume" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
         conversionFactorToBase: 1000000,
         calculationLogic: "1 m³ = 1,000,000 ml (1,000 L)",
@@ -71,7 +71,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
     {
         name: "Unit",
         symbol: "unit",
-        unitFamily: "count" as UnitFamilyType,
+        unitOfMeasurementFamily: "count" as UnitOfMeasurementFamilyType,
         isBaseUnit: true,
         conversionFactorToBase: 1,
         calculationLogic:
@@ -80,7 +80,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
     {
         name: "Dozen",
         symbol: "dz",
-        unitFamily: "count" as UnitFamilyType,
+        unitOfMeasurementFamily: "count" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
         conversionFactorToBase: 12,
         calculationLogic: "1 dozen = 12 units",
@@ -88,7 +88,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
     {
         name: "Gross",
         symbol: "grs",
-        unitFamily: "count" as UnitFamilyType,
+        unitOfMeasurementFamily: "count" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
         conversionFactorToBase: 144,
         calculationLogic: "1 gross = 144 units (12 dozen)",
@@ -98,7 +98,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
     {
         name: "Meter",
         symbol: "m",
-        unitFamily: "length" as UnitFamilyType,
+        unitOfMeasurementFamily: "length" as UnitOfMeasurementFamilyType,
         isBaseUnit: true,
         conversionFactorToBase: 1,
         calculationLogic: "The base unit for all length calculations.",
@@ -106,7 +106,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
     {
         name: "Centimeter",
         symbol: "cm",
-        unitFamily: "length" as UnitFamilyType,
+        unitOfMeasurementFamily: "length" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
         conversionFactorToBase: 0.01,
         calculationLogic: "1 cm = 0.01 m",
@@ -114,7 +114,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
     {
         name: "Kilometer",
         symbol: "km",
-        unitFamily: "length" as UnitFamilyType,
+        unitOfMeasurementFamily: "length" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
         conversionFactorToBase: 1000,
         calculationLogic: "1 km = 1000 m",
@@ -138,9 +138,9 @@ const seedUnitsOfMeasurement = async () => {
                 name: sql`excluded
                 .
                 name`, // Update with the incoming value
-                unitFamily: sql`excluded
+                unitOfMeasurementFamily: sql`excluded
                 .
-                "unitFamily"`, // Update with the incoming value
+                "unitOfMeasurementFamily"`, // Update with the incoming value
                 isBaseUnit: sql`excluded
                 .
                 "isBaseUnit"`, // Update with the incoming value

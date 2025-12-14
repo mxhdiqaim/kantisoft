@@ -10,7 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 // Define the core categories of measurement
-export const unitFamilyEnum = pgEnum("unitFamily", [
+export const unitOfMeasurementFamilyEnum = pgEnum("unitOfMeasurementFamily", [
     "weight", // Mass (e.g. kg, g)
     "volume", // Liquid/Capacity (e.g. L, ml)
     "count", // Discrete units (e.g. unit, dozen)
@@ -29,7 +29,9 @@ export const unitOfMeasurement = pgTable(
         // The short code (used in display/calculations)
         symbol: text("symbol").notNull(), // e.g., "kg", "g", "L", "unit"
 
-        unitFamily: unitFamilyEnum("unitFamily").notNull(), // e.g., "WEIGHT", "VOLUME", "COUNT"
+        unitOfMeasurementFamily: unitOfMeasurementFamilyEnum(
+            "unitOfMeasurementFamily",
+        ).notNull(), // e.g., "WEIGHT", "VOLUME", "COUNT"
 
         // The factor to convert THIS unit to the internal system's BASE UNIT (e.g. 1000 for 1 kg -> 1000 g)
         conversionFactorToBase: doublePrecision("conversionFactorToBase")
@@ -60,4 +62,5 @@ export type UnitOfMeasurementSchemaT = typeof unitOfMeasurement.$inferSelect;
 export type InsertUnitOfMeasurementSchemaT =
     typeof unitOfMeasurement.$inferInsert;
 
-export type UnitFamilyType = (typeof unitFamilyEnum.enumValues)[number];
+export type UnitOfMeasurementFamilyType =
+    (typeof unitOfMeasurementFamilyEnum.enumValues)[number];

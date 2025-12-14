@@ -45,6 +45,14 @@ export const InventoryTransactionSummaryTypeEnum = {
     PURCHASE_RECEIVE: "purchaseReceive",
 } as const;
 
+export const UnitOfMeasurementFamilyEnum = {
+    WEIGHT: "weight",
+    VOLUME: "volume",
+    COUNT: "count",
+    AREA: "area",
+    LENGTH: "length",
+};
+
 export const RawMaterialStatusEnum = {
     ACTIVE: "active",
     DELETED: "deleted",
