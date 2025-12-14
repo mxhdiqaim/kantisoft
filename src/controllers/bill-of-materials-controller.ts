@@ -4,10 +4,18 @@ import { CustomRequest } from "../types/express";
 import { handleError2 } from "../service/error-handling";
 import { StatusCodes } from "http-status-codes";
 import db from "../db";
-import { billOfMaterials } from '../schema/bill-of-materials-schema';
+import { billOfMaterials, InsertBillOfMaterialsSchemaT } from "../schema/bill-of-materials-schema";
 import { rawMaterials } from '../schema/raw-materials-schema';
 import { unitOfMeasurement } from '../schema/unit-of-measurement-schema';
 import { eq } from 'drizzle-orm';
+import { UnitConversionService } from "../service/unit-conversion-service";
+
+// Define the expected structure of a single item in the request body
+interface BomItemRequest {
+    rawMaterialId: string;
+    consumptionQuantityPresentation: number;
+    unitOfMeasurementId: string;
+}
 
 /**
  * @description Retrieves the full Bill of Materials (Recipe) for a menu item.
@@ -113,6 +121,116 @@ export const getBillOfMaterials = async (req: CustomRequest, res: Response) => {
         return handleError2(
             res,
             'A server error occurred while fetching the Bill of Materials.',
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined
+        );
+    }
+};
+
+/**
+ * @description Creates or updates the Bill of Materials (BOM) for a menu item.
+ * This implementation uses an "overwrite" strategy: all old ingredients are deleted,
+ * and the new list is inserted as the current recipe.
+ * @route POST /api/v1/menu-items/:id/bom
+ * @access Admin, Manager
+ */
+export const defineBillOfMaterials = async (req: CustomRequest, res: Response) => {
+    const currentUser = req.user?.data;
+    const storeId = currentUser?.storeId;
+
+    if (!storeId) {
+        return handleError2(
+            res,
+            'User does not have an associated store.',
+            StatusCodes.BAD_REQUEST
+        )
+    }
+
+    const { id: menuItemId } = req.params;
+    const bomItems: BomItemRequest[] = req.body; // Expecting an array of raw material inputs
+
+    console.log("Received BOM Items:", bomItems);
+
+    if (!menuItemId) {
+        return handleError2(res, 'Something went wrong', StatusCodes.BAD_REQUEST);
+    }
+
+    if (!Array.isArray(bomItems) || bomItems.length === 0) {
+        // If the user submits an empty array, we interpret it as clearing the recipe.
+        // We will proceed to step 5.a (deletion).
+    }
+
+    try {
+        // We use a transaction to ensure atomicity: either all items are saved, or none are.
+        const insertedBOMs = await db.transaction(async (tx) => {
+
+            const recordsToInsert: InsertBillOfMaterialsSchemaT[] = [];
+
+            // Process and Validate Each BOM Item
+            for (const item of bomItems) {
+                const { rawMaterialId, consumptionQuantityPresentation, unitOfMeasurementId } = item;
+
+                if (!rawMaterialId || consumptionQuantityPresentation === undefined || !unitOfMeasurementId || consumptionQuantityPresentation <= 0) {
+                    throw new Error("Invalid BOM item data: material ID, positive quantity, and unit ID are required.");
+                }
+
+                // Fetch the Unit Record (the unit the user specified, e.g., 'cup')
+                const unitOfMeasurementRecord = await UnitConversionService.fetchUnitById(unitOfMeasurementId);
+
+                if (!unitOfMeasurementRecord) {
+                    throw new Error(`Unit of Measurement not found.`);
+                }
+
+                // 3. CRITICAL: Convert Consumption Quantity to the Raw Material's BASE Unit
+                // (e.g. 2 cups * 240 g/cup = 480 g)
+                const consumptionQuantityBase = UnitConversionService.convertToBaseUnit(
+                    consumptionQuantityPresentation,
+                    unitOfMeasurementRecord
+                );
+
+                // Check if the Raw Material itself is valid (FK check)
+                const rawMaterialCheck = await tx.query.rawMaterials.findFirst({
+                    where: eq(rawMaterials.id, rawMaterialId)
+                });
+
+                if (!rawMaterialCheck) {
+                    throw new Error(`Raw Material not found.`);
+                }
+
+                recordsToInsert.push({
+                    menuItemId: menuItemId,
+                    rawMaterialId: rawMaterialId,
+                    consumptionQuantityBase: consumptionQuantityBase, // Stored in the Base Unit
+                });
+            }
+
+            // Database Operations: Overwrite
+
+            // Delete existing BOM items for this menuItemId (Overwrite/Reset)
+            await tx.delete(billOfMaterials)
+                .where(eq(billOfMaterials.menuItemId, menuItemId));
+
+            // Insert the new BOM items (only if the list is not empty)
+            if (recordsToInsert.length > 0) {
+                const result = await tx.insert(billOfMaterials)
+                    .values(recordsToInsert)
+                    .returning();
+                return result;
+            }
+
+            return []; // Return an empty array if the recipe was just cleared
+        });
+
+        return res.status(StatusCodes.CREATED).json(insertedBOMs);
+
+    } catch (error: any) {
+        if (error.message.includes("not found") || error.message.includes("Invalid")) {
+            return handleError2(res, error.message, StatusCodes.BAD_REQUEST, error);
+        }
+
+        return handleError2(
+            res,
+            'A server error occurred while defining the Bill of Materials.',
             StatusCodes.INTERNAL_SERVER_ERROR,
             error instanceof Error ? error : undefined
         );

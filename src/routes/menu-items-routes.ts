@@ -1,5 +1,6 @@
 import express from "express";
 import * as controller from "../controllers/menu-items-controller";
+import * as bomController from "../controllers/bill-of-materials-controller";
 import { isAuthorized } from "../middlewares/is-authorised-middleware";
 import { UserRoleEnum } from "../types/enums";
 
@@ -18,6 +19,13 @@ router.post(
     isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
     controller.createMenuItem,
 );
+
+router.post(
+    "/:id/bom",
+    isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
+    bomController.defineBillOfMaterials,
+);
+
 router.patch(
     "/:id",
     isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER]),
