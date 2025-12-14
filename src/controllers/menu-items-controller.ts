@@ -11,6 +11,7 @@ import {StatusCodes} from "http-status-codes";
 import {UserRoleEnum} from "../types/enums";
 import {getStoreAndBranchIds} from "../service/store-service";
 import {stores} from "../schema/stores-schema";
+import { MenuItemCostingService } from "../service/menuitem-costing-service";
 
 /**
  * @desc    Get all menu items with pagination and role-based filtering.
@@ -165,6 +166,52 @@ export const getMenuItemById = async (req: CustomRequest, res: Response) => {
             "Problem loading menu item, please try again",
             StatusCodes.INTERNAL_SERVER_ERROR,
             error instanceof Error ? error : undefined,
+        );
+    }
+};
+
+/**
+ * @description Retrieves the calculated total raw material cost for a menu item.
+ * @route GET /api/v1/menu-items/:id/cost
+ * @access Admin, Manager
+ */
+export const getMenuItemCost = async (req: CustomRequest, res: Response) => {
+    const currentUser = req.user?.data;
+    const storeId = currentUser?.storeId;
+
+    if (!storeId) {
+        return handleError2(
+            res,
+            "You must be associated with a store to view menu items.",
+            StatusCodes.FORBIDDEN,
+        );
+    }
+
+    const { id: menuItemId } = req.params;
+
+    if (!menuItemId) {
+        return handleError2(res, 'Something went wrong.', StatusCodes.BAD_REQUEST);
+    }
+
+    try {
+        // Use the dedicated service to calculate the cost
+        const totalCost = await MenuItemCostingService.calculateTotalRawMaterialCost(menuItemId);
+
+        if (totalCost === null) {
+            return res.status(StatusCodes.OK).json({ message: "No Bill of Materials defined for this menu item. Cost is zero." });
+        }
+
+        return res.status(StatusCodes.OK).json({
+            menuItemId: menuItemId,
+            totalRawMaterialCost: totalCost,
+        });
+
+    } catch (error: any) {
+        return handleError2(
+            res,
+            'A server error occurred while calculating the menu item cost.',
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined
         );
     }
 };

@@ -12,6 +12,7 @@ import unitOfMeasurement from "./unit-of-measurement-routes";
 import rawMaterials from "./raw-material-route";
 import rawMaterialInventory from "./raw-material-inventory-routes";
 import billOfMaterial from "./bill-of-material-routes";
+import production from "./production-routes";
 
 import { protectedRoute } from "../config/jwt-config";
 import { checkUserHasStore } from "../middlewares/check-user-has-store";
@@ -68,6 +69,13 @@ router.use(
     "/bill-of-materials",
     isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
     billOfMaterial,
+);
+
+// Production routes
+router.use(
+    "/production",
+    isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
+    production,
 );
 
 // These routes need to be protected and scoped to the user's store

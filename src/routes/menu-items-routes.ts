@@ -7,6 +7,11 @@ const router = express.Router();
 
 router.get("/", controller.getAllMenuItems);
 router.get("/:id", controller.getMenuItemById);
+router.get(
+    "/:id/cost",
+    isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
+    controller.getMenuItemCost,
+);
 
 router.post(
     "/create",

@@ -56,6 +56,15 @@ export const RawMaterialTransactionTypeEnum = {
     GOING_OUT: "goingOut",
 } as const;
 
+export const RawMaterialTransactionSourceEnum = {
+    PURCHASE_RECEIPT: "purchaseReceipt",
+    PRODUCTION_USAGE: "productionUsage",
+    INVENTORY_ADJUSTMENT: "inventoryAdjustment",
+    WASTAGE: "wastage",
+    TRANSFER_IN: "transferIn",
+    TRANSFER_OUT: "transferOut",
+};
+
 export const INVENTORY_TRANSACTION_SUMMARY_TYPES = Object.values(
     InventoryTransactionSummaryTypeEnum,
 );
