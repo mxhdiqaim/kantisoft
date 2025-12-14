@@ -140,13 +140,14 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
 /**
  * @description Creates the initial inventory record for a Raw Material in a Store,
  * or updates the minStockLevel if the record already exists (UPSERT).
- * @route POST /api/v1/raw-material-inventory/create
+ * @route POST /api/v1/raw-materials/inventory/:id
  * @access Admin, Manager
  * @body { rawMaterialId: string, minStockLevel: number }
  */
 export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: Response) => {
     const currentUser = req.user?.data;
     const storeId = currentUser?.storeId;
+    const { id: rawMaterialId } = req.params;
 
     if (!storeId) {
         return handleError2(
@@ -156,7 +157,7 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
         );
     }
 
-    const { rawMaterialId, minStockLevel } = req.body;
+    const { minStockLevel } = req.body;
 
     // We assume minStockLevel is mandatory for setting up inventory tracking
     if (!rawMaterialId || minStockLevel === undefined || typeof minStockLevel !== 'number' || minStockLevel < 0) {
