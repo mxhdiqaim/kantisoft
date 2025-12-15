@@ -1,7 +1,6 @@
-// src/utils/shortCodeGenerator.ts
 import db from "../db";
 import { menuItems } from "../schema/menu-items-schema";
-import { sql, desc, eq } from "drizzle-orm"; // Import asc for ordering
+import { desc, eq, sql } from "drizzle-orm"; // Import asc for ordering
 
 /**
  * Generates the next available unique numeric item code for a menu item.
@@ -15,13 +14,20 @@ export const generateUniqueItemCode = async (): Promise<string> => {
         // We order by itemCode descending and take the first one to reliably get the max.
         const latestItem = await db
             .select({
-                itemCode:
-                    sql<number>`CAST(${menuItems.itemCode} AS INTEGER)`.as(
-                        "itemCode",
-                    ),
+                itemCode: sql<number>`CAST(
+                ${menuItems.itemCode}
+                AS
+                INTEGER
+                )`.as("itemCode"),
             })
             .from(menuItems)
-            .orderBy(desc(sql`CAST(${menuItems.itemCode} AS INTEGER)`)) // Use desc to get the highest
+            .orderBy(
+                desc(sql`CAST(
+                ${menuItems.itemCode}
+                AS
+                INTEGER
+                )`),
+            ) // Use desc to get the highest
             .limit(1);
 
         const currentMaxCode = latestItem[0]?.itemCode || 0; // If no items, start from 0
@@ -38,7 +44,7 @@ export const generateUniqueItemCode = async (): Promise<string> => {
         }
 
         // This loop is a safeguard. In case the calculated `nextCode` is already taken
-        // (e.g., manual entry), it will find the next available one.
+        // (e.g. manual entry), it will find the next available one.
         // For a simple sequential generator, this check might be overkill, but it makes the function more robust.
         let isCodeUnique = false;
         while (!isCodeUnique) {

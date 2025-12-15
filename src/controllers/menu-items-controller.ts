@@ -225,6 +225,7 @@ export const getMenuItemCost = async (req: CustomRequest, res: Response) => {
  * @body    isAvailable {boolean} - [Optional] Availability of the item.
  * @body    itemCode {string} - [Optional] A unique code for the item.
  * @body    storeId {string} - [Optional] For Managers: The ID of the store to add the item to.
+ * @query   targetStoreId {string} - For Managers: The ID of the store to add the item to.
  */
 export const createMenuItem = async (req: CustomRequest, res: Response) => {
     try {
@@ -245,22 +246,32 @@ export const createMenuItem = async (req: CustomRequest, res: Response) => {
             price,
             isAvailable,
             itemCode: providedItemCode,
-            storeId: targetStoreId, // For managers to specify a store
         } = req.body;
+
+        const { targetStoreId: queryTargetStoreId } = req.query;
 
         let finalStoreId = storeId;
 
-        if (userRole === UserRoleEnum.MANAGER) {
-            if (targetStoreId) {
+        if (queryTargetStoreId && typeof queryTargetStoreId === 'string') {
+            if (userRole === UserRoleEnum.MANAGER) {
                 const storeIds = await getStoreAndBranchIds(storeId);
-                if (!storeIds?.includes(targetStoreId)) {
+                if (!storeIds?.includes(queryTargetStoreId)) {
                     return handleError2(
                         res,
                         "You do not have permission to create items in this store.",
                         StatusCodes.FORBIDDEN,
                     );
                 }
-                finalStoreId = targetStoreId;
+                finalStoreId = queryTargetStoreId;
+            } else {
+                if (queryTargetStoreId !== storeId) {
+                    return handleError2(
+                        res,
+                        "You only have permission to create items in your own store.",
+                        StatusCodes.FORBIDDEN,
+                    );
+                }
+                finalStoreId = queryTargetStoreId;
             }
         }
 
