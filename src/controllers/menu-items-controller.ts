@@ -12,6 +12,7 @@ import {UserRoleEnum} from "../types/enums";
 import {getStoreAndBranchIds} from "../service/store-service";
 import {stores} from "../schema/stores-schema";
 import { MenuItemCostingService } from "../service/menuitem-costing-service";
+import { determineFinalStoreId } from "../utils/store-permission-utils";
 
 /**
  * @desc    Get all menu items with pagination and role-based filtering.
@@ -225,6 +226,7 @@ export const getMenuItemCost = async (req: CustomRequest, res: Response) => {
  * @body    isAvailable {boolean} - [Optional] Availability of the item.
  * @body    itemCode {string} - [Optional] A unique code for the item.
  * @body    storeId {string} - [Optional] For Managers: The ID of the store to add the item to.
+ * @query   targetStoreId {string} - For Managers: The ID of the store to add the item to.
  */
 export const createMenuItem = async (req: CustomRequest, res: Response) => {
     try {
@@ -245,24 +247,12 @@ export const createMenuItem = async (req: CustomRequest, res: Response) => {
             price,
             isAvailable,
             itemCode: providedItemCode,
-            storeId: targetStoreId, // For managers to specify a store
         } = req.body;
 
-        let finalStoreId = storeId;
+        const { targetStoreId } = req.query;
 
-        if (userRole === UserRoleEnum.MANAGER) {
-            if (targetStoreId) {
-                const storeIds = await getStoreAndBranchIds(storeId);
-                if (!storeIds?.includes(targetStoreId)) {
-                    return handleError2(
-                        res,
-                        "You do not have permission to create items in this store.",
-                        StatusCodes.FORBIDDEN,
-                    );
-                }
-                finalStoreId = targetStoreId;
-            }
-        }
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
 
         if (!name || price === undefined) {
             return handleError2(

@@ -20,7 +20,9 @@ import {
     INVENTORY_TRANSACTION_SUMMARY_TYPES,
     InventoryTransactionSummaryTypeEnum,
     InventoryTransactionTypeEnum,
+    UserRoleEnum,
 } from "../types/enums";
+import { determineFinalStoreId } from "../utils/store-permission-utils";
 
 /**
  * @desc    Get all inventory records for the user's store
@@ -281,6 +283,7 @@ export const createInventoryRecord = async (
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
+        const userRole = currentUser?.role;
 
         if (!storeId) {
             return handleError2(
@@ -290,8 +293,11 @@ export const createInventoryRecord = async (
             );
         }
 
+        const { targetStoreId } = req.query;
         const { menuItemId, quantity, minStockLevel } = req.body;
 
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
 
         // Validation and Existence Checks
         if (!menuItemId || quantity === undefined) {
@@ -304,7 +310,7 @@ export const createInventoryRecord = async (
 
         const existingInventory = await getInventoryByMenuItemId(
             menuItemId,
-            storeId,
+            finalStoreId,
         );
 
         if (existingInventory) {
@@ -318,7 +324,7 @@ export const createInventoryRecord = async (
         const existingMenuItem = await db.query.menuItems.findFirst({
             where: and(
                 eq(menuItems.id, menuItemId),
-                eq(menuItems.storeId, storeId),
+                eq(menuItems.storeId, finalStoreId),
             ),
             columns: { id: true, name: true }, // Only fetch what is needed
         });
@@ -336,7 +342,7 @@ export const createInventoryRecord = async (
             .insert(inventory)
             .values({
                 menuItemId,
-                storeId: storeId,
+                storeId: finalStoreId,
                 quantity: quantity,
                 minStockLevel: minStockLevel,
                 // status will be set based on minStockLevel logic
@@ -346,7 +352,7 @@ export const createInventoryRecord = async (
         // Log initial stock transaction
         await db.insert(inventoryTransactions).values({
             menuItemId,
-            storeId: storeId,
+            storeId: finalStoreId,
             transactionType: "adjustmentIn", // Treat the initial setting as an adjustment in
             quantityChange: quantity,
             resultingQuantity: quantity,
@@ -357,7 +363,7 @@ export const createInventoryRecord = async (
         // Log activity
         await logActivity({
             userId: currentUser?.id,
-            storeId: storeId,
+            storeId: finalStoreId,
             action: "INVENTORY_RECORD_CREATED",
             entityId: newInventory.id,
             entityType: "inventory",
