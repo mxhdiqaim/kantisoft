@@ -12,6 +12,7 @@ import {UserRoleEnum} from "../types/enums";
 import {getStoreAndBranchIds} from "../service/store-service";
 import {stores} from "../schema/stores-schema";
 import { MenuItemCostingService } from "../service/menuitem-costing-service";
+import { determineFinalStoreId } from "../utils/store-permission-utils";
 
 /**
  * @desc    Get all menu items with pagination and role-based filtering.
@@ -248,32 +249,10 @@ export const createMenuItem = async (req: CustomRequest, res: Response) => {
             itemCode: providedItemCode,
         } = req.body;
 
-        const { targetStoreId: queryTargetStoreId } = req.query;
+        const { targetStoreId } = req.query;
 
-        let finalStoreId = storeId;
-
-        if (queryTargetStoreId && typeof queryTargetStoreId === 'string') {
-            if (userRole === UserRoleEnum.MANAGER) {
-                const storeIds = await getStoreAndBranchIds(storeId);
-                if (!storeIds?.includes(queryTargetStoreId)) {
-                    return handleError2(
-                        res,
-                        "You do not have permission to create items in this store.",
-                        StatusCodes.FORBIDDEN,
-                    );
-                }
-                finalStoreId = queryTargetStoreId;
-            } else {
-                if (queryTargetStoreId !== storeId) {
-                    return handleError2(
-                        res,
-                        "You only have permission to create items in your own store.",
-                        StatusCodes.FORBIDDEN,
-                    );
-                }
-                finalStoreId = queryTargetStoreId;
-            }
-        }
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
 
         if (!name || price === undefined) {
             return handleError2(
