@@ -476,6 +476,8 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
+        const userId = currentUser?.id;
+        const userRole = currentUser?.role;
 
         if (!storeId) {
             return handleError2(
@@ -486,9 +488,12 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
         }
 
         const { id: menuItemId } = req.params;
+        const { targetStoreId } = req.query;
 
         const { quantityAdjustment, transactionType, notes } = req.body; // quantityAdjustment is the delta (+ or -)
-        const userId = currentUser?.id;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
 
         // Validation
         if (quantityAdjustment === undefined || !transactionType) {
@@ -521,7 +526,7 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
         // Fetch current inventory
         const currentInventory = await getInventoryByMenuItemId(
             menuItemId,
-            storeId,
+            finalStoreId,
         );
 
         if (!currentInventory) {
@@ -563,7 +568,7 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
                 .where(
                     and(
                         eq(inventory.menuItemId, menuItemId),
-                        eq(inventory.storeId, storeId),
+                        eq(inventory.storeId, finalStoreId),
                     ),
                 )
                 .returning();
@@ -573,7 +578,7 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
                 .insert(inventoryTransactions)
                 .values({
                     menuItemId,
-                    storeId,
+                    storeId: finalStoreId,
                     transactionType,
                     quantityChange: changeAmount,
                     resultingQuantity: newQuantity,
@@ -589,7 +594,7 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
         // 5. Log activity
         await logActivity({
             userId: userId,
-            storeId: storeId,
+            storeId: finalStoreId,
             // action: `STOCK_ADJUSTED_${transactionType.toUpperCase()}`,
             action: getStockAdjustedAction(transactionType),
             entityId: updatedInventory.id,
