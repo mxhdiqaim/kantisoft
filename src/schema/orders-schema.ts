@@ -3,9 +3,9 @@ import {
     numeric,
     pgEnum,
     pgTable,
+    text,
     timestamp,
     uuid,
-    text,
 } from "drizzle-orm/pg-core";
 import { menuItems } from "./menu-items-schema";
 import { users } from "./users-schema";
@@ -15,6 +15,7 @@ export const orderStatusEnum = pgEnum("orderStatus", [
     "cancelled",
     "completed",
     "pending",
+    "deleted",
 ]);
 
 export const orderPaymentMethodEnum = pgEnum("paymentMethod", [

@@ -1,0 +1,1 @@
+ALTER TYPE "public"."orderStatus" ADD VALUE 'deleted';

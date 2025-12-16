@@ -31,11 +31,11 @@ import { determineFinalStoreId } from "../utils/store-permission-utils";
  */
 export const getAllInventory = async (req: CustomRequest, res: Response) => {
     try {
-        // const currentUser = req.user?.data;
-        // const storeId = currentUser?.storeId;
-        const storeIds = req.storeIds;
+        const currentUser = req.user?.data;
+        const storeId = currentUser?.storeId;
+        const userRole = currentUser?.role;
 
-        if (!storeIds || storeIds.length === 0) {
+        if (!storeId) {
             return handleError2(
                 res,
                 "You must be associated with a store to view inventory.",
@@ -43,8 +43,13 @@ export const getAllInventory = async (req: CustomRequest, res: Response) => {
             );
         }
 
+        const { targetStoreId } = req.query;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
+
         const allInventory = await db.query.inventory.findMany({
-            where: inArray(inventory.storeId, storeIds),
+            where: eq(inventory.storeId, finalStoreId),
             orderBy: [desc(inventory.lastModified)],
             with: {
                 menuItem: { columns: { name: true, itemCode: true } },
@@ -54,7 +59,6 @@ export const getAllInventory = async (req: CustomRequest, res: Response) => {
 
         res.status(StatusCodes.OK).json(allInventory);
     } catch (error) {
-        // console.error(error);
         handleError2(
             res,
             "Problem loading inventory data, please try again",
@@ -76,12 +80,11 @@ export const getTransactionsByMenuItem = async (
     res: Response,
 ) => {
     try {
-        // const currentUser = req.user?.data;
-        // const storeId = currentUser?.storeId;
-        const storeIds = req.storeIds;
+        const currentUser = req.user?.data;
+        const storeId = currentUser?.storeId;
+        const userRole = currentUser?.role;
 
-
-        if (!storeIds || storeIds.length === 0) {
+        if (!storeId) {
             return handleError2(
                 res,
                 "You must be associated with a store.",
@@ -90,12 +93,15 @@ export const getTransactionsByMenuItem = async (
         }
 
         const { id: menuItemId } = req.params;
-        const { startDate, endDate } = req.query;
+        const { startDate, endDate, targetStoreId } = req.query;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
 
         // Base condition: Filter by the item ID and the store ID
         let whereClause = and(
             eq(inventoryTransactions.menuItemId, menuItemId),
-            inArray(inventoryTransactions.storeId, storeIds),
+            eq(inventoryTransactions.storeId, finalStoreId),
         );
 
         // Optional: Add date range filtering
@@ -235,6 +241,7 @@ export const getInventoryByMenuItem = async (
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
+        const userRole = currentUser?.role;
 
         if (!storeId) {
             return handleError2(
@@ -245,10 +252,14 @@ export const getInventoryByMenuItem = async (
         }
 
         const { id: menuItemId } = req.params;
+        const { targetStoreId } = req.query;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
 
         const inventoryItem = await getInventoryByMenuItemId(
             menuItemId,
-            storeId,
+            finalStoreId,
         );
 
         if (!inventoryItem) {
@@ -476,6 +487,8 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
+        const userId = currentUser?.id;
+        const userRole = currentUser?.role;
 
         if (!storeId) {
             return handleError2(
@@ -486,9 +499,12 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
         }
 
         const { id: menuItemId } = req.params;
+        const { targetStoreId } = req.query;
 
         const { quantityAdjustment, transactionType, notes } = req.body; // quantityAdjustment is the delta (+ or -)
-        const userId = currentUser?.id;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
 
         // Validation
         if (quantityAdjustment === undefined || !transactionType) {
@@ -521,7 +537,7 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
         // Fetch current inventory
         const currentInventory = await getInventoryByMenuItemId(
             menuItemId,
-            storeId,
+            finalStoreId,
         );
 
         if (!currentInventory) {
@@ -563,7 +579,7 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
                 .where(
                     and(
                         eq(inventory.menuItemId, menuItemId),
-                        eq(inventory.storeId, storeId),
+                        eq(inventory.storeId, finalStoreId),
                     ),
                 )
                 .returning();
@@ -573,7 +589,7 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
                 .insert(inventoryTransactions)
                 .values({
                     menuItemId,
-                    storeId,
+                    storeId: finalStoreId,
                     transactionType,
                     quantityChange: changeAmount,
                     resultingQuantity: newQuantity,
@@ -589,7 +605,7 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
         // 5. Log activity
         await logActivity({
             userId: userId,
-            storeId: storeId,
+            storeId: finalStoreId,
             // action: `STOCK_ADJUSTED_${transactionType.toUpperCase()}`,
             action: getStockAdjustedAction(transactionType),
             entityId: updatedInventory.id,
@@ -730,6 +746,8 @@ export const markAsDiscontinued = async (
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
+        const userId = currentUser?.id;
+        const userRole = currentUser?.role;
 
         if (!storeId) {
             return handleError2(
@@ -740,7 +758,10 @@ export const markAsDiscontinued = async (
         }
 
         const { id: menuItemId } = req.params;
-        const { id: userId} = currentUser;
+        const { targetStoreId } = req.query;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
 
         const [updatedInventory] = await db
             .update(inventory)
@@ -751,7 +772,7 @@ export const markAsDiscontinued = async (
             .where(
                 and(
                     eq(inventory.menuItemId, menuItemId),
-                    eq(inventory.storeId, storeId),
+                    eq(inventory.storeId, finalStoreId),
                     // Prevent discontinuing if already discontinued
                     ne(inventory.status, InventoryTransactionTypeEnum.DISCONTINUED),
                 ),
@@ -769,7 +790,7 @@ export const markAsDiscontinued = async (
         // Log activity
         await logActivity({
             userId: userId,
-            storeId: storeId,
+            storeId: finalStoreId,
             action: "INVENTORY_DISCONTINUED",
             entityId: updatedInventory.id,
             entityType: "inventory",
@@ -799,6 +820,8 @@ export const deleteInventoryRecord = async (
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
+        const userId = currentUser?.id;
+        const userRole = currentUser?.role;
 
         if (!storeId) {
             return handleError2(
@@ -809,13 +832,15 @@ export const deleteInventoryRecord = async (
         }
 
         const { id: menuItemId } = req.params;
-        const { id: userId} = currentUser;
-        // const userId = currentUser?.id;
+        const { targetStoreId } = req.query;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
 
         // Fetch the record before deleting to get the Inventory ID for logging
         const inventoryToDelete = await getInventoryByMenuItemId(
             menuItemId,
-            storeId,
+            finalStoreId,
         );
 
         if (!inventoryToDelete) {
@@ -842,7 +867,7 @@ export const deleteInventoryRecord = async (
                 .where(
                     and(
                         eq(inventoryTransactions.menuItemId, menuItemId),
-                        eq(inventoryTransactions.storeId, storeId),
+                        eq(inventoryTransactions.storeId, finalStoreId),
                     ),
                 );
 
@@ -852,7 +877,7 @@ export const deleteInventoryRecord = async (
                 .where(
                     and(
                         eq(inventory.menuItemId, menuItemId),
-                        eq(inventory.storeId, storeId),
+                        eq(inventory.storeId, finalStoreId),
                     ),
                 )
                 .returning();
@@ -862,7 +887,7 @@ export const deleteInventoryRecord = async (
         // Log activity
         await logActivity({
             userId: userId,
-            storeId: storeId,
+            storeId: finalStoreId,
             action: "INVENTORY_RECORD_DELETED",
             entityId: inventoryToDelete.id, // Use the ID of the deleted inventory record
             entityType: "inventory",
