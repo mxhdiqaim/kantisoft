@@ -6,7 +6,7 @@ import db from "../db";
 import { menuItems } from "../schema/menu-items-schema";
 import { orderItems, orders } from "../schema/orders-schema";
 import { users } from "../schema/users-schema";
-import { OrderPaymentMethodEnum, OrderStatusEnum, } from "../types/enums";
+import { OrderPaymentMethodEnum, OrderStatusEnum, UserRoleEnum } from "../types/enums";
 import { handleError2 } from "../service/error-handling";
 import { generateOrderReference } from "../utils";
 import { logActivity } from "../service/activity-logger";
@@ -15,12 +15,12 @@ import { decrementStockForOrder } from "./inventory-controller";
 import { StatusCodes } from "http-status-codes";
 import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 import { InsufficientStockError } from "../errors";
+import { determineFinalStoreId } from "../utils/store-permission-utils";
 
 export const getAllOrders = async (req: CustomRequest, res: Response) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
-        // const userStoreId = req.userStoreId;
 
         if (!storeId) {
             return handleError2(
@@ -30,10 +30,14 @@ export const getAllOrders = async (req: CustomRequest, res: Response) => {
             );
         }
 
-        const whereClause = eq(orders.storeId, storeId)
+        const userRole = currentUser?.role;
+        const { targetStoreId } = req.query;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
 
         const allOrders = await db.query.orders.findMany({
-            where: whereClause,
+            where: eq(orders.storeId, finalStoreId),
             orderBy: [desc(orders.createdAt)],
             with: {
                 store: { columns: { name: true } },
@@ -47,7 +51,6 @@ export const getAllOrders = async (req: CustomRequest, res: Response) => {
         });
         res.status(StatusCodes.OK).json(allOrders);
     } catch (error) {
-        // console.error(error);
         handleError2(
             res,
             "Problem loading orders, please try again.",
@@ -185,9 +188,9 @@ export const getOrdersByPeriod = async (req: CustomRequest, res: Response) => {
 
 export const getOrderById = async (req: CustomRequest, res: Response) => {
     try {
-        const { id } = req.params;
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
+        const userRole = currentUser?.role;
 
         if (!storeId) {
             return handleError2(
@@ -197,24 +200,17 @@ export const getOrderById = async (req: CustomRequest, res: Response) => {
             );
         }
 
-        // if (!userStoreId) {
-        //     return handleError2(
-        //         res,
-        //         "User not associated with a store.",
-        //         StatusCodes.UNAUTHORIZED,
-        //     );
-        // }
+        const { targetStoreId } = req.query;
 
-        // CRITICAL FIX: Always filter by the user's storeId.
-        // A manager should only see orders from their own store.
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
+
+        const { id: orderId } = req.params;
+
         const whereClause = and(
-            eq(orders.id, id),
-            eq(orders.storeId, storeId),
+            eq(orders.id, orderId),
+            eq(orders.storeId, finalStoreId),
         );
-
-        // if (!isManager && userStoreId) {
-        //     whereClause = and(whereClause, eq(orders.storeId, userStoreId));
-        // }
 
         const order = await db.query.orders.findFirst({
             where: whereClause,
@@ -256,23 +252,14 @@ export const getOrderById = async (req: CustomRequest, res: Response) => {
     * @desc    Create a new order
     * @route   POST /api/orders
     * @access  Private (Seller/Manager/Admin of the same store)
-    * @body    { "sellerId": "some-uuid", "paymentMethod": "paymentMethod", "orderStatus": "orderStatus", "items": [ { "menuItemId": "uuid-for-burger", "quantity": 2 }, { "menuItemId": "uuid-for-fries", "quantity": 1 }] }
+    * @body    {"paymentMethod": "paymentMethod", "orderStatus": "orderStatus", "items": [ { "menuItemId": "uuid-for-burger", "quantity": 2 }, { "menuItemId": "uuid-for-fries", "quantity": 1 }] }
  */
 
 export const createOrder = async (req: CustomRequest, res: Response) => {
     try {
-        const {
-            sellerId,
-            items,
-            paymentMethod = "cash" as OrderPaymentMethodEnum,
-            orderStatus = "completed" as OrderStatusEnum,
-        } = req.body;
-
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
 
-        // CRITICAL FIX: Don't trust the storeId from the request body.
-        // Get the storeId directly from the authenticated user.
         if (!storeId) {
             return handleError2(
                 res,
@@ -281,26 +268,17 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
             );
         }
 
-        if (!sellerId) {
-            return handleError2(
-                res,
-                "Seller is required.",
-                StatusCodes.BAD_REQUEST,
-            );
-        }
+        const userRole = currentUser?.role;
+        const { targetStoreId } = req.query;
 
-        // CRITICAL FIX: Validate that the sellerId belongs to the same store
-        const sellerUser = await db.query.users.findFirst({
-            where: and(eq(users.id, sellerId), eq(users.storeId, storeId)),
-        });
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
 
-        if (!sellerUser) {
-            return handleError2(
-                res,
-                "The specified seller does not belong to the store.",
-                StatusCodes.FORBIDDEN,
-            );
-        }
+        const {
+            items,
+            paymentMethod = OrderPaymentMethodEnum.CASH as OrderPaymentMethodEnum,
+            orderStatus = OrderStatusEnum.PENDING as OrderStatusEnum,
+        } = req.body;
 
         if (!items || !Array.isArray(items) || items.length === 0) {
             return handleError2(
@@ -336,7 +314,7 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
             const priceString = priceMap.get(item.menuItemId);
             if (priceString === undefined) {
                 throw new Error(
-                    `Could not find price for menu item ${item.menuItemId}`,
+                    `Could not find price for menu item`,
                 );
             }
 
@@ -361,9 +339,9 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
                     reference: orderReference,
                     totalAmount,
                     paymentMethod,
-                    orderStatus,
-                    sellerId,
-                    storeId,
+                    orderStatus: orderStatus && OrderStatusEnum.COMPLETED,
+                    sellerId: currentUser?.id,
+                    storeId: finalStoreId,
                 })
                 .returning({ reference: orders.reference, id: orders.id });
 
@@ -387,15 +365,15 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
                 insertedOrder.reference ?? "",
                 insertedOrder.id,
                 itemsForStockDecrement,
-                sellerId,
-                storeId,
+                currentUser?.id,
+                finalStoreId,
                 tx,
             );
 
             // Log this activity after the transaction is successful
             await logActivity({
-                userId: sellerId,
-                storeId: storeId,
+                userId: currentUser?.id,
+                storeId: finalStoreId,
                 action: "ORDER_CREATED",
                 entityId: insertedOrder.id,
                 entityType: "order",
@@ -453,9 +431,6 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
  */
 export const updateOrderStatus = async (req: CustomRequest, res: Response) => {
     try {
-        const { id } = req.params;
-        const { orderStatus } = req.body; // e.g. 'pending', 'completed', 'cancelled'
-
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
 
@@ -467,25 +442,7 @@ export const updateOrderStatus = async (req: CustomRequest, res: Response) => {
             );
         }
 
-        // // const userStoreId = req.userStoreId;
-        // const userStoreId = req.userStoreId;
-        // // const isManager = req.user?.data.role === UserRoleEnum.MANAGER;
-        //
-        // if (!userStoreId) {
-        //     return handleError2(
-        //         res,
-        //         "User not associated with a store.",
-        //         StatusCodes.UNAUTHORIZED,
-        //     );
-        // }
-        //
-        // if (!orderStatus) {
-        //     return handleError2(
-        //         res,
-        //         "Order status is required.",
-        //         StatusCodes.BAD_REQUEST,
-        //     );
-        // }
+        const { orderStatus } = req.body;
 
         if (!orderStatus) {
             return handleError2(
@@ -495,10 +452,18 @@ export const updateOrderStatus = async (req: CustomRequest, res: Response) => {
             );
         }
 
+        const userRole = currentUser?.role;
+        const { targetStoreId } = req.query;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
+
+        const { id: orderId } = req.params;
+
         // Add the condition that the order must be 'pending' to be updated
         const whereClause = and(
-            eq(orders.id, id),
-            eq(orders.storeId, storeId),
+            eq(orders.id, orderId),
+            eq(orders.storeId, finalStoreId),
             eq(orders.orderStatus, OrderStatusEnum.PENDING),
         );
 
@@ -518,17 +483,16 @@ export const updateOrderStatus = async (req: CustomRequest, res: Response) => {
 
         // Log activity for order status update
         await logActivity({
-            userId: req.user?.data.id,
-            storeId: storeId,
+            userId: currentUser?.id,
+            storeId: finalStoreId,
             action: "ORDER_STATUS_UPDATED",
             entityId: updatedOrder[0].id,
             entityType: "order",
-            details: `Order status updated to "${orderStatus}" by ${req.user?.data.firstName} ${req.user?.data.lastName}.`,
+            details: `Order status updated to "${orderStatus}" by ${currentUser?.firstName} ${currentUser?.lastName}.`,
         });
 
         res.status(StatusCodes.OK).json(updatedOrder[0]);
     } catch (error) {
-        // console.error(error);
         handleError2(
             res,
             "Problem updating order, please try again.",
@@ -541,7 +505,6 @@ export const updateOrderStatus = async (req: CustomRequest, res: Response) => {
 // Delete an order
 export const deleteOrder = async (req: CustomRequest, res: Response) => {
     try {
-        const { id } = req.params;
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
 
@@ -553,16 +516,25 @@ export const deleteOrder = async (req: CustomRequest, res: Response) => {
             );
         }
 
+        const userRole = currentUser?.role;
+        const { targetStoreId } = req.query;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
+
+        const { id: orderId } = req.params;
+
         // Add the condition that the order must be 'pending' to be deleted
         const whereClause = and(
-            eq(orders.id, id),
-            eq(orders.storeId, storeId),
-            eq(orders.orderStatus, OrderStatusEnum.PENDING),
+            eq(orders.id, orderId),
+            eq(orders.storeId, finalStoreId),
+            eq(orders.orderStatus, OrderStatusEnum.PENDING)
         );
 
         // The 'onDelete: cascade' in the schema will automatically delete related orderItems.
         const deletedOrder = await db
-            .delete(orders)
+            .update(orders)
+            .set({ orderStatus: OrderStatusEnum.DELETED })
             .where(whereClause)
             .returning();
 
@@ -576,8 +548,8 @@ export const deleteOrder = async (req: CustomRequest, res: Response) => {
 
         // Log activity for order deletion
         await logActivity({
-            userId: req.user?.data.id,
-            storeId: storeId,
+            userId: currentUser?.id,
+            storeId: finalStoreId,
             action: "ORDER_DELETED",
             entityId: deletedOrder[0].id,
             entityType: "order",
@@ -603,7 +575,6 @@ export const getMostOrderedItem = async (req: CustomRequest, res: Response) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
-        // const userStoreId = req.userStoreId;
 
         if (!storeId) {
             return handleError2(
@@ -613,10 +584,16 @@ export const getMostOrderedItem = async (req: CustomRequest, res: Response) => {
             );
         }
 
-        const whereClause = eq(orders.storeId, storeId)
+        const userRole = currentUser?.role;
+        const { targetStoreId } = req.query;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
+
+        const whereClause = eq(orders.storeId, finalStoreId)
 
         // Aggregate total quantity for each menu item
-        const result = await db
+        const [orderItemResult] = await db
             .select({
                 menuItemId: orderItems.menuItemId,
                 totalQuantity: sql<number>`SUM(${orderItems.quantity})`.as(
@@ -629,7 +606,7 @@ export const getMostOrderedItem = async (req: CustomRequest, res: Response) => {
             .orderBy(desc(sql`totalQuantity`))
             .limit(1);
 
-        if (result.length === 0) {
+        if (!orderItemResult) {
             return handleError2(
                 res,
                 "No orders found.",
@@ -640,15 +617,14 @@ export const getMostOrderedItem = async (req: CustomRequest, res: Response) => {
         // Fetch menu item details
         const menuItem = await db.query.menuItems.findFirst({
             where: (menuItems, { eq }) =>
-                eq(menuItems.id, result[0].menuItemId),
+                eq(menuItems.id, orderItemResult.menuItemId),
         });
 
         res.status(StatusCodes.OK).json({
             menuItem,
-            totalQuantity: result[0].totalQuantity,
+            totalQuantity: orderItemResult.totalQuantity,
         });
     } catch (error) {
-        // console.error(error);
         handleError2(
             res,
             "Problem fetching most ordered item, please try again.",
@@ -668,10 +644,8 @@ export const getOrderByReference = async (
     res: Response,
 ) => {
     try {
-        const { reference } = req.params;
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
-        // const userStoreId = req.userStoreId;
 
         if (!storeId) {
             return handleError2(
@@ -681,26 +655,19 @@ export const getOrderByReference = async (
             );
         }
 
-        // const userStoreId = req.userStoreId;
-        // const isManager = req.user?.data.role === UserRoleEnum.MANAGER;
+        const userRole = currentUser?.role;
+        const { targetStoreId } = req.query;
 
-        // if (!userStoreId) {
-        //     return handleError2(
-        //         res,
-        //         "User not associated with a store.",
-        //         StatusCodes.UNAUTHORIZED,
-        //     );
-        // }
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
+
+        const { reference } = req.params;
 
         // CRITICAL FIX: The where clause must ALWAYS filter by the storeId
         const whereClause = and(
             eq(orders.reference, reference),
-            eq(orders.storeId, storeId),
+            eq(orders.storeId, finalStoreId),
         );
-
-        // if (!isManager && userStoreId) {
-        //     whereClause = and(whereClause, eq(orders.storeId, userStoreId));
-        // }
 
         const order = await db.query.orders.findFirst({
             where: whereClause,
@@ -728,7 +695,6 @@ export const getOrderByReference = async (
         }
         res.status(StatusCodes.OK).json(order);
     } catch (error) {
-        // console.error(error);
         return handleError2(
             res,
             "Problem loading order, please try again.",
