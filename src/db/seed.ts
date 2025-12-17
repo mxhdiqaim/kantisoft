@@ -9,7 +9,7 @@ import { sql } from "drizzle-orm";
 const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
     // Weight Units
     {
-        name: "Gram",
+        name: "gram",
         symbol: "g",
         unitOfMeasurementFamily: "weight" as UnitOfMeasurementFamilyType,
         isBaseUnit: true,
@@ -17,7 +17,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
         calculationLogic: "The base unit for all weight calculations.",
     },
     {
-        name: "Kilogram",
+        name: "kilogram",
         symbol: "kg",
         unitOfMeasurementFamily: "weight" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
@@ -25,7 +25,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
         calculationLogic: "1 kg = 1000 g",
     },
     {
-        name: "Tonne (Metric Ton)",
+        name: "tonne",
         symbol: "t",
         unitOfMeasurementFamily: "weight" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
@@ -33,7 +33,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
         calculationLogic: "1 t = 1,000,000 g (1,000 kg)",
     },
     {
-        name: "Milligram",
+        name: "milligram",
         symbol: "mg",
         unitOfMeasurementFamily: "weight" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
@@ -43,7 +43,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
 
     // Volume Units
     {
-        name: "Milliliter",
+        name: "millilitre",
         symbol: "ml",
         unitOfMeasurementFamily: "volume" as UnitOfMeasurementFamilyType,
         isBaseUnit: true,
@@ -51,7 +51,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
         calculationLogic: "The base unit for all volume calculations.",
     },
     {
-        name: "Liter",
+        name: "litre",
         symbol: "L",
         unitOfMeasurementFamily: "volume" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
@@ -59,8 +59,8 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
         calculationLogic: "1 L = 1000 ml",
     },
     {
-        name: "Cubic Meter",
-        symbol: "m³",
+        name: "cubic metre",
+        symbol: "m3",
         unitOfMeasurementFamily: "volume" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
         conversionFactorToBase: 1000000,
@@ -69,7 +69,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
 
     // Count Units
     {
-        name: "Unit",
+        name: "unit",
         symbol: "unit",
         unitOfMeasurementFamily: "count" as UnitOfMeasurementFamilyType,
         isBaseUnit: true,
@@ -78,7 +78,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
             "The base unit for discrete items (e.g., eggs, pieces).",
     },
     {
-        name: "Dozen",
+        name: "dozen",
         symbol: "dz",
         unitOfMeasurementFamily: "count" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
@@ -86,7 +86,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
         calculationLogic: "1 dozen = 12 units",
     },
     {
-        name: "Gross",
+        name: "gross",
         symbol: "grs",
         unitOfMeasurementFamily: "count" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
@@ -96,7 +96,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
 
     // Length Units
     {
-        name: "Meter",
+        name: "metre",
         symbol: "m",
         unitOfMeasurementFamily: "length" as UnitOfMeasurementFamilyType,
         isBaseUnit: true,
@@ -104,7 +104,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
         calculationLogic: "The base unit for all length calculations.",
     },
     {
-        name: "Centimeter",
+        name: "centimetre",
         symbol: "cm",
         unitOfMeasurementFamily: "length" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
@@ -112,7 +112,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
         calculationLogic: "1 cm = 0.01 m",
     },
     {
-        name: "Kilometer",
+        name: "kilometre",
         symbol: "km",
         unitOfMeasurementFamily: "length" as UnitOfMeasurementFamilyType,
         isBaseUnit: false,
@@ -138,6 +138,9 @@ const seedUnitsOfMeasurement = async () => {
                 name: sql`excluded
                 .
                 name`, // Update with the incoming value
+                symbol: sql`excluded
+                .
+                symbol`, // Update with the incoming value
                 unitOfMeasurementFamily: sql`excluded
                 .
                 "unitOfMeasurementFamily"`, // Update with the incoming value

@@ -14,8 +14,52 @@ export const unitOfMeasurementFamilyEnum = pgEnum("unitOfMeasurementFamily", [
     "weight", // Mass (e.g. kg, g)
     "volume", // Liquid/Capacity (e.g. L, ml)
     "count", // Discrete units (e.g. unit, dozen)
-    "area", // (Optional: m², sq ft)
+    "area", // (Optional: m², sqm)
     "length", // (Optional: m, cm, km)
+]);
+
+export const unitNameEnum = pgEnum("unitName", [
+    "milligram",
+    "gram",
+    "kilogram",
+    "tonne",
+
+    "millilitre",
+    "litre",
+
+    "unit",
+    "dozen",
+    "gross",
+
+    "square metre",
+    "metre square",
+    "cubic metre",
+
+    "centimetre",
+    "metre",
+    "kilometre",
+]);
+
+export const unitSymbolEnum = pgEnum("unitSymbol", [
+    "mg", // milligram
+    "g", // gram
+    "kg", // kilogram
+    "t", // tonne
+
+    "ml", // millilitre
+    "L", // litre
+
+    "unit", // single unit
+    "dz", // 12 units
+    "grs", // gross (144 units)
+
+    "sqm", // square meter
+    "m2", // meter square
+    "m3", // cubic meter
+
+    "cm", // centimeter
+    "m", // meter
+    "km", // kilometer
 ]);
 
 export const unitOfMeasurement = pgTable(
@@ -24,21 +68,21 @@ export const unitOfMeasurement = pgTable(
         id: uuid("id").defaultRandom().primaryKey(),
 
         // The display name of the unit (what the user sees)
-        name: text("name").notNull(), // e.g., "Kilogram", "Gram", "Litre", "Dozen"
+        name: unitNameEnum("name").notNull(), // e.g., "Kilogram", "Gram", "Litre", "Dozen"
 
         // The short code (used in display/calculations)
-        symbol: text("symbol").notNull(), // e.g., "kg", "g", "L", "unit"
+        symbol: unitSymbolEnum("symbol").notNull(), // e.g., "kg", "g", "L", "unit"
 
         unitOfMeasurementFamily: unitOfMeasurementFamilyEnum(
             "unitOfMeasurementFamily",
         ).notNull(), // e.g., "WEIGHT", "VOLUME", "COUNT"
 
+        isBaseUnit: boolean("isBaseUnit").notNull().default(false), // True for the base unit in a family (e.g. 'g')
+
         // The factor to convert THIS unit to the internal system's BASE UNIT (e.g. 1000 for 1 kg -> 1000 g)
         conversionFactorToBase: doublePrecision("conversionFactorToBase")
             .notNull()
             .default(1),
-
-        isBaseUnit: boolean("isBaseUnit").notNull().default(false), // True for the base unit in a family (e.g. 'g')
 
         calculationLogic: text("calculationLogic").default(""), // Explanation of conversion logic
 
