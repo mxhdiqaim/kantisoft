@@ -8,7 +8,8 @@ import db from "../../db";
 import { UnitConversionService } from "../../service/unit-conversion-service";
 import { unitOfMeasurement } from "../../schema/unit-of-measurement-schema";
 import { and, eq } from "drizzle-orm";
-import { RawMaterialStatusEnum } from "../../types/enums";
+import {RawMaterialStatusEnum, UserRoleEnum} from "../../types/enums";
+import {determineFinalStoreId} from "../../utils/store-permission-utils";
 
 
 /**
@@ -27,6 +28,12 @@ export const getAllRawMaterial = async (req: CustomRequest, res: Response) => {
             StatusCodes.BAD_REQUEST
         )
     }
+
+    const userRole = currentUser?.role;
+    const { targetStoreId } = req.query;
+
+    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+    if (!finalStoreId) return;  // Error already handled
 
     try {
         // We join rawMaterials with unitOfMeasurement to get the presentation unit details needed for the display conversion.
@@ -51,7 +58,10 @@ export const getAllRawMaterial = async (req: CustomRequest, res: Response) => {
                 unitOfMeasurement,
                 eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id)
             )
-            .where(eq(rawMaterials.status, RawMaterialStatusEnum.ACTIVE))
+            .where(and(
+                eq(rawMaterials.storeId, finalStoreId),
+                eq(rawMaterials.status, RawMaterialStatusEnum.ACTIVE)
+            ))
             .execute();
 
         // Iterate through results to convert the stored Base Price back to the
@@ -114,7 +124,6 @@ export const getAllRawMaterial = async (req: CustomRequest, res: Response) => {
 export const getSingleRawMaterial = async (req: CustomRequest, res: Response) => {
     const currentUser = req.user?.data;
     const storeId = currentUser?.storeId;
-    const { id: rawMaterialId } = req.params;
 
     if (!storeId) {
         return handleError2(
@@ -124,6 +133,8 @@ export const getSingleRawMaterial = async (req: CustomRequest, res: Response) =>
         )
     }
 
+    const { id: rawMaterialId } = req.params;
+
     // Basic ID Validation
     if (!rawMaterialId) {
         return handleError2(
@@ -132,6 +143,13 @@ export const getSingleRawMaterial = async (req: CustomRequest, res: Response) =>
             StatusCodes.BAD_REQUEST
         );
     }
+
+    const userRole = currentUser?.role;
+    const { targetStoreId } = req.query;
+
+    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+    if (!finalStoreId) return;  // Error already handled
+
 
     try {
         // We select the necessary fields and join with the unit of the measurement table.
@@ -157,6 +175,7 @@ export const getSingleRawMaterial = async (req: CustomRequest, res: Response) =>
                 eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id)
             )
             .where(and(
+                eq(rawMaterials.storeId, finalStoreId),
                 eq(rawMaterials.id, rawMaterialId),
                 eq(rawMaterials.status, RawMaterialStatusEnum.ACTIVE)
             ))
@@ -223,7 +242,6 @@ export const getSingleRawMaterial = async (req: CustomRequest, res: Response) =>
  * @access Admin, Manager
  */
 export const createRawMaterial = async (req: CustomRequest, res: Response) => {
-
     const currentUser = req.user?.data;
     const storeId = currentUser?.storeId;
 
@@ -234,6 +252,13 @@ export const createRawMaterial = async (req: CustomRequest, res: Response) => {
             StatusCodes.BAD_REQUEST
         )
     }
+
+    const userRole = currentUser?.role;
+    const { targetStoreId } = req.query;
+
+    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+    if (!finalStoreId) return;  // Error already handled
+
 
     const {
         name,
@@ -275,6 +300,7 @@ export const createRawMaterial = async (req: CustomRequest, res: Response) => {
             description,
             unitOfMeasurementId,
             latestUnitPrice: latestUnitPriceBase, // Store the calculated price per BASE UNIT
+            storeId: finalStoreId,
         };
 
         // Insert the new Raw Material
@@ -286,7 +312,7 @@ export const createRawMaterial = async (req: CustomRequest, res: Response) => {
 
     } catch (error: any) {
         // Handle unique constraint violation (Raw Material Name must be unique)
-        if (error.cause?.code === '23505') {
+        if (error.cause?.code === '23505' && error.cause?.constraint === 'raw_materials_name_store_id_unique') {
             return handleError2(
                 res,
                 'A raw material with this name already exists.',
@@ -321,6 +347,14 @@ export const updateRawMaterial = async (req: CustomRequest, res: Response) => {
             StatusCodes.BAD_REQUEST
         )
     }
+
+    const userRole = currentUser?.role;
+    const { targetStoreId } = req.query;
+
+    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+    if (!finalStoreId) return;  // Error already handled
+
+
     const {
         name,
         description,
@@ -334,7 +368,10 @@ export const updateRawMaterial = async (req: CustomRequest, res: Response) => {
 
     try {
         const existingMaterial = await db.query.rawMaterials.findFirst({
-            where: eq(rawMaterials.id, rawMaterialId),
+            where: and(
+                eq(rawMaterials.storeId, finalStoreId),
+                eq(rawMaterials.id, rawMaterialId),
+            ),
             with: {
                 unitOfMeasurement: true // Fetch the current unit for comparison
             }
@@ -396,16 +433,19 @@ export const updateRawMaterial = async (req: CustomRequest, res: Response) => {
             return res.status(StatusCodes.OK).json({ success: true, message: 'No fields provided for update.' });
         }
 
-        const updatedResult = await db.update(rawMaterials)
+        const [updatedItem] = await db.update(rawMaterials)
             .set(updatePayload)
-            .where(eq(rawMaterials.id, rawMaterialId))
+            .where(and(
+                eq(rawMaterials.storeId, finalStoreId),
+                eq(rawMaterials.id, rawMaterialId),
+            ))
             .returning();
 
-        if (updatedResult.length === 0) {
+        if (!updatedItem) {
             return handleError2(res, 'Update failed or raw material not found.', StatusCodes.INTERNAL_SERVER_ERROR);
         }
 
-        const [updatedItem] = updatedResult;
+        // const [updatedItem] = updatedResult;
 
         // Fetch the unit used for display (could be the old one or the newly provided one)
         const unitForDisplay = finalUnitOfMeasurementRecord || existingMaterial.unitOfMeasurement;
@@ -439,7 +479,6 @@ export const updateRawMaterial = async (req: CustomRequest, res: Response) => {
 export const deleteRawMaterial = async (req: CustomRequest, res: Response) => {
     const currentUser = req.user?.data;
     const storeId = currentUser?.storeId;
-    const { id: rawMaterialId } = req.params;
 
     if (!storeId) {
         return handleError2(
@@ -448,6 +487,14 @@ export const deleteRawMaterial = async (req: CustomRequest, res: Response) => {
             StatusCodes.BAD_REQUEST
         )
     }
+
+    const userRole = currentUser?.role;
+    const { targetStoreId } = req.query;
+
+    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+    if (!finalStoreId) return;  // Error already handled
+
+    const { id: rawMaterialId } = req.params;
 
     if (!rawMaterialId) {
         return handleError2(res, 'Missing Raw Material', StatusCodes.BAD_REQUEST);
@@ -458,7 +505,10 @@ export const deleteRawMaterial = async (req: CustomRequest, res: Response) => {
             .set({
                 status: RawMaterialStatusEnum.DELETED, // Set the status to 'deleted'
             })
-            .where(eq(rawMaterials.id, rawMaterialId))
+            .where(and(
+                eq(rawMaterials.storeId, finalStoreId),
+                eq(rawMaterials.id, rawMaterialId),
+            ))
             .returning({ id: rawMaterials.id, name: rawMaterials.name, status: rawMaterials.status }); // Return only key confirmation fields
 
         if (!result) {

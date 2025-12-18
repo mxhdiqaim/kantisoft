@@ -249,10 +249,10 @@ export const getOrderById = async (req: CustomRequest, res: Response) => {
 };
 
 /*
-    * @desc    Create a new order
-    * @route   POST /api/orders
-    * @access  Private (Seller/Manager/Admin of the same store)
-    * @body    {"paymentMethod": "paymentMethod", "orderStatus": "orderStatus", "items": [ { "menuItemId": "uuid-for-burger", "quantity": 2 }, { "menuItemId": "uuid-for-fries", "quantity": 1 }] }
+ * @desc    Create a new order
+ * @route   POST /api/orders
+ * @access  Private (Seller/Manager/Admin of the same store)
+ * @body    {"paymentMethod": "paymentMethod", "orderStatus": "orderStatus", "items": [ { "menuItemId": "uuid-for-burger", "quantity": 2 }, { "menuItemId": "uuid-for-fries", "quantity": 1 }] }
  */
 
 export const createOrder = async (req: CustomRequest, res: Response) => {

@@ -4,10 +4,11 @@ import {
     pgTable,
     text,
     timestamp,
-    uniqueIndex,
+    unique,
     uuid,
 } from "drizzle-orm/pg-core";
 import { unitOfMeasurement } from "../unit-of-measurement-schema";
+import { stores } from "../stores-schema";
 
 // Define the Status Enum for Soft Deletion
 export const rawMaterialStatusEnum = pgEnum("rawMaterialStatus", [
@@ -35,6 +36,10 @@ export const rawMaterials = pgTable(
 
         status: rawMaterialStatusEnum("status").notNull().default("active"),
 
+        storeId: uuid("storeId").references(() => stores.id, {
+            onDelete: "restrict",
+        }),
+
         createdAt: timestamp("createdAt").defaultNow().notNull(),
         lastModified: timestamp("lastModified")
             .defaultNow()
@@ -43,9 +48,10 @@ export const rawMaterials = pgTable(
     },
     (table) => {
         return {
-            rawMaterialNameUnique: uniqueIndex("raw_material_name_unique").on(
-                table.name,
-            ),
+            // Add a composite unique constraint on (storeId, name)
+            rawMaterialNameStoreIdUnique: unique(
+                "raw_materials_name_store_id_unique",
+            ).on(table.storeId, table.name),
         };
     },
 );
