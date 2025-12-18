@@ -286,7 +286,7 @@ export const createRawMaterial = async (req: CustomRequest, res: Response) => {
 
     } catch (error: any) {
         // Handle unique constraint violation (Raw Material Name must be unique)
-        if (error.code === '23505') {
+        if (error.cause?.code === '23505') {
             return handleError2(
                 res,
                 'A raw material with this name already exists.',
@@ -418,7 +418,7 @@ export const updateRawMaterial = async (req: CustomRequest, res: Response) => {
         return res.status(StatusCodes.OK).json({
             ...updatedItem,
             latestUnitPricePresentation: priceForDisplay, // The formatted price
-            unit: unitForDisplay // Include unit details
+            unitOfMeasurement: unitForDisplay // Include unit details
         });
 
     } catch (error: any) {
