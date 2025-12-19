@@ -348,10 +348,10 @@ export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: 
     const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
     if (!finalStoreId) return;
 
-    const { id: rawMaterialId } = req.params;
+    const { id: inventoryRecordId } = req.params;
     const { minStockLevel, } = req.body;
 
-    if (!rawMaterialId) {
+    if (!inventoryRecordId) {
         return handleError2(res, 'Raw Material is required', StatusCodes.BAD_REQUEST);
     }
 
@@ -362,13 +362,15 @@ export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: 
     try {
         const [updatedRecord] = await db.update(rawMaterialInventory)
             .set({
-                minStockLevel: minStockLevel,
+                minStockLevel,
                 lastModified: new Date(),
             })
-            .where(and(
-                eq(rawMaterialInventory.rawMaterialId, rawMaterialId),
-                eq(rawMaterialInventory.storeId, finalStoreId)
-            ))
+            .where(
+                and(
+                    eq(rawMaterialInventory.id, inventoryRecordId),
+                    eq(rawMaterialInventory.storeId, finalStoreId)
+                )
+            )
             .returning();
 
         if (!updatedRecord) {
