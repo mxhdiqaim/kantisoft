@@ -4,7 +4,7 @@ import { CustomRequest } from "../../types/express";
 import { handleError2 } from "../../service/error-handling";
 import { StatusCodes } from "http-status-codes";
 import db from "../../db";
-import {and, eq, sql} from 'drizzle-orm';
+import { and, desc, eq, sql } from "drizzle-orm";
 import {rawMaterialInventory} from "../../schema/raw-materials-schema/raw-material-inventory-schema";
 import {rawMaterials} from "../../schema/raw-materials-schema";
 import {unitOfMeasurement} from "../../schema/unit-of-measurement-schema";
@@ -13,19 +13,112 @@ import {
     RawMaterialTransactionSource,
     rawMaterialTransactionSourceEnum
 } from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
-import {RawMaterialTransactionTypeEnum} from "../../types/enums";
+import { RawMaterialTransactionTypeEnum, UserRoleEnum } from "../../types/enums";
 import {InventoryAdjustmentService} from "../../service/raw-material-inventory-adjustment-service";
+import { determineFinalStoreId } from "../../utils/store-permission-utils";
 
+/**
+ * @description Retrieves all inventory records for a specific Store.
+ * @route GET /api/v1/raw-materials/inventory
+ * @access Admin, Manager, Staff
+ */
+export const getAllRawMaterialInventory = async (req: CustomRequest, res: Response) => {
+    try {
+        const currentUser = req.user?.data;
+        const storeId = currentUser?.storeId;
+        const userRole = currentUser?.role;
+
+        if (!storeId) {
+            return handleError2(res, "Store association required.", StatusCodes.FORBIDDEN);
+        }
+
+        const { targetStoreId } = req.query;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;
+
+        // Fetch using Relational API
+        const allRawMaterialInventory = await db.query.rawMaterialInventory.findMany({
+            where: eq(rawMaterialInventory.storeId, finalStoreId),
+            orderBy: [desc(rawMaterialInventory.lastModified)],
+            columns: {
+                id: true,
+                quantity: true,
+                minStockLevel: true,
+                status: true,
+                createdAt: true,
+                lastModified: true
+            },
+            with: {
+                rawMaterial: {
+                    columns: {
+                        id: true,
+                        name: true,
+                        latestUnitPrice: true
+                    },
+                    with: {
+                        unitOfMeasurement: {
+                            columns: {
+                                id: true,
+                                name: true,
+                                symbol: true,
+                            }
+                        }
+                    }
+                },
+                store: {
+                    columns: {
+                        id: true,
+                        name: true
+                    }
+                },
+            },
+        });
+
+        // Format data for table display
+        const formattedData = allRawMaterialInventory.map(item => ({
+            id: item.id,
+            quantity: item.quantity,
+            minStockLevel: item.minStockLevel,
+            status: item.status,
+            createdAt: item.createdAt,
+            lastModified: item.lastModified,
+
+            rawMaterialId: item.rawMaterial.id,
+            rawMaterialName: item.rawMaterial.name,
+            latestUnitPrice: item.rawMaterial.latestUnitPrice,
+
+            unitOfMeasurement: {
+                id: item.rawMaterial.unitOfMeasurement.id,
+                name: item.rawMaterial.unitOfMeasurement.name,
+                symbol: item.rawMaterial.unitOfMeasurement.symbol,
+            },
+
+            storeId: item.store.id,
+            storeName: item.store.name,
+        }));
+
+        res.status(StatusCodes.OK).json(formattedData);
+
+    } catch (error) {
+
+        handleError2(
+            res,
+            "Problem loading raw material inventory",
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined
+        );
+    }
+};
 
 /**
  * @description Retrieves the current stock level for a Raw Material in a specific Store.
- * @route GET /api/v1/raw-material-inventory/:id
+ * @route GET /api/v1/raw-materials/inventory/:id
  * @access Admin, Manager, Staff
  */
 export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Response) => {
     const currentUser = req.user?.data;
     const storeId = currentUser?.storeId;
-    const { id: rawMaterialId } = req.params;
 
     if (!storeId) {
         return handleError2(
@@ -34,6 +127,14 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
             StatusCodes.BAD_REQUEST
         );
     }
+    const userRole = currentUser?.role;
+    const { targetStoreId } = req.query;
+
+    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+    if (!finalStoreId) return;  // Error already handled
+
+    const { id: rawMaterialId } = req.params;
+
     if (!rawMaterialId) {
         return handleError2(res, 'Missing Raw Material.', StatusCodes.BAD_REQUEST);
     }
@@ -43,16 +144,16 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
         // Join Inventory -> RawMaterial -> UnitOfMeasurement
         const [stockRecord] = await db.select({
             // Inventory Fields
-            inventoryId: rawMaterialInventory.id,
+            id: rawMaterialInventory.id,
             rawMaterialId: rawMaterialInventory.rawMaterialId,
             storeId: rawMaterialInventory.storeId,
-            quantityBase: rawMaterialInventory.quantity, // Stored in Base Unit (g, ml)
-            minStockLevelBase: rawMaterialInventory.minStockLevel, // Stored in Base Unit
+            quantity: rawMaterialInventory.quantity, // Stored in Base Unit (g, ml)
+            minStockLevel: rawMaterialInventory.minStockLevel, // Stored in Base Unit
             status: rawMaterialInventory.status,
 
             // Raw Material Fields
             rawMaterialName: rawMaterials.name,
-            latestUnitPriceBase: rawMaterials.latestUnitPrice, // Price per Base Unit
+            latestUnitPrice: rawMaterials.latestUnitPrice, // Price per Base Unit
 
             // Unit Fields (needed for conversion)
             unitOfMeasurement: {
@@ -72,8 +173,8 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
                 eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id)
             )
             .where(and(
+                eq(rawMaterialInventory.storeId, finalStoreId),
                 eq(rawMaterialInventory.rawMaterialId, rawMaterialId),
-                eq(rawMaterialInventory.storeId, storeId)
             ))
             .limit(1)
             .execute();
@@ -96,20 +197,20 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
         const conversionFactor = stockRecord.unitOfMeasurement.conversionFactorToBase;
 
         // a. Current Quantity Conversion
-        const quantityPresentation = stockRecord.quantityBase / conversionFactor;
+        const quantityPresentation = stockRecord.quantity / conversionFactor;
 
         // b. Min Stock Level Conversion
-        const minStockLevelPresentation = stockRecord.minStockLevelBase / conversionFactor;
+        const minStockLevelPresentation = stockRecord.minStockLevel / conversionFactor;
 
         // c. Price Conversion (for display)
         const latestUnitPricePresentation = UnitConversionService.displayPriceInPresentationUnit(
-            stockRecord.latestUnitPriceBase,
+            stockRecord.latestUnitPrice,
             stockRecord.unitOfMeasurement
         );
 
         // Format Response
         return res.status(StatusCodes.OK).json({
-            inventoryId: stockRecord.inventoryId,
+            inventoryId: stockRecord.id,
             rawMaterialId: stockRecord.rawMaterialId,
             rawMaterialName: stockRecord.rawMaterialName,
 
@@ -123,8 +224,8 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
             latestUnitPricePresentation: latestUnitPricePresentation,
 
             // Internal Data (Optional for API, but good for context)
-            quantityBase: stockRecord.quantityBase,
-            minStockLevelBase: stockRecord.minStockLevelBase,
+            quantity: stockRecord.quantity,
+            minStockLevel: stockRecord.minStockLevel,
         });
 
     } catch (error: any) {
@@ -142,12 +243,11 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
  * or updates the minStockLevel if the record already exists (UPSERT).
  * @route POST /api/v1/raw-materials/inventory/:id
  * @access Admin, Manager
- * @body { rawMaterialId: string, minStockLevel: number }
+ * @body { rawMaterialId: string, minStockLevel: number, quantity?: number }
  */
 export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: Response) => {
     const currentUser = req.user?.data;
     const storeId = currentUser?.storeId;
-    const { id: rawMaterialId } = req.params;
 
     if (!storeId) {
         return handleError2(
@@ -157,20 +257,34 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
         );
     }
 
-    const { minStockLevel } = req.body;
+    const userRole = currentUser?.role;
+    const { targetStoreId } = req.query;
 
-    // We assume minStockLevel is mandatory for setting up inventory tracking
-    if (!rawMaterialId || minStockLevel === undefined || typeof minStockLevel !== 'number' || minStockLevel < 0) {
-        return handleError2(res, 'Raw Material and minStockLevel and it must be equal to or greater 0', StatusCodes.BAD_REQUEST);
+    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+    if (!finalStoreId) return;
+
+    const { minStockLevel, quantity, rawMaterialId } = req.body;
+
+    if (rawMaterialId === undefined || typeof rawMaterialId !== "string" || !rawMaterialId) {
+        return handleError2(res, 'Raw Material is required', StatusCodes.BAD_REQUEST);
+    }
+
+    if (minStockLevel === undefined || typeof minStockLevel !== 'number' || minStockLevel < 0) {
+        return handleError2(res, 'Minimum Stock Level is required and must be equal to or greater 0', StatusCodes.BAD_REQUEST);
+    }
+
+    if (typeof quantity !== "number" || quantity < 0) {
+        return handleError2(res, 'Quantity must be equal to or greater 0', StatusCodes.BAD_REQUEST);
     }
 
     try {
         // Data to insert or update
         const inventoryData = {
             rawMaterialId: rawMaterialId,
-            storeId: storeId,
+            storeId: finalStoreId,
             minStockLevel: minStockLevel,
-            // quantity defaults to 0, status defaults to 'inStock'
+            quantity: quantity, // if not provided, it defaults to 0
+            // status defaults to 'inStock'
         };
 
         const [inventoryRecord] = await db.insert(rawMaterialInventory)
@@ -183,10 +297,12 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
                 set: {
                     minStockLevel: sql`excluded."minStockLevel"`,
                 },
+
+                setWhere: eq(rawMaterialInventory.storeId, finalStoreId),
             })
             .returning();
 
-        // --- 2. Determine Action and Return Success ---
+        // Determine Action and Return Success
         // (We can't easily tell if it was an insert or update from Drizzle's result array,
         // so we use a generic success message focusing on the outcome)
 
@@ -212,6 +328,64 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
     }
 };
 
+/**
+ * @description Updates the minimum stock level for a raw material inventory record.
+ * @route PATCH /api/v1/raw-materials/inventory/:id
+ * @access Admin, Manager
+ * @body { minStockLevel: number }
+ */
+export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: Response) => {
+    const currentUser = req.user?.data;
+    const storeId = currentUser?.storeId;
+
+    if (!storeId) {
+        return handleError2(res, 'User does not have an associated store.', StatusCodes.BAD_REQUEST);
+    }
+
+    const userRole = currentUser?.role;
+    const { targetStoreId } = req.query;
+
+    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+    if (!finalStoreId) return;
+
+    const { id: rawMaterialId } = req.params;
+    const { minStockLevel, } = req.body;
+
+    if (!rawMaterialId) {
+        return handleError2(res, 'Raw Material is required', StatusCodes.BAD_REQUEST);
+    }
+
+    if (minStockLevel === undefined || typeof minStockLevel !== 'number' || minStockLevel < 0) {
+        return handleError2(res, 'Minimum Stock Level is required and must be equal to or greater 0', StatusCodes.BAD_REQUEST);
+    }
+
+    try {
+        const [updatedRecord] = await db.update(rawMaterialInventory)
+            .set({
+                minStockLevel: minStockLevel,
+                lastModified: new Date(),
+            })
+            .where(and(
+                eq(rawMaterialInventory.rawMaterialId, rawMaterialId),
+                eq(rawMaterialInventory.storeId, finalStoreId)
+            ))
+            .returning();
+
+        if (!updatedRecord) {
+            return handleError2(res, 'Inventory record not found for this raw material in the specified store.', StatusCodes.NOT_FOUND);
+        }
+
+        return res.status(StatusCodes.OK).json(updatedRecord);
+
+    } catch (error: any) {
+        return handleError2(
+            res,
+            'A server error occurred while updating the inventory record.',
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined
+        );
+    }
+};
 
 /**
  * @description Records an incoming stock transaction (IN) and updates the inventory quantity.
