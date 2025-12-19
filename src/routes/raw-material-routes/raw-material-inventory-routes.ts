@@ -5,7 +5,8 @@ const router = Express.Router();
 
 router.get("/", controller.getAllRawMaterialInventory);
 router.get("/:id", controller.getCurrentRawMaterialStock);
-router.post("/:id", controller.createRawMaterialInventoryRecord);
+router.patch("/:id", controller.updateRawMaterialInventoryRecord);
+router.post("/create", controller.createRawMaterialInventoryRecord);
 router.post("/:id/stock-in", controller.addStockToRawMaterial);
 
 export default router;
