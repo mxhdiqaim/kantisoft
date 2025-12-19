@@ -4,7 +4,7 @@ import { CustomRequest } from "../../types/express";
 import { handleError2 } from "../../service/error-handling";
 import { StatusCodes } from "http-status-codes";
 import db from "../../db";
-import {and, eq, sql} from 'drizzle-orm';
+import { and, desc, eq, sql } from "drizzle-orm";
 import {rawMaterialInventory} from "../../schema/raw-materials-schema/raw-material-inventory-schema";
 import {rawMaterials} from "../../schema/raw-materials-schema";
 import {unitOfMeasurement} from "../../schema/unit-of-measurement-schema";
@@ -13,19 +13,65 @@ import {
     RawMaterialTransactionSource,
     rawMaterialTransactionSourceEnum
 } from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
-import {RawMaterialTransactionTypeEnum} from "../../types/enums";
+import { RawMaterialTransactionTypeEnum, UserRoleEnum } from "../../types/enums";
 import {InventoryAdjustmentService} from "../../service/raw-material-inventory-adjustment-service";
+import { determineFinalStoreId } from "../../utils/store-permission-utils";
 
+/**
+ * @description Retrieves all inventory records for a specific Store.
+ * @route GET /api/v1/raw-materials/inventory
+ * @access Admin, Manager, Staff
+ */
+export const getAllRawMaterialInventory = async (req: CustomRequest, res: Response) => {
+    try {
+        const currentUser = req.user?.data;
+        const storeId = currentUser?.storeId;
+        const userRole = currentUser?.role;
+
+        if (!storeId) {
+            return handleError2(res, "Store association required.", StatusCodes.FORBIDDEN);
+        }
+
+        const { targetStoreId } = req.query;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;
+
+        // Fetch using Relational API
+        const allRawMaterialInventory = await db.query.rawMaterialInventory.findMany({
+            where: eq(rawMaterialInventory.storeId, finalStoreId),
+            orderBy: [desc(rawMaterialInventory.lastModified)],
+            with: {
+                rawMaterial: {
+                    with: {
+                        unitOfMeasurement: true // Deep join to get the conversion factor and symbol
+                    }
+                },
+                store: { columns: { id: true, name: true } },
+            },
+        });
+
+        res.status(StatusCodes.OK).json(allRawMaterialInventory);
+
+    } catch (error) {
+
+        handleError2(
+            res,
+            "Problem loading raw material inventory",
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined
+        );
+    }
+};
 
 /**
  * @description Retrieves the current stock level for a Raw Material in a specific Store.
- * @route GET /api/v1/raw-material-inventory/:id
+ * @route GET /api/v1/raw-materials/inventory/:id
  * @access Admin, Manager, Staff
  */
 export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Response) => {
     const currentUser = req.user?.data;
     const storeId = currentUser?.storeId;
-    const { id: rawMaterialId } = req.params;
 
     if (!storeId) {
         return handleError2(
@@ -34,6 +80,14 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
             StatusCodes.BAD_REQUEST
         );
     }
+    const userRole = currentUser?.role;
+    const { targetStoreId } = req.query;
+
+    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+    if (!finalStoreId) return;  // Error already handled
+
+    const { id: rawMaterialId } = req.params;
+
     if (!rawMaterialId) {
         return handleError2(res, 'Missing Raw Material.', StatusCodes.BAD_REQUEST);
     }
@@ -72,8 +126,8 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
                 eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id)
             )
             .where(and(
+                eq(rawMaterialInventory.storeId, finalStoreId),
                 eq(rawMaterialInventory.rawMaterialId, rawMaterialId),
-                eq(rawMaterialInventory.storeId, storeId)
             ))
             .limit(1)
             .execute();
@@ -142,12 +196,11 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
  * or updates the minStockLevel if the record already exists (UPSERT).
  * @route POST /api/v1/raw-materials/inventory/:id
  * @access Admin, Manager
- * @body { rawMaterialId: string, minStockLevel: number }
+ * @body { rawMaterialId: string, minStockLevel: number, quantity?: number }
  */
 export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: Response) => {
     const currentUser = req.user?.data;
     const storeId = currentUser?.storeId;
-    const { id: rawMaterialId } = req.params;
 
     if (!storeId) {
         return handleError2(
@@ -157,19 +210,28 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
         );
     }
 
-    const { minStockLevel } = req.body;
+    const userRole = currentUser?.role;
+    const { targetStoreId } = req.query;
+
+    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+    if (!finalStoreId) return;
+
+    const { id: rawMaterialId } = req.params;
+    const { minStockLevel, quantity } = req.body;
 
     // We assume minStockLevel is mandatory for setting up inventory tracking
-    if (!rawMaterialId || minStockLevel === undefined || typeof minStockLevel !== 'number' || minStockLevel < 0) {
+    if (!rawMaterialId || minStockLevel === undefined || typeof minStockLevel !== 'number' || minStockLevel < 0 || typeof quantity !== "number" || quantity < 0) {
         return handleError2(res, 'Raw Material and minStockLevel and it must be equal to or greater 0', StatusCodes.BAD_REQUEST);
     }
+
 
     try {
         // Data to insert or update
         const inventoryData = {
             rawMaterialId: rawMaterialId,
-            storeId: storeId,
+            storeId: finalStoreId,
             minStockLevel: minStockLevel,
+            quantity: quantity,
             // quantity defaults to 0, status defaults to 'inStock'
         };
 
@@ -183,10 +245,12 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
                 set: {
                     minStockLevel: sql`excluded."minStockLevel"`,
                 },
+
+                setWhere: eq(rawMaterialInventory.storeId, finalStoreId),
             })
             .returning();
 
-        // --- 2. Determine Action and Return Success ---
+        // Determine Action and Return Success
         // (We can't easily tell if it was an insert or update from Drizzle's result array,
         // so we use a generic success message focusing on the outcome)
 
