@@ -41,17 +41,60 @@ export const getAllRawMaterialInventory = async (req: CustomRequest, res: Respon
         const allRawMaterialInventory = await db.query.rawMaterialInventory.findMany({
             where: eq(rawMaterialInventory.storeId, finalStoreId),
             orderBy: [desc(rawMaterialInventory.lastModified)],
+            columns: {
+                id: true,
+                quantity: true,
+                minStockLevel: true,
+                status: true,
+                createdAt: true,
+                lastModified: true
+            },
             with: {
                 rawMaterial: {
+                    columns: {
+                        id: true,
+                        name: true,
+                        latestUnitPrice: true
+                    },
                     with: {
-                        unitOfMeasurement: true // Deep join to get the conversion factor and symbol
+                        unitOfMeasurement: {
+                            columns: {
+                                id: true,
+                                name: true
+                            }
+                        }
                     }
                 },
-                store: { columns: { id: true, name: true } },
+                store: {
+                    columns: {
+                        id: true,
+                        name: true
+                    }
+                },
             },
         });
 
-        res.status(StatusCodes.OK).json(allRawMaterialInventory);
+        // Format data for table display
+        const formattedData = allRawMaterialInventory.map(item => ({
+            id: item.id,
+            quantity: item.quantity,
+            minStockLevel: item.minStockLevel,
+            status: item.status,
+            createdAt: item.createdAt,
+            lastModified: item.lastModified,
+
+            rawMaterialId: item.rawMaterial.id,
+            rawMaterialName: item.rawMaterial.name,
+            latestUnitPrice: item.rawMaterial.latestUnitPrice,
+
+            unitOfMeasurementId: item.rawMaterial.unitOfMeasurement.id,
+            unitOfMeasurementName: item.rawMaterial.unitOfMeasurement.name,
+
+            storeId: item.store.id,
+            storeName: item.store.name,
+        }));
+
+        res.status(StatusCodes.OK).json(formattedData);
 
     } catch (error) {
 
@@ -231,8 +274,8 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
             rawMaterialId: rawMaterialId,
             storeId: finalStoreId,
             minStockLevel: minStockLevel,
-            quantity: quantity,
-            // quantity defaults to 0, status defaults to 'inStock'
+            quantity: quantity, // if not provided, it  defaults to 0
+            // status defaults to 'inStock'
         };
 
         const [inventoryRecord] = await db.insert(rawMaterialInventory)
