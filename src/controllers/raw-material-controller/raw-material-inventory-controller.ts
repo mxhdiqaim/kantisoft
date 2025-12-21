@@ -394,37 +394,55 @@ export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: 
 
 /**
  * @description Records an incoming stock transaction (IN) and updates the inventory quantity.
- * @route POST /api/v1/raw-material-inventory/:id/stock-in
+ * @route POST /api/v1/raw-materials/inventory/:id/stock-in
  * @access Admin, Manager
  */
-export const addStockToRawMaterial = async (req: CustomRequest, res: Response) => {
+export const addStockToRawMaterialInventory = async (req: CustomRequest, res: Response) => {
     const currentUser = req.user?.data;
     const storeId = currentUser?.storeId;
-    const userId = currentUser?.id;
-    const { id: rawMaterialId } = req.params;
 
-    if (!storeId || !userId) {
+    if (!storeId) {
         return handleError2(
             res,
             'User does not belong to a store or user ID is missing. Please contact support if you believe this is an error.',
             StatusCodes.BAD_REQUEST
         );
     }
+    const userRole = currentUser?.role;
+    const { targetStoreId } = req.query;
+
+    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+    if (!finalStoreId) return;  // Error already handled
+
+    const { id: rawMaterialId } = req.params;
+
     if (!rawMaterialId) {
-        return handleError2(res, 'Something went wrong', StatusCodes.BAD_REQUEST);
+        return handleError2(res, 'Missing Raw Material', StatusCodes.BAD_REQUEST);
     }
 
     const {
-        quantity, // Quantity in the user's unit (Presentation Unit, e.g., 10)
         unitOfMeasurementId, // The ID of the unit the quantity is measured in (e.g. Kilogram's ID)
-        source, // Reason for the addition (e.g. 'purchase_receipt')
+        source, // Reason for the addition (e.g. 'purchaseReceipt')
+        quantity, // Quantity in the user's unit (Presentation Unit, e.g., 10)
         documentRefId,
         notes
     } = req.body;
 
     // Validate required transaction fields
-    if (quantity === undefined || unitOfMeasurementId === undefined || source === undefined || typeof quantity !== 'number' || quantity <= 0) {
-        return handleError2(res, 'Quantity (must be > 0), Unit of measurement, and Source are required.', StatusCodes.BAD_REQUEST);
+    if (unitOfMeasurementId === undefined || typeof unitOfMeasurementId !== "string" || !unitOfMeasurementId) {
+        return handleError2(res, 'Measurement unit is required', StatusCodes.BAD_REQUEST);
+    }
+
+    if (source === undefined || typeof source !== "string" || !source) {
+        return handleError2(res, 'Source is required', StatusCodes.BAD_REQUEST);
+    }
+
+    if (typeof quantity !== 'number' || quantity <= 0) {
+        return handleError2(res, 'Quantity must be greater than 0)', StatusCodes.BAD_REQUEST);
+    }
+
+    if (documentRefId === undefined || typeof documentRefId !== "string" || !documentRefId) {
+        return handleError2(res, 'Reference is required', StatusCodes.BAD_REQUEST);
     }
 
     // Validate source against the enum
@@ -435,18 +453,21 @@ export const addStockToRawMaterial = async (req: CustomRequest, res: Response) =
     try {
         // Verify that the raw material exists before proceeding
         const materialExists = await db.query.rawMaterials.findFirst({
-            where: eq(rawMaterials.id, rawMaterialId),
+            where: and(
+                eq(rawMaterials.storeId, finalStoreId),
+                eq(rawMaterials.id, rawMaterialId)
+            ),
         });
 
         if (!materialExists) {
-            return handleError2(res, `Raw material with ID ${rawMaterialId} not found.`, StatusCodes.NOT_FOUND);
+            return handleError2(res, `Raw material not found.`, StatusCodes.NOT_FOUND);
         }
 
         // Prepare Transaction Data
         const transactionData = {
-            rawMaterialId: rawMaterialId,
-            storeId: storeId,
-            userId: userId,
+            rawMaterialId: materialExists.id,
+            storeId: finalStoreId,
+            userId: currentUser?.id as string,
             type: RawMaterialTransactionTypeEnum.COMING_IN,
             source: source as RawMaterialTransactionSource,
             documentRefId,
