@@ -20,7 +20,7 @@ import { determineFinalStoreId } from "../../utils/store-permission-utils";
 /**
  * @description Retrieves all inventory records for a specific Store.
  * @route GET /api/v1/raw-materials/inventory
- * @access Admin, Manager, Staff
+ * @access Admin, Manager
  */
 export const getAllRawMaterialInventory = async (req: CustomRequest, res: Response) => {
     try {
@@ -112,11 +112,11 @@ export const getAllRawMaterialInventory = async (req: CustomRequest, res: Respon
 };
 
 /**
- * @description Retrieves the current stock level for a Raw Material in a specific Store.
+ * @description Retrieves the current stock level for a Raw Material Inventory.
  * @route GET /api/v1/raw-materials/inventory/:id
- * @access Admin, Manager, Staff
+ * @access Admin, Manager
  */
-export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Response) => {
+export const getCurrentRawMaterialInventoryStock = async (req: CustomRequest, res: Response) => {
     const currentUser = req.user?.data;
     const storeId = currentUser?.storeId;
 
@@ -145,11 +145,13 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
         const [stockRecord] = await db.select({
             // Inventory Fields
             id: rawMaterialInventory.id,
-            rawMaterialId: rawMaterialInventory.rawMaterialId,
-            storeId: rawMaterialInventory.storeId,
             quantity: rawMaterialInventory.quantity, // Stored in Base Unit (g, ml)
             minStockLevel: rawMaterialInventory.minStockLevel, // Stored in Base Unit
             status: rawMaterialInventory.status,
+            rawMaterialId: rawMaterialInventory.rawMaterialId,
+            storeId: rawMaterialInventory.storeId,
+            createdAt: rawMaterialInventory.createdAt,
+            lastModified: rawMaterialInventory.lastModified,
 
             // Raw Material Fields
             rawMaterialName: rawMaterials.name,
@@ -194,13 +196,13 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
         // We need the inverse: Base -> Presentation.
         // Formula: Quantity_Presentation = Quantity_Base / ConversionFactorToBase
 
-        const conversionFactor = stockRecord.unitOfMeasurement.conversionFactorToBase;
+        // const conversionFactor = stockRecord.unitOfMeasurement.conversionFactorToBase;
 
         // a. Current Quantity Conversion
-        const quantityPresentation = stockRecord.quantity / conversionFactor;
+        // const quantityPresentation = stockRecord.quantity / conversionFactor;
 
         // b. Min Stock Level Conversion
-        const minStockLevelPresentation = stockRecord.minStockLevel / conversionFactor;
+        // const minStockLevelPresentation = stockRecord.minStockLevel / conversionFactor;
 
         // c. Price Conversion (for display)
         const latestUnitPricePresentation = UnitConversionService.displayPriceInPresentationUnit(
@@ -210,22 +212,23 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
 
         // Format Response
         return res.status(StatusCodes.OK).json({
-            inventoryId: stockRecord.id,
-            rawMaterialId: stockRecord.rawMaterialId,
-            rawMaterialName: stockRecord.rawMaterialName,
-
-            // Displayed Stock Data
-            quantityPresentation: quantityPresentation, // The amount the user understands (e.g. 50 kg)
-            minStockLevelPresentation: minStockLevelPresentation,
-            unitOfMeasurement: stockRecord.unitOfMeasurement,
-            status: stockRecord.status,
-
-            // Price Data
-            latestUnitPricePresentation: latestUnitPricePresentation,
-
-            // Internal Data (Optional for API, but good for context)
+            id: stockRecord.id,
             quantity: stockRecord.quantity,
             minStockLevel: stockRecord.minStockLevel,
+            status: stockRecord.status,
+            rawMaterialId: stockRecord.rawMaterialId,
+            storeId: stockRecord.storeId,
+            createdAt: stockRecord.createdAt,
+            lastModified: stockRecord.lastModified,
+
+            rawMaterialName: stockRecord.rawMaterialName,
+            latestUnitPrice: latestUnitPricePresentation,
+
+            // // Displayed Stock Data
+            // quantityPresentation: quantityPresentation, // The amount the user understands (e.g. 50 kg)
+            // minStockLevelPresentation: minStockLevelPresentation,
+
+            unitOfMeasurement: stockRecord.unitOfMeasurement,
         });
 
     } catch (error: any) {
@@ -392,7 +395,7 @@ export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: 
 /**
  * @description Records an incoming stock transaction (IN) and updates the inventory quantity.
  * @route POST /api/v1/raw-material-inventory/:id/stock-in
- * @access Admin, Manager, Stock Clerk
+ * @access Admin, Manager
  */
 export const addStockToRawMaterial = async (req: CustomRequest, res: Response) => {
     const currentUser = req.user?.data;
