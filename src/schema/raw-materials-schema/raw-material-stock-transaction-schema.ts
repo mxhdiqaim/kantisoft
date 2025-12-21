@@ -54,7 +54,7 @@ export const rawMaterialStockTransactions = pgTable(
         quantityBase: doublePrecision("quantityBase").notNull(),
 
         // Reference to an external document ID (e.g. Purchase Order ID, Production Batch ID)
-        documentRefId: uuid("documentRefId"),
+        documentRefId: text("documentRefId"),
 
         notes: text("notes"),
 

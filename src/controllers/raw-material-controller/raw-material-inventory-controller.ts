@@ -13,14 +13,15 @@ import {
     RawMaterialTransactionSource,
     rawMaterialTransactionSourceEnum
 } from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
-import { RawMaterialTransactionTypeEnum, UserRoleEnum } from "../../types/enums";
+import { RawMaterialTransactionSourceEnum, RawMaterialTransactionTypeEnum, UserRoleEnum } from "../../types/enums";
 import {InventoryAdjustmentService} from "../../service/raw-material-inventory-adjustment-service";
 import { determineFinalStoreId } from "../../utils/store-permission-utils";
+import { generateStockReference } from "../../utils/generate-stock-reference";
 
 /**
  * @description Retrieves all inventory records for a specific Store.
  * @route GET /api/v1/raw-materials/inventory
- * @access Admin, Manager, Staff
+ * @access Admin, Manager
  */
 export const getAllRawMaterialInventory = async (req: CustomRequest, res: Response) => {
     try {
@@ -112,11 +113,11 @@ export const getAllRawMaterialInventory = async (req: CustomRequest, res: Respon
 };
 
 /**
- * @description Retrieves the current stock level for a Raw Material in a specific Store.
+ * @description Retrieves the current stock level for a Raw Material Inventory.
  * @route GET /api/v1/raw-materials/inventory/:id
- * @access Admin, Manager, Staff
+ * @access Admin, Manager
  */
-export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Response) => {
+export const getCurrentRawMaterialInventoryStock = async (req: CustomRequest, res: Response) => {
     const currentUser = req.user?.data;
     const storeId = currentUser?.storeId;
 
@@ -145,11 +146,13 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
         const [stockRecord] = await db.select({
             // Inventory Fields
             id: rawMaterialInventory.id,
-            rawMaterialId: rawMaterialInventory.rawMaterialId,
-            storeId: rawMaterialInventory.storeId,
             quantity: rawMaterialInventory.quantity, // Stored in Base Unit (g, ml)
             minStockLevel: rawMaterialInventory.minStockLevel, // Stored in Base Unit
             status: rawMaterialInventory.status,
+            rawMaterialId: rawMaterialInventory.rawMaterialId,
+            storeId: rawMaterialInventory.storeId,
+            createdAt: rawMaterialInventory.createdAt,
+            lastModified: rawMaterialInventory.lastModified,
 
             // Raw Material Fields
             rawMaterialName: rawMaterials.name,
@@ -194,13 +197,13 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
         // We need the inverse: Base -> Presentation.
         // Formula: Quantity_Presentation = Quantity_Base / ConversionFactorToBase
 
-        const conversionFactor = stockRecord.unitOfMeasurement.conversionFactorToBase;
+        // const conversionFactor = stockRecord.unitOfMeasurement.conversionFactorToBase;
 
         // a. Current Quantity Conversion
-        const quantityPresentation = stockRecord.quantity / conversionFactor;
+        // const quantityPresentation = stockRecord.quantity / conversionFactor;
 
         // b. Min Stock Level Conversion
-        const minStockLevelPresentation = stockRecord.minStockLevel / conversionFactor;
+        // const minStockLevelPresentation = stockRecord.minStockLevel / conversionFactor;
 
         // c. Price Conversion (for display)
         const latestUnitPricePresentation = UnitConversionService.displayPriceInPresentationUnit(
@@ -210,22 +213,23 @@ export const getCurrentRawMaterialStock = async (req: CustomRequest, res: Respon
 
         // Format Response
         return res.status(StatusCodes.OK).json({
-            inventoryId: stockRecord.id,
-            rawMaterialId: stockRecord.rawMaterialId,
-            rawMaterialName: stockRecord.rawMaterialName,
-
-            // Displayed Stock Data
-            quantityPresentation: quantityPresentation, // The amount the user understands (e.g. 50 kg)
-            minStockLevelPresentation: minStockLevelPresentation,
-            unitOfMeasurement: stockRecord.unitOfMeasurement,
-            status: stockRecord.status,
-
-            // Price Data
-            latestUnitPricePresentation: latestUnitPricePresentation,
-
-            // Internal Data (Optional for API, but good for context)
+            id: stockRecord.id,
             quantity: stockRecord.quantity,
             minStockLevel: stockRecord.minStockLevel,
+            status: stockRecord.status,
+            rawMaterialId: stockRecord.rawMaterialId,
+            storeId: stockRecord.storeId,
+            createdAt: stockRecord.createdAt,
+            lastModified: stockRecord.lastModified,
+
+            rawMaterialName: stockRecord.rawMaterialName,
+            latestUnitPrice: latestUnitPricePresentation,
+
+            // // Displayed Stock Data
+            // quantityPresentation: quantityPresentation, // The amount the user understands (e.g. 50 kg)
+            // minStockLevelPresentation: minStockLevelPresentation,
+
+            unitOfMeasurement: stockRecord.unitOfMeasurement,
         });
 
     } catch (error: any) {
@@ -391,63 +395,103 @@ export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: 
 
 /**
  * @description Records an incoming stock transaction (IN) and updates the inventory quantity.
- * @route POST /api/v1/raw-material-inventory/:id/stock-in
- * @access Admin, Manager, Stock Clerk
+ * @route POST /api/v1/raw-materials/inventory/:id/stock-in
+ * @access Admin, Manager
+ * @body { unitOfMeasurementId: string, source: RawMaterialTransactionSource, quantity: number, documentRefId: string, notes?: string }
  */
-export const addStockToRawMaterial = async (req: CustomRequest, res: Response) => {
+export const stockInRawMaterialInventory = async (req: CustomRequest, res: Response) => {
     const currentUser = req.user?.data;
     const storeId = currentUser?.storeId;
-    const userId = currentUser?.id;
-    const { id: rawMaterialId } = req.params;
 
-    if (!storeId || !userId) {
+    if (!storeId) {
         return handleError2(
             res,
             'User does not belong to a store or user ID is missing. Please contact support if you believe this is an error.',
             StatusCodes.BAD_REQUEST
         );
     }
+    const userRole = currentUser?.role;
+    const { targetStoreId } = req.query;
+
+    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+    if (!finalStoreId) return;  // Error already handled
+
+    const { id: rawMaterialId } = req.params;
+
     if (!rawMaterialId) {
-        return handleError2(res, 'Something went wrong', StatusCodes.BAD_REQUEST);
+        return handleError2(res, 'Missing Raw Material', StatusCodes.BAD_REQUEST);
     }
 
     const {
-        quantity, // Quantity in the user's unit (Presentation Unit, e.g., 10)
         unitOfMeasurementId, // The ID of the unit the quantity is measured in (e.g. Kilogram's ID)
-        source, // Reason for the addition (e.g. 'purchase_receipt')
+        source, // Reason for the addition (e.g. 'purchaseReceipt')
+        quantity, // Quantity in the user's unit (Presentation Unit, e.g., 10)
         documentRefId,
         notes
     } = req.body;
 
     // Validate required transaction fields
-    if (quantity === undefined || unitOfMeasurementId === undefined || source === undefined || typeof quantity !== 'number' || quantity <= 0) {
-        return handleError2(res, 'Quantity (must be > 0), Unit of measurement, and Source are required.', StatusCodes.BAD_REQUEST);
+    if (unitOfMeasurementId === undefined || typeof unitOfMeasurementId !== "string" || !unitOfMeasurementId) {
+        return handleError2(res, 'Measurement unit is required', StatusCodes.BAD_REQUEST);
     }
+
+    if (source === undefined || typeof source !== "string" || !source) {
+        return handleError2(res, 'Source is required', StatusCodes.BAD_REQUEST);
+    }
+
+    if (quantity === undefined || quantity <= 0) {
+        return handleError2(res, 'Quantity must be greater than 0', StatusCodes.BAD_REQUEST);
+    }
+
+    // if (documentRefId === undefined || typeof documentRefId !== "string" || !documentRefId) {
+    //     return handleError2(res, 'Reference is required', StatusCodes.BAD_REQUEST);
+    // }
 
     // Validate source against the enum
     if (!Object.values(rawMaterialTransactionSourceEnum.enumValues).includes(source as RawMaterialTransactionSource)) {
         return handleError2(res, `Invalid transaction source.`, StatusCodes.BAD_REQUEST);
     }
 
+    // Conditional Validation for documentRefId
+    let finalReference = documentRefId;
+
+    // If a source is 'purchaseReceipt', we MUST have a manual reference
+    if (source === RawMaterialTransactionSourceEnum.PURCHASE_RECEIPT && !finalReference) {
+        return handleError2(
+            res,
+            'A Document Reference is mandatory for purchase receipts (e.g., Invoice #).',
+            StatusCodes.BAD_REQUEST
+        );
+    }
+
+    // Auto-Generation Logic
+    // If it's a manual adjustment or other source and no ref is provided, generate one
+    if (!finalReference) {
+        finalReference = generateStockReference(); // e.g., DEC-SUN-23-A9B2
+    }
+
     try {
         // Verify that the raw material exists before proceeding
         const materialExists = await db.query.rawMaterials.findFirst({
-            where: eq(rawMaterials.id, rawMaterialId),
+            where: and(
+                eq(rawMaterials.storeId, finalStoreId),
+                eq(rawMaterials.id, rawMaterialId)
+            ),
         });
 
         if (!materialExists) {
-            return handleError2(res, `Raw material with ID ${rawMaterialId} not found.`, StatusCodes.NOT_FOUND);
+            return handleError2(res, `Raw material not found.`, StatusCodes.NOT_FOUND);
         }
 
         // Prepare Transaction Data
         const transactionData = {
-            rawMaterialId: rawMaterialId,
-            storeId: storeId,
-            userId: userId,
+            rawMaterialId: materialExists.id,
+            storeId: finalStoreId,
+            userId: currentUser?.id as string,
             type: RawMaterialTransactionTypeEnum.COMING_IN,
             source: source as RawMaterialTransactionSource,
-            documentRefId,
-            notes
+            documentRefId: finalReference,
+            notes: notes || `Stock added via ${source}.`
         };
 
         // Process Adjustment via Service
