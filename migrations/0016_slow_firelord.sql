@@ -1,0 +1,1 @@
+ALTER TABLE "rawMaterialStockTransactions" ALTER COLUMN "documentRefId" SET DATA TYPE text;

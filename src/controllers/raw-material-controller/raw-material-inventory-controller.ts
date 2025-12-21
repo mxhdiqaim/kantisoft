@@ -13,9 +13,10 @@ import {
     RawMaterialTransactionSource,
     rawMaterialTransactionSourceEnum
 } from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
-import { RawMaterialTransactionTypeEnum, UserRoleEnum } from "../../types/enums";
+import { RawMaterialTransactionSourceEnum, RawMaterialTransactionTypeEnum, UserRoleEnum } from "../../types/enums";
 import {InventoryAdjustmentService} from "../../service/raw-material-inventory-adjustment-service";
 import { determineFinalStoreId } from "../../utils/store-permission-utils";
+import { generateStockReference } from "../../utils/generate-stock-reference";
 
 /**
  * @description Retrieves all inventory records for a specific Store.
@@ -396,8 +397,9 @@ export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: 
  * @description Records an incoming stock transaction (IN) and updates the inventory quantity.
  * @route POST /api/v1/raw-materials/inventory/:id/stock-in
  * @access Admin, Manager
+ * @body { unitOfMeasurementId: string, source: RawMaterialTransactionSource, quantity: number, documentRefId: string, notes?: string }
  */
-export const addStockToRawMaterialInventory = async (req: CustomRequest, res: Response) => {
+export const stockInRawMaterialInventory = async (req: CustomRequest, res: Response) => {
     const currentUser = req.user?.data;
     const storeId = currentUser?.storeId;
 
@@ -437,17 +439,35 @@ export const addStockToRawMaterialInventory = async (req: CustomRequest, res: Re
         return handleError2(res, 'Source is required', StatusCodes.BAD_REQUEST);
     }
 
-    if (typeof quantity !== 'number' || quantity <= 0) {
-        return handleError2(res, 'Quantity must be greater than 0)', StatusCodes.BAD_REQUEST);
+    if (quantity === undefined || quantity <= 0) {
+        return handleError2(res, 'Quantity must be greater than 0', StatusCodes.BAD_REQUEST);
     }
 
-    if (documentRefId === undefined || typeof documentRefId !== "string" || !documentRefId) {
-        return handleError2(res, 'Reference is required', StatusCodes.BAD_REQUEST);
-    }
+    // if (documentRefId === undefined || typeof documentRefId !== "string" || !documentRefId) {
+    //     return handleError2(res, 'Reference is required', StatusCodes.BAD_REQUEST);
+    // }
 
     // Validate source against the enum
     if (!Object.values(rawMaterialTransactionSourceEnum.enumValues).includes(source as RawMaterialTransactionSource)) {
         return handleError2(res, `Invalid transaction source.`, StatusCodes.BAD_REQUEST);
+    }
+
+    // Conditional Validation for documentRefId
+    let finalReference = documentRefId;
+
+    // If a source is 'purchaseReceipt', we MUST have a manual reference
+    if (source === RawMaterialTransactionSourceEnum.PURCHASE_RECEIPT && !finalReference) {
+        return handleError2(
+            res,
+            'A Document Reference is mandatory for purchase receipts (e.g., Invoice #).',
+            StatusCodes.BAD_REQUEST
+        );
+    }
+
+    // Auto-Generation Logic
+    // If it's a manual adjustment or other source and no ref is provided, generate one
+    if (!finalReference) {
+        finalReference = generateStockReference(); // e.g., DEC-SUN-23-A9B2
     }
 
     try {
@@ -470,8 +490,8 @@ export const addStockToRawMaterialInventory = async (req: CustomRequest, res: Re
             userId: currentUser?.id as string,
             type: RawMaterialTransactionTypeEnum.COMING_IN,
             source: source as RawMaterialTransactionSource,
-            documentRefId,
-            notes
+            documentRefId: finalReference,
+            notes: notes || `Stock added via ${source}.`
         };
 
         // Process Adjustment via Service

@@ -7,6 +7,6 @@ router.get("/", controller.getAllRawMaterialInventory);
 router.get("/:id", controller.getCurrentRawMaterialInventoryStock);
 router.patch("/:id", controller.updateRawMaterialInventoryRecord);
 router.post("/create", controller.createRawMaterialInventoryRecord);
-router.post("/:id/stock-in", controller.addStockToRawMaterialInventory);
+router.post("/:id/stock-in", controller.stockInRawMaterialInventory);
 
 export default router;
