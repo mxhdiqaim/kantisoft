@@ -10,6 +10,7 @@ import {rawMaterials} from "../../schema/raw-materials-schema";
 import {unitOfMeasurement} from "../../schema/unit-of-measurement-schema";
 import {UnitConversionService} from "../../service/unit-conversion-service";
 import {
+    rawMaterialTransactions,
     RawMaterialTransactionSource,
     rawMaterialTransactionSourceEnum
 } from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
@@ -17,6 +18,7 @@ import { RawMaterialTransactionSourceEnum, RawMaterialTransactionTypeEnum, UserR
 import {InventoryAdjustmentService} from "../../service/raw-material-inventory-adjustment-service";
 import { determineFinalStoreId } from "../../utils/store-permission-utils";
 import { generateStockReference } from "../../utils/generate-stock-reference";
+import {users} from "../../schema/users-schema";
 
 /**
  * @description Retrieves all inventory records for a specific Store.

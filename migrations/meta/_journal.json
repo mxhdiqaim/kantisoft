@@ -120,6 +120,13 @@
       "when": 1766360290107,
       "tag": "0016_slow_firelord",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1766396047541,
+      "tag": "0017_many_gideon",
+      "breakpoints": true
     }
   ]
 }

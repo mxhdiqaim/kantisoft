@@ -1,8 +1,8 @@
 import db from "../db";
 import { rawMaterialInventory } from "../schema/raw-materials-schema/raw-material-inventory-schema";
 import {
-    InsertRawMaterialStockTransactionSchemaT,
-    rawMaterialStockTransactions,
+    InsertRawMaterialTransactionSchemaT,
+    rawMaterialTransactions,
 } from "../schema/raw-materials-schema/raw-material-stock-transaction-schema";
 import { UnitConversionService } from "./unit-conversion-service";
 import { and, eq, sql } from "drizzle-orm";
@@ -21,7 +21,7 @@ export const InventoryAdjustmentService = {
      */
     async processStockAdjustment(
         transaction: Omit<
-            InsertRawMaterialStockTransactionSchemaT,
+            InsertRawMaterialTransactionSchemaT,
             "quantityBase" | "createdAt" | "id" | "lastModified"
         >,
         quantityPresentation: number,
@@ -50,7 +50,7 @@ export const InventoryAdjustmentService = {
         return db.transaction(async (tx) => {
             // a. Record the Stock Transaction (Ledger Entry)
             await tx
-                .insert(rawMaterialStockTransactions)
+                .insert(rawMaterialTransactions)
                 .values({
                     ...transaction,
                     quantityBase: quantityBase, // Always positive in the log, the 'type' field indicates direction

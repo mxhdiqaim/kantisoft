@@ -8,13 +8,13 @@ const router = express.Router();
 // Raw Material Inventory routes
 router.use("/inventory", rawMaterialInventory);
 
+// Raw Material Stock Transaction routes
+router.use("/transactions", rawMaterialStockTransaction);
+
 router.get("/", controller.getAllRawMaterial);
 router.get("/:id", controller.getSingleRawMaterial);
 router.post("/create", controller.createRawMaterial);
 router.patch("/:id", controller.updateRawMaterial);
 router.delete("/:id", controller.deleteRawMaterial);
-
-// Raw Material Stock Transaction routes
-router.use("/transactions", rawMaterialStockTransaction);
 
 export default router;

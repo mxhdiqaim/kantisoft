@@ -4,11 +4,13 @@ import { CustomRequest } from "../../types/express";
 import { handleError2 } from "../../service/error-handling";
 import { StatusCodes } from "http-status-codes";
 import db from "../../db";
-import { rawMaterialStockTransactions } from '../../schema/raw-materials-schema/raw-material-stock-transaction-schema';
+import { rawMaterialTransactions } from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
 import { rawMaterials } from '../../schema/raw-materials-schema';
 import { unitOfMeasurement } from '../../schema/unit-of-measurement-schema';
 import { users } from '../../schema/users-schema'; // Assuming you have a user's schema
 import { eq, and, desc } from 'drizzle-orm';
+import { determineFinalStoreId } from "../../utils/store-permission-utils";
+import { UserRoleEnum } from "../../types/enums";
 
 /**
  * @description Retrieves the full transaction history (stock ledger) for a raw material in a store.
@@ -32,14 +34,14 @@ export const getStockTransactions = async (req: CustomRequest, res: Response) =>
         // Join Transactions -> RawMaterials -> Unit -> Users
         const results = await db.select({
             // Transaction Fields
-            id: rawMaterialStockTransactions.id,
-            type: rawMaterialStockTransactions.type,
-            source: rawMaterialStockTransactions.source,
-            quantityBase: rawMaterialStockTransactions.quantityBase,
-            documentRefId: rawMaterialStockTransactions.documentRefId,
-            notes: rawMaterialStockTransactions.notes,
-            createdAt: rawMaterialStockTransactions.createdAt,
-            lastModified: rawMaterialStockTransactions.lastModified,
+            id: rawMaterialTransactions.id,
+            type: rawMaterialTransactions.type,
+            source: rawMaterialTransactions.source,
+            quantityBase: rawMaterialTransactions.quantityBase,
+            documentRefId: rawMaterialTransactions.documentRefId,
+            notes: rawMaterialTransactions.notes,
+            createdAt: rawMaterialTransactions.createdAt,
+            lastModified: rawMaterialTransactions.lastModified,
 
             // Raw Material Info
             rawMaterialName: rawMaterials.name,
@@ -62,10 +64,10 @@ export const getStockTransactions = async (req: CustomRequest, res: Response) =>
                 conversionFactorToBase: unitOfMeasurement.conversionFactorToBase,
             }
         })
-            .from(rawMaterialStockTransactions)
+            .from(rawMaterialTransactions)
             .innerJoin(
                 rawMaterials,
-                eq(rawMaterialStockTransactions.rawMaterialId, rawMaterials.id)
+                eq(rawMaterialTransactions.rawMaterialId, rawMaterials.id)
             )
             .innerJoin(
                 unitOfMeasurement,
@@ -73,13 +75,13 @@ export const getStockTransactions = async (req: CustomRequest, res: Response) =>
             )
             .leftJoin( // Use left join just in case the userId is missing/null in future
                 users,
-                eq(rawMaterialStockTransactions.userId, users.id)
+                eq(rawMaterialTransactions.userId, users.id)
             )
             .where(and(
-                eq(rawMaterialStockTransactions.rawMaterialId, rawMaterialId),
-                eq(rawMaterialStockTransactions.storeId, storeId)
+                eq(rawMaterialTransactions.rawMaterialId, rawMaterialId),
+                eq(rawMaterialTransactions.storeId, storeId)
             ))
-            .orderBy(desc(rawMaterialStockTransactions.createdAt)) // Newest transactions first
+            .orderBy(desc(rawMaterialTransactions.createdAt)) // Newest transactions first
             .execute();
 
         if (results.length === 0) {
@@ -126,3 +128,70 @@ export const getStockTransactions = async (req: CustomRequest, res: Response) =>
         );
     }
 }
+
+/**
+ * @description Retrieves transaction logs for a specific raw material or the whole store.
+ * @route GET /api/v1/raw-materials/transactions
+ */
+export const getRawMaterialInventoryTransactions = async (req: CustomRequest, res: Response) => {
+    const currentUser = req.user?.data;
+    const storeId = currentUser?.storeId;
+
+    if (!storeId) {
+        return handleError2(res, "Store association required.", StatusCodes.FORBIDDEN);
+    }
+
+    const userRole = currentUser?.role;
+    const { rawMaterialId, targetStoreId } = req.query; // Optional filter
+
+    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+    if (!finalStoreId) return;
+
+    try {
+        const logs = await db.select({
+            id: rawMaterialTransactions.id,
+            type: rawMaterialTransactions.type, // 'COMING_IN' or 'GOING_OUT'
+            source: rawMaterialTransactions.source,
+            quantity: rawMaterialTransactions.quantityBase,
+            reference: rawMaterialTransactions.documentRefId,
+            notes: rawMaterialTransactions.notes,
+
+            createdAt: rawMaterialTransactions.createdAt,
+            lastModified: rawMaterialTransactions.lastModified,
+
+            users: {
+                id: users.id,
+                firstName: users.firstName,
+                lastName: users.lastName,
+            },
+            rawMaterial: {
+                id: rawMaterials.id,
+                name: rawMaterials.name,
+                unitOfMeasurementId: rawMaterials.unitOfMeasurementId,
+                description: rawMaterials.description,
+                latestUnitPrice: rawMaterials.latestUnitPrice,
+                status: rawMaterials.status,
+            },
+        })
+            .from(rawMaterialTransactions)
+            .innerJoin(users, eq(rawMaterialTransactions.userId, users.id))
+            .innerJoin(rawMaterials, eq(rawMaterialTransactions.rawMaterialId, rawMaterials.id))
+            .where(
+                and(
+                    eq(rawMaterialTransactions.storeId, finalStoreId),
+                    // Only filter by material if the ID is provided
+                    rawMaterialId ? eq(rawMaterialTransactions.rawMaterialId, rawMaterialId as string) : undefined
+                )
+            )
+            .orderBy(desc(rawMaterialTransactions.lastModified));
+
+        return res.status(StatusCodes.OK).json(logs);
+    } catch (error) {
+        return handleError2(
+            res,
+            'Could not fetch logs',
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined
+        );
+    }
+};

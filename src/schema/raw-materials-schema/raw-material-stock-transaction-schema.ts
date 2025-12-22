@@ -32,44 +32,41 @@ export const rawMaterialTransactionSourceEnum = pgEnum(
     ],
 );
 
-export const rawMaterialStockTransactions = pgTable(
-    "rawMaterialStockTransactions",
-    {
-        id: uuid("id").defaultRandom().primaryKey(),
+export const rawMaterialTransactions = pgTable("rawMaterialTransactions", {
+    id: uuid("id").defaultRandom().primaryKey(),
 
-        rawMaterialId: uuid("rawMaterialId")
-            .notNull()
-            .references(() => rawMaterials.id, { onDelete: "restrict" }),
-        storeId: uuid("storeId")
-            .notNull()
-            .references(() => stores.id, { onDelete: "restrict" }),
-        userId: uuid("userId")
-            .notNull()
-            .references(() => users.id, { onDelete: "restrict" }),
+    rawMaterialId: uuid("rawMaterialId")
+        .notNull()
+        .references(() => rawMaterials.id, { onDelete: "restrict" }),
+    storeId: uuid("storeId")
+        .notNull()
+        .references(() => stores.id, { onDelete: "restrict" }),
+    userId: uuid("userId")
+        .notNull()
+        .references(() => users.id, { onDelete: "restrict" }),
 
-        type: rawMaterialTransactionTypeEnum("type").notNull(),
-        source: rawMaterialTransactionSourceEnum("source").notNull(),
+    type: rawMaterialTransactionTypeEnum("type").notNull(),
+    source: rawMaterialTransactionSourceEnum("source").notNull(),
 
-        // Quantity is always stored in the Base Unit (g, ml, or piece)
-        quantityBase: doublePrecision("quantityBase").notNull(),
+    // Quantity is always stored in the Base Unit (g, ml, or piece)
+    quantityBase: doublePrecision("quantityBase").notNull(),
 
-        // Reference to an external document ID (e.g. Purchase Order ID, Production Batch ID)
-        documentRefId: text("documentRefId"),
+    // Reference to an external document ID (e.g. Purchase Order ID, Production Batch ID)
+    documentRefId: text("documentRefId"),
 
-        notes: text("notes"),
+    notes: text("notes"),
 
-        createdAt: timestamp("createdAt").defaultNow().notNull(),
-        lastModified: timestamp("lastModified")
-            .defaultNow()
-            .notNull()
-            .$onUpdateFn(() => new Date()),
-    },
-);
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    lastModified: timestamp("lastModified")
+        .defaultNow()
+        .notNull()
+        .$onUpdateFn(() => new Date()),
+});
 
-export type RawMaterialStockTransactionSchemaT =
-    typeof rawMaterialStockTransactions.$inferSelect;
-export type InsertRawMaterialStockTransactionSchemaT =
-    typeof rawMaterialStockTransactions.$inferInsert;
+export type RawMaterialTransactionSchemaT =
+    typeof rawMaterialTransactions.$inferSelect;
+export type InsertRawMaterialTransactionSchemaT =
+    typeof rawMaterialTransactions.$inferInsert;
 export type RawMaterialTransactionType =
     (typeof rawMaterialTransactionTypeEnum.enumValues)[number];
 export type RawMaterialTransactionSource =
