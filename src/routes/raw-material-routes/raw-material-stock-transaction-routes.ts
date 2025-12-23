@@ -3,6 +3,7 @@ import * as controller from "../../controllers/raw-material-controller/raw-mater
 
 const router = Express.Router();
 
+router.get("/", controller.getRawMaterialInventoryTransactions);
 router.get("/:id", controller.getStockTransactions);
 
 export default router;

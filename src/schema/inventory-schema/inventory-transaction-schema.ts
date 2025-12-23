@@ -50,6 +50,10 @@ export const inventoryTransactions = pgTable("inventoryTransactions", {
     transactionDate: timestamp("transactionDate").defaultNow().notNull(),
 
     createdAt: timestamp("createdAt").defaultNow().notNull(),
+    lastModified: timestamp("lastModified")
+        .defaultNow()
+        .notNull()
+        .$onUpdateFn(() => new Date()),
 });
 
 export type InventoryTransactionSchemaT =

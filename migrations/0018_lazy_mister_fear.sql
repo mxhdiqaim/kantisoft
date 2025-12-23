@@ -1,0 +1,2 @@
+ALTER TABLE "inventoryTransactions" ADD COLUMN "lastModified" timestamp DEFAULT now() NOT NULL;--> statement-breakpoint
+ALTER TABLE "rawMaterialTransactions" ADD COLUMN "transactionDate" timestamp DEFAULT now() NOT NULL;
