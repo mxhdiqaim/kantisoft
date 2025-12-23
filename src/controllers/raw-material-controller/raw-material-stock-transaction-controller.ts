@@ -8,9 +8,8 @@ import { rawMaterialTransactions } from "../../schema/raw-materials-schema/raw-m
 import { rawMaterials } from '../../schema/raw-materials-schema';
 import { unitOfMeasurement } from '../../schema/unit-of-measurement-schema';
 import { users } from '../../schema/users-schema'; // Assuming you have a user's schema
-import { eq, and, desc } from 'drizzle-orm';
-import { determineFinalStoreId } from "../../utils/store-permission-utils";
-import { UserRoleEnum } from "../../types/enums";
+import { eq, and, desc, inArray, SQL, gte, lte } from "drizzle-orm";
+import { validateStoreAndExtractDates } from "../../utils/validate-store-dates";
 
 /**
  * @description Retrieves the full transaction history (stock ledger) for a raw material in a store.
@@ -134,28 +133,39 @@ export const getStockTransactions = async (req: CustomRequest, res: Response) =>
  * @route GET /api/v1/raw-materials/transactions
  */
 export const getRawMaterialInventoryTransactions = async (req: CustomRequest, res: Response) => {
-    const currentUser = req.user?.data;
-    const storeId = currentUser?.storeId;
-
-    if (!storeId) {
-        return handleError2(res, "Store association required.", StatusCodes.FORBIDDEN);
-    }
-
-    const userRole = currentUser?.role;
-    const { rawMaterialId, targetStoreId } = req.query; // Optional filter
-
-    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-    if (!finalStoreId) return;
-
     try {
-        const logs = await db.select({
+        const validated = await validateStoreAndExtractDates(req, res);
+        if (!validated) return; // Error already handled
+
+        const { storeIds, finalStartDate, finalEndDate, periodUsed, storeQueryType } = validated;
+
+        const { rawMaterialId } = req.query; // Optional filter
+
+        // 1. Construct the Base WHERE clause (Store Filter)
+        let whereClause: SQL | undefined = inArray(rawMaterialTransactions.storeId, storeIds);
+
+        // 2. Apply the Date Filter (Copied from getInventoryTransactions)
+        if (finalStartDate && finalEndDate) {
+            whereClause = and(
+                whereClause,
+                gte(rawMaterialTransactions.transactionDate, finalStartDate),
+                lte(rawMaterialTransactions.transactionDate, finalEndDate),
+            );
+        }
+
+        // 3. Add the Raw Material Filter if provided
+        if (rawMaterialId) {
+            whereClause = and(whereClause, eq(rawMaterialTransactions.rawMaterialId, rawMaterialId as string));
+        }
+
+        const txLogs = await db.select({
             id: rawMaterialTransactions.id,
-            type: rawMaterialTransactions.type, // 'COMING_IN' or 'GOING_OUT'
+            type: rawMaterialTransactions.type,
             source: rawMaterialTransactions.source,
             quantity: rawMaterialTransactions.quantityBase,
             reference: rawMaterialTransactions.documentRefId,
             notes: rawMaterialTransactions.notes,
-
+            transactionDate: rawMaterialTransactions.transactionDate, // Crucial for reporting
             createdAt: rawMaterialTransactions.createdAt,
             lastModified: rawMaterialTransactions.lastModified,
 
@@ -168,28 +178,27 @@ export const getRawMaterialInventoryTransactions = async (req: CustomRequest, re
                 id: rawMaterials.id,
                 name: rawMaterials.name,
                 unitOfMeasurementId: rawMaterials.unitOfMeasurementId,
-                description: rawMaterials.description,
                 latestUnitPrice: rawMaterials.latestUnitPrice,
-                status: rawMaterials.status,
             },
         })
             .from(rawMaterialTransactions)
             .innerJoin(users, eq(rawMaterialTransactions.userId, users.id))
             .innerJoin(rawMaterials, eq(rawMaterialTransactions.rawMaterialId, rawMaterials.id))
-            .where(
-                and(
-                    eq(rawMaterialTransactions.storeId, finalStoreId),
-                    // Only filter by material if the ID is provided
-                    rawMaterialId ? eq(rawMaterialTransactions.rawMaterialId, rawMaterialId as string) : undefined
-                )
-            )
-            .orderBy(desc(rawMaterialTransactions.lastModified));
+            .where(whereClause) // Using the unified whereClause
+            .orderBy(desc(rawMaterialTransactions.transactionDate), desc(rawMaterialTransactions.createdAt));
 
-        return res.status(StatusCodes.OK).json(logs);
+        return res.status(StatusCodes.OK).json({
+            startDate: finalStartDate ? finalStartDate.toISOString() : 'All Time',
+            endDate: finalEndDate ? finalEndDate.toISOString() : 'All Time',
+            transactions: txLogs, // Changed the key to 'transactions' to match other logs
+            timePeriod: periodUsed,
+            storeQueryType
+        });
+
     } catch (error) {
         return handleError2(
             res,
-            'Could not fetch logs',
+            'Could not fetch raw material logs',
             StatusCodes.INTERNAL_SERVER_ERROR,
             error instanceof Error ? error : undefined
         );

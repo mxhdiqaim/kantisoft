@@ -56,6 +56,8 @@ export const rawMaterialTransactions = pgTable("rawMaterialTransactions", {
 
     notes: text("notes"),
 
+    transactionDate: timestamp("transactionDate").defaultNow().notNull(),
+
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     lastModified: timestamp("lastModified")
         .defaultNow()
