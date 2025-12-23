@@ -158,39 +158,76 @@ export const getRawMaterialInventoryTransactions = async (req: CustomRequest, re
             whereClause = and(whereClause, eq(rawMaterialTransactions.rawMaterialId, rawMaterialId as string));
         }
 
-        const txLogs = await db.select({
+        const transactionLogs = await db.select({
             id: rawMaterialTransactions.id,
             type: rawMaterialTransactions.type,
             source: rawMaterialTransactions.source,
-            quantity: rawMaterialTransactions.quantityBase,
+            quantityBase: rawMaterialTransactions.quantityBase,
             reference: rawMaterialTransactions.documentRefId,
             notes: rawMaterialTransactions.notes,
             transactionDate: rawMaterialTransactions.transactionDate, // Crucial for reporting
             createdAt: rawMaterialTransactions.createdAt,
             lastModified: rawMaterialTransactions.lastModified,
 
-            users: {
-                id: users.id,
+            user: {
+                // id: users.id,
                 firstName: users.firstName,
                 lastName: users.lastName,
             },
             rawMaterial: {
-                id: rawMaterials.id,
+                // id: rawMaterials.id,
                 name: rawMaterials.name,
-                unitOfMeasurementId: rawMaterials.unitOfMeasurementId,
                 latestUnitPrice: rawMaterials.latestUnitPrice,
             },
+
+            // Unit Info (for conversion)
+            unitOfMeasurement: {
+                // id: unitOfMeasurement.id,
+                // name: unitOfMeasurement.name,
+                symbol: unitOfMeasurement.symbol,
+                conversionFactorToBase: unitOfMeasurement.conversionFactorToBase,
+            }
         })
             .from(rawMaterialTransactions)
             .innerJoin(users, eq(rawMaterialTransactions.userId, users.id))
             .innerJoin(rawMaterials, eq(rawMaterialTransactions.rawMaterialId, rawMaterials.id))
+            .innerJoin(unitOfMeasurement, eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id))
             .where(whereClause) // Using the unified whereClause
             .orderBy(desc(rawMaterialTransactions.transactionDate), desc(rawMaterialTransactions.createdAt));
+
+        // Post-Processing and Conversion
+        const transactionHistory = transactionLogs.map(item => {
+            const factor = item.unitOfMeasurement.conversionFactorToBase || 1;
+
+            // Formula: Presentation = Base / Factor
+            const quantityPresentation = Number(item.quantityBase) / factor;
+
+            return {
+                id: item.id,
+                rawMaterialName: item.rawMaterial.name,
+
+                // Display Values
+                quantity: quantityPresentation,
+                unitSymbol: item.unitOfMeasurement.symbol,
+
+                // Transaction Details
+                type: item.type,
+                source: item.source,
+                reference: item.reference,
+                notes: item.notes,
+                transactionDate: item.transactionDate,
+
+                // Audit
+                performedBy: `${item.user.firstName} ${item.user.lastName}`,
+                createdAt: item.createdAt,
+                lastModifiedAt: item.lastModified,
+            };
+        });
 
         return res.status(StatusCodes.OK).json({
             startDate: finalStartDate ? finalStartDate.toISOString() : 'All Time',
             endDate: finalEndDate ? finalEndDate.toISOString() : 'All Time',
-            transactions: txLogs, // Changed the key to 'transactions' to match other logs
+            transactions: transactionHistory,
             timePeriod: periodUsed,
             storeQueryType
         });
