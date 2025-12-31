@@ -7,6 +7,8 @@ import {
 import { UnitConversionService } from "./unit-conversion-service";
 import { and, eq, sql } from "drizzle-orm";
 import { calculateInventoryStatus } from "../helpers";
+import { inventory } from "../schema/inventory-schema";
+import { RawMaterialTransactionTypeEnum } from "../types/enums";
 
 /**
  * Service to handle all atomic inventory adjustments (IN or OUT).
@@ -106,5 +108,110 @@ export const InventoryAdjustmentService = {
 
             return updatedRecord; // Return the final, updated inventory record
         });
+    },
+
+    /**
+     * Deducts raw material stock during production.
+     * Uses an existing transaction (tx) to ensure atomicity.
+     */
+    async processRawMaterialStockOut(
+        tx: any, // Use the Drizzle transaction type here
+        data: {
+            rawMaterialId: string;
+            storeId: string;
+            type: "goingOut";
+            userId: string;
+            source: string;
+            quantityBase: number;
+            documentRefId: string;
+            notes: string;
+        },
+    ) {
+        // Record Transaction Log
+        await tx.insert(rawMaterialTransactions).values({
+            rawMaterialId: data.rawMaterialId,
+            storeId: data.storeId,
+            type: data.type,
+            userId: data.userId,
+            source: data.source,
+            quantityBase: data.quantityBase,
+            documentRefId: data.documentRefId,
+            notes: data.notes,
+        });
+
+        // Update Inventory Master
+        const [updated] = await tx
+            .update(rawMaterialInventory)
+            .set({
+                // Subtracting from base quantity
+                quantity: sql`${rawMaterialInventory.quantity}
+                -
+                ${data.quantityBase}`,
+                lastModified: new Date(),
+            })
+            .where(
+                and(
+                    eq(rawMaterialInventory.rawMaterialId, data.rawMaterialId),
+                    eq(rawMaterialInventory.storeId, data.storeId),
+                ),
+            )
+            .returning();
+
+        if (!updated)
+            throw new Error(`Inventory record for material not found.`);
+
+        // Update Status (Low stock check)
+        const newStatus = calculateInventoryStatus(
+            updated.quantity,
+            updated.minStockLevel,
+        );
+        if (newStatus !== updated.status) {
+            await tx
+                .update(rawMaterialInventory)
+                .set({ status: newStatus })
+                .where(eq(rawMaterialInventory.id, updated.id));
+        }
+    },
+
+    /**
+     * Adds finished goods (Menu Items) to inventory after production.
+     */
+    async processMenuItemStockIn(
+        tx: any,
+        data: {
+            menuItemId: string;
+            storeId: string;
+            type: typeof RawMaterialTransactionTypeEnum;
+            source: string;
+            quantity: number;
+            notes: string;
+        },
+    ) {
+        // Assuming you have a menuItemInventory table and a menuItemTransactions table
+        // This follows the same logic as Raw Materials but for Finished Goods
+
+        await tx.insert(inventory).values({
+            menuItemId: data.menuItemId,
+            storeId: data.storeId,
+            type: data.type,
+            source: data.source,
+            quantity: data.quantity,
+            notes: data.notes,
+        });
+
+        await tx
+            .update(inventory)
+            .set({
+                quantity: sql`${inventory.quantity}
+                +
+                ${data.quantity}`,
+                lastModified: new Date(),
+            })
+            .where(
+                and(
+                    eq(inventory.storeId, data.storeId),
+                    eq(inventory.menuItemId, data.menuItemId),
+                ),
+            );
     },
 };

@@ -19,6 +19,10 @@ export const billOfMaterials = pgTable(
             .notNull()
             .references(() => rawMaterials.id, { onDelete: "restrict" }),
 
+        // storeId: uuid("storeId")
+        //     .notNull()
+        //     .references(() => stores.id, { onDelete: "restrict" }),
+
         // Core BOM Fields
         consumptionQuantityBase: doublePrecision(
             "consumptionQuantityBase",
@@ -34,6 +38,7 @@ export const billOfMaterials = pgTable(
         return {
             // A finished product (menuItem) can only contain one instance of a specific raw material.
             bomUnique: unique("bom_menuItem_material_unique").on(
+                // table.storeId,
                 table.menuItemId,
                 table.rawMaterialId,
             ),

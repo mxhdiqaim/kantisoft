@@ -64,6 +64,9 @@ export const RawMaterialTransactionTypeEnum = {
     COMING_IN: "comingIn",
     GOING_OUT: "goingOut",
 } as const;
+export const RAW_MATERIAL_TRANSACTION_TYPES = Object.values(
+    RawMaterialTransactionTypeEnum,
+);
 
 export const RawMaterialTransactionSourceEnum = {
     PURCHASE_RECEIPT: "purchaseReceipt",
@@ -72,7 +75,11 @@ export const RawMaterialTransactionSourceEnum = {
     WASTAGE: "wastage",
     TRANSFER_IN: "transferIn",
     TRANSFER_OUT: "transferOut",
+    PRODUCTION_CONSUMPTION: "productionConsumption",
 };
+export const RAW_MATERIAL_TRANSACTION_SOURCES = Object.values(
+    RawMaterialTransactionSourceEnum,
+);
 
 export const INVENTORY_TRANSACTION_SUMMARY_TYPES = Object.values(
     InventoryTransactionSummaryTypeEnum,
