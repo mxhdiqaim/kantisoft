@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Response } from 'express';
+import { Response } from "express";
 import { CustomRequest } from "../types/express";
 import { handleError2 } from "../service/error-handling";
 import { StatusCodes } from "http-status-codes";
 import db from "../db";
 import { billOfMaterials, InsertBillOfMaterialsSchemaT } from "../schema/bill-of-materials-schema";
-import { rawMaterials } from '../schema/raw-materials-schema';
-import { unitOfMeasurement } from '../schema/unit-of-measurement-schema';
-import { eq } from 'drizzle-orm';
+import { rawMaterials } from "../schema/raw-materials-schema";
+import { unitOfMeasurement } from "../schema/unit-of-measurement-schema";
+import { eq } from "drizzle-orm";
 import { UnitConversionService } from "../service/unit-conversion-service";
 
 // Define the expected structure of a single item in the request body
@@ -135,32 +135,31 @@ export const getBillOfMaterials = async (req: CustomRequest, res: Response) => {
  * @access Admin, Manager
  */
 export const defineBillOfMaterials = async (req: CustomRequest, res: Response) => {
-    const currentUser = req.user?.data;
-    const storeId = currentUser?.storeId;
-
-    if (!storeId) {
-        return handleError2(
-            res,
-            'User does not have an associated store.',
-            StatusCodes.BAD_REQUEST
-        )
-    }
-
-    const { id: menuItemId } = req.params;
-    const bomItems: BomItemRequest[] = req.body; // Expecting an array of raw material inputs
-
-    console.log("Received BOM Items:", bomItems);
-
-    if (!menuItemId) {
-        return handleError2(res, 'Something went wrong', StatusCodes.BAD_REQUEST);
-    }
-
-    if (!Array.isArray(bomItems) || bomItems.length === 0) {
-        // If the user submits an empty array, we interpret it as clearing the recipe.
-        // We will proceed to step 5.a (deletion).
-    }
-
     try {
+        const currentUser = req.user?.data;
+        const storeId = currentUser?.storeId;
+
+        if (!storeId) {
+            return handleError2(
+                res,
+                'User does not have an associated store.',
+                StatusCodes.BAD_REQUEST
+            )
+        }
+
+        const { id: menuItemId } = req.params;
+        const bomItems: BomItemRequest[] = req.body; // Expecting an array of raw material inputs
+
+        console.log("Received BOM Items:", bomItems);
+
+        if (!menuItemId) {
+            return handleError2(res, 'Something went wrong', StatusCodes.BAD_REQUEST);
+        }
+
+        if (!Array.isArray(bomItems) || bomItems.length === 0) {
+            // If the user submits an empty array, we interpret it as clearing the recipe.
+            // We will proceed to step 5.a (deletion).
+        }
         // We use a transaction to ensure atomicity: either all items are saved, or none are.
         const insertedBOMs = await db.transaction(async (tx) => {
 
@@ -200,7 +199,8 @@ export const defineBillOfMaterials = async (req: CustomRequest, res: Response) =
                 recordsToInsert.push({
                     menuItemId: menuItemId,
                     rawMaterialId: rawMaterialId,
-                    consumptionQuantityBase: consumptionQuantityBase, // Stored in the Base Unit
+                    consumptionQuantityBase: consumptionQuantityBase,
+                    storeId,
                 });
             }
 
@@ -212,10 +212,10 @@ export const defineBillOfMaterials = async (req: CustomRequest, res: Response) =
 
             // Insert the new BOM items (only if the list is not empty)
             if (recordsToInsert.length > 0) {
-                const result = await tx.insert(billOfMaterials)
+                return await tx
+                    .insert(billOfMaterials)
                     .values(recordsToInsert)
                     .returning();
-                return result;
             }
 
             return []; // Return an empty array if the recipe was just cleared

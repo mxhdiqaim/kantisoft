@@ -7,6 +7,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { menuItems } from "./menu-items-schema";
 import { rawMaterials } from "./raw-materials-schema";
+import { stores } from "./stores-schema";
 
 export const billOfMaterials = pgTable(
     "billOfMaterials",
@@ -19,9 +20,9 @@ export const billOfMaterials = pgTable(
             .notNull()
             .references(() => rawMaterials.id, { onDelete: "restrict" }),
 
-        // storeId: uuid("storeId")
-        //     .notNull()
-        //     .references(() => stores.id, { onDelete: "restrict" }),
+        storeId: uuid("storeId")
+            .notNull()
+            .references(() => stores.id, { onDelete: "restrict" }),
 
         // Core BOM Fields
         consumptionQuantityBase: doublePrecision(
@@ -38,7 +39,7 @@ export const billOfMaterials = pgTable(
         return {
             // A finished product (menuItem) can only contain one instance of a specific raw material.
             bomUnique: unique("bom_menuItem_material_unique").on(
-                // table.storeId,
+                table.storeId,
                 table.menuItemId,
                 table.rawMaterialId,
             ),

@@ -8,7 +8,12 @@ import { UnitConversionService } from "./unit-conversion-service";
 import { and, eq, sql } from "drizzle-orm";
 import { calculateInventoryStatus } from "../helpers";
 import { inventory } from "../schema/inventory-schema";
-import { RawMaterialTransactionTypeEnum } from "../types/enums";
+import {
+    InventoryTransactionSummaryTypeEnum,
+    InventoryTransactionTypeEnum,
+    TransactionTypeEnum,
+} from "../types/enums";
+import { inventoryTransactions } from "../schema/inventory-schema/inventory-transaction-schema";
 
 /**
  * Service to handle all atomic inventory adjustments (IN or OUT).
@@ -119,7 +124,7 @@ export const InventoryAdjustmentService = {
         data: {
             rawMaterialId: string;
             storeId: string;
-            type: "goingOut";
+            type: typeof TransactionTypeEnum;
             userId: string;
             source: string;
             quantityBase: number;
@@ -160,6 +165,12 @@ export const InventoryAdjustmentService = {
         if (!updated)
             throw new Error(`Inventory record for material not found.`);
 
+        if (updated.quantity < 0) {
+            throw new Error(
+                `Insufficient stock for material. Production cancelled.`,
+            );
+        }
+
         // Update Status (Low stock check)
         const newStatus = calculateInventoryStatus(
             updated.quantity,
@@ -181,25 +192,26 @@ export const InventoryAdjustmentService = {
         data: {
             menuItemId: string;
             storeId: string;
-            type: typeof RawMaterialTransactionTypeEnum;
-            source: string;
             quantity: number;
             notes: string;
+            performedBy?: string;
+
+            // type: typeof TransactionTypeEnum;
+            // source: typeof MenuItemTransactionSourceEnum;
         },
     ) {
-        // Assuming you have a menuItemInventory table and a menuItemTransactions table
-        // This follows the same logic as Raw Materials but for Finished Goods
-
-        await tx.insert(inventory).values({
+        // Log the transaction in your existing 'inventoryTransactions' table
+        await tx.insert(inventoryTransactions).values({
             menuItemId: data.menuItemId,
             storeId: data.storeId,
-            type: data.type,
-            source: data.source,
-            quantity: data.quantity,
-            notes: data.notes,
+            transactionType: InventoryTransactionSummaryTypeEnum.PRODUCTION_IN, // Using the new enum value
+            quantityChange: data.quantity, // Positive number for stock in
+            performedBy: data.performedBy,
+            notes: data.notes || "Production Batch Completed",
         });
 
-        await tx
+        // Update the 'inventory' table primary record
+        const [updatedRecord] = await tx
             .update(inventory)
             .set({
                 quantity: sql`${inventory.quantity}
@@ -209,9 +221,33 @@ export const InventoryAdjustmentService = {
             })
             .where(
                 and(
-                    eq(inventory.storeId, data.storeId),
                     eq(inventory.menuItemId, data.menuItemId),
+                    eq(inventory.storeId, data.storeId),
                 ),
+            )
+            .returning();
+
+        // Handle status updates (Low Stock logic)
+        if (updatedRecord) {
+            const newStatus = calculateInventoryStatus(
+                updatedRecord.quantity,
+                updatedRecord.minStockLevel,
             );
+
+            if (newStatus !== updatedRecord.status) {
+                await tx
+                    .update(inventory)
+                    .set({ status: newStatus })
+                    .where(eq(inventory.id, updatedRecord.id));
+            }
+        } else {
+            // Optional: If no inventory record exists yet, create one
+            await tx.insert(inventory).values({
+                menuItemId: data.menuItemId,
+                storeId: data.storeId,
+                quantity: data.quantity,
+                status: InventoryTransactionTypeEnum.IN_STOCK,
+            });
+        }
     },
 };
