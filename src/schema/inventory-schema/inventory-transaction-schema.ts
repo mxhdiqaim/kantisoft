@@ -19,6 +19,7 @@ export const transactionTypeEnum = pgEnum("transactionType", [
     "adjustmentOut", // Manual decrease (e.g. waste, spoilage, theft)
     "transferOut", // Moving stock to another store/location (not currently implemented TODO: will be implemented later)
     "transferIn", // Receiving stock from another store/location (not currently implemented TODO: will be implemented later)
+    "productionIn", // Finished goods produced from raw materials (not currently implemented TODO: will be implemented later)
 ]);
 
 // Transactions table: Logs every movement (in/out) of inventory

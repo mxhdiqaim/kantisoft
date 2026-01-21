@@ -10,7 +10,7 @@ import {rawMaterials} from "../../schema/raw-materials-schema";
 import {unitOfMeasurement} from "../../schema/unit-of-measurement-schema";
 import {UnitConversionService} from "../../service/unit-conversion-service";
 import { RawMaterialTransactionSource, rawMaterialTransactionSourceEnum } from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
-import { RawMaterialTransactionSourceEnum, RawMaterialTransactionTypeEnum, UserRoleEnum } from "../../types/enums";
+import { RawMaterialTransactionSourceEnum, TransactionTypeEnum, UserRoleEnum } from "../../types/enums";
 import {InventoryAdjustmentService} from "../../service/raw-material-inventory-adjustment-service";
 import { determineFinalStoreId } from "../../utils/store-permission-utils";
 import { generateStockReference } from "../../utils/generate-stock-reference";
@@ -485,7 +485,7 @@ export const stockInRawMaterialInventory = async (req: CustomRequest, res: Respo
             rawMaterialId: materialExists.id,
             storeId: finalStoreId,
             userId: currentUser?.id as string,
-            type: RawMaterialTransactionTypeEnum.COMING_IN,
+            type: TransactionTypeEnum.COMING_IN,
             source: source as RawMaterialTransactionSource,
             documentRefId: finalReference,
             notes: notes || `Stock added via ${source}.`

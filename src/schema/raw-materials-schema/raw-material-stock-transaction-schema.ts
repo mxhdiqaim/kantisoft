@@ -29,6 +29,7 @@ export const rawMaterialTransactionSourceEnum = pgEnum(
         "wastage", // Deduction due to spoilage or loss
         "transferIn",
         "transferOut",
+        "productionConsumption",
     ],
 );
 

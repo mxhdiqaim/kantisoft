@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { InventoryAdjustmentService } from "./raw-material-inventory-adjustment-service";
 import {
     RawMaterialTransactionSourceEnum,
-    RawMaterialTransactionTypeEnum,
+    TransactionTypeEnum,
 } from "../types/enums";
 import { RawMaterialTransactionSource } from "../schema/raw-materials-schema/raw-material-stock-transaction-schema";
 
@@ -63,7 +63,7 @@ export const RawMaterialProductionService = {
                     rawMaterialId: rawMaterialId,
                     storeId: storeId,
                     userId: userId,
-                    type: RawMaterialTransactionTypeEnum.GOING_OUT,
+                    type: TransactionTypeEnum.GOING_OUT,
                     source: RawMaterialTransactionSourceEnum.PRODUCTION_USAGE as RawMaterialTransactionSource,
                     documentRefId: productionBatchId,
                     notes: `Deduction for Menu Item ${menuItemId} production.`,

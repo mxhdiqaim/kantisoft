@@ -29,7 +29,7 @@ export const InventoryTransactionTypeEnum = {
     IN_STOCK: "inStock",
     LOW_STOCK: "lowStock",
     OUT_OF_STOCK: "outOfStock",
-    ADJUSTMENT: "adjustment",
+    // ADJUSTMENT: "adjustment",
     DISCONTINUED: "discontinued",
 } as const;
 
@@ -44,6 +44,7 @@ export const InventoryTransactionSummaryTypeEnum = {
     ADJUSTMENT_IN: "adjustmentIn",
     ADJUSTMENT_OUT: "adjustmentOut",
     PURCHASE_RECEIVE: "purchaseReceive",
+    PRODUCTION_IN: "productionIn",
 } as const;
 
 export const UnitOfMeasurementFamilyEnum = {
@@ -60,10 +61,13 @@ export const RawMaterialStatusEnum = {
     ARCHIVED: "archived",
 } as const;
 
-export const RawMaterialTransactionTypeEnum = {
+export const TransactionTypeEnum = {
     COMING_IN: "comingIn",
     GOING_OUT: "goingOut",
 } as const;
+
+export const RAW_MATERIAL_TRANSACTION_TYPES =
+    Object.values(TransactionTypeEnum);
 
 export const RawMaterialTransactionSourceEnum = {
     PURCHASE_RECEIPT: "purchaseReceipt",
@@ -72,8 +76,18 @@ export const RawMaterialTransactionSourceEnum = {
     WASTAGE: "wastage",
     TRANSFER_IN: "transferIn",
     TRANSFER_OUT: "transferOut",
+    PRODUCTION_CONSUMPTION: "productionConsumption",
 };
+export const RAW_MATERIAL_TRANSACTION_SOURCES = Object.values(
+    RawMaterialTransactionSourceEnum,
+);
 
 export const INVENTORY_TRANSACTION_SUMMARY_TYPES = Object.values(
     InventoryTransactionSummaryTypeEnum,
 );
+
+export const MenuItemTransactionSourceEnum = {
+    PRODUCTION_OUTPUT: "productionOutput",
+    POS_SALE: "posSale",
+    MANUAL_ADJUSTMENT: "manualAdjustment",
+};

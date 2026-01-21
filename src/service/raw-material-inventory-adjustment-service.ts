@@ -7,6 +7,13 @@ import {
 import { UnitConversionService } from "./unit-conversion-service";
 import { and, eq, sql } from "drizzle-orm";
 import { calculateInventoryStatus } from "../helpers";
+import { inventory } from "../schema/inventory-schema";
+import {
+    InventoryTransactionSummaryTypeEnum,
+    InventoryTransactionTypeEnum,
+    TransactionTypeEnum,
+} from "../types/enums";
+import { inventoryTransactions } from "../schema/inventory-schema/inventory-transaction-schema";
 
 /**
  * Service to handle all atomic inventory adjustments (IN or OUT).
@@ -106,5 +113,141 @@ export const InventoryAdjustmentService = {
 
             return updatedRecord; // Return the final, updated inventory record
         });
+    },
+
+    /**
+     * Deducts raw material stock during production.
+     * Uses an existing transaction (tx) to ensure atomicity.
+     */
+    async processRawMaterialStockOut(
+        tx: any, // Use the Drizzle transaction type here
+        data: {
+            rawMaterialId: string;
+            storeId: string;
+            type: typeof TransactionTypeEnum;
+            userId: string;
+            source: string;
+            quantityBase: number;
+            documentRefId: string;
+            notes: string;
+        },
+    ) {
+        // Record Transaction Log
+        await tx.insert(rawMaterialTransactions).values({
+            rawMaterialId: data.rawMaterialId,
+            storeId: data.storeId,
+            type: data.type,
+            userId: data.userId,
+            source: data.source,
+            quantityBase: data.quantityBase,
+            documentRefId: data.documentRefId,
+            notes: data.notes,
+        });
+
+        // Update Inventory Master
+        const [updated] = await tx
+            .update(rawMaterialInventory)
+            .set({
+                // Subtracting from base quantity
+                quantity: sql`${rawMaterialInventory.quantity}
+                -
+                ${data.quantityBase}`,
+                lastModified: new Date(),
+            })
+            .where(
+                and(
+                    eq(rawMaterialInventory.rawMaterialId, data.rawMaterialId),
+                    eq(rawMaterialInventory.storeId, data.storeId),
+                ),
+            )
+            .returning();
+
+        if (!updated)
+            throw new Error(`Inventory record for material not found.`);
+
+        if (updated.quantity < 0) {
+            throw new Error(
+                `Insufficient stock for material. Production cancelled.`,
+            );
+        }
+
+        // Update Status (Low stock check)
+        const newStatus = calculateInventoryStatus(
+            updated.quantity,
+            updated.minStockLevel,
+        );
+        if (newStatus !== updated.status) {
+            await tx
+                .update(rawMaterialInventory)
+                .set({ status: newStatus })
+                .where(eq(rawMaterialInventory.id, updated.id));
+        }
+    },
+
+    /**
+     * Adds finished goods (Menu Items) to inventory after production.
+     */
+    async processMenuItemStockIn(
+        tx: any,
+        data: {
+            menuItemId: string;
+            storeId: string;
+            quantity: number;
+            notes: string;
+            performedBy?: string;
+
+            // type: typeof TransactionTypeEnum;
+            // source: typeof MenuItemTransactionSourceEnum;
+        },
+    ) {
+        // Log the transaction in your existing 'inventoryTransactions' table
+        await tx.insert(inventoryTransactions).values({
+            menuItemId: data.menuItemId,
+            storeId: data.storeId,
+            transactionType: InventoryTransactionSummaryTypeEnum.PRODUCTION_IN, // Using the new enum value
+            quantityChange: data.quantity, // Positive number for stock in
+            performedBy: data.performedBy,
+            notes: data.notes || "Production Batch Completed",
+        });
+
+        // Update the 'inventory' table primary record
+        const [updatedRecord] = await tx
+            .update(inventory)
+            .set({
+                quantity: sql`${inventory.quantity}
+                +
+                ${data.quantity}`,
+                lastModified: new Date(),
+            })
+            .where(
+                and(
+                    eq(inventory.menuItemId, data.menuItemId),
+                    eq(inventory.storeId, data.storeId),
+                ),
+            )
+            .returning();
+
+        // Handle status updates (Low Stock logic)
+        if (updatedRecord) {
+            const newStatus = calculateInventoryStatus(
+                updatedRecord.quantity,
+                updatedRecord.minStockLevel,
+            );
+
+            if (newStatus !== updatedRecord.status) {
+                await tx
+                    .update(inventory)
+                    .set({ status: newStatus })
+                    .where(eq(inventory.id, updatedRecord.id));
+            }
+        } else {
+            // Optional: If no inventory record exists yet, create one
+            await tx.insert(inventory).values({
+                menuItemId: data.menuItemId,
+                storeId: data.storeId,
+                quantity: data.quantity,
+                status: InventoryTransactionTypeEnum.IN_STOCK,
+            });
+        }
     },
 };
