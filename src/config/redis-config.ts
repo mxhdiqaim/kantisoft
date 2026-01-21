@@ -18,21 +18,15 @@ if (NODE_ENV === "production") {
     redisClient = createClient({
         url: `redis://:${encodedPassword}@${redisHost}:${redisPort}`,
     });
-} else {
-    const redisHost = getEnvVariable("REDIS_HOST");
-    const redisPort = getEnvVariable("REDIS_PORT");
-    const redisPassword = getEnvVariable("REDIS_PASSWORD");
 
-    const encodedPassword = encodeURIComponent(redisPassword);
-
-    redisClient = createClient({
-        url: `redis://:${encodedPassword}@${redisHost}:${redisPort}`,
-    });
+    redisClient.on("error", (err) => console.log("Redis Client Error", err));
 }
 
-redisClient.on("error", (err) => console.log("Redis Client Error", err));
-
 const connectRedis = async () => {
+    if (!redisClient) {
+        console.log("Redis is disabled for the current environment.");
+        return;
+    }
     try {
         await redisClient.connect();
         console.log("Redis client connected successfully");
