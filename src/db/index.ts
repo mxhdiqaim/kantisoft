@@ -26,20 +26,20 @@ if (NODE_ENV === "production") {
 
     pool = new Pool(poolConfig);
 } else {
-    // Development/Local environment configuration
-    const host = getEnvVariable("DB_HOST");
-    const port = Number(getEnvVariable("DB_PORT") || "5432");
-    const user = getEnvVariable("DB_USER");
-    const password = getEnvVariable("DB_PASSWORD");
-    const database = getEnvVariable("DB_NAME");
+    const connectionString = getEnvVariable("DATABASE_URL");
+    const sslRequired = getEnvVariable("DB_SSL_REQUIRED") === "true";
 
-    pool = new Pool({
-        host,
-        port,
-        user,
-        password,
-        database,
-    });
+    const poolConfig: PoolConfig = {
+        connectionString,
+    };
+
+    if (sslRequired) {
+        poolConfig.ssl = {
+            rejectUnauthorized: false,
+        };
+    }
+
+    pool = new Pool(poolConfig);
 }
 const db = drizzle(pool, { schema });
 
