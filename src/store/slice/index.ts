@@ -49,6 +49,7 @@ import type {
     UpdateRawMaterialResponseType,
     UpdateRawMaterialType
 } from "@/types/raw-material-types.ts";
+import type {BomTypes, DefineBomSchemaType} from "@/types/bom-types.ts";
 
 const baseUrl = getEnvVariable("VITE_APP_API_URL");
 
@@ -154,7 +155,9 @@ export const apiSlice = createApi({
         "RawMaterialInventory",
         "RawMaterialInventories",
         "RawMaterialInventoryStock",
-        "RawMaterialTransactions"
+        "RawMaterialTransactions",
+        "BOM",
+        "RawMaterialStock"
     ],
     endpoints: (builder) => ({
         // -------------------------
@@ -656,6 +659,46 @@ export const apiSlice = createApi({
             providesTags: ["RawMaterialTransactions"],
         }),
 
+        // -------------------------
+        // BOM Endpoints
+        // -------------------------
+        getBOM: builder.query<BomTypes[], string>({
+            query: (menuItemId) => `/bill-of-materials/${menuItemId}/bom`,
+            providesTags: ['BOM'],
+        }),
+
+        defineBOM: builder.mutation<void, DefineBomSchemaType>({
+            query: ({menuItemId, items}) => ({
+                url: `/menu-items/${menuItemId}/bom`,
+                method: 'POST',
+                body: items,
+            }),
+            invalidatesTags: ['BOM'],
+        }),
+
+        // -------------------------
+        // Production Endpoints
+        // -------------------------
+        runProduction: builder.mutation<void, { menuItemId: string; quantityToProduce: number }>({
+            query: (body) => ({
+                url: '/production',
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['Inventory', 'RawMaterialStock'],
+        }),
+
+        // -------------------------
+        // Alerts & Margins Endpoints
+        // -------------------------
+        getInventoryAlerts: builder.query<any, void>({
+            query: () => '/inventory/alerts',
+            providesTags: ['Inventory', 'RawMaterialStock'],
+        }),
+        getProfitMargins: builder.query<any[], void>({
+            query: () => '/catalog/margins',
+        }),
+
     }),
 });
 
@@ -701,7 +744,7 @@ export const {
     useUpdateStoreMutation,
     useDeleteStoreMutation,
 
-    // activity log hooks
+    // Activity Log hooks
     useGetActivitiesQuery,
 
     // Inventory Hooks
@@ -730,4 +773,15 @@ export const {
     useGetRawMaterialInventoryStockQuery,
     useStockInRawMaterialInventoryMutation,
     useGetRawMaterialInventoryTransactionsQuery,
+
+    // BOM Hooks
+    useGetBOMQuery,
+    useDefineBOMMutation,
+
+    // Production Hooks
+    useRunProductionMutation,
+
+    // Alerts & Margins Hooks
+    useGetInventoryAlertsQuery,
+    useGetProfitMarginsQuery,
 } = apiSlice;

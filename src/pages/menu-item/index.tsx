@@ -10,8 +10,6 @@ import ApiErrorDisplay from "@/components/feedback/api-error-display";
 import {selectCurrentUser} from "@/store/slice/auth-slice";
 import {useAppSelector} from "@/store";
 import MenuItemsPageSkeleton from "@/components/menu-items/loading";
-
-import {DeleteOutline, EditOutlined, MoreVert} from "@mui/icons-material";
 import DataGridTable from "@/components/ui/data-grid-table";
 import type {GridColDef} from "@mui/x-data-grid";
 import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
@@ -25,11 +23,15 @@ import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-men
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import {getMenuItemsInventoryStatusChip} from "@/components/ui";
 import {relativeTime} from "@/utils/get-relative-time.ts";
+import {useNavigate} from "react-router-dom";
+
+import {DeleteOutline, EditOutlined, MoreVert, RestaurantMenuOutlined} from "@mui/icons-material";
 
 const MenuItems = () => {
     const theme = useTheme();
     const notify = useNotifier();
     const {t} = useTranslation();
+    const navigate = useNavigate();
 
     const currentUser = useAppSelector(selectCurrentUser);
 
@@ -295,9 +297,6 @@ const MenuItems = () => {
                         canInteract && (
                             <CustomButton
                                 variant={"text"}
-                                // anchorEl={anchorEl}
-                                // open={isOpen}
-                                // onClose={handleMenuClose}
                                 sx={{
                                     borderRadius: "10px",
                                     color: theme.palette.text.primary,
@@ -313,6 +312,11 @@ const MenuItems = () => {
                                 <TableStyledMenuItem onClick={handleEdit}>
                                     <EditOutlined sx={{mr: 1}}/>
                                     Edit
+                                </TableStyledMenuItem>
+                                <TableStyledMenuItem
+                                    onClick={() => navigate(`/catalog/menu-items/${params.row.id}/recipe`)}>
+                                    <RestaurantMenuOutlined sx={{mr: 1}}/>
+                                    Manage Recipe
                                 </TableStyledMenuItem>
                                 <TableStyledMenuItem
                                     onClick={() => handleDelete(params.row.id)}
