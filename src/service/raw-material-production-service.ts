@@ -17,6 +17,7 @@ export const RawMaterialProductionService = {
      * @param storeId The store where production occurs.
      * @param userId The user initiating the production (for audit).
      * @param productionBatchId A unique ID for the production batch (for documentRefId).
+     * @param quantityToProduce The number of finished product units to produce.
      * @returns A success message or throws an error.
      */
     async runProduction(
@@ -24,6 +25,7 @@ export const RawMaterialProductionService = {
         storeId: string,
         userId: string,
         productionBatchId: string,
+        quantityToProduce: number,
     ): Promise<void> {
         // Fetch BOM (Recipe) Data`
         // We only need the consumptionQuantityBase (the amount to deduct)
@@ -44,9 +46,7 @@ export const RawMaterialProductionService = {
             .execute();
 
         if (bomItems.length === 0) {
-            throw new Error(
-                `Cannot run production: No Bill of Materials defined for the Menu Item`,
-            );
+            throw new Error(`No Bill of Materials defined for this Menu Item`);
         }
 
         // Starting Atomic Transaction for Deduction
@@ -56,7 +56,17 @@ export const RawMaterialProductionService = {
             // InventoryAdjustmentService to enforce business rules (e.g. throwing error on negative stock if enforced).
 
             for (const item of bomItems) {
-                const { rawMaterialId, consumptionQuantityBase } = item;
+                // 🟢 MULTIPLY: Recipe Amount * Number of plates
+                const totalNeededBase =
+                    item.consumptionQuantityBase * quantityToProduce;
+
+                const materialRecord = await tx.query.rawMaterials.findFirst({
+                    where: eq(rawMaterials.id, item.rawMaterialId),
+                });
+
+                if (!materialRecord) throw new Error(`Raw Material not found.`);
+
+                const { rawMaterialId } = item;
 
                 // Create the transaction data for an OUT movement
                 const transactionData = {
@@ -66,7 +76,7 @@ export const RawMaterialProductionService = {
                     type: TransactionTypeEnum.GOING_OUT,
                     source: RawMaterialTransactionSourceEnum.PRODUCTION_USAGE as RawMaterialTransactionSource,
                     documentRefId: productionBatchId,
-                    notes: `Deduction for Menu Item ${menuItemId} production.`,
+                    notes: `Batch production of ${quantityToProduce} x ${menuItemId}`,
                 };
 
                 // IMPORTANT: Since the consumptionQuantityBase is already in the Base Unit,
@@ -86,22 +96,34 @@ export const RawMaterialProductionService = {
                 // and pass the raw material's own presentation unit ID to allow the service
                 // to handle the base unit lookup (which it already stores).
 
-                const materialRecord = await tx.query.rawMaterials.findFirst({
-                    where: eq(rawMaterials.id, rawMaterialId),
-                });
+                // const materialRecord = await tx.query.rawMaterials.findFirst({
+                //     where: eq(rawMaterials.id, rawMaterialId),
+                // });
 
-                if (!materialRecord) {
-                    // Should not happen due to FK check, but safety first.
-                    throw new Error(`Raw Material not found.`);
-                }
+                // if (!materialRecord) {
+                //     // Should not happen due to FK check, but safety first.
+                //     throw new Error(`Raw Material not found.`);
+                // }
 
                 // Execute the stock deduction
                 await InventoryAdjustmentService.processStockAdjustment(
                     transactionData,
-                    consumptionQuantityBase, // Qty Base is treated as Presentation Qty for this service call
-                    materialRecord.unitOfMeasurementId, // Pass the Raw Material's default unitOfMeasurementId
+                    totalNeededBase,
+                    materialRecord.unitOfMeasurementId,
+                    // consumptionQuantityBase, // Qty Base is treated as Presentation Qty for this service call
+                    // materialRecord.unitOfMeasurementId, // Pass the Raw Material's default unitOfMeasurementId
                 );
             }
+
+            // PART B: Add Finished Menu Items (The "Gain")
+            // NEW: Updating your existing 'inventory' table for Menu Items
+            await InventoryAdjustmentService.processMenuItemStockIn(tx, {
+                menuItemId: menuItemId,
+                storeId: storeId,
+                quantity: quantityToProduce, // Adding the 10 plates
+                notes: `Successfully cooked batch: ${productionBatchId}`,
+                performedBy: userId,
+            });
         });
 
         // If the transaction succeeds, all ingredients were deducted.

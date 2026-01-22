@@ -11,6 +11,7 @@ import { inventory } from "../schema/inventory-schema";
 import { StatusCodes } from "http-status-codes";
 import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 import { TIMEZONE } from "../constant";
+import { calculateMenuItemCost } from "../helpers";
 
 /**
  * @description Get core sales summary metrics (Revenue, Order Count, Avg Order Value)
@@ -466,6 +467,72 @@ export const getInventoryValuationAndHealth = async (
         return handleError2(
             res,
             "Failed to retrieve inventory health summary.",
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined,
+        );
+    }
+};
+
+/**
+ * @description Analyzes the profit margins of menu items by comparing
+ * their BOM cost against their selling price.
+ * @route GET /api/v1/dashboard/margin-analysis
+ */
+export const getMarginAnalysis = async (req: CustomRequest, res: Response) => {
+    const currentUser = req.user?.data;
+    const storeId = currentUser?.storeId;
+
+    if (!storeId) {
+        return handleError2(
+            res,
+            "User does not belong to a store.",
+            StatusCodes.BAD_REQUEST,
+        );
+    }
+
+    try {
+        // Fetch all menu items for the store
+        const items = await db
+            .select({
+                id: menuItems.id,
+                name: menuItems.name,
+                sellingPrice: menuItems.price,
+            })
+            .from(menuItems)
+            .where(eq(menuItems.storeId, storeId));
+
+        const analysis = await Promise.all(
+            items.map(async (item) => {
+                // Calculate the current cost using the helper we discussed
+                const totalIngredientCost = await calculateMenuItemCost(
+                    item.id,
+                    storeId,
+                );
+
+                const grossProfit =
+                    Number(item.sellingPrice) - totalIngredientCost;
+                const foodCostPercentage =
+                    Number(item.sellingPrice) > 0
+                        ? (totalIngredientCost / Number(item.sellingPrice)) *
+                        100
+                        : 0;
+
+                return {
+                    ...item,
+                    totalIngredientCost,
+                    grossProfit,
+                    foodCostPercentage: Number(foodCostPercentage.toFixed(2)),
+                    // 🚩 Flag if food cost is too high (an Industry standard is usually > 35%)
+                    status: foodCostPercentage > 35 ? "LOW_MARGIN" : "HEALTHY",
+                };
+            }),
+        );
+
+        return res.status(StatusCodes.OK).json(analysis);
+    } catch (error) {
+        return handleError2(
+            res,
+            "Margin analysis failed",
             StatusCodes.INTERNAL_SERVER_ERROR,
             error instanceof Error ? error : undefined,
         );

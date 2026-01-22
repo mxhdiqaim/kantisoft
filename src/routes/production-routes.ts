@@ -3,7 +3,7 @@ import * as controller from "../controllers/production-controller";
 
 const router = Express.Router();
 
-// Production Run Endpoint
+router.get("/summary", controller.getProductionSummary);
 router.post("/", controller.runProduction);
 
 export default router;

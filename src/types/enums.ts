@@ -77,7 +77,7 @@ export const RawMaterialTransactionSourceEnum = {
     TRANSFER_IN: "transferIn",
     TRANSFER_OUT: "transferOut",
     PRODUCTION_CONSUMPTION: "productionConsumption",
-};
+} as const;
 export const RAW_MATERIAL_TRANSACTION_SOURCES = Object.values(
     RawMaterialTransactionSourceEnum,
 );

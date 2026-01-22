@@ -31,4 +31,10 @@ router.get(
     controller.getInventoryValuationAndHealth,
 );
 
+router.get(
+    "/inventory-health-valuation",
+    isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
+    controller.getMarginAnalysis,
+);
+
 export = router;
