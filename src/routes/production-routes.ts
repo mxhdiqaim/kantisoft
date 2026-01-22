@@ -3,7 +3,8 @@ import * as controller from "../controllers/production-controller";
 
 const router = Express.Router();
 
-// Production Run Endpoint
+router.get("/summary", controller.getProductionSummary);
 router.post("/", controller.runProduction);
+router.post("/wastage", controller.recordWastage);
 
 export default router;

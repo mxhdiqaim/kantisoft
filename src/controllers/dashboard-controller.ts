@@ -1,6 +1,6 @@
 import { Response } from "express";
 import db from "../db";
-import { and, count, desc, eq, gte, lt, max, min, sql, sum, lte, SQL, inArray } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, lt, lte, max, min, sql, SQL, sum } from "drizzle-orm";
 import { orderItems, orders } from "../schema/orders-schema";
 import { handleError2 } from "../service/error-handling";
 import { OrderBy } from "../types";
@@ -11,6 +11,9 @@ import { inventory } from "../schema/inventory-schema";
 import { StatusCodes } from "http-status-codes";
 import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 import { TIMEZONE } from "../constant";
+import { calculateMenuItemCost } from "../helpers";
+import { billOfMaterials } from "../schema/bill-of-materials-schema";
+import { rawMaterials } from "../schema/raw-materials-schema";
 
 /**
  * @description Get core sales summary metrics (Revenue, Order Count, Avg Order Value)
@@ -469,5 +472,65 @@ export const getInventoryValuationAndHealth = async (
             StatusCodes.INTERNAL_SERVER_ERROR,
             error instanceof Error ? error : undefined,
         );
+    }
+};
+
+/**
+ * @description Calculates the cost and profit margin for all menu items in a store.
+ * Formula: (Selling Price - Ingredient Cost) / Selling Price * 100
+ * @route GET /api/v1/dashboard/menu-profit-margins
+ */
+export const getMenuProfitMargins = async (req: CustomRequest, res: Response) => {
+    const currentUser = req.user?.data;
+    const storeId = currentUser?.storeId;
+
+    if (!storeId) {
+        return handleError2(
+            res,
+            "User does not belong to a store.",
+            StatusCodes.BAD_REQUEST,
+        );
+    }
+
+    try {
+        const report = await db.transaction(async (tx) => {
+            // Fetch all menu items for the store
+            const items = await tx.select().from(menuItems).where(eq(menuItems.storeId, storeId));
+
+            return await Promise.all(items.map(async (item) => {
+                // Fetch BOM for this item with the latest raw material prices
+                const ingredients = await tx
+                    .select({
+                        quantityNeeded: billOfMaterials.consumptionQuantityBase,
+                        currentPricePerBaseUnit: rawMaterials.latestUnitPrice,
+                    })
+                    .from(billOfMaterials)
+                    .innerJoin(rawMaterials, eq(billOfMaterials.rawMaterialId, rawMaterials.id))
+                    .where(eq(billOfMaterials.menuItemId, item.id));
+
+                // Calculate the Total Cost of Ingredients
+                const totalCost = ingredients.reduce((sum, ing) => {
+                    return sum + (ing.quantityNeeded * ing.currentPricePerBaseUnit);
+                }, 0);
+
+                const sellingPrice = parseFloat(item.price);
+                const grossProfit = sellingPrice - totalCost;
+                const marginPercentage = sellingPrice > 0 ? (grossProfit / sellingPrice) * 100 : 0;
+
+                return {
+                    name: item.name,
+                    sellingPrice,
+                    totalCost: Number(totalCost.toFixed(2)),
+                    grossProfit: Number(grossProfit.toFixed(2)),
+                    marginPercentage: Number(marginPercentage.toFixed(2)),
+                    // 🚩 Business Insight: Alert if margin is below industry standard (typically 60-70%)
+                    status: marginPercentage < 35 ? "LOW_MARGIN" : "HEALTHY"
+                };
+            }));
+        });
+
+        return res.status(StatusCodes.OK).json(report);
+    } catch (error) {
+        return handleError2(res, 'Margin calculation failed', StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
     }
 };

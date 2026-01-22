@@ -134,6 +134,13 @@
       "when": 1766481611977,
       "tag": "0018_lazy_mister_fear",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1769075432833,
+      "tag": "0019_narrow_pixie",
+      "breakpoints": true
     }
   ]
 }

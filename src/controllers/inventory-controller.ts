@@ -23,6 +23,7 @@ import {
     UserRoleEnum,
 } from "../types/enums";
 import { determineFinalStoreId } from "../utils/store-permission-utils";
+import { InventoryAlertService } from "../service/inventory-alert-service";
 
 /**
  * @desc    Get all inventory records for the user's store
@@ -904,5 +905,32 @@ export const deleteInventoryRecord = async (
             StatusCodes.INTERNAL_SERVER_ERROR,
             error instanceof Error ? error : undefined,
         );
+    }
+};
+
+
+/**
+ * @desc    Get inventory alerts for low stock items (raw materials and menu items)
+ * @route GET /api/v1/inventory/alerts
+ */
+export const getInventoryAlerts = async (req: CustomRequest, res: Response) => {
+    const storeId = req.user?.data?.storeId;
+
+    if (!storeId) {
+        return handleError2(res, 'Store context missing', StatusCodes.BAD_REQUEST);
+    }
+
+    try {
+        const report = await InventoryAlertService.getLowStockReport(storeId);
+
+        // If everything is stocked, return a nice empty state
+        const totalAlerts = report.rawMaterialsToBuy.length + report.menuItemsToProduce.length;
+
+        return res.status(StatusCodes.OK).json({
+            count: totalAlerts,
+            ...report
+        });
+    } catch (error: any) {
+        return handleError2(res, "Failed to fetch Inventory Alerts", StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
     }
 };

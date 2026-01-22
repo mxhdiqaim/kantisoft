@@ -7,7 +7,6 @@ import {
     RawMaterialTransactionSourceEnum,
     TransactionTypeEnum,
 } from "../types/enums";
-import { RawMaterialTransactionSource } from "../schema/raw-materials-schema/raw-material-stock-transaction-schema";
 
 // Service dedicated to executing production runs and atomically deducting raw materials from inventory
 export const RawMaterialProductionService = {
@@ -17,6 +16,7 @@ export const RawMaterialProductionService = {
      * @param storeId The store where production occurs.
      * @param userId The user initiating the production (for audit).
      * @param productionBatchId A unique ID for the production batch (for documentRefId).
+     * @param quantityToProduce The number of finished product units to produce.
      * @returns A success message or throws an error.
      */
     async runProduction(
@@ -24,6 +24,7 @@ export const RawMaterialProductionService = {
         storeId: string,
         userId: string,
         productionBatchId: string,
+        quantityToProduce: number,
     ): Promise<void> {
         // Fetch BOM (Recipe) Data`
         // We only need the consumptionQuantityBase (the amount to deduct)
@@ -44,9 +45,7 @@ export const RawMaterialProductionService = {
             .execute();
 
         if (bomItems.length === 0) {
-            throw new Error(
-                `Cannot run production: No Bill of Materials defined for the Menu Item`,
-            );
+            throw new Error(`No Bill of Materials defined for this Menu Item`);
         }
 
         // Starting Atomic Transaction for Deduction
@@ -56,18 +55,29 @@ export const RawMaterialProductionService = {
             // InventoryAdjustmentService to enforce business rules (e.g. throwing error on negative stock if enforced).
 
             for (const item of bomItems) {
-                const { rawMaterialId, consumptionQuantityBase } = item;
+                // 🟢 MULTIPLY: Recipe Amount * Number of plates
+                const totalNeededBase =
+                    item.consumptionQuantityBase * quantityToProduce;
+
+                const materialRecord = await tx.query.rawMaterials.findFirst({
+                    where: eq(rawMaterials.id, item.rawMaterialId),
+                });
+
+                if (!materialRecord) throw new Error(`Raw Material not found.`);
+
+                // const { rawMaterialId } = item;
 
                 // Create the transaction data for an OUT movement
-                const transactionData = {
-                    rawMaterialId: rawMaterialId,
-                    storeId: storeId,
-                    userId: userId,
-                    type: TransactionTypeEnum.GOING_OUT,
-                    source: RawMaterialTransactionSourceEnum.PRODUCTION_USAGE as RawMaterialTransactionSource,
-                    documentRefId: productionBatchId,
-                    notes: `Deduction for Menu Item ${menuItemId} production.`,
-                };
+                // const transactionData = {
+                //     rawMaterialId: rawMaterialId,
+                //     storeId: storeId,
+                //     userId: userId,
+                //     type: TransactionTypeEnum.GOING_OUT,
+                //     source: RawMaterialTransactionSourceEnum.PRODUCTION_USAGE as RawMaterialTransactionSource,
+                //     quantityBase: totalNeededBase,
+                //     documentRefId: productionBatchId,
+                //     notes: `Batch production of ${quantityToProduce} x ${menuItemId}`,
+                // };
 
                 // IMPORTANT: Since the consumptionQuantityBase is already in the Base Unit,
                 // we treat the Base Unit as the Presentation Unit for the Adjustment Service
@@ -86,24 +96,29 @@ export const RawMaterialProductionService = {
                 // and pass the raw material's own presentation unit ID to allow the service
                 // to handle the base unit lookup (which it already stores).
 
-                const materialRecord = await tx.query.rawMaterials.findFirst({
-                    where: eq(rawMaterials.id, rawMaterialId),
-                });
-
-                if (!materialRecord) {
-                    // Should not happen due to FK check, but safety first.
-                    throw new Error(`Raw Material not found.`);
-                }
-
-                // Execute the stock deduction
-                await InventoryAdjustmentService.processStockAdjustment(
-                    transactionData,
-                    consumptionQuantityBase, // Qty Base is treated as Presentation Qty for this service call
-                    materialRecord.unitOfMeasurementId, // Pass the Raw Material's default unitOfMeasurementId
+                await InventoryAdjustmentService.processRawMaterialStockOut(
+                    tx, // Pass the active transaction
+                    {
+                        rawMaterialId: item.rawMaterialId,
+                        storeId: storeId,
+                        userId: userId,
+                        type: TransactionTypeEnum.GOING_OUT,
+                        source: RawMaterialTransactionSourceEnum.PRODUCTION_USAGE,
+                        quantityBase: totalNeededBase,
+                        documentRefId: productionBatchId,
+                        notes: `Batch production of ${quantityToProduce} x ${menuItemId}`,
+                    },
                 );
             }
-        });
 
-        // If the transaction succeeds, all ingredients were deducted.
+            // PART B: Add Finished Menu Items
+            await InventoryAdjustmentService.processMenuItemStockIn(tx, {
+                menuItemId: menuItemId,
+                storeId: storeId,
+                quantity: quantityToProduce,
+                notes: `Successfully cooked batch: ${productionBatchId}`,
+                performedBy: userId,
+            });
+        });
     },
 };

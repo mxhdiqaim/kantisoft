@@ -31,4 +31,10 @@ router.get(
     controller.getInventoryValuationAndHealth,
 );
 
+router.get(
+    "/menu-profit-margins",
+    isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
+    controller.getMenuProfitMargins,
+);
+
 export = router;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import db from "../db";
 import { rawMaterialInventory } from "../schema/raw-materials-schema/raw-material-inventory-schema";
 import {
@@ -8,12 +9,9 @@ import { UnitConversionService } from "./unit-conversion-service";
 import { and, eq, sql } from "drizzle-orm";
 import { calculateInventoryStatus } from "../helpers";
 import { inventory } from "../schema/inventory-schema";
-import {
-    InventoryTransactionSummaryTypeEnum,
-    InventoryTransactionTypeEnum,
-    TransactionTypeEnum,
-} from "../types/enums";
+import { InventoryTransactionSummaryTypeEnum, InventoryTransactionTypeEnum, TRANSACTION_TYPES } from "../types/enums";
 import { inventoryTransactions } from "../schema/inventory-schema/inventory-transaction-schema";
+import { rawMaterials } from "../schema/raw-materials-schema";
 
 /**
  * Service to handle all atomic inventory adjustments (IN or OUT).
@@ -124,7 +122,7 @@ export const InventoryAdjustmentService = {
         data: {
             rawMaterialId: string;
             storeId: string;
-            type: typeof TransactionTypeEnum;
+            type: (typeof TRANSACTION_TYPES)[number];
             userId: string;
             source: string;
             quantityBase: number;
@@ -132,23 +130,17 @@ export const InventoryAdjustmentService = {
             notes: string;
         },
     ) {
-        // Record Transaction Log
-        await tx.insert(rawMaterialTransactions).values({
-            rawMaterialId: data.rawMaterialId,
-            storeId: data.storeId,
-            type: data.type,
-            userId: data.userId,
-            source: data.source,
-            quantityBase: data.quantityBase,
-            documentRefId: data.documentRefId,
-            notes: data.notes,
-        });
+        // 1. Get the material name using Standard API to avoid 'referencedTable' error
+        const [materialInfo] = await tx
+            .select({ name: rawMaterials.name })
+            .from(rawMaterials)
+            .where(eq(rawMaterials.id, data.rawMaterialId))
+            .limit(1);
 
-        // Update Inventory Master
+        // Update Inventory Master FIRST to get the new total
         const [updated] = await tx
             .update(rawMaterialInventory)
             .set({
-                // Subtracting from base quantity
                 quantity: sql`${rawMaterialInventory.quantity}
                 -
                 ${data.quantityBase}`,
@@ -162,20 +154,40 @@ export const InventoryAdjustmentService = {
             )
             .returning();
 
-        if (!updated)
-            throw new Error(`Inventory record for material not found.`);
-
-        if (updated.quantity < 0) {
+        // Material doesn't even exist in the warehouse
+        if (!updated) {
             throw new Error(
-                `Insufficient stock for material. Production cancelled.`,
+                `Inventory Error: ${materialInfo?.name || "Material"} is not stocked in this store.`,
             );
         }
+
+        // The "Insufficient Stock" Guard
+        if (updated.quantity < 0) {
+            // We calculate the deficit to be helpful
+            const missingAmount = Math.abs(updated.quantity);
+            throw new Error(
+                `Insufficient Stock: You need ${data.quantityBase} units of ${materialInfo?.name || "Material"}, but you are short by ${missingAmount} units.`,
+            );
+        }
+
+        // Record Transaction Log only if stock was enough
+        await tx.insert(rawMaterialTransactions).values({
+            rawMaterialId: data.rawMaterialId,
+            storeId: data.storeId,
+            type: data.type,
+            userId: data.userId,
+            source: data.source,
+            quantityBase: data.quantityBase,
+            documentRefId: data.documentRefId,
+            notes: data.notes,
+        });
 
         // Update Status (Low stock check)
         const newStatus = calculateInventoryStatus(
             updated.quantity,
             updated.minStockLevel,
         );
+
         if (newStatus !== updated.status) {
             await tx
                 .update(rawMaterialInventory)
