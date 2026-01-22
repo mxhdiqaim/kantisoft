@@ -32,9 +32,9 @@ router.get(
 );
 
 router.get(
-    "/inventory-health-valuation",
+    "/menu-profit-margins",
     isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
-    controller.getMarginAnalysis,
+    controller.getMenuProfitMargins,
 );
 
 export = router;

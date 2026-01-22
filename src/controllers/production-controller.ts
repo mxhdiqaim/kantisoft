@@ -8,11 +8,13 @@ import db from "../db";
 import { rawMaterialTransactions } from "../schema/raw-materials-schema/raw-material-stock-transaction-schema";
 import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { rawMaterials } from "../schema/raw-materials-schema";
-import { RawMaterialTransactionSourceEnum } from "../types/enums";
+import { RawMaterialTransactionSourceEnum, TransactionTypeEnum } from "../types/enums";
 import { inventoryTransactions } from "../schema/inventory-schema/inventory-transaction-schema";
 import { menuItems } from "../schema/menu-items-schema";
 import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
-import { nanoid } from "nanoid"; // For generating a production batch ID
+import { nanoid } from "nanoid";
+import { UnitConversionService } from "../service/unit-conversion-service";
+import { InventoryAdjustmentService } from "../service/raw-material-inventory-adjustment-service"; // For generating a production batch ID
 
 
 /**
@@ -87,7 +89,7 @@ export const runProduction = async (req: CustomRequest, res: Response) => {
     if (!storeId || !userId) {
         return handleError2(
             res,
-            'User/Store context missing.',
+            'User does not have an associated store.',
             StatusCodes.BAD_REQUEST
         );
     }
@@ -157,5 +159,73 @@ export const runProduction = async (req: CustomRequest, res: Response) => {
             StatusCodes.INTERNAL_SERVER_ERROR,
             error instanceof Error ? error : undefined
         );
+    }
+};
+
+/**
+ * @description Records raw material wastage (spoilage, spills, burnt food).
+ * @route POST /api/v1/production/wastage
+ */
+export const recordWastage = async (req: CustomRequest, res: Response) => {
+    const currentUser = req.user?.data;
+    const storeId = currentUser?.storeId;
+    const userId = currentUser?.id;
+
+    if (!userId) {
+        return handleError2(
+            res,
+            'User not found',
+            StatusCodes.BAD_REQUEST
+        );
+    }
+
+    if (!storeId) {
+        return handleError2(
+            res,
+            'User does not have an associated store.',
+            StatusCodes.BAD_REQUEST
+        );
+    }
+
+    const { rawMaterialId, quantityPresentation, unitOfMeasurementId, reason } = req.body;
+
+    if (!rawMaterialId || !quantityPresentation || !unitOfMeasurementId) {
+        return handleError2(res, 'Missing required wastage data.', StatusCodes.BAD_REQUEST);
+    }
+
+    try {
+        const wasteBatchId = `WASTE-${nanoid(8)}`;
+
+        await db.transaction(async (tx) => {
+            // Convert the wasted amount to Base Units (e.g. 2 kg -> 2000 g)
+            const unitRecord = await UnitConversionService.fetchUnitById(unitOfMeasurementId);
+            if (!unitRecord) throw new Error("Invalid unit of measurement.");
+
+            const quantityBase = UnitConversionService.convertToBaseUnit(
+                quantityPresentation,
+                unitRecord
+            );
+
+            // Use our existing service to deduct stock
+            // We use 'wastage' as the source so it shows up correctly in reports
+            await InventoryAdjustmentService.processRawMaterialStockOut(tx, {
+                rawMaterialId,
+                storeId,
+                userId,
+                type: TransactionTypeEnum.GOING_OUT,
+                source: RawMaterialTransactionSourceEnum.WASTAGE,
+                quantityBase: quantityBase,
+                documentRefId: wasteBatchId,
+                notes: reason || "General kitchen wastage",
+            });
+        });
+
+        return res.status(StatusCodes.OK).json({
+            message: "Wastage recorded successfully. Inventory updated.",
+            wasteRef: wasteBatchId
+        });
+
+    } catch (error) {
+        return handleError2(res, "Failed to complete the action", StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
     }
 };
