@@ -98,7 +98,7 @@ const BillOfMaterialsScreen = () => {
         }
 
         try {
-            await defineBom({menuItemId: menuItemId!, items: rows}).unwrap();
+            await defineBom({menuItemId: menuItemId!, bomItems: rows}).unwrap();
             notify("Recipe updated successfully!", "success");
             navigate('/catalog/menu-items');
         } catch (error: any) {
