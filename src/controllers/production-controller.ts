@@ -123,6 +123,15 @@ export const runProduction = async (req: CustomRequest, res: Response) => {
         });
 
     } catch (error: any) {
+        // 🟢 NEW: Catch our custom "Insufficient Stock" or "Inventory Error" messages
+        if (error.message.includes('Insufficient Stock') || error.message.includes('Inventory Error')) {
+            return handleError2(
+                res,
+                error.message, // This will now say "Insufficient Stock: You need 5000 units of Rice..."
+                StatusCodes.BAD_REQUEST
+            );
+        }
+
         // Handle specific inventory-related errors
         if (error.message.includes('not exist')) {
             return handleError2(

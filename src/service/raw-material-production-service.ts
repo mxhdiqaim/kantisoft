@@ -7,7 +7,6 @@ import {
     RawMaterialTransactionSourceEnum,
     TransactionTypeEnum,
 } from "../types/enums";
-import { RawMaterialTransactionSource } from "../schema/raw-materials-schema/raw-material-stock-transaction-schema";
 
 // Service dedicated to executing production runs and atomically deducting raw materials from inventory
 export const RawMaterialProductionService = {
@@ -66,18 +65,19 @@ export const RawMaterialProductionService = {
 
                 if (!materialRecord) throw new Error(`Raw Material not found.`);
 
-                const { rawMaterialId } = item;
+                // const { rawMaterialId } = item;
 
                 // Create the transaction data for an OUT movement
-                const transactionData = {
-                    rawMaterialId: rawMaterialId,
-                    storeId: storeId,
-                    userId: userId,
-                    type: TransactionTypeEnum.GOING_OUT,
-                    source: RawMaterialTransactionSourceEnum.PRODUCTION_USAGE as RawMaterialTransactionSource,
-                    documentRefId: productionBatchId,
-                    notes: `Batch production of ${quantityToProduce} x ${menuItemId}`,
-                };
+                // const transactionData = {
+                //     rawMaterialId: rawMaterialId,
+                //     storeId: storeId,
+                //     userId: userId,
+                //     type: TransactionTypeEnum.GOING_OUT,
+                //     source: RawMaterialTransactionSourceEnum.PRODUCTION_USAGE as RawMaterialTransactionSource,
+                //     quantityBase: totalNeededBase,
+                //     documentRefId: productionBatchId,
+                //     notes: `Batch production of ${quantityToProduce} x ${menuItemId}`,
+                // };
 
                 // IMPORTANT: Since the consumptionQuantityBase is already in the Base Unit,
                 // we treat the Base Unit as the Presentation Unit for the Adjustment Service
@@ -96,36 +96,29 @@ export const RawMaterialProductionService = {
                 // and pass the raw material's own presentation unit ID to allow the service
                 // to handle the base unit lookup (which it already stores).
 
-                // const materialRecord = await tx.query.rawMaterials.findFirst({
-                //     where: eq(rawMaterials.id, rawMaterialId),
-                // });
-
-                // if (!materialRecord) {
-                //     // Should not happen due to FK check, but safety first.
-                //     throw new Error(`Raw Material not found.`);
-                // }
-
-                // Execute the stock deduction
-                await InventoryAdjustmentService.processStockAdjustment(
-                    transactionData,
-                    totalNeededBase,
-                    materialRecord.unitOfMeasurementId,
-                    // consumptionQuantityBase, // Qty Base is treated as Presentation Qty for this service call
-                    // materialRecord.unitOfMeasurementId, // Pass the Raw Material's default unitOfMeasurementId
+                await InventoryAdjustmentService.processRawMaterialStockOut(
+                    tx, // Pass the active transaction
+                    {
+                        rawMaterialId: item.rawMaterialId,
+                        storeId: storeId,
+                        userId: userId,
+                        type: TransactionTypeEnum.GOING_OUT,
+                        source: RawMaterialTransactionSourceEnum.PRODUCTION_USAGE,
+                        quantityBase: totalNeededBase,
+                        documentRefId: productionBatchId,
+                        notes: `Batch production of ${quantityToProduce} x ${menuItemId}`,
+                    },
                 );
             }
 
-            // PART B: Add Finished Menu Items (The "Gain")
-            // NEW: Updating your existing 'inventory' table for Menu Items
+            // PART B: Add Finished Menu Items
             await InventoryAdjustmentService.processMenuItemStockIn(tx, {
                 menuItemId: menuItemId,
                 storeId: storeId,
-                quantity: quantityToProduce, // Adding the 10 plates
+                quantity: quantityToProduce,
                 notes: `Successfully cooked batch: ${productionBatchId}`,
                 performedBy: userId,
             });
         });
-
-        // If the transaction succeeds, all ingredients were deducted.
     },
 };

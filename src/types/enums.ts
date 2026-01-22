@@ -66,8 +66,7 @@ export const TransactionTypeEnum = {
     GOING_OUT: "goingOut",
 } as const;
 
-export const RAW_MATERIAL_TRANSACTION_TYPES =
-    Object.values(TransactionTypeEnum);
+export const TRANSACTION_TYPES = Object.values(TransactionTypeEnum);
 
 export const RawMaterialTransactionSourceEnum = {
     PURCHASE_RECEIPT: "purchaseReceipt",
