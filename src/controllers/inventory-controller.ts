@@ -669,16 +669,16 @@ export const decrementStockForOrder = async (
         for (const item of items) {
             const currentRecord = inventoryMap.get(item.menuItemId);
 
+            // If the inventory record is missing, throw an error and roll back the Order.
+            // Suggestion: Fetch the name from the inventory record (if joined) or pass it in so the error message is human-readable.
             if (!currentRecord) {
-                // If the inventory record is missing, throw an error and roll back the Order.
-                throw new InsufficientStockError(
-                    `Inventory record not found for menu item ID: ${item.menuItemId}. Item is not tracked.`,
-                );
+                throw new InsufficientStockError(`Item not found in inventory.`);
             }
+
             if (currentRecord.quantity < item.quantity) {
                 // Insufficient stock, throw an error and roll back the Order.
                 throw new InsufficientStockError(
-                    `Insufficient stock for item ID: ${item.menuItemId}. Current: ${currentRecord.quantity}, Ordered: ${item.quantity}.`,
+                    `Insufficient stock. Available: ${currentRecord.quantity}. requested: ${item.quantity}.`
                 );
             }
         }

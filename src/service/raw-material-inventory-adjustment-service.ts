@@ -89,7 +89,7 @@ export const InventoryAdjustmentService = {
                 );
             }
 
-            // c. Re-determine and Update Inventory Status (Low Stock/Out of Stock)
+            // Re-determine and Update Inventory Status (Low Stock/Out of Stock)
             // const updatedRecord = inventoryUpdate[0];
             const newQuantity = updatedRecord.quantity;
             const minStockLevel = updatedRecord.minStockLevel;
