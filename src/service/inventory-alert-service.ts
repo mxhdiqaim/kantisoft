@@ -1,7 +1,7 @@
 import db from "../db";
 import {rawMaterials} from "../schema/raw-materials-schema";
 import {rawMaterialInventory} from "../schema/raw-materials-schema/raw-material-inventory-schema";
-import {and, eq, sql} from "drizzle-orm";
+import {and, eq, inArray, sql} from "drizzle-orm";
 import {menuItems} from "../schema/menu-items-schema";
 import {inventory} from "../schema/inventory-schema";
 
@@ -9,14 +9,16 @@ import {inventory} from "../schema/inventory-schema";
  * @description Scans both Raw Materials and Menu Items for low stock levels.
  */
 export const InventoryAlertService = {
-    async getLowStockReport(storeId: string) {
-        // Check Raw Materials (The "Shopping List")
-        const lowRawMaterials = await db
+    async getUnifiedAlertReport(storeIds: string[]) {
+        // Raw Materials Queries
+        const rawMaterialsAlerts = await db
             .select({
+                id: rawMaterials.id,
                 name: rawMaterials.name,
                 currentStock: rawMaterialInventory.quantity,
                 threshold: rawMaterialInventory.minStockLevel,
-                status: rawMaterialInventory.status,
+                status: rawMaterialInventory.status, // 'lowStock' or 'outOfStock'
+                storeId: rawMaterialInventory.storeId,
             })
             .from(rawMaterialInventory)
             .innerJoin(
@@ -25,35 +27,53 @@ export const InventoryAlertService = {
             )
             .where(
                 and(
-                    eq(rawMaterialInventory.storeId, storeId),
-                    sql`${rawMaterialInventory.quantity}
-                    <=
-                    ${rawMaterialInventory.minStockLevel}`,
+                    inArray(rawMaterialInventory.storeId, storeIds),
+                    // Capture both low and out of stock
+                    sql`${rawMaterialInventory.status}
+                    IN ('lowStock', 'outOfStock')`,
                 ),
             );
 
-        // Check Menu Items (The "Cooking List")
-        const lowMenuItems = await db
+        // Menu Items Queries
+        const menuItemsAlerts = await db
             .select({
+                id: menuItems.id,
                 name: menuItems.name,
                 currentStock: inventory.quantity,
                 threshold: inventory.minStockLevel,
-                status: inventory.status,
+                status: inventory.status, // 'lowStock' or 'outOfStock'
+                storeId: inventory.storeId,
             })
             .from(inventory)
             .innerJoin(menuItems, eq(inventory.menuItemId, menuItems.id))
             .where(
                 and(
-                    eq(inventory.storeId, storeId),
-                    sql`${inventory.quantity}
-                    <=
-                    ${inventory.minStockLevel}`,
+                    inArray(inventory.storeId, storeIds),
+                    sql`${inventory.status}
+                    IN ('lowStock', 'outOfStock')`,
                 ),
             );
 
+        // Categorize for easy frontend consumption
         return {
-            rawMaterialsToBuy: lowRawMaterials,
-            menuItemsToProduce: lowMenuItems,
+            rawMaterials: {
+                outOfStock: rawMaterialsAlerts.filter(
+                    (i) => i.status === "outOfStock",
+                ),
+                lowStock: rawMaterialsAlerts.filter(
+                    (i) => i.status === "lowStock",
+                ),
+                total: rawMaterialsAlerts.length,
+            },
+            menuItems: {
+                outOfStock: menuItemsAlerts.filter(
+                    (i) => i.status === "outOfStock",
+                ),
+                lowStock: menuItemsAlerts.filter(
+                    (i) => i.status === "lowStock",
+                ),
+                total: menuItemsAlerts.length,
+            },
             timestamp: new Date(),
         };
     },

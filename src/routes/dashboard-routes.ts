@@ -15,11 +15,7 @@ router.get(
     isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
     controller.getTopSells,
 );
-router.get(
-    "/inventory-summary",
-    isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
-    controller.getInventorySummary,
-);
+
 router.get(
     "/sales-trend",
     isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),

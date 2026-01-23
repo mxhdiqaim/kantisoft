@@ -914,21 +914,19 @@ export const deleteInventoryRecord = async (
  * @route GET /api/v1/inventory/alerts
  */
 export const getInventoryAlerts = async (req: CustomRequest, res: Response) => {
-    const storeId = req.user?.data?.storeId;
-
-    if (!storeId) {
-        return handleError2(res, 'Store context missing', StatusCodes.BAD_REQUEST);
-    }
-
     try {
-        const report = await InventoryAlertService.getLowStockReport(storeId);
+        // Use your existing helper to get authorised store IDs
+        const validated = await validateStoreAndExtractDates(req, res);
+        if (!validated) return; // Error already handled by the helper
 
-        // If everything is stocked, return a nice empty state
-        const totalAlerts = report.rawMaterialsToBuy.length + report.menuItemsToProduce.length;
+        const { storeIds, storeQueryType } = validated;
+
+        const report = await InventoryAlertService.getUnifiedAlertReport(storeIds);
 
         return res.status(StatusCodes.OK).json({
-            count: totalAlerts,
-            ...report
+            ...report,
+            storeQueryType,
+            totalAlertCount: report.rawMaterials.total + report.menuItems.total
         });
     } catch (error: any) {
         return handleError2(res, "Failed to fetch Inventory Alerts", StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);

@@ -29,7 +29,7 @@ export const getProductionSummary = async (req: CustomRequest, res: Response) =>
 
         const { storeIds, finalStartDate, finalEndDate } = validated;
 
-        // Calculate Total Cost of Raw Materials Consumed
+        // Calculate the Total Cost of Raw Materials Consumed
         const rawConsumption = await db.select({
             totalCost: sql<number>`SUM(${rawMaterialTransactions.quantityBase} * ${rawMaterials.latestUnitPrice})`
         })
