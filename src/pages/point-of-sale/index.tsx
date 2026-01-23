@@ -1,5 +1,5 @@
 import EachMenuItem from "@/components/order-tracking/each-menu-item.tsx";
-import MenuIteFormModal from "@/components/order-tracking/menu-item-form-modal";
+import MenuIteFormModal from "@/components/menu-items/menu-item-form-modal.tsx";
 import OrderCart from "@/components/order-tracking/order-cart";
 import PaymentModal from "@/components/order-tracking/payment-modal";
 import MenuItemSkeleton from "@/components/spinners/manu-item-skeleton";

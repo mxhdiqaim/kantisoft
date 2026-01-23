@@ -1,10 +1,10 @@
-import type { SxProps, Theme } from "@mui/material";
+import type {SxProps, Theme} from "@mui/material";
 import Backdrop from "@mui/material/Backdrop";
 import Box from "@mui/material/Box";
 import Fade from "@mui/material/Fade";
 import Modal from "@mui/material/Modal";
 import Typography from "@mui/material/Typography";
-import type { FC, ReactNode } from "react";
+import type {FC, ReactNode} from "react";
 
 interface Props {
     open: boolean;
@@ -17,24 +17,24 @@ interface Props {
 }
 
 const CustomModal: FC<Props> = ({
-    open,
-    onClose,
-    title,
-    description,
-    children,
-    modalStyles = {},
-    backdropProps = {},
-}) => {
+                                    open,
+                                    onClose,
+                                    title,
+                                    description,
+                                    children,
+                                    modalStyles = {},
+                                    backdropProps = {},
+                                }) => {
     const defaultStyle: SxProps<Theme> = {
         position: "absolute",
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
-        width: { xs: "80vw", md: 600 },
+        width: {xs: "80vw", md: 600},
         bgcolor: "background.paper",
         borderRadius: 4,
         boxShadow: 24,
-        p: 4,
+        p: 2,
         overflow: "auto",
         maxHeight: "85vh",
         ...modalStyles,
@@ -48,7 +48,7 @@ const CustomModal: FC<Props> = ({
             closeAfterTransition
             aria-labelledby="custom-modal-title"
             aria-describedby="custom-modal-description"
-            slots={{ backdrop: Backdrop }}
+            slots={{backdrop: Backdrop}}
             slotProps={{
                 backdrop: {
                     timeout: 500,
@@ -70,7 +70,7 @@ const CustomModal: FC<Props> = ({
                     {description && (
                         <Typography
                             id="custom-modal-description"
-                            sx={{ mt: 2 }}
+                            sx={{mt: 2}}
                         >
                             {description}
                         </Typography>

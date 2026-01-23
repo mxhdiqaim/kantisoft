@@ -87,6 +87,8 @@ const BillOfMaterialsScreen = () => {
 
 
     const onSubmit = async (data: DefineBomSchemaType) => {
+        if (!menuItemId) return;
+
         try {
             await defineBom({menuItemId: menuItemId!, bomItems: data.bomItems}).unwrap();
             notify("Recipe updated successfully!", "success");
@@ -117,7 +119,7 @@ const BillOfMaterialsScreen = () => {
                     title={"Save Recipe"}
                     variant="contained"
                     startIcon={isSaving ? <CircularProgress size={20} color="inherit"/> : <SaveIcon/>}
-                    // disabled={isSaving}
+                    disabled={isSaving}
                 />
             </Box>
 

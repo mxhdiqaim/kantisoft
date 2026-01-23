@@ -25,6 +25,7 @@ import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 
 import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ProductionModal from "@/components/menu-items/production-modal.tsx";
 
 const InventoryManagement = () => {
     const {t} = useTranslation();
@@ -47,6 +48,7 @@ const InventoryManagement = () => {
     });
 
     const [formModalOpen, setFormModalOpen] = useState(false);
+    const [productionModalOpen, setProductionModalOpen] = useState(false);
     const [adjustStockModalOpen, setAdjustStockModalOpen] = useState(false);
 
     const [selectedRow, setSelectedRow] = useState<InventoryType | null>(null);
@@ -57,22 +59,30 @@ const InventoryManagement = () => {
 
     const handleOpenFormModal = () => {
         setFormModalOpen(true);
+        setSelectedRow(null);
+    };
+
+    const openProductionFormModal = () => {
+        setProductionModalOpen(true);
+    };
+
+    const closeProductionFormModal = () => {
+        setProductionModalOpen(false);
+        setSelectedRow(null);
     };
 
     const handleCloseFormModal = () => {
         setFormModalOpen(false);
+        setSelectedRow(null);
     };
 
     const handleOpenAdjustStockModal = () => {
         setAdjustStockModalOpen(true);
+        // setSelectedRow(null);
     };
 
     const handleCloseAdjustStockModal = () => {
         setAdjustStockModalOpen(false);
-        handleMenuClose();
-    };
-
-    const handleMenuClose = () => {
         setSelectedRow(null);
     };
 
@@ -80,7 +90,6 @@ const InventoryManagement = () => {
         console.log("Discontinue: ", selectedRow);
 
         if (!selectedRow) return;
-
 
         try {
             await markAsDiscontinued(selectedRow.menuItemId).unwrap();
@@ -219,13 +228,18 @@ const InventoryManagement = () => {
                         }
                     >
                         <TableStyledMenuItem
+                            onClick={openProductionFormModal}
+                            sx={{borderRadius: theme.borderRadius.small, mx: 1}}
+                        >
+                            Produce
+                        </TableStyledMenuItem>
+                        <TableStyledMenuItem
                             onClick={handleOpenAdjustStockModal}
                             sx={{borderRadius: theme.borderRadius.small, mx: 1}}
                         >
                             Adjust Stock
                         </TableStyledMenuItem>
                         <TableStyledMenuItem
-                            onClick={handleMenuClose}
                             disabled={true}
                             sx={{borderRadius: theme.borderRadius.small, mx: 1}}
                         >
@@ -259,7 +273,7 @@ const InventoryManagement = () => {
                 )
             ),
         },
-    ], [selectedRow, isDiscontinuing])
+    ], [selectedRow, isDiscontinuing, handleOpenAdjustStockModal])
 
     if (isLoading) {
         return (
@@ -310,6 +324,14 @@ const InventoryManagement = () => {
             </Grid>
             <CreateInventoryRecord open={formModalOpen} onClose={handleCloseFormModal}/>
             <AdjustStock open={adjustStockModalOpen} onClose={handleCloseAdjustStockModal} inventoryItem={selectedRow}/>
+
+            {selectedRow && (
+                <ProductionModal
+                    open={productionModalOpen}
+                    onClose={closeProductionFormModal}
+                    menuItem={{id: selectedRow.id, name: selectedRow.name}}
+                />
+            )}
         </>
     );
 };

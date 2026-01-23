@@ -49,7 +49,7 @@ import type {
     UpdateRawMaterialResponseType,
     UpdateRawMaterialType
 } from "@/types/raw-material-types.ts";
-import type {BomTypes, DefineBomSchemaType} from "@/types/bom-types.ts";
+import type {BomTypes, DefineBomSchemaType, ProductionRequestType} from "@/types/bom-types.ts";
 
 const baseUrl = getEnvVariable("VITE_APP_API_URL");
 
@@ -667,7 +667,7 @@ export const apiSlice = createApi({
             providesTags: ['BOM'],
         }),
 
-        defineBOM: builder.mutation<void, DefineBomSchemaType>({
+        defineBOM: builder.mutation<void, DefineBomSchemaType & { menuItemId: string }>({
             query: ({menuItemId, bomItems}) => ({
                 url: `/menu-items/${menuItemId}/bom`,
                 method: 'POST',
@@ -679,7 +679,7 @@ export const apiSlice = createApi({
         // -------------------------
         // Production Endpoints
         // -------------------------
-        runProduction: builder.mutation<void, { menuItemId: string; quantityToProduce: number }>({
+        runProduction: builder.mutation<void, ProductionRequestType & { menuItemId: string }>({
             query: (body) => ({
                 url: '/production',
                 method: 'POST',

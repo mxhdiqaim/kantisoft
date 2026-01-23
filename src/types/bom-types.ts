@@ -12,7 +12,7 @@ export type BomTypes = {
 }
 
 export const defineBomSchema = yup.object({
-    menuItemId: yup.string().uuid().required("Menu Item ID is required."),
+    // menuItemId: yup.string().uuid().required("Menu Item ID is required."),
     bomItems: yup.array().of(
         yup.object({
             rawMaterialId: yup.string().uuid("Invalid Raw Material").typeError("Raw Material must be selected.").required("Raw Material is required."),
@@ -23,3 +23,12 @@ export const defineBomSchema = yup.object({
 });
 
 export type DefineBomSchemaType = yup.InferType<typeof defineBomSchema>;
+
+// { menuItemId: string; quantityToProduce: number }
+
+export const productionRequestSchema = yup.object({
+    // menuItemId: yup.string().uuid().required("Menu Item is required."),
+    quantityToProduce: yup.number().positive("Quantity to produce must be greater than zero.").required("Quantity to produce is required.").typeError("Quantity to produce must be a valid number."),
+});
+
+export type ProductionRequestType = yup.InferType<typeof productionRequestSchema>;

@@ -1,21 +1,21 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-
-import CustomModal from "@/components/customs/custom-modal";
-import {getApiError} from "@/helpers/get-api-error";
-import useNotifier from "@/hooks/useNotifier";
+import CustomModal from "@/components/customs/custom-modal.tsx";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import useNotifier from "@/hooks/useNotifier.ts";
 import {useCreateMenuItemMutation, useUpdateMenuItemMutation} from "@/store/slice";
 import {
     type AddMenuItemType,
     createMenuItemSchema,
     type EditMenuItemType,
     type MenuItemType,
-} from "@/types/menu-item-type";
+} from "@/types/menu-item-type.ts";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {Box, Grid, TextField, Typography} from "@mui/material";
+import {Box, Grid, Typography} from "@mui/material";
 import {useEffect} from "react";
 import {Controller, useForm} from "react-hook-form";
 import CustomButton from "@/components/ui/button.tsx";
+import {StyledTextField} from "@/components/ui";
 
 interface Props {
     open: boolean;
@@ -97,7 +97,7 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
                                 name="name"
                                 control={control}
                                 render={({field}) => (
-                                    <TextField
+                                    <StyledTextField
                                         {...field}
                                         fullWidth
                                         label="Name"
@@ -112,7 +112,7 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
                                 name="price"
                                 control={control}
                                 render={({field}) => (
-                                    <TextField
+                                    <StyledTextField
                                         {...field}
                                         fullWidth
                                         label="Price"
@@ -132,7 +132,7 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
                                 name="itemCode"
                                 control={control}
                                 render={({field}) => (
-                                    <TextField
+                                    <StyledTextField
                                         {...field}
                                         fullWidth
                                         label="Item Code (Optional)"

@@ -2,14 +2,13 @@ import {type MouseEvent, useMemo, useState} from "react";
 import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
 import {useDeleteMenuItemMutation, useGetMenuItemsQuery} from "@/store/slice";
 import useNotifier from "@/hooks/useNotifier";
-import MenuItemFormModal from "@/components/order-tracking/menu-item-form-modal";
+import MenuItemFormModal from "@/components/menu-items/menu-item-form-modal.tsx";
 import type {MenuItemType} from "@/types/menu-item-type";
 import {useTranslation} from "react-i18next";
 import {getApiError} from "@/helpers/get-api-error";
 import ApiErrorDisplay from "@/components/feedback/api-error-display";
 import {selectCurrentUser} from "@/store/slice/auth-slice";
 import {useAppSelector} from "@/store";
-import MenuItemsPageSkeleton from "@/components/menu-items/loading";
 import DataGridTable from "@/components/ui/data-grid-table";
 import type {GridColDef} from "@mui/x-data-grid";
 import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
@@ -24,6 +23,7 @@ import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import {getMenuItemsInventoryStatusChip} from "@/components/ui";
 import {relativeTime} from "@/utils/get-relative-time.ts";
 import {useNavigate} from "react-router-dom";
+import MenuItemsPageSkeleton from "@/components/menu-items/loading";
 
 import {DeleteOutline, EditOutlined, MoreVert, RestaurantMenuOutlined} from "@mui/icons-material";
 
