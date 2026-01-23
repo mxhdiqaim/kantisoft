@@ -281,17 +281,22 @@ export const apiSlice = createApi({
                     ? [...result.data.map(({id}) => ({type: "Order" as const, id})), {type: "Order", id: "LIST"}]
                     : [{type: "Order", id: "LIST"}],
         }),
+
         getOrderById: builder.query<SingleOrderType, string>({
             query: (id) => `/orders/${id}`,
             providesTags: (_result, _error, id) => [{type: "Order", id}],
         }),
+
         createOrder: builder.mutation<SingleOrderType, Omit<CreateOrderType, "amountReceived">>({
             query: (newOrder) => ({
                 url: "/orders/create",
                 method: "POST",
                 body: newOrder,
             }),
-            invalidatesTags: [{type: "Order", id: "LIST"}],
+            invalidatesTags: [{type: "Order", id: "LIST"}, {type: "MenuItem", id: "LIST"}, {
+                type: "Inventory",
+                id: "LIST"
+            }],
         }),
 
         // -------------------------
@@ -704,17 +709,17 @@ export const apiSlice = createApi({
 export const {
     useHealthCheckQuery,
 
-    // auth hooks
+    // Auth hooks
     useLoginMutation,
     useLogoutMutation,
     useRegisterManagerAndStoreMutation,
 
-    // order hooks
+    // Order hooks
     useGetOrdersByPeriodQuery,
     useGetOrderByIdQuery,
     useCreateOrderMutation,
 
-    // menu item hooks
+    // Menu item hooks
     useGetMenuItemsQuery,
     useCreateMenuItemMutation,
     useDeleteMenuItemMutation,

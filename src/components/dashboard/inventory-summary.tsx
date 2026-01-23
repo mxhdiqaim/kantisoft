@@ -4,10 +4,12 @@ import {Avatar, Box, Grid, Skeleton, Typography, useTheme} from "@mui/material";
 import CountUp from "react-countup";
 import CustomCard from "../customs/custom-card";
 import {useNavigate} from "react-router-dom";
+import {useTranslation} from "react-i18next";
 
 const InventoryAlerts = () => {
     const theme = useTheme();
     const navigate = useNavigate();
+    const {t} = useTranslation();
     const {data: alerts, isLoading: isFetchingAlerts} = useGetInventoryAlertsQuery();
 
     if (isFetchingAlerts) {
@@ -37,7 +39,7 @@ const InventoryAlerts = () => {
                     onClick={() => navigate('/stock/materials')}
                 >
                     <Box sx={{display: 'flex', justifyContent: 'space-between', mb: 2}}>
-                        <Typography variant="h6" color="primary">Procurement Needed</Typography>
+                        <Typography variant="h6" color="primary">Raw Material</Typography>
                         <ShoppingCartCheckout color="action"/>
                     </Box>
                     <Grid container spacing={2}>
@@ -83,7 +85,7 @@ const InventoryAlerts = () => {
                     onClick={() => navigate('/stock/finished-goods')}
                 >
                     <Box sx={{display: 'flex', justifyContent: 'space-between', mb: 2}}>
-                        <Typography variant="h6" color="primary">Production Needed</Typography>
+                        <Typography variant="h6" color="primary">{t("menuItems")}</Typography>
                         <SoupKitchen color="action"/>
                     </Box>
                     <Grid container spacing={2}>
@@ -99,7 +101,7 @@ const InventoryAlerts = () => {
                                 </Avatar>
                                 <Box>
                                     <Typography variant="h5" fontWeight="bold"><CountUp end={menuOut}/></Typography>
-                                    <Typography variant="caption" color="text.secondary">Empty Trays</Typography>
+                                    <Typography variant="caption" color="text.secondary">Out of stock</Typography>
                                 </Box>
                             </Box>
                         </Grid>
@@ -114,7 +116,7 @@ const InventoryAlerts = () => {
                                 </Avatar>
                                 <Box>
                                     <Typography variant="h5" fontWeight="bold"><CountUp end={menuLow}/></Typography>
-                                    <Typography variant="caption" color="text.secondary">Low Availability</Typography>
+                                    <Typography variant="caption" color="text.secondary">Low Stock</Typography>
                                 </Box>
                             </Box>
                         </Grid>
