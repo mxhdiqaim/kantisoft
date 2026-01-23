@@ -6,13 +6,13 @@ import TopSells from "@/components/dashboard/top-sells";
 import {useGetSalesSummaryQuery} from "@/store/slice";
 import {filterSchema} from "@/types/dashboard-types";
 import type {Period} from "@/types/order-types.ts";
-import {getTitle} from "@/utils";
 import {relativeTime} from "@/utils/get-relative-time.ts";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {AttachMoney, PointOfSale, ShoppingCart} from "@mui/icons-material";
-import {Box, FormControl, Grid, InputLabel, MenuItem, Select, Typography, useTheme} from "@mui/material";
+import {Box, Grid, Typography, useTheme} from "@mui/material";
 import {useEffect, useMemo, useState} from "react";
-import {Controller, useForm} from "react-hook-form";
+import {useForm} from "react-hook-form";
+import OverviewHeader from "@/components/ui/custom-header.tsx";
 
 const Index = () => {
     const theme = useTheme();
@@ -73,44 +73,11 @@ const Index = () => {
 
     return (
         <Box sx={{mx: "auto"}}>
-            <Box
-                sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    mb: 1,
-                }}
-            >
-                <Typography variant="h4">Dashboard</Typography>
-                <Box
-                    sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "right",
-                    }}
-                >
-                    <Box sx={{display: "flex", alignItems: "center", gap: 2}}>
-                        <Typography variant="h4" component="h1">
-                            {getTitle(period)}&apos;s Sales Summary
-                        </Typography>
-                        <Controller
-                            name="period"
-                            control={control}
-                            render={({field}) => (
-                                <FormControl sx={{minWidth: 120}} size="small">
-                                    <InputLabel id="period-select-label">Period</InputLabel>
-                                    <Select {...field} labelId="period-select-label" label="Period">
-                                        <MenuItem value={"today"}>Today</MenuItem>
-                                        <MenuItem value={"week"}>This Week</MenuItem>
-                                        <MenuItem value={"month"}>This Month</MenuItem>
-                                        <MenuItem value={"all-time"}>All Time</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            )}
-                        />
-                    </Box>
-                </Box>
-            </Box>
+            <OverviewHeader
+                title={"Dashboard"}
+                control={control}
+                name={"period"}
+            />
             <Box sx={{display: "flex", justifyContent: "flex-end"}}>
                 <Typography
                     variant="h6"

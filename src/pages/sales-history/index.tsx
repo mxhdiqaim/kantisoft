@@ -3,7 +3,7 @@ import SalesHistoryOverviewCard from "@/components/sales-history/sales-history-o
 import SalesHistoryTable from "@/components/sales-history/sales-history-table";
 import {useGetOrdersByPeriodQuery} from "@/store/slice";
 import {filterSchema, type TimePeriod} from "@/types";
-import {getTitle, ngnFormatter} from "@/utils";
+import {ngnFormatter} from "@/utils";
 import {relativeTime} from "@/utils/get-relative-time";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {DinnerDiningOutlined, DomainVerificationOutlined, MonetizationOn, Person2Outlined} from "@mui/icons-material";
@@ -55,11 +55,11 @@ const SalesHistory = () => {
         <Box sx={{mx: "auto"}}>
             <OverviewHeader
                 title={"Sales"}
-                timePeriod={period}
+                // timePeriod={period}
                 control={control}
-                getTimeTitle={getTitle}
+                // getTimeTitle={getTitle}
                 name={"timePeriod"}
-                timeTitle={"Sales History"}
+                // timeTitle={"Sales History"}
             />
             <Box sx={{display: "flex", justifyContent: "flex-end"}}>
                 <Typography

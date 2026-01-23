@@ -3,7 +3,7 @@ import {useGetAllRawMaterialsQuery, useGetRawMaterialInventoryTransactionsQuery}
 import type {GridColDef} from "@mui/x-data-grid";
 import {useEffect, useMemo, useState} from "react";
 import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
-import {camelCaseToTitleCase, getTitle} from "@/utils";
+import {camelCaseToTitleCase} from "@/utils";
 import {getTransactionTypeChipColor, StyledTextField} from "@/components/ui";
 import {formatDateTimeCustom, relativeTime} from "@/utils/get-relative-time.ts";
 import DataGridTable from "@/components/ui/data-grid-table";
@@ -233,11 +233,11 @@ const RawMaterialInventoryTransaction = () => {
         <Box>
             <OverviewHeader
                 title={"Raw Material Transactions"}
-                timePeriod={data.timePeriod as TimePeriod}
+                // timePeriod={data.timePeriod as TimePeriod}
                 control={control}
-                getTimeTitle={getTitle}
+                // getTimeTitle={getTitle}
                 name={"timePeriod"}
-                timeTitle={"Transactions"}
+                // timeTitle={"Transactions"}
             />
             <Box sx={{display: "flex", justifyContent: "flex-end"}}>
                 <Typography

@@ -157,7 +157,8 @@ export const apiSlice = createApi({
         "RawMaterialInventoryStock",
         "RawMaterialTransactions",
         "BOM",
-        "RawMaterialStock"
+        "RawMaterialStock",
+        "ProductionSummary"
     ],
     endpoints: (builder) => ({
         // -------------------------
@@ -695,6 +696,14 @@ export const apiSlice = createApi({
             invalidatesTags: ['Inventory', 'RawMaterialStock'],
         }),
 
+        getProductionSummary: builder.query<any, TimePeriod>({
+            query: (timePeriod = "today") => ({
+                url: "/production/summary",
+                params: {timePeriod},
+            }),
+            providesTags: ["ProductionSummary"],
+        }),
+
         // -------------------------
         // Margins Endpoints
         // -------------------------
@@ -783,6 +792,7 @@ export const {
 
     // Production Hooks
     useRunProductionMutation,
+    useGetProductionSummaryQuery,
 
     // Alerts & Margins Hooks
     // useGetInventoryAlertsQuery,

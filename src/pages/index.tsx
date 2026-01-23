@@ -43,3 +43,6 @@ export {default as RawMaterialInventoryScreen} from "./raw-materials/raw-materia
 export {default as RawMaterialInventoryTransactionScreen} from "./raw-materials/raw-material-inventory-transaction.tsx"; // Stock in/out transactions
 export {default as BillOfMaterialsScreen} from "./menu-item/bom"; // Recipe definition
 export {default as UnitOfMeasurementsScreen} from "./raw-materials/unit-of-measurements.tsx"; // Units of measurement
+
+// Production screens
+export {default as ProductionAnalysisScreen} from "./production/production-analysis.tsx"

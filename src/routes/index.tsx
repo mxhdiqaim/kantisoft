@@ -14,6 +14,7 @@ import {
     MenuItemScreen,
     NotFoundScreen,
     PointOfSaleScreen,
+    ProductionAnalysisScreen,
     ProfileScreen,
     RawMaterialInventoryScreen,
     RawMaterialInventoryTransactionScreen,
@@ -202,6 +203,12 @@ export const appRoutes: AppRouteType[] = [
                 to: "activity",
                 title: "System Activity",
                 element: ActivityLogScreen,
+                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+            },
+            {
+                to: "production-analysis",
+                title: "Production Analysis",
+                element: ProductionAnalysisScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
         ]

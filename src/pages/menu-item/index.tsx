@@ -184,7 +184,7 @@ const MenuItems = () => {
                 field: "price",
                 headerName: "Price",
                 type: "number",
-                minWidth: 120,
+                minWidth: 150,
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
@@ -199,7 +199,7 @@ const MenuItems = () => {
                 flex: 1,
                 field: "inventoryStockStatus",
                 headerName: "Stock Status",
-                minWidth: 120,
+                minWidth: 180,
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
