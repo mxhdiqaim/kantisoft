@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useEffect} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {
     Autocomplete,
@@ -13,31 +13,30 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    TextField,
     Typography,
     useTheme
 } from '@mui/material';
+import {
+    useDefineBOMMutation,
+    useGetAllRawMaterialsQuery,
+    useGetAllUnitOfMeasurementsQuery,
+    useGetBOMQuery
+} from '@/store/slice';
+import useNotifier from '@/hooks/useNotifier';
+import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+import CustomButton from "@/components/ui/button.tsx";
+import {defineBomSchema, type DefineBomSchemaType} from "@/types/bom-types.ts";
+import {Controller, useFieldArray, useForm} from "react-hook-form";
+import {yupResolver} from "@hookform/resolvers/yup";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import {StyledTextField} from "@/components/ui";
+
 import {
     AddCircleOutline as AddIcon,
     ArrowBackIosNew as BackIcon,
     DeleteOutline as DeleteIcon,
     SaveOutlined as SaveIcon
 } from '@mui/icons-material';
-import {
-    useDefineBOMMutation,
-    useGetAllRawMaterialsQuery,
-    useGetAllUnitOfMeasurementsQuery,
-    useGetBOMQuery
-} from '@/store/slice'; // Import from your new productionApi
-import useNotifier from '@/hooks/useNotifier';
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
-import CustomButton from "@/components/ui/button.tsx";
-
-interface BomRow {
-    rawMaterialId: string;
-    consumptionQuantityPresentation: number;
-    unitOfMeasurementId: string;
-}
 
 const BillOfMaterialsScreen = () => {
     const {id: menuItemId} = useParams<{ id: string }>();
@@ -45,91 +44,80 @@ const BillOfMaterialsScreen = () => {
     const navigate = useNavigate();
     const notify = useNotifier();
 
-    // API Hooks
-    const {data: bomData, isLoading: isLoadingBom} = useGetBOMQuery(menuItemId!);
+    const {data: bomData, isLoading: isLoadingBom} = useGetBOMQuery(menuItemId!, {skip: !menuItemId});
     const memoizedBom = useMemoizedArray(bomData);
 
-    const {data: rawMaterials} = useGetAllRawMaterialsQuery();
+    const {data: rawMaterials, isLoading: isLoadingRawMaterial} = useGetAllRawMaterialsQuery();
     const memoizedMaterial = useMemoizedArray(rawMaterials);
 
-    const {data: unitData} = useGetAllUnitOfMeasurementsQuery();
+    const {data: unitData, isLoading: isUnitLoading} = useGetAllUnitOfMeasurementsQuery();
     const memoizedMeasurements = useMemoizedArray(unitData);
 
     const [defineBom, {isLoading: isSaving}] = useDefineBOMMutation();
 
-    // Local State for Form
-    const [rows, setRows] = useState<BomRow[]>([]);
+    const {
+        control,
+        handleSubmit,
+        reset,
+        formState: {errors},
+    } = useForm({
+        defaultValues: {
+            bomItems: [{rawMaterialId: '', consumptionQuantityPresentation: 0, unitOfMeasurementId: ''}]
+        },
 
-    // Initialize rows when existing BOM is loaded
+        resolver: yupResolver(defineBomSchema),
+    });
+
+    const {fields, append, remove} = useFieldArray({
+        control,
+        name: "bomItems",
+    });
+
     useEffect(() => {
-        if (memoizedBom && Array.isArray(memoizedBom)) {
-            const initialRows = memoizedBom.map(item => ({
-                rawMaterialId: item.rawMaterialId,
-                consumptionQuantityPresentation: item.consumptionQuantity,
-                unitOfMeasurementId: item.unitOfMeasurement.id
-            }));
-            setRows(initialRows);
-        } else if (!isLoadingBom && (!memoizedBom || memoizedBom.length === 0)) {
-            // Add one empty row by default if no BOM exists
-            handleAddRow();
+        if (memoizedBom && memoizedBom.length > 0) {
+            reset({
+                bomItems: memoizedBom.map(item => ({
+                    rawMaterialId: item.rawMaterialId,
+                    consumptionQuantityPresentation: item.consumptionQuantity,
+                    unitOfMeasurementId: item.unitOfMeasurement.id
+                }))
+            });
         }
-    }, [memoizedBom, isLoadingBom]);
+    }, [memoizedBom, reset]);
 
-    const handleAddRow = () => {
-        setRows([...rows, {rawMaterialId: '', consumptionQuantityPresentation: 0, unitOfMeasurementId: ''}]);
-    };
 
-    const handleRemoveRow = (index: number) => {
-        setRows(rows.filter((_, i) => i !== index));
-    };
-
-    const handleUpdateRow = (index: number, field: keyof BomRow, value: any) => {
-        const newRows = [...rows];
-        newRows[index] = {...newRows[index], [field]: value};
-        setRows(newRows);
-    };
-
-    const handleSave = async () => {
-        // Validation
-        const isValid = rows.every(r => r.rawMaterialId && r.consumptionQuantityPresentation > 0 && r.unitOfMeasurementId);
-        if (!isValid) {
-            notify("Please ensure all rows have a material, quantity, and unit.", "warning");
-            return;
-        }
-
+    const onSubmit = async (data: DefineBomSchemaType) => {
         try {
-            await defineBom({menuItemId: menuItemId!, bomItems: rows}).unwrap();
+            await defineBom({menuItemId: menuItemId!, bomItems: data.bomItems}).unwrap();
             notify("Recipe updated successfully!", "success");
             navigate('/catalog/menu-items');
-        } catch (error: any) {
-            notify(error?.data?.message || "Failed to save recipe", "error");
+        } catch (error) {
+            const defaultMessage = `Failed to save recipe. Please try again.`;
+            const apiError = getApiError(error, defaultMessage);
+            notify(apiError.message, "error");
         }
     };
 
-    if (isLoadingBom) return <Box sx={{display: 'flex', justifyContent: 'center', p: 5}}><CircularProgress/></Box>;
+    if (isLoadingBom) {
+        return <Box sx={{display: 'flex', justifyContent: 'center', p: 5}}><CircularProgress/></Box>;
+    }
 
     return (
-        <Box>
-            <CustomButton
-                title={"Go Back"}
-                startIcon={<BackIcon sx={{fontSize: 14}}/>}
-                onClick={() => navigate(-1)}
-                sx={{color: theme.palette.text.secondary, mb: 1}}
-            />
-
-            <Box sx={{my: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                <Box>
-                    <Typography variant="h4" color="primary">Manage Recipe</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        Define the ingredients and quantities required for this item.
-                    </Typography>
-                </Box>
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+            <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1}}>
                 <CustomButton
+                    title={"Go Back"}
+                    startIcon={<BackIcon sx={{fontSize: 14}}/>}
+                    onClick={() => navigate(-1)}
+                    sx={{color: theme.palette.text.secondary, mb: 1}}
+                />
+
+                <CustomButton
+                    type="submit"
                     title={"Save Recipe"}
                     variant="contained"
                     startIcon={isSaving ? <CircularProgress size={20} color="inherit"/> : <SaveIcon/>}
-                    onClick={handleSave}
-                    disabled={isSaving}
+                    // disabled={isSaving}
                 />
             </Box>
 
@@ -145,53 +133,85 @@ const BillOfMaterialsScreen = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {rows.map((row, index) => (
-                                <TableRow key={index} sx={{'&:hover': {backgroundColor: '#F9F9F9'}}}>
-                                    {/* Material Selection */}
+                            {fields.map((field, index) => (
+                                <TableRow key={field.id} sx={{'&:hover': {backgroundColor: '#F9F9F9'}}}>
                                     <TableCell>
-                                        <Autocomplete
-                                            options={memoizedMaterial}
-                                            getOptionLabel={(option) => option.name}
-                                            value={memoizedMaterial.find(rm => rm.id === row.rawMaterialId) || null}
-                                            onChange={(_, newValue) => handleUpdateRow(index, 'rawMaterialId', newValue?.id || '')}
-                                            renderInput={(params) =>
-                                                <TextField
-                                                    {...params}
-                                                    placeholder="Select Material"
-                                                    size="small"
+                                        <Controller
+                                            name={`bomItems.${index}.rawMaterialId`}
+                                            control={control}
+                                            render={({field: controllerField, fieldState}) => (
+                                                <Autocomplete
+                                                    {...controllerField}
+                                                    options={memoizedMaterial}
+                                                    loading={isLoadingRawMaterial}
+                                                    getOptionLabel={(option) => option.name}
+                                                    value={memoizedMaterial.find(rm => rm.id === controllerField.value) || null}
+                                                    onChange={(_, newValue) => controllerField.onChange(newValue?.id || '')}
+                                                    renderInput={(params) =>
+                                                        <StyledTextField
+                                                            {...params}
+                                                            placeholder="Select Material"
+                                                            size="small"
+                                                            disabled={isSaving}
+                                                            error={!!fieldState.error}
+                                                            helperText={fieldState.error?.message}
+                                                        />
+                                                    }
                                                 />
-                                            }
+                                            )}
                                         />
                                     </TableCell>
-
-                                    {/* Quantity Input */}
                                     <TableCell>
-                                        <TextField
-                                            type="number"
-                                            fullWidth
-                                            size="small"
-                                            value={row.consumptionQuantityPresentation}
-                                            onChange={(e) => handleUpdateRow(index, 'consumptionQuantityPresentation', parseFloat(e.target.value))}
-                                            slotProps={{htmlInput: {min: 0, step: 0.1}}}
+                                        <Controller
+                                            name={`bomItems.${index}.consumptionQuantityPresentation`}
+                                            control={control}
+                                            render={({field: controllerField, fieldState}) => (
+                                                <StyledTextField
+                                                    {...controllerField}
+                                                    type="number"
+                                                    fullWidth
+                                                    size="small"
+                                                    disabled={isSaving}
+                                                    error={!!fieldState.error}
+                                                    helperText={fieldState.error?.message}
+                                                    onChange={(e) => controllerField.onChange(parseFloat(e.target.value))}
+                                                    slotProps={{htmlInput: {min: 0, step: 0.1}}}
+                                                />
+                                            )}
                                         />
                                     </TableCell>
-
-                                    {/* Unit Selection */}
                                     <TableCell>
-                                        <Autocomplete
-                                            options={memoizedMeasurements}
-                                            getOptionLabel={(option) => `${option.name} (${option.symbol})`}
-                                            value={memoizedMeasurements.find(u => u.id === row.unitOfMeasurementId) || null}
-                                            onChange={(_, newValue) => handleUpdateRow(index, 'unitOfMeasurementId', newValue?.id || '')}
-                                            renderInput={(params) => <TextField {...params} placeholder="Select Unit"
-                                                                                size="small"/>}
+                                        <Controller
+                                            name={`bomItems.${index}.unitOfMeasurementId`}
+                                            control={control}
+                                            render={({field: controllerField, fieldState}) => (
+                                                <Autocomplete
+                                                    {...controllerField}
+                                                    options={memoizedMeasurements}
+                                                    loading={isUnitLoading}
+                                                    getOptionLabel={(option) => `${option.name} (${option.symbol})`}
+                                                    value={memoizedMeasurements.find(u => u.id === controllerField.value) || null}
+                                                    onChange={(_, newValue) => controllerField.onChange(newValue?.id || '')}
+                                                    renderInput={(params) =>
+                                                        <StyledTextField
+                                                            {...params}
+                                                            placeholder="Select Unit"
+                                                            size="small"
+                                                            disabled={isSaving}
+                                                            error={!!fieldState.error}
+                                                            helperText={fieldState.error?.message}
+                                                        />
+                                                    }
+                                                />
+                                            )}
                                         />
                                     </TableCell>
-
-                                    {/* Actions */}
                                     <TableCell sx={{textAlign: 'center'}}>
-                                        <IconButton color="error" onClick={() => handleRemoveRow(index)}
-                                                    disabled={rows.length === 1}>
+                                        <IconButton
+                                            color="error"
+                                            onClick={() => remove(index)}
+                                            disabled={fields.length === 1 || isSaving}
+                                        >
                                             <DeleteIcon/>
                                         </IconButton>
                                     </TableCell>
@@ -208,11 +228,21 @@ const BillOfMaterialsScreen = () => {
                         title={"Add Ingredient"}
                         variant="outlined"
                         startIcon={<AddIcon/>}
-                        onClick={handleAddRow}
+                        onClick={() => append({
+                            rawMaterialId: '',
+                            consumptionQuantityPresentation: 0,
+                            unitOfMeasurementId: ''
+                        })}
                         sx={{borderRadius: 2}}
+                        disabled={isSaving}
                     />
                 </Box>
             </Card>
+            {errors.bomItems?.message && (
+                <Typography color="error" sx={{mt: 2, textAlign: 'center'}}>
+                    {errors.bomItems.message}
+                </Typography>
+            )}
         </Box>
     );
 };

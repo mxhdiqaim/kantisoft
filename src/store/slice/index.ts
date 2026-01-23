@@ -668,10 +668,10 @@ export const apiSlice = createApi({
         }),
 
         defineBOM: builder.mutation<void, DefineBomSchemaType>({
-            query: ({menuItemId, items}) => ({
+            query: ({menuItemId, bomItems}) => ({
                 url: `/menu-items/${menuItemId}/bom`,
                 method: 'POST',
-                body: items,
+                body: bomItems,
             }),
             invalidatesTags: ['BOM'],
         }),

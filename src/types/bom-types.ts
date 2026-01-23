@@ -15,9 +15,9 @@ export const defineBomSchema = yup.object({
     menuItemId: yup.string().uuid().required("Menu Item ID is required."),
     bomItems: yup.array().of(
         yup.object({
-            rawMaterialId: yup.string().uuid().required("Raw Material ID is required."),
-            consumptionQuantityPresentation: yup.number().positive("Consumption quantity must be greater than zero.").required("Consumption quantity is required."),
-            unitOfMeasurementId: yup.string().uuid().required("Unit of Measurement ID is required."),
+            rawMaterialId: yup.string().uuid("Invalid Raw Material").typeError("Raw Material must be selected.").required("Raw Material is required."),
+            consumptionQuantityPresentation: yup.number().positive("Quantity must be greater than zero.").required("Quantity is required.").typeError("Quantity must be a valid number."),
+            unitOfMeasurementId: yup.string().uuid("Invalid Measurement Unit").typeError("Measurement unit must be selected.").required("Measurement unit is required."),
         })
     ).min(1, "At least one BOM item is required."),
 });
