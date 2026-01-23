@@ -254,7 +254,6 @@ export const getOrderById = async (req: CustomRequest, res: Response) => {
  * @access  Private (Seller/Manager/Admin of the same store)
  * @body    {"paymentMethod": "paymentMethod", "orderStatus": "orderStatus", "items": [ { "menuItemId": "uuid-for-burger", "quantity": 2 }, { "menuItemId": "uuid-for-fries", "quantity": 1 }] }
  */
-
 export const createOrder = async (req: CustomRequest, res: Response) => {
     try {
         const currentUser = req.user?.data;
@@ -294,33 +293,25 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
         const existingMenuItems = await db
             .select()
             .from(menuItems)
-            .where(inArray(menuItems.id, menuItemIds));
+            .where(and(inArray(menuItems.id, menuItemIds), eq(menuItems.storeId, finalStoreId)));
 
         if (existingMenuItems.length !== menuItemIds.length) {
             return handleError2(
                 res,
-                "One or more menu items not found.",
+                "Menu item(s) not found.",
                 StatusCodes.NOT_FOUND,
             );
         }
 
-        const priceMap = new Map(
-            existingMenuItems.map((item) => [item.id, item.price]),
-        );
+        const priceMap = new Map(existingMenuItems.map((item) => [item.id, item.price]));
 
         // Calculate total price
         let totalAmount = 0;
         const orderItemsToInsert = items.map((item) => {
-            const priceString = priceMap.get(item.menuItemId);
-            if (priceString === undefined) {
-                throw new Error(
-                    `Could not find price for menu item`,
-                );
-            }
-
-            const priceAtOrder = parseFloat(priceString);
+            const priceAtOrder = parseFloat(priceMap.get(item.menuItemId) || "0");
             const subTotal = priceAtOrder * item.quantity;
             totalAmount += subTotal;
+
             return {
                 menuItemId: item.menuItemId,
                 quantity: String(item.quantity),
@@ -343,7 +334,7 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
                     sellerId: currentUser?.id,
                     storeId: finalStoreId,
                 })
-                .returning({ reference: orders.reference, id: orders.id });
+                .returning({ id: orders.id, reference: orders.reference });
 
             // Insert into the 'orderItems' table
             const newOrderItemsData = orderItemsToInsert.map((item) => ({
@@ -352,7 +343,8 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
             }));
             await tx.insert(orderItems).values(newOrderItemsData);
 
-            // DECREMENT STOCK
+            // DECREMENT STOCK (Finished Goods)
+            // This service should now update the 'inventory' table status to 'outOfStock' if quantity hits 0
             // This must run within the transaction (tx) so that if stock is not enough,
             // the entire order (step 1 & 2) is automatically rolled back.
             const itemsForStockDecrement = items.map(item => ({
@@ -362,7 +354,7 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
             }));
 
             await decrementStockForOrder(
-                insertedOrder.reference ?? "",
+                insertedOrder.reference ?? "REF",
                 insertedOrder.id,
                 itemsForStockDecrement,
                 currentUser?.id,
@@ -377,7 +369,7 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
                 action: "ORDER_CREATED",
                 entityId: insertedOrder.id,
                 entityType: "order",
-                details: `User created a new order with reference ${insertedOrder.reference}.`,
+                details: `Order ${insertedOrder.reference} created. Total: ${totalAmount}`,
             });
 
             //  Fetch and return the complete order data

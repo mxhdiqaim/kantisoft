@@ -150,8 +150,6 @@ export const defineBillOfMaterials = async (req: CustomRequest, res: Response) =
         const { id: menuItemId } = req.params;
         const bomItems: BomItemRequest[] = req.body; // Expecting an array of raw material inputs
 
-        console.log("Received BOM Items:", bomItems);
-
         if (!menuItemId) {
             return handleError2(res, 'Something went wrong', StatusCodes.BAD_REQUEST);
         }
