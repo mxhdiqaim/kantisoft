@@ -1,79 +1,128 @@
-import { useGetInventorySummaryQuery } from "@/store/slice";
-import { WarningAmber, NoFood } from "@mui/icons-material";
-import { Avatar, Box, Grid, Skeleton, Typography, useTheme } from "@mui/material";
+import {useGetInventoryAlertsQuery} from "@/store/slice";
+import {NoFood, ShoppingCartCheckout, SoupKitchen, WarningAmber} from "@mui/icons-material";
+import {Avatar, Box, Grid, Skeleton, Typography, useTheme} from "@mui/material";
 import CountUp from "react-countup";
 import CustomCard from "../customs/custom-card";
+import {useNavigate} from "react-router-dom";
 
-const InventorySummary = () => {
+const InventoryAlerts = () => {
     const theme = useTheme();
-    const { data: summary, isLoading } = useGetInventorySummaryQuery();
+    const navigate = useNavigate();
+    const {data: alerts, isLoading: isFetchingAlerts} = useGetInventoryAlertsQuery();
 
-    if (isLoading) {
+    if (isFetchingAlerts) {
         return (
             <Grid container spacing={3}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                    <Skeleton variant="rectangular" height={120} sx={{ borderRadius: theme.borderRadius.small }} />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                    <Skeleton variant="rectangular" height={120} sx={{ borderRadius: theme.borderRadius.small }} />
-                </Grid>
+                {[1, 2].map((i) => (
+                    <Grid size={{xs: 12, sm: 6}} key={i}>
+                        <Skeleton variant="rectangular" height={160} sx={{borderRadius: theme.borderRadius.small}}/>
+                    </Grid>
+                ))}
             </Grid>
         );
     }
 
-    const outOfStock = summary?.totalOutOfStockItems ?? 0;
-    const lowStock = summary?.totalLowStockItems ?? 0;
+    // Extracting data from your new fused controller structure
+    const rawOut = alerts?.rawMaterials?.outOfStock?.length || 0;
+    const rawLow = alerts?.rawMaterials?.lowStock?.length || 0;
+
+    const menuOut = alerts?.menuItems?.outOfStock?.length || 0;
+    const menuLow = alerts?.menuItems?.lowStock?.length || 0;
 
     return (
         <Grid container spacing={3}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-                <CustomCard sx={{ boxShadow: theme.customShadows.card, borderRadius: theme.borderRadius.small }}>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <Avatar
-                            sx={{
-                                bgcolor: theme.palette.error.light,
-                                color: theme.palette.error.dark,
-                                width: 56,
-                                height: 56,
-                                mr: 2,
-                            }}
-                        >
-                            <NoFood />
-                        </Avatar>
-                        <Box>
-                            <Typography variant="h4" component="div" fontWeight="bold">
-                                <CountUp end={outOfStock} duration={2} />
-                            </Typography>
-                            <Typography color="text.secondary">Out of Stock</Typography>
-                        </Box>
+            <Grid size={{xs: 12, sm: 6}}>
+                <CustomCard
+                    sx={{cursor: 'pointer', '&:hover': {boxShadow: theme.shadows[1]}}}
+                    onClick={() => navigate('/stock/materials')}
+                >
+                    <Box sx={{display: 'flex', justifyContent: 'space-between', mb: 2}}>
+                        <Typography variant="h6" color="primary">Procurement Needed</Typography>
+                        <ShoppingCartCheckout color="action"/>
                     </Box>
+                    <Grid container spacing={2}>
+                        <Grid size={6}>
+                            <Box sx={{display: 'flex', alignItems: 'center'}}>
+                                <Avatar
+                                    sx={{
+                                        background: theme.palette.error.light,
+                                        color: theme.palette.error.dark,
+                                        mr: 1.5
+                                    }}>
+                                    <NoFood fontSize="small"/>
+                                </Avatar>
+                                <Box>
+                                    <Typography variant="h5" fontWeight="bold"><CountUp end={rawOut}/></Typography>
+                                    <Typography variant="caption" color="text.secondary">Out of Stock</Typography>
+                                </Box>
+                            </Box>
+                        </Grid>
+                        <Grid size={6}>
+                            <Box sx={{display: 'flex', alignItems: 'center'}}>
+                                <Avatar sx={{
+                                    background: theme.palette.warning.light,
+                                    color: theme.palette.warning.dark,
+                                    mr: 1.5
+                                }}>
+                                    <WarningAmber fontSize="small"/>
+                                </Avatar>
+                                <Box>
+                                    <Typography variant="h5" fontWeight="bold"><CountUp end={rawLow}/></Typography>
+                                    <Typography variant="caption" color="text.secondary">Low Stock</Typography>
+                                </Box>
+                            </Box>
+                        </Grid>
+                    </Grid>
                 </CustomCard>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-                <CustomCard sx={{ boxShadow: theme.customShadows.card, borderRadius: theme.borderRadius.small }}>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <Avatar
-                            sx={{
-                                bgcolor: theme.palette.warning.light,
-                                color: theme.palette.warning.dark,
-                                width: 56,
-                                height: 56,
-                                mr: 2,
-                            }}
-                        >
-                            <WarningAmber />
-                        </Avatar>
-                        <Box>
-                            <Typography variant="h4" component="div" fontWeight="bold">
-                                <CountUp end={lowStock} duration={2} />
-                            </Typography>
-                            <Typography color="text.secondary">Low Availability</Typography>
-                        </Box>
+
+            {/* Menu Items - Production Alerts */}
+            <Grid size={{xs: 12, sm: 6}}>
+                <CustomCard
+                    sx={{cursor: 'pointer', '&:hover': {boxShadow: theme.shadows[1]}}}
+                    onClick={() => navigate('/stock/finished-goods')}
+                >
+                    <Box sx={{display: 'flex', justifyContent: 'space-between', mb: 2}}>
+                        <Typography variant="h6" color="primary">Production Needed</Typography>
+                        <SoupKitchen color="action"/>
                     </Box>
+                    <Grid container spacing={2}>
+                        <Grid size={6}>
+                            <Box sx={{display: 'flex', alignItems: 'center'}}>
+                                <Avatar
+                                    sx={{
+                                        background: theme.palette.error.light,
+                                        color: theme.palette.error.dark,
+                                        mr: 1.5
+                                    }}>
+                                    <NoFood fontSize="small"/>
+                                </Avatar>
+                                <Box>
+                                    <Typography variant="h5" fontWeight="bold"><CountUp end={menuOut}/></Typography>
+                                    <Typography variant="caption" color="text.secondary">Empty Trays</Typography>
+                                </Box>
+                            </Box>
+                        </Grid>
+                        <Grid size={6}>
+                            <Box sx={{display: 'flex', alignItems: 'center'}}>
+                                <Avatar sx={{
+                                    background: theme.palette.warning.light,
+                                    color: theme.palette.warning.dark,
+                                    mr: 1.5
+                                }}>
+                                    <WarningAmber fontSize="small"/>
+                                </Avatar>
+                                <Box>
+                                    <Typography variant="h5" fontWeight="bold"><CountUp end={menuLow}/></Typography>
+                                    <Typography variant="caption" color="text.secondary">Low Availability</Typography>
+                                </Box>
+                            </Box>
+                        </Grid>
+                    </Grid>
                 </CustomCard>
             </Grid>
         </Grid>
     );
 };
 
-export default InventorySummary;
+export default InventoryAlerts;

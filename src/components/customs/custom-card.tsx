@@ -1,7 +1,7 @@
-import { Card, CardActions, CardContent, CardHeader, type SxProps, type Theme } from "@mui/material";
-import { forwardRef, type ReactNode } from "react";
+import {Card, CardActions, CardContent, CardHeader, type CardProps, type SxProps, type Theme} from "@mui/material";
+import {forwardRef, type ReactNode} from "react";
 
-interface Props {
+interface Props extends CardProps {
     children?: ReactNode;
     variant?: "outlined" | "elevation";
     sx?: SxProps<Theme>;
@@ -10,7 +10,7 @@ interface Props {
     actions?: ReactNode;
 }
 
-const CustomCard = ({ children, variant = "outlined", sx, title, subheader, actions }: Props) => {
+const CustomCard = ({children, variant = "outlined", sx, title, subheader, actions}: Props) => {
     if (!children) {
         return <></>;
     }
@@ -19,11 +19,11 @@ const CustomCard = ({ children, variant = "outlined", sx, title, subheader, acti
         <>
             {children && (
                 <Card variant={variant} sx={sx}>
-                    {title && subheader && <CardHeader title={title} subheader={subheader} />}
-                    {(!title || !subheader) && <CardHeader sx={{ display: "none" }} />}
+                    {title && subheader && <CardHeader title={title} subheader={subheader}/>}
+                    {(!title || !subheader) && <CardHeader sx={{display: "none"}}/>}
                     <CardContent>{children && children}</CardContent>
                     {actions && <CardActions>{actions}</CardActions>}
-                    {!actions && <CardActions sx={{ display: "none" }} />}
+                    {!actions && <CardActions sx={{display: "none"}}/>}
                 </Card>
             )}
         </>
@@ -31,7 +31,7 @@ const CustomCard = ({ children, variant = "outlined", sx, title, subheader, acti
 };
 
 export const CustomCardRef = forwardRef<HTMLDivElement, Props>((props, ref) => {
-    const { children, variant = "elevation", sx } = props;
+    const {children, variant = "elevation", sx} = props;
     if (!children) {
         return <></>;
     }
@@ -41,7 +41,7 @@ export const CustomCardRef = forwardRef<HTMLDivElement, Props>((props, ref) => {
             {children && (
                 <Card variant={variant} sx={sx} ref={ref}>
                     <CardContent>{children && children}</CardContent>
-                    <CardActions sx={{ display: "none" }} />
+                    <CardActions sx={{display: "none"}}/>
                 </Card>
             )}
         </>

@@ -1,6 +1,6 @@
 import type {ActivityLogEntry, ActivityLogResponse} from "@/types";
 import type {
-    InventorySummaryType,
+    InventoryAlertType,
     SalesTrendType,
     SaleSummarySchemaType,
     TopSellsItemType,
@@ -141,7 +141,7 @@ export const apiSlice = createApi({
         "users",
         "Summary",
         "TopSells",
-        "InventorySummary",
+        "InventoryAlerts",
         "SalesTrend",
         "Store",
         "ActivityLog",
@@ -251,6 +251,7 @@ export const apiSlice = createApi({
             }),
             providesTags: ["Summary"],
         }),
+
         getTopSells: builder.query<TopSellsItemType[], TopSellsParamType>({
             query: ({timePeriod = "today", limit = 5, orderBy = "quantity", startDate = "", endDate = ""}) => ({
                 url: "/dashboard/top-sells",
@@ -258,10 +259,7 @@ export const apiSlice = createApi({
             }),
             providesTags: ["TopSells"],
         }),
-        getInventorySummary: builder.query<InventorySummaryType, void>({
-            query: () => "/dashboard/inventory-summary",
-            providesTags: ["InventorySummary"],
-        }),
+
         getSalesTrend: builder.query<SalesTrendType[], TimePeriod | void>({
             query: (timePeriod = "week") => ({
                 url: "/dashboard/sales-trend",
@@ -465,7 +463,6 @@ export const apiSlice = createApi({
                         id
                     })), {type: "SingleInventoryTransaction", id: "LIST"}]
                     : [{type: "SingleInventoryTransaction", id: "LIST"}],
-            // providesTags: (_result, _error, {menuItemId}) => [{type: "SingleInventoryTransaction", id: menuItemId}],
         }),
 
         getInventoryTransactions: builder.query<InventoryTransactionResponseType, {
@@ -523,6 +520,11 @@ export const apiSlice = createApi({
                 method: "DELETE",
             }),
             invalidatesTags: [{type: "Inventory", id: "LIST"}],
+        }),
+
+        getInventoryAlerts: builder.query<InventoryAlertType, void>({
+            query: () => "/inventory/alerts",
+            providesTags: ["InventoryAlerts"],
         }),
 
         // -------------------------
@@ -689,12 +691,8 @@ export const apiSlice = createApi({
         }),
 
         // -------------------------
-        // Alerts & Margins Endpoints
+        // Margins Endpoints
         // -------------------------
-        getInventoryAlerts: builder.query<any, void>({
-            query: () => '/inventory/alerts',
-            providesTags: ['Inventory', 'RawMaterialStock'],
-        }),
         getProfitMargins: builder.query<any[], void>({
             query: () => '/catalog/margins',
         }),
@@ -725,7 +723,6 @@ export const {
     // Dashboard Hooks
     useGetSalesSummaryQuery,
     useGetTopSellsQuery,
-    useGetInventorySummaryQuery,
     useGetSalesTrendQuery,
 
     // User Management Hooks
@@ -755,6 +752,7 @@ export const {
     useAdjustStockMutation,
     useMarkAsDiscontinuedMutation,
     useDeleteInventoryRecordMutation,
+    useGetInventoryAlertsQuery,
 
     // Unit of Measurement Hooks
     useGetAllUnitOfMeasurementsQuery,
@@ -782,6 +780,6 @@ export const {
     useRunProductionMutation,
 
     // Alerts & Margins Hooks
-    useGetInventoryAlertsQuery,
+    // useGetInventoryAlertsQuery,
     useGetProfitMarginsQuery,
 } = apiSlice;
