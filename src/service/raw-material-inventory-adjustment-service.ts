@@ -130,7 +130,7 @@ export const InventoryAdjustmentService = {
             notes: string;
         },
     ) {
-        // 1. Get the material name using Standard API to avoid 'referencedTable' error
+        // 1. Get the material name using Standard API to avoid the 'referencedTable' error
         const [materialInfo] = await tx
             .select({ name: rawMaterials.name })
             .from(rawMaterials)
@@ -164,9 +164,9 @@ export const InventoryAdjustmentService = {
         // The "Insufficient Stock" Guard
         if (updated.quantity < 0) {
             // We calculate the deficit to be helpful
-            const missingAmount = Math.abs(updated.quantity);
+            // const missingAmount = Math.abs(updated.quantity);
             throw new Error(
-                `Insufficient Stock: You need ${data.quantityBase} units of ${materialInfo?.name || "Material"}, but you are short by ${missingAmount} units.`,
+                `Insufficient Stock: You are short on ${materialInfo?.name || "Material"}`,
             );
         }
 

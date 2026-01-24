@@ -9,6 +9,7 @@ import * as rawMaterials from "../schema/raw-materials-schema";
 import * as rawMaterialInventory from "../schema/raw-materials-schema/raw-material-inventory-schema";
 import * as billOfMaterials from "../schema/bill-of-materials-schema";
 import * as unitOfMeasurement from "../schema/unit-of-measurement-schema";
+import * as productions from "../schema/production-schema";
 
 import * as menuItemsRelations from "../schema/relations/menu-items-relation";
 import * as ordersRelations from "../schema/relations/orders-relation";
@@ -44,6 +45,7 @@ const schema = {
     ...rawMaterialInventory,
     ...billOfMaterials,
     ...unitOfMeasurement,
+    ...productions,
 
     ...relations,
 };

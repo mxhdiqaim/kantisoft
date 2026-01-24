@@ -5,77 +5,107 @@ import { handleError2 } from "../service/error-handling";
 import { StatusCodes } from "http-status-codes";
 import {RawMaterialProductionService} from "../service/raw-material-production-service";
 import db from "../db";
-import { rawMaterialTransactions } from "../schema/raw-materials-schema/raw-material-stock-transaction-schema";
-import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
-import { rawMaterials } from "../schema/raw-materials-schema";
+import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { RawMaterialTransactionSourceEnum, TransactionTypeEnum } from "../types/enums";
-import { inventoryTransactions } from "../schema/inventory-schema/inventory-transaction-schema";
 import { menuItems } from "../schema/menu-items-schema";
 import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 import { nanoid } from "nanoid";
 import { UnitConversionService } from "../service/unit-conversion-service";
-import { InventoryAdjustmentService } from "../service/raw-material-inventory-adjustment-service"; // For generating a production batch ID
+import { InventoryAdjustmentService } from "../service/raw-material-inventory-adjustment-service";
+import { users } from "../schema/users-schema";
+import { productions } from "../schema/production-schema"; // For generating a production batch ID
 
 
 /**
- * @description Generates a summary of production value and efficiency for a given period.
+ * @description Get a detailed list of all production transactions
+ * @route GET /api/v1/production/logs
+ */
+export const getProductionLogs = async (req: CustomRequest, res: Response) => {
+    try {
+        const validated = await validateStoreAndExtractDates(req, res);
+        if (!validated) return;
+
+        const { storeIds, finalStartDate, finalEndDate } = validated;
+
+        const logs = await db.select({
+            id: productions.id,
+            batchReference: productions.batchReference,
+            itemName: menuItems.name,
+            quantityProduced: productions.quantityProduced,
+            totalCost: productions.totalIngredientCost,
+            revenueValue: productions.potentialRevenue,
+            createdAt: productions.createdAt,
+            performedBy: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`
+        })
+            .from(productions)
+            .innerJoin(menuItems, eq(productions.menuItemId, menuItems.id))
+            .leftJoin(users, eq(productions.performedBy, users.id))
+            .where(
+                and(
+                    inArray(productions.storeId, storeIds),
+                    gte(productions.createdAt, finalStartDate!),
+                    lte(productions.createdAt, finalEndDate!)
+                )
+            )
+            .orderBy(desc(productions.createdAt));
+
+        return res.status(StatusCodes.OK).json(logs);
+    } catch (error) {
+        return handleError2(res, 'Failed to fetch production logs', StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
+    }
+};
+
+/**
+ * @description Generates a summary of production value and efficiency using the Productions table
  * @route GET /api/v1/production/summary
  * @access Admin, Manager
  */
 export const getProductionSummary = async (req: CustomRequest, res: Response) => {
     try {
         const validated = await validateStoreAndExtractDates(req, res);
-        if (!validated) return; // Error already handled
+        if (!validated) return;
 
         const { storeIds, finalStartDate, finalEndDate } = validated;
 
-        // Calculate the Total Cost of Raw Materials Consumed
-        const rawConsumption = await db.select({
-            totalCost: sql<number>`SUM(${rawMaterialTransactions.quantityBase} * ${rawMaterials.latestUnitPrice})`
+        // One clean query to get all aggregates
+        const stats = await db.select({
+            totalCost: sql<number>`SUM(${productions.totalIngredientCost})`,
+            totalValue: sql<number>`SUM(${productions.potentialRevenue})`,
+            totalItems: sql<number>`SUM(${productions.quantityProduced})`,
+            batchCount: sql<number>`COUNT(${productions.id})`
         })
-            .from(rawMaterialTransactions)
-            .innerJoin(rawMaterials, eq(rawMaterialTransactions.rawMaterialId, rawMaterials.id))
+            .from(productions)
             .where(
                 and(
-                    inArray(rawMaterialTransactions.storeId, storeIds),
-                    eq(rawMaterialTransactions.source, RawMaterialTransactionSourceEnum.PRODUCTION_CONSUMPTION),
-                    gte(rawMaterialTransactions.createdAt, finalStartDate!),
-                    lte(rawMaterialTransactions.createdAt, finalEndDate!)
+                    inArray(productions.storeId, storeIds),
+                    gte(productions.createdAt, finalStartDate!),
+                    lte(productions.createdAt, finalEndDate!)
                 )
             );
 
-        // Calculate Total Value of Menu Items Produced
-        const productionOutput = await db.select({
-            count: sql<number>`SUM(${inventoryTransactions.quantityChange})`,
-            totalValue: sql<number>`SUM(${inventoryTransactions.quantityChange} * ${menuItems.price})`
-        })
-            .from(inventoryTransactions)
-            .innerJoin(menuItems, eq(inventoryTransactions.menuItemId, menuItems.id))
-            .where(
-                and(
-                    inArray(inventoryTransactions.storeId, storeIds),
-                    eq(inventoryTransactions.transactionType, 'productionIn'),
-                    gte(inventoryTransactions.createdAt, finalStartDate!),
-                    lte(inventoryTransactions.createdAt, finalEndDate!)
-                )
-            );
+        const totalCost = Number(stats[0]?.totalCost || 0);
+        const totalValue = Number(stats[0]?.totalValue || 0);
+        const totalItems = Number(stats[0]?.totalItems || 0);
 
-        const totalCost = Number(rawConsumption[0]?.totalCost || 0);
-        const totalValue = Number(productionOutput[0]?.totalValue || 0);
-        const profitMargin = totalValue > 0 ? ((totalValue - totalCost) / totalValue) * 100 : 0;
+        // Calculate Profit Margin safely
+        const profitMargin = totalValue > 0
+            ? ((totalValue - totalCost) / totalValue) * 100
+            : 0;
 
         return res.status(StatusCodes.OK).json({
-            totalCostOfIngredients: totalCost,
-            potentialRevenueCreated: totalValue,
-            grossProductionMargin: `${profitMargin.toFixed(2)}%`,
-            itemsProducedCount: productionOutput[0]?.count || 0
+            summary: {
+                totalCostOfIngredients: totalCost,
+                potentialRevenueCreated: totalValue,
+                grossProductionMargin: `${profitMargin.toFixed(2)}%`,
+                itemsProducedCount: totalItems,
+                numberOfBatches: stats[0]?.batchCount || 0
+            }
         });
 
     } catch (error) {
-        return handleError2(res, 'Could not generate production report', StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
+        return handleError2(res, 'Could not generate production summary', StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
     }
 };
-
 /**
  * @description Executes a production run for a menu item, deducting all required raw materials.
  * @route POST /api/v1/production
