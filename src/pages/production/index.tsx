@@ -1,13 +1,12 @@
 import {Box, CircularProgress, Grid, Typography, useTheme} from '@mui/material';
 import {AccountBalanceWalletOutlined, KitchenOutlined, ReceiptLong, TrendingUp} from '@mui/icons-material';
 import {useGetProductionLogsQuery, useGetProductionSummaryQuery} from '@/store/slice';
-import SummaryCard from "@/components/dashboard/summary-card"; // Reuse your existing component
 import {useForm} from "react-hook-form";
 import {filterSchema, type TimePeriod} from "@/types";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {relativeTime} from "@/utils/get-relative-time.ts";
 import {useEffect, useMemo, useState} from "react";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+import {useMemoizedArray, useMemoizedObject} from "@/hooks/use-memoized-array.ts";
 import DataGridTable from "@/components/ui/data-grid-table";
 import type {GridColDef} from "@mui/x-data-grid";
 import {formatCurrency, formatDateCustom} from "@/utils";
@@ -15,6 +14,7 @@ import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx
 import ProductionModal from "@/components/menu-items/production-modal.tsx";
 import CustomButton from "@/components/ui/button.tsx";
 import PeriodSelector from "@/components/ui/period-selector.tsx";
+import ProductionSummaryCard from "@/components/production/production-summary-card.tsx";
 
 const ProductionScreen = () => {
     const theme = useTheme();
@@ -38,6 +38,10 @@ const ProductionScreen = () => {
 
     const {data: summary, isLoading, isError, fulfilledTimeStamp} = useGetProductionSummaryQuery(period);
 
+    const memoizedSummary = useMemoizedObject(summary);
+
+    console.log("Production memoizedSummary:", memoizedSummary);
+
     const openProductionFormModal = () => {
         setProductionModalOpen(true);
     };
@@ -46,28 +50,28 @@ const ProductionScreen = () => {
         setProductionModalOpen(false);
     };
 
-    const cards = [
+    const summaryCards = [
         {
             title: "Cost of Ingredients",
-            value: summary?.totalCostOfIngredients || 0,
+            value: memoizedSummary.totalCostOfIngredients || 0,
             icon: <ReceiptLong/>,
             color: theme.palette.error.main, // Represents money spent
         },
         {
             title: "Potential Revenue Created",
-            value: summary?.potentialRevenueCreated || 0,
+            value: memoizedSummary?.potentialRevenueCreated || 0,
             icon: <TrendingUp/>,
             color: theme.palette.success.main, // Represents value added
         },
         {
             title: "Items Produced",
-            value: summary?.itemsProducedCount || 0,
+            value: memoizedSummary?.itemsProducedCount || 0,
             icon: <KitchenOutlined/>,
             color: theme.palette.info.main,
         },
         {
             title: "Production Margin",
-            value: summary?.grossProductionMargin || "0%",
+            value: memoizedSummary?.grossProductionMargin || "0%",
             icon: <AccountBalanceWalletOutlined/>,
             color: theme.palette.warning.main,
         }
@@ -212,10 +216,9 @@ const ProductionScreen = () => {
             </Box>
 
             <Grid container spacing={3} mb={4}>
-                {cards.map((card, index) => (
+                {summaryCards.map((card, index) => (
                     <Grid size={{xs: 12, sm: 6, md: 3}} key={card.title}>
-                        {/* Note: If SummaryCard only takes numbers, pass string-based margins separately */}
-                        <SummaryCard
+                        <ProductionSummaryCard
                             index={index}
                             title={card.title}
                             value={card.value}

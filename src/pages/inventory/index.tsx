@@ -49,7 +49,6 @@ const InventoryManagement = () => {
     });
 
     const [formModalOpen, setFormModalOpen] = useState(false);
-    const [productionModalOpen, setProductionModalOpen] = useState(false);
     const [adjustStockModalOpen, setAdjustStockModalOpen] = useState(false);
 
     const [selectedRow, setSelectedRow] = useState<InventoryType | null>(null);
@@ -63,14 +62,6 @@ const InventoryManagement = () => {
         setSelectedRow(null);
     };
 
-    const openProductionFormModal = () => {
-        setProductionModalOpen(true);
-    };
-
-    const closeProductionFormModal = () => {
-        setProductionModalOpen(false);
-        setSelectedRow(null);
-    };
 
     const handleCloseFormModal = () => {
         setFormModalOpen(false);

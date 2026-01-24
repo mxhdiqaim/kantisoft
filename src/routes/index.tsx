@@ -206,12 +206,6 @@ export const appRoutes: AppRouteType[] = [
                 element: ActivityLogScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
-            // {
-            //     to: "production",
-            //     title: "Production",
-            //     element: ProductionScreen,
-            //     roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-            // },
             {
                 to: "wastage-analysis",
                 title: "Wastage Analysis",
@@ -231,8 +225,8 @@ export const appRoutes: AppRouteType[] = [
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
         children: [
             {
-                to: "run",
-                title: "Run Production",
+                to: "Overview",
+                title: "Production",
                 element: ProductionScreen,
                 roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
             },
