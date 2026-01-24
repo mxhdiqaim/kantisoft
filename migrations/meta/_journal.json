@@ -141,6 +141,13 @@
       "when": 1769075432833,
       "tag": "0019_narrow_pixie",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1769255479836,
+      "tag": "0020_slimy_captain_flint",
+      "breakpoints": true
     }
   ]
 }
