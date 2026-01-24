@@ -14,7 +14,7 @@ import {
     MenuItemScreen,
     NotFoundScreen,
     PointOfSaleScreen,
-    ProductionAnalysisScreen,
+    ProductionScreen,
     ProfileScreen,
     RawMaterialInventoryScreen,
     RawMaterialInventoryTransactionScreen,
@@ -206,9 +206,9 @@ export const appRoutes: AppRouteType[] = [
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
             {
-                to: "production-analysis",
-                title: "Production Analysis",
-                element: ProductionAnalysisScreen,
+                to: "production",
+                title: "Production",
+                element: ProductionScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
         ]

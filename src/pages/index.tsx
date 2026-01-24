@@ -45,4 +45,4 @@ export {default as BillOfMaterialsScreen} from "./menu-item/bom"; // Recipe defi
 export {default as UnitOfMeasurementsScreen} from "./raw-materials/unit-of-measurements.tsx"; // Units of measurement
 
 // Production screens
-export {default as ProductionAnalysisScreen} from "./production/production-analysis.tsx"
+export {default as ProductionScreen} from "./production"

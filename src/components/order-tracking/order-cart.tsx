@@ -1,5 +1,5 @@
 import type {CartItem} from "@/types/cart-item-type";
-import {ngnFormatter} from "@/utils";
+import {formatCurrency} from "@/utils";
 import {Add, Delete, Remove} from "@mui/icons-material";
 import {Box, Divider, IconButton, List, ListItem, ListItemText, Typography, useTheme} from "@mui/material";
 import CustomButton from "@/components/ui/button.tsx";
@@ -49,7 +49,7 @@ const OrderCart = ({cartItems, onUpdateQuantity, onRemoveItem, onOpenPaymentDial
                                 >
                                     <ListItemText
                                         primary={item.name}
-                                        secondary={`Subtotal: ${ngnFormatter.format(item.price * item.quantity)}`}
+                                        secondary={`Subtotal: ${formatCurrency(item.price * item.quantity)}`}
                                         slotProps={{
                                             primary: {
                                                 sx: {
@@ -81,7 +81,7 @@ const OrderCart = ({cartItems, onUpdateQuantity, onRemoveItem, onOpenPaymentDial
                     <Divider/>
                     <Box sx={{mt: 2}}>
                         <Typography variant="h3" color={theme.palette.success.main} mt={1}>
-                            Total: {ngnFormatter.format(total)}{" "}
+                            Total: {formatCurrency(total)}{" "}
                         </Typography>
                     </Box>
                 </>

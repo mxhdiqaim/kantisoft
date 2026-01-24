@@ -3,6 +3,7 @@ import type {UserRoleType, UserType} from "@/types/user-types";
 import type {ChipProps} from "@mui/material";
 import {useEffect} from "react";
 import {useLocation} from "react-router-dom";
+import {format} from "date-fns";
 
 // fixes scroll behaviour on route change
 export const ScrollToTop = () => {
@@ -150,4 +151,25 @@ export const camelCaseToTitleCase = (str: string) => {
 
     // Capitalise the first letter of the resulting string
     return result.charAt(0).toUpperCase() + result.slice(1);
+};
+
+/**
+ * Custom date formatter for specific display variants.
+ * @param date - Date object, string, or number
+ * @param variant - 'short' (21 Dec, 2025) or 'long' (21 December 2025)
+ */
+export const formatDateCustom = (
+    date: Date | string | number | null | undefined,
+    variant: "short" | "long" = "short",
+): string => {
+    if (!date) return "";
+
+    const dateObj = new Date(date);
+
+    // d = Day (21)
+    // MMM = Short Month (Dec) | MMMM = Long Month (December)
+    // yyyy = Year (2025)
+    const pattern = variant === "short" ? "d MMM, yyyy" : "d MMMM, yyyy";
+
+    return format(dateObj, pattern);
 };

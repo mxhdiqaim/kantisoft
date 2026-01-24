@@ -3,7 +3,7 @@ import {selectCurrentUser} from "@/store/slice/auth-slice";
 import {selectActiveStore} from "@/store/slice/store-slice";
 import type {CartItem} from "@/types/cart-item-type";
 import {createOrderSchema, type CreateOrderType} from "@/types/order-types.ts";
-import {ngnFormatter} from "@/utils";
+import {formatCurrency} from "@/utils";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {DialogActions, FormControl, FormControlLabel, FormHelperText, Radio, RadioGroup,} from "@mui/material";
 import {useEffect} from "react";
@@ -111,7 +111,7 @@ const PaymentModal = ({open, onClose, onCompleteSale, cartItems, isLoading}: Pro
             open={open}
             onClose={onClose}
             title={"Payment"}
-            description={`Total Amount: ${ngnFormatter.format(total)}`}
+            description={`Total Amount: ${formatCurrency(total)}`}
         >
             <form onSubmit={handleSubmit(onSubmit)}>
                 <FormControl component="fieldset" error={!!errors.paymentMethod}>
@@ -145,7 +145,7 @@ const PaymentModal = ({open, onClose, onCompleteSale, cartItems, isLoading}: Pro
                     {/*            )}*/}
                     {/*        />*/}
                     {/*        <Typography sx={{ mt: 1 }}>*/}
-                    {/*            Change: {change > 0 ? ngnFormatter.format(change) : "NGN 0.00"}*/}
+                    {/*            Change: {formatCurrency(change)}*/}
                     {/*        </Typography>*/}
                     {/*    </>*/}
                     {/*)}*/}

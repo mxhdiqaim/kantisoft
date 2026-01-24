@@ -1,6 +1,6 @@
-import {Box, Card, CircularProgress, Grid, Typography, useTheme} from '@mui/material';
+import {Box, CircularProgress, Grid, Typography, useTheme} from '@mui/material';
 import {AccountBalanceWalletOutlined, KitchenOutlined, ReceiptLong, TrendingUp} from '@mui/icons-material';
-import {useGetProductionSummaryQuery} from '@/store/slice';
+import {useGetProductionLogsQuery, useGetProductionSummaryQuery} from '@/store/slice';
 import SummaryCard from "@/components/dashboard/summary-card"; // Reuse your existing component
 import {useForm} from "react-hook-form";
 import OverviewHeader from "@/components/ui/custom-header.tsx";
@@ -8,9 +8,18 @@ import {filterSchema, type TimePeriod} from "@/types";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {relativeTime} from "@/utils/get-relative-time.ts";
 import {useEffect, useState} from "react";
+import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+import DataGridTable from "@/components/ui/data-grid-table";
+import type {GridColDef} from "@mui/x-data-grid";
+import {formatCurrency, formatDateCustom} from "@/utils";
+import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
 
-const ProductionAnalysisScreen = () => {
+const ProductionScreen = () => {
     const theme = useTheme();
+
+    const {data, isLoading: isFetchingProductionLogs} = useGetProductionLogsQuery();
+
+    const productionLogsData = useMemoizedArray(data);
 
     const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
         mode: "onChange",
@@ -60,7 +69,94 @@ const ProductionAnalysisScreen = () => {
         }
     ];
 
-    if (isLoading) return <Box sx={{p: 5, textAlign: 'center'}}><CircularProgress/></Box>;
+    const columns: GridColDef[] = [
+        {
+            flex: 1,
+            field: 'batchReference',
+            headerName: 'Batch ID',
+            minWidth: 180,
+            align: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{params.value}</Typography>
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: 'itemName',
+            headerName: 'Menu Item',
+            minWidth: 150,
+            align: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{params.value}</Typography>
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: 'quantityProduced',
+            headerName: 'Qty Produced',
+            minWidth: 150,
+            align: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{params.value}</Typography>
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: 'totalCost',
+            headerName: 'Ingredient Cost',
+            minWidth: 150,
+            align: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{formatCurrency(params.value)}</Typography>
+                </TableStyledBox>
+            )
+        },
+        {
+            flex: 1,
+            field: 'revenueValue',
+            headerName: 'Potential Value',
+            minWidth: 150,
+            align: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{formatCurrency(params.value)}</Typography>
+                </TableStyledBox>
+            )
+        },
+        {
+            flex: 1,
+            field: 'performedBy',
+            headerName: 'Chef',
+            minWidth: 150,
+            align: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{params.value}</Typography>
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: 'createdAt',
+            headerName: 'Date',
+            minWidth: 150,
+            align: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{formatDateCustom(params.value)}</Typography>
+                </TableStyledBox>
+            ),
+        },
+    ];
+
+    if (isLoading || isFetchingProductionLogs) return <Box sx={{p: 5, textAlign: 'center'}}><CircularProgress/></Box>;
 
     if (isError) {
         return (
@@ -75,11 +171,8 @@ const ProductionAnalysisScreen = () => {
             <Box sx={{mx: "auto"}}>
                 <OverviewHeader
                     title={"Productions"}
-                    // timePeriod={period}
                     control={control}
-                    // getTimeTitle={getTitle}
                     name={"timePeriod"}
-                    // timeTitle={""}
                 />
                 <Box sx={{display: "flex", justifyContent: "flex-end"}}>
                     <Typography
@@ -113,27 +206,13 @@ const ProductionAnalysisScreen = () => {
                 ))}
             </Grid>
 
-            {/* Analysis Section */}
-            <Grid container spacing={3}>
-                <Grid size={{xs: 12, md: 6}}>
-                    <Card sx={{p: 3, borderRadius: theme.borderRadius.medium}}>
-                        <Typography variant="h6" gutterBottom>Production Efficiency</Typography>
-                        <Typography variant="body2" sx={{mb: 2}}>
-                            This period, your kitchen converted raw materials into finished goods with a
-                            <strong> {summary?.grossProductionMargin} </strong> margin.
-                        </Typography>
-                        <Box sx={{p: 2, bgcolor: theme.palette.grey[50], borderRadius: 1}}>
-                            <Typography variant="caption" display="block">Insight:</Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                If your Production Margin is significantly lower than your Sales Margin, check for high
-                                raw material waste or inaccurate ingredient portions in the BOM.
-                            </Typography>
-                        </Box>
-                    </Card>
+            <Grid container spacing={2}>
+                <Grid size={12}>
+                    <DataGridTable data={productionLogsData} loading={isFetchingProductionLogs} columns={columns}/>
                 </Grid>
             </Grid>
         </Box>
     );
 };
 
-export default ProductionAnalysisScreen;
+export default ProductionScreen;
