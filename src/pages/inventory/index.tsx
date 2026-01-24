@@ -319,7 +319,7 @@ const InventoryManagement = () => {
 
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData ?? []} columns={columns} loading={isLoading}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
                 </Grid>
             </Grid>
             <CreateInventoryRecord open={formModalOpen} onClose={handleCloseFormModal}/>
@@ -329,7 +329,7 @@ const InventoryManagement = () => {
                 <ProductionModal
                     open={productionModalOpen}
                     onClose={closeProductionFormModal}
-                    menuItem={{id: selectedRow.id, name: selectedRow.name}}
+                    menuItem={{menuItemId: selectedRow.menuItemId, menuItem: selectedRow.menuItem}}
                 />
             )}
         </>

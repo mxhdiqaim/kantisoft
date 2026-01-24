@@ -137,6 +137,7 @@ export const apiSlice = createApi({
     tagTypes: [
         "Order",
         "MenuItem",
+        "MenuItems",
         "User",
         "users",
         "Summary",
@@ -311,8 +312,8 @@ export const apiSlice = createApi({
             transformResponse: (response: { data: MenuItemType[] }) => response.data,
             providesTags: (result) =>
                 result
-                    ? [...result.map(({id}) => ({type: "MenuItem" as const, id})), {type: "MenuItem", id: "LIST"}]
-                    : [{type: "MenuItem", id: "LIST"}],
+                    ? [...result.map(({id}) => ({type: "MenuItems" as const, id})), {type: "MenuItems", id: "LIST"}]
+                    : [{type: "MenuItems", id: "LIST"}],
         }),
         createMenuItem: builder.mutation<MenuItemType, AddMenuItemType>({
             query: (newMenuItem) => ({
@@ -320,7 +321,7 @@ export const apiSlice = createApi({
                 method: "POST",
                 body: newMenuItem,
             }),
-            invalidatesTags: [{type: "MenuItem", id: "LIST"}],
+            invalidatesTags: [{type: "MenuItems", id: "LIST"}],
         }),
         deleteMenuItem: builder.mutation<void, string>({
             query: (id) => ({
@@ -337,7 +338,7 @@ export const apiSlice = createApi({
             }),
             invalidatesTags: (_result, _error, {id}) => [
                 {type: "MenuItem", id},
-                {type: "MenuItem", id: "LIST"},
+                {type: "MenuItems", id: "LIST"},
             ],
         }),
 
@@ -693,7 +694,7 @@ export const apiSlice = createApi({
                 method: 'POST',
                 body,
             }),
-            invalidatesTags: ['Inventory', 'RawMaterialStock'],
+            invalidatesTags: ['Inventory', 'RawMaterialStock', "MenuItems"],
         }),
 
         getProductionSummary: builder.query<any, TimePeriod>({

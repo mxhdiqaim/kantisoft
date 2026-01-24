@@ -8,11 +8,12 @@ import CustomModal from "@/components/customs/custom-modal.tsx";
 import {StyledTextField} from "@/components/ui";
 import CustomButton from "@/components/ui/button.tsx";
 import {getApiError} from "@/helpers/get-api-error.ts";
+import type {InventoryType} from "@/types/inventory-types.ts";
 
 interface Props {
     open: boolean;
     onClose: () => void;
-    menuItem: { id: string; name: string };
+    menuItem: Pick<InventoryType, "menuItemId" | "menuItem">;
 }
 
 const ProductionModal = ({open, onClose, menuItem}: Props) => {
@@ -34,13 +35,13 @@ const ProductionModal = ({open, onClose, menuItem}: Props) => {
 
     const onSubmit = async (data: ProductionRequestType) => {
         try {
-            await runProduction({menuItemId: menuItem.id, ...data}).unwrap();
-            notify(`Successfully produced ${data.quantityToProduce} units of ${menuItem.name}`, "success");
+            await runProduction({menuItemId: menuItem.menuItemId, ...data}).unwrap();
+            notify(`Successfully produced ${data.quantityToProduce} units of ${menuItem.menuItem.name}`, "success");
 
             reset();
             onClose();
         } catch (error) {
-            const defaultMessage = `Failed to make production for ${menuItem.name}.`;
+            const defaultMessage = `Failed to make production for ${menuItem.menuItem.name}.`;
             const apiError = getApiError(error, defaultMessage);
 
             notify(apiError.message, "error");
