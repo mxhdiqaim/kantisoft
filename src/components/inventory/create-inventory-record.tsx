@@ -12,6 +12,7 @@ import CustomButton from "@/components/ui/button.tsx";
 import {StyledTextField} from "@/components/ui";
 import Icon from "@/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
+import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 
 interface Props {
     open: boolean;
@@ -20,7 +21,10 @@ interface Props {
 
 const CreateInventoryRecord: FC<Props> = ({open, onClose}) => {
     const notify = useNotifier();
+
     const {data: menuItemsData, isLoading: isLoadingMenuItems} = useGetMenuItemsQuery({});
+    const memoizedMenuItems = useMemoizedArray(menuItemsData);
+
     const [createInventory, {isLoading, isSuccess, reset: resetMutation}] = useCreateInventoryRecordMutation();
 
     const {
@@ -98,7 +102,7 @@ const CreateInventoryRecord: FC<Props> = ({open, onClose}) => {
                                         <MenuItem value={""} disabled>
                                             Select Menu Item
                                         </MenuItem>
-                                        {menuItemsData?.map((menuItem) => (
+                                        {memoizedMenuItems?.map((menuItem) => (
                                             <MenuItem key={menuItem.id} value={menuItem.id}
                                                       sx={{textTransform: "capitalize"}}>
                                                 {menuItem.name}

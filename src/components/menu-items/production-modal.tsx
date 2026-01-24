@@ -1,5 +1,5 @@
-import {Box, CircularProgress, Grid, Stack, Typography} from '@mui/material';
-import {useRunProductionMutation} from '@/store/slice';
+import {Box, CircularProgress, FormControl, Grid, InputAdornment, MenuItem, Stack, Typography} from '@mui/material';
+import {useGetMenuItemsQuery, useRunProductionMutation} from '@/store/slice';
 import useNotifier from '@/hooks/useNotifier';
 import {Controller, useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
@@ -8,17 +8,22 @@ import CustomModal from "@/components/customs/custom-modal.tsx";
 import {StyledTextField} from "@/components/ui";
 import CustomButton from "@/components/ui/button.tsx";
 import {getApiError} from "@/helpers/get-api-error.ts";
-import type {InventoryType} from "@/types/inventory-types.ts";
+import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+
+import Icon from "@/components/ui/icon.tsx";
+import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
     open: boolean;
     onClose: () => void;
-    menuItem: Pick<InventoryType, "menuItemId" | "menuItem">;
 }
 
-const ProductionModal = ({open, onClose, menuItem}: Props) => {
+const ProductionModal = ({open, onClose}: Props) => {
     const notify = useNotifier();
     const [runProduction, {isLoading: isProducing}] = useRunProductionMutation();
+
+    const {data: menuItemsData, isLoading: isLoadingMenuItems} = useGetMenuItemsQuery({});
+    const memoizedMenuItems = useMemoizedArray(menuItemsData);
 
     const {
         control,
@@ -35,13 +40,13 @@ const ProductionModal = ({open, onClose, menuItem}: Props) => {
 
     const onSubmit = async (data: ProductionRequestType) => {
         try {
-            await runProduction({menuItemId: menuItem.menuItemId, ...data}).unwrap();
-            notify(`Successfully produced ${data.quantityToProduce} units of ${menuItem.menuItem.name}`, "success");
+            await runProduction(data).unwrap();
+            notify(`Successfully produced ${data.quantityToProduce} units.`, "success");
 
             reset();
             onClose();
         } catch (error) {
-            const defaultMessage = `Failed to make production for ${menuItem.menuItem.name}.`;
+            const defaultMessage = `Failed to make production.`;
             const apiError = getApiError(error, defaultMessage);
 
             notify(apiError.message, "error");
@@ -56,6 +61,49 @@ const ProductionModal = ({open, onClose, menuItem}: Props) => {
             </Typography>
             <Box component={"form"} onSubmit={handleSubmit(onSubmit)}>
                 <Grid container spacing={2}>
+                    <Grid size={12}>
+                        <Controller
+                            name="menuItemId"
+                            control={control}
+                            render={({field}) => (
+                                <FormControl fullWidth>
+                                    <StyledTextField
+                                        {...field}
+                                        select
+                                        label="Select Menu Item"
+                                        disabled={isLoadingMenuItems}
+                                        SelectProps={{
+                                            IconComponent: () => null,
+                                            endAdornment: (
+                                                <InputAdornment position="end">
+                                                    <Icon
+                                                        src={ArrowDownIconSvg}
+                                                        alt={"Dropdown Arrow"}
+                                                        sx={{width: 15, height: 15}}
+                                                    />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        error={Boolean(errors.menuItemId)}
+                                        helperText={errors.menuItemId?.message}
+                                    >
+                                        <MenuItem value={""} disabled>
+                                            Select Menu Item
+                                        </MenuItem>
+                                        {memoizedMenuItems?.map((menuItem) => (
+                                            <MenuItem
+                                                key={menuItem.id}
+                                                value={menuItem.id}
+                                                sx={{textTransform: "capitalize"}}
+                                            >
+                                                {menuItem.name}
+                                            </MenuItem>
+                                        ))}
+                                    </StyledTextField>
+                                </FormControl>
+                            )}
+                        />
+                    </Grid>
                     <Grid size={12}>
                         <Controller
                             name="quantityToProduce"

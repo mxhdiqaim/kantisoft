@@ -3,22 +3,25 @@ import {AccountBalanceWalletOutlined, KitchenOutlined, ReceiptLong, TrendingUp} 
 import {useGetProductionLogsQuery, useGetProductionSummaryQuery} from '@/store/slice';
 import SummaryCard from "@/components/dashboard/summary-card"; // Reuse your existing component
 import {useForm} from "react-hook-form";
-import OverviewHeader from "@/components/ui/custom-header.tsx";
 import {filterSchema, type TimePeriod} from "@/types";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {relativeTime} from "@/utils/get-relative-time.ts";
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import DataGridTable from "@/components/ui/data-grid-table";
 import type {GridColDef} from "@mui/x-data-grid";
 import {formatCurrency, formatDateCustom} from "@/utils";
 import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
+import ProductionModal from "@/components/menu-items/production-modal.tsx";
+import CustomButton from "@/components/ui/button.tsx";
+import PeriodSelector from "@/components/ui/period-selector.tsx";
 
 const ProductionScreen = () => {
     const theme = useTheme();
 
-    const {data, isLoading: isFetchingProductionLogs} = useGetProductionLogsQuery();
+    const [productionModalOpen, setProductionModalOpen] = useState(false);
 
+    const {data, isLoading: isFetchingProductionLogs} = useGetProductionLogsQuery();
     const productionLogsData = useMemoizedArray(data);
 
     const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
@@ -35,12 +38,13 @@ const ProductionScreen = () => {
 
     const {data: summary, isLoading, isError, fulfilledTimeStamp} = useGetProductionSummaryQuery(period);
 
-    useEffect(() => {
-        if (fulfilledTimeStamp) {
-            setLastFetched(new Date(fulfilledTimeStamp));
-        }
-    }, [fulfilledTimeStamp]);
+    const openProductionFormModal = () => {
+        setProductionModalOpen(true);
+    };
 
+    const closeProductionFormModal = () => {
+        setProductionModalOpen(false);
+    };
 
     const cards = [
         {
@@ -69,7 +73,7 @@ const ProductionScreen = () => {
         }
     ];
 
-    const columns: GridColDef[] = [
+    const columns: GridColDef[] = useMemo(() => [
         {
             flex: 1,
             field: 'batchReference',
@@ -154,7 +158,13 @@ const ProductionScreen = () => {
                 </TableStyledBox>
             ),
         },
-    ];
+    ], []);
+
+    useEffect(() => {
+        if (fulfilledTimeStamp) {
+            setLastFetched(new Date(fulfilledTimeStamp));
+        }
+    }, [fulfilledTimeStamp]);
 
     if (isLoading || isFetchingProductionLogs) return <Box sx={{p: 5, textAlign: 'center'}}><CircularProgress/></Box>;
 
@@ -169,11 +179,21 @@ const ProductionScreen = () => {
     return (
         <Box>
             <Box sx={{mx: "auto"}}>
-                <OverviewHeader
-                    title={"Productions"}
-                    control={control}
-                    name={"timePeriod"}
-                />
+                <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2}}>
+                    <Typography variant={"h5"}>Productions</Typography>
+                    <Box sx={{display: "flex", alignItems: "center"}}>
+                        <CustomButton
+                            variant={"contained"}
+                            title={"Make Production"}
+                            onClick={openProductionFormModal}
+                            sx={{mr: 1}}
+                        />
+                        <PeriodSelector
+                            control={control}
+                            name={"timePeriod"}
+                        />
+                    </Box>
+                </Box>
                 <Box sx={{display: "flex", justifyContent: "flex-end"}}>
                     <Typography
                         variant="h6"
@@ -211,6 +231,11 @@ const ProductionScreen = () => {
                     <DataGridTable data={productionLogsData} loading={isFetchingProductionLogs} columns={columns}/>
                 </Grid>
             </Grid>
+
+            <ProductionModal
+                open={productionModalOpen}
+                onClose={closeProductionFormModal}
+            />
         </Box>
     );
 };

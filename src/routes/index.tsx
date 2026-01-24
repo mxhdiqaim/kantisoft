@@ -29,9 +29,10 @@ import {
     ViewSalesHistoryScreen,
     ViewStoreScreen,
     ViewUserScreen,
+    WastageAnalysisScreen,
 } from "@/pages";
 import {type UserRole, UserRoleEnum} from "@/types/user-types";
-import {DashboardOutlined} from "@mui/icons-material";
+import {DashboardOutlined, KitchenOutlined} from "@mui/icons-material";
 import AddAlertOutlinedIcon from "@mui/icons-material/AddAlertOutlined";
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 import RestaurantMenuOutlinedIcon from "@mui/icons-material/RestaurantMenuOutlined";
@@ -205,12 +206,42 @@ export const appRoutes: AppRouteType[] = [
                 element: ActivityLogScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
+            // {
+            //     to: "production",
+            //     title: "Production",
+            //     element: ProductionScreen,
+            //     roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+            // },
             {
-                to: "production",
-                title: "Production",
-                element: ProductionScreen,
+                to: "wastage-analysis",
+                title: "Wastage Analysis",
+                element: WastageAnalysisScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+            }
+        ]
+    },
+
+    // ---------------------------------
+    // KITCHEN & PRODUCTION (Operations)
+    // ---------------------------------
+    {
+        to: "/production",
+        title: "Kitchen Ops",
+        icon: <KitchenOutlined/>,
+        roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
+        children: [
+            {
+                to: "run",
+                title: "Run Production",
+                element: ProductionScreen,
+                roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
             },
+            // {
+            //     to: "wastage",
+            //     title: "Wastage Entry",
+            //     element: RecordWastageScreen, // Dedicated entry screen
+            //     roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
+            // },
         ]
     },
 

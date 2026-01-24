@@ -1,26 +1,20 @@
 import {type Control, Controller, type FieldValues, type Path} from "react-hook-form";
 import {Box, FormControl, InputAdornment, MenuItem, Typography} from "@mui/material";
-// import type {TimePeriod} from "@/types";
+import {StyledTextField} from "@/components/ui/index.tsx";
+
 import Icon from "@/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
-import {StyledTextField} from "@/components/ui/index.tsx";
 
 type Props<T extends FieldValues> = {
     title: string;
-    // timePeriod: TimePeriod;
-    // getTimeTitle: (timePeriod: TimePeriod) => string;
     control: Control<T>;
     name: Path<T>;
-    // timeTitle?: string;
 };
 
 const OverviewHeader = <T extends FieldValues>({
                                                    title,
-                                                   // timePeriod,
-                                                   // getTimeTitle,
                                                    control,
                                                    name,
-                                                   // timeTitle
                                                }: Props<T>) => (
     <Box
         sx={{
@@ -39,9 +33,6 @@ const OverviewHeader = <T extends FieldValues>({
             }}
         >
             <Box sx={{display: "flex", alignItems: "center", gap: 2}}>
-                <Typography variant="h4" component="h1">
-                    {/*{getTimeTitle(timePeriod)}&apos;s {timeTitle}*/}
-                </Typography>
                 <Controller
                     name={name}
                     control={control}

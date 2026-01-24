@@ -25,7 +25,6 @@ import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 
 import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import ProductionModal from "@/components/menu-items/production-modal.tsx";
 
 const InventoryManagement = () => {
     const {t} = useTranslation();
@@ -33,14 +32,16 @@ const InventoryManagement = () => {
     const currentUser = useSelector(selectCurrentUser);
     const notify = useNotifier();
     const navigate = useNavigate();
+
     const {data: inventoryData, isLoading, isError, error} = useGetAllInventoryQuery();
+    const memoizedInventories = useMemoizedArray(inventoryData);
+
     const [markAsDiscontinued, {isLoading: isDiscontinuing}] = useMarkAsDiscontinuedMutation();
     const [deleteInventoryRecord, {isLoading: isDeleting}] = useDeleteInventoryRecordMutation();
 
     const canInteract = currentUser?.status === UserStatusEnum.ACTIVE &&
         (currentUser?.role === UserRoleEnum.ADMIN || currentUser?.role === UserRoleEnum.MANAGER);
 
-    const memoizedInventories = useMemoizedArray(inventoryData);
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
         initialData: memoizedInventories,
@@ -114,7 +115,7 @@ const InventoryManagement = () => {
         }
     };
 
-    const columns: GridColDef<InventoryType>[] = useMemo(() => [
+    const columns: GridColDef[] = useMemo(() => [
         {
             flex: 1,
             field: "menuItem",
@@ -122,7 +123,6 @@ const InventoryManagement = () => {
             minWidth: 150,
             align: "left",
             headerAlign: "left",
-            // valueGetter: (params) => params.row.menuItem?.name ?? "",
             renderCell: (params) => (
                 <TableStyledBox
                     sx={{cursor: 'pointer', ":hover": {textDecoration: "underline"}}}
@@ -227,12 +227,12 @@ const InventoryManagement = () => {
                             </Tooltip>
                         }
                     >
-                        <TableStyledMenuItem
-                            onClick={openProductionFormModal}
-                            sx={{borderRadius: theme.borderRadius.small, mx: 1}}
-                        >
-                            Produce
-                        </TableStyledMenuItem>
+                        {/*<TableStyledMenuItem*/}
+                        {/*    onClick={openProductionFormModal}*/}
+                        {/*    sx={{borderRadius: theme.borderRadius.small, mx: 1}}*/}
+                        {/*>*/}
+                        {/*    Produce*/}
+                        {/*</TableStyledMenuItem>*/}
                         <TableStyledMenuItem
                             onClick={handleOpenAdjustStockModal}
                             sx={{borderRadius: theme.borderRadius.small, mx: 1}}
@@ -324,14 +324,6 @@ const InventoryManagement = () => {
             </Grid>
             <CreateInventoryRecord open={formModalOpen} onClose={handleCloseFormModal}/>
             <AdjustStock open={adjustStockModalOpen} onClose={handleCloseAdjustStockModal} inventoryItem={selectedRow}/>
-
-            {selectedRow && (
-                <ProductionModal
-                    open={productionModalOpen}
-                    onClose={closeProductionFormModal}
-                    menuItem={{menuItemId: selectedRow.menuItemId, menuItem: selectedRow.menuItem}}
-                />
-            )}
         </>
     );
 };

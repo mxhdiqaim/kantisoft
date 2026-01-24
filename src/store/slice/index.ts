@@ -158,7 +158,8 @@ export const apiSlice = createApi({
         "RawMaterialTransactions",
         "BOM",
         "RawMaterialStock",
-        "ProductionSummary"
+        "ProductionSummary",
+        "ProductionWastageSummary",
     ],
     endpoints: (builder) => ({
         // -------------------------
@@ -689,11 +690,17 @@ export const apiSlice = createApi({
         // -------------------------
         getProductionLogs: builder.query<any[], void>({
             query: () => "/production/logs",
-            
+
             providesTags: ["ProductionSummary"],
         }),
 
-        runProduction: builder.mutation<void, ProductionRequestType & { menuItemId: string }>({
+        getProductionWastageSummary: builder.query<any[], void>({
+            query: () => "/production/wastage/summary",
+
+            providesTags: ["ProductionWastageSummary"],
+        }),
+
+        runProduction: builder.mutation<void, ProductionRequestType>({
             query: (body) => ({
                 url: '/production',
                 method: 'POST',
@@ -798,6 +805,7 @@ export const {
 
     // Production Hooks
     useGetProductionLogsQuery,
+    useGetProductionWastageSummaryQuery,
     useRunProductionMutation,
     useGetProductionSummaryQuery,
 

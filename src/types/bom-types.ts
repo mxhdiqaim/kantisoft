@@ -27,7 +27,7 @@ export type DefineBomSchemaType = yup.InferType<typeof defineBomSchema>;
 // { menuItemId: string; quantityToProduce: number }
 
 export const productionRequestSchema = yup.object({
-    // menuItemId: yup.string().uuid().required("Menu Item is required."),
+    menuItemId: yup.string().uuid().required("Menu Item is required."),
     quantityToProduce: yup.number().positive("Quantity to produce must be greater than zero.").required("Quantity to produce is required.").typeError("Quantity to produce must be a valid number."),
 });
 

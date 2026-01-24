@@ -46,3 +46,4 @@ export {default as UnitOfMeasurementsScreen} from "./raw-materials/unit-of-measu
 
 // Production screens
 export {default as ProductionScreen} from "./production"
+export {default as WastageAnalysisScreen} from "./production/wastage-analysis.tsx"
