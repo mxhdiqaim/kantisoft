@@ -13,7 +13,10 @@ import { nanoid } from "nanoid";
 import { UnitConversionService } from "../service/unit-conversion-service";
 import { InventoryAdjustmentService } from "../service/raw-material-inventory-adjustment-service";
 import { users } from "../schema/users-schema";
-import { productions } from "../schema/production-schema"; // For generating a production batch ID
+import { productions } from "../schema/production-schema";
+import { inventory } from "../schema/inventory-schema";
+import { rawMaterialTransactions } from "../schema/raw-materials-schema/raw-material-stock-transaction-schema";
+import { rawMaterials } from "../schema/raw-materials-schema"; // For generating a production batch ID
 
 
 /**
@@ -106,6 +109,7 @@ export const getProductionSummary = async (req: CustomRequest, res: Response) =>
         return handleError2(res, 'Could not generate production summary', StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
     }
 };
+
 /**
  * @description Executes a production run for a menu item, deducting all required raw materials.
  * @route POST /api/v1/production
@@ -146,12 +150,16 @@ export const runProduction = async (req: CustomRequest, res: Response) => {
             productionQty
         );
 
+        // Fetch the updated inventory for the item to return to the UI
+        const updatedStock = await db.query.inventory.findFirst({
+            where: eq(inventory.menuItemId, menuItemId)
+        });
+
         // Return Success Response
         return res.status(StatusCodes.OK).json({
-            message: `Production of ${productionQty} units completed successfully.`,
-            menuItemId: menuItemId,
-            productionBatchId: productionBatchId,
-            storeId: storeId,
+            message: `Production completed`,
+            newQuantity: updatedStock?.quantity || 0,
+            batchId: productionBatchId,
         });
 
     } catch (error: any) {
@@ -257,5 +265,40 @@ export const recordWastage = async (req: CustomRequest, res: Response) => {
 
     } catch (error) {
         return handleError2(res, "Failed to complete the action", StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
+    }
+};
+
+/**
+ * @description Generates a summary of wastage by reason and cost.
+ * @route GET /api/v1/production/wastage/summary
+ */
+export const getWastageSummary = async (req: CustomRequest, res: Response) => {
+    try {
+        const validated = await validateStoreAndExtractDates(req, res);
+        if (!validated) return;
+
+        const { storeIds, finalStartDate, finalEndDate } = validated;
+
+        // Group wastage by reason and calculate total cost impact
+        const wastageStats = await db.select({
+            reason: rawMaterialTransactions.notes, // Or use a dedicated column if you add one
+            totalLost: sql<number>`SUM(ABS(${rawMaterialTransactions.quantityBase}))`,
+            financialLoss: sql<number>`SUM(ABS(${rawMaterialTransactions.quantityBase}) * ${rawMaterials.latestUnitPrice})`
+        })
+            .from(rawMaterialTransactions)
+            .innerJoin(rawMaterials, eq(rawMaterialTransactions.rawMaterialId, rawMaterials.id))
+            .where(
+                and(
+                    inArray(rawMaterialTransactions.storeId, storeIds),
+                    eq(rawMaterialTransactions.source, RawMaterialTransactionSourceEnum.WASTAGE),
+                    gte(rawMaterialTransactions.createdAt, finalStartDate!),
+                    lte(rawMaterialTransactions.createdAt, finalEndDate!)
+                )
+            )
+            .groupBy(rawMaterialTransactions.notes);
+
+        return res.status(StatusCodes.OK).json(wastageStats);
+    } catch (error) {
+        return handleError2(res, 'Could not generate wastage report', StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
     }
 };
