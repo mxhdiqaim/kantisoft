@@ -3,7 +3,7 @@ import {useGetProductionLogsQuery} from '@/store/slice';
 import {useForm} from "react-hook-form";
 import {filterSchema, type TimePeriod} from "@/types";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {relativeTime} from "@/utils/get-relative-time.ts";
+// import {relativeTime} from "@/utils/get-relative-time.ts";
 import {useMemo, useState} from "react";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import DataGridTable from "@/components/ui/data-grid-table";
@@ -33,7 +33,7 @@ const ProductionScreen = () => {
     });
 
 
-    const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
+    const {control, /*watch */} = useForm<{ timePeriod: TimePeriod }>({
         mode: "onChange",
         resolver: yupResolver(filterSchema),
         defaultValues: {
@@ -41,9 +41,9 @@ const ProductionScreen = () => {
         },
     });
 
-    const period = watch("timePeriod");
+    // const period = watch("timePeriod");
 
-    const [lastFetched, setLastFetched] = useState<Date | null>(null);
+    // const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
     // const {data: summary, isLoading, isError, fulfilledTimeStamp} = useGetProductionSummaryQuery(period);
 
@@ -207,21 +207,21 @@ const ProductionScreen = () => {
                         />
                     </Box>
                 </Box>
-                <Box sx={{display: "flex", justifyContent: "flex-end"}}>
-                    <Typography
-                        variant="h6"
-                        component="span"
-                        color="text.secondary"
-                        align="right"
-                        mb={1}
-                        sx={{
-                            fontWeight: 400,
-                            textAlign: "right",
-                        }}
-                    >
-                        {lastFetched ? `Last updated ${relativeTime(lastFetched)}` : "Fetching data..."}
-                    </Typography>
-                </Box>
+                {/*<Box sx={{display: "flex", justifyContent: "flex-end"}}>*/}
+                {/*    <Typography*/}
+                {/*        variant="h6"*/}
+                {/*        component="span"*/}
+                {/*        color="text.secondary"*/}
+                {/*        align="right"*/}
+                {/*        mb={1}*/}
+                {/*        sx={{*/}
+                {/*            fontWeight: 400,*/}
+                {/*            textAlign: "right",*/}
+                {/*        }}*/}
+                {/*    >*/}
+                {/*        {lastFetched ? `Last updated ${relativeTime(lastFetched)}` : "Fetching data..."}*/}
+                {/*    </Typography>*/}
+                {/*</Box>*/}
             </Box>
 
             <TableSearchActions
