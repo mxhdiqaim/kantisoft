@@ -1,11 +1,11 @@
 import {Box, CircularProgress, Grid, Typography} from '@mui/material';
-import {useGetProductionLogsQuery, useGetProductionSummaryQuery} from '@/store/slice';
+import {useGetProductionLogsQuery} from '@/store/slice';
 import {useForm} from "react-hook-form";
 import {filterSchema, type TimePeriod} from "@/types";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {relativeTime} from "@/utils/get-relative-time.ts";
-import {useEffect, useMemo, useState} from "react";
-import {useMemoizedArray, useMemoizedObject} from "@/hooks/use-memoized-array.ts";
+import {useMemo, useState} from "react";
+import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import DataGridTable from "@/components/ui/data-grid-table";
 import type {GridColDef} from "@mui/x-data-grid";
 import {formatCurrency, formatDateCustom} from "@/utils";
@@ -45,11 +45,11 @@ const ProductionScreen = () => {
 
     const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
-    const {data: summary, isLoading, isError, fulfilledTimeStamp} = useGetProductionSummaryQuery(period);
+    // const {data: summary, isLoading, isError, fulfilledTimeStamp} = useGetProductionSummaryQuery(period);
 
-    const memoizedSummary = useMemoizedObject(summary);
+    // const memoizedSummary = useMemoizedObject(summary);
 
-    console.log("Production memoizedSummary:", memoizedSummary);
+    // console.log("Production memoizedSummary:", memoizedSummary);
 
     const openProductionFormModal = () => {
         setProductionModalOpen(true);
@@ -173,21 +173,21 @@ const ProductionScreen = () => {
         },
     ], []);
 
-    useEffect(() => {
-        if (fulfilledTimeStamp) {
-            setLastFetched(new Date(fulfilledTimeStamp));
-        }
-    }, [fulfilledTimeStamp]);
+    // useEffect(() => {
+    //     if (fulfilledTimeStamp) {
+    //         setLastFetched(new Date(fulfilledTimeStamp));
+    //     }
+    // }, [fulfilledTimeStamp]);
 
-    if (isLoading || isFetchingProductionLogs) return <Box sx={{p: 5, textAlign: 'center'}}><CircularProgress/></Box>;
+    if (isFetchingProductionLogs) return <Box sx={{p: 5, textAlign: 'center'}}><CircularProgress/></Box>;
 
-    if (isError) {
-        return (
-            <Typography color="error" align="center" sx={{mt: 4}}>
-                Failed to load sales history. Please try again later.
-            </Typography>
-        );
-    }
+    // if (isError) {
+    //     return (
+    //         <Typography color="error" align="center" sx={{mt: 4}}>
+    //             Failed to load sales history. Please try again later.
+    //         </Typography>
+    //     );
+    // }
 
     return (
         <Box>
