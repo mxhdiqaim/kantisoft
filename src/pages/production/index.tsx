@@ -1,5 +1,4 @@
-import {Box, CircularProgress, Grid, Typography, useTheme} from '@mui/material';
-import {AccountBalanceWalletOutlined, KitchenOutlined, ReceiptLong, TrendingUp} from '@mui/icons-material';
+import {Box, CircularProgress, Grid, Typography} from '@mui/material';
 import {useGetProductionLogsQuery, useGetProductionSummaryQuery} from '@/store/slice';
 import {useForm} from "react-hook-form";
 import {filterSchema, type TimePeriod} from "@/types";
@@ -14,15 +13,25 @@ import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx
 import ProductionModal from "@/components/menu-items/production-modal.tsx";
 import CustomButton from "@/components/ui/button.tsx";
 import PeriodSelector from "@/components/ui/period-selector.tsx";
-import ProductionSummaryCard from "@/components/production/production-summary-card.tsx";
+import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
+import {useSearch} from "@/use-search.ts";
+// import ProductionSummaryCard from "@/components/production/production-summary-card.tsx";
+
+// import {AccountBalanceWalletOutlined, KitchenOutlined, ReceiptLong, TrendingUp} from '@mui/icons-material';
 
 const ProductionScreen = () => {
-    const theme = useTheme();
+    // const theme = useTheme();
 
     const [productionModalOpen, setProductionModalOpen] = useState(false);
 
     const {data, isLoading: isFetchingProductionLogs} = useGetProductionLogsQuery();
-    const productionLogsData = useMemoizedArray(data);
+    const memoizedProductionLogs = useMemoizedArray(data);
+
+    const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
+        initialData: memoizedProductionLogs,
+        searchKeys: ["name", "storeType", "location"],
+    });
+
 
     const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
         mode: "onChange",
@@ -50,32 +59,32 @@ const ProductionScreen = () => {
         setProductionModalOpen(false);
     };
 
-    const summaryCards = [
-        {
-            title: "Cost of Ingredients",
-            value: memoizedSummary.totalCostOfIngredients || 0,
-            icon: <ReceiptLong/>,
-            color: theme.palette.error.main, // Represents money spent
-        },
-        {
-            title: "Potential Revenue Created",
-            value: memoizedSummary?.potentialRevenueCreated || 0,
-            icon: <TrendingUp/>,
-            color: theme.palette.success.main, // Represents value added
-        },
-        {
-            title: "Items Produced",
-            value: memoizedSummary?.itemsProducedCount || 0,
-            icon: <KitchenOutlined/>,
-            color: theme.palette.info.main,
-        },
-        {
-            title: "Production Margin",
-            value: memoizedSummary?.grossProductionMargin || "0%",
-            icon: <AccountBalanceWalletOutlined/>,
-            color: theme.palette.warning.main,
-        }
-    ];
+    // const summaryCards = [
+    //     {
+    //         title: "Cost of Ingredients",
+    //         value: memoizedSummary.totalCostOfIngredients || 0,
+    //         icon: <ReceiptLong/>,
+    //         color: theme.palette.error.main, // Represents money spent
+    //     },
+    //     {
+    //         title: "Potential Revenue Created",
+    //         value: memoizedSummary?.potentialRevenueCreated || 0,
+    //         icon: <TrendingUp/>,
+    //         color: theme.palette.success.main, // Represents value added
+    //     },
+    //     {
+    //         title: "Items Produced",
+    //         value: memoizedSummary?.itemsProducedCount || 0,
+    //         icon: <KitchenOutlined/>,
+    //         color: theme.palette.info.main,
+    //     },
+    //     {
+    //         title: "Production Margin",
+    //         value: memoizedSummary?.grossProductionMargin || "0%",
+    //         icon: <AccountBalanceWalletOutlined/>,
+    //         color: theme.palette.warning.main,
+    //     }
+    // ];
 
     const columns: GridColDef[] = useMemo(() => [
         {
@@ -215,23 +224,32 @@ const ProductionScreen = () => {
                 </Box>
             </Box>
 
-            <Grid container spacing={3} mb={4}>
-                {summaryCards.map((card, index) => (
-                    <Grid size={{xs: 12, sm: 6, md: 3}} key={card.title}>
-                        <ProductionSummaryCard
-                            index={index}
-                            title={card.title}
-                            value={card.value}
-                            icon={card.icon}
-                            color={card.color}
-                        />
-                    </Grid>
-                ))}
-            </Grid>
+            <TableSearchActions
+                searchControl={searchControl}
+                searchSubmit={searchSubmit}
+                handleSearch={handleSearch}
+                placeholder={"Search by name, type or location"}
+                // onExportCsv={handleExportCsv}
+                // onExportXlsx={handleExportXlsx}
+            />
+
+            {/*<Grid container spacing={3} mb={4}>*/}
+            {/*    {summaryCards.map((card, index) => (*/}
+            {/*        <Grid size={{xs: 12, sm: 6, md: 3}} key={card.title}>*/}
+            {/*            <ProductionSummaryCard*/}
+            {/*                index={index}*/}
+            {/*                title={card.title}*/}
+            {/*                value={card.value}*/}
+            {/*                icon={card.icon}*/}
+            {/*                color={card.color}*/}
+            {/*            />*/}
+            {/*        </Grid>*/}
+            {/*    ))}*/}
+            {/*</Grid>*/}
 
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={productionLogsData} loading={isFetchingProductionLogs} columns={columns}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isFetchingProductionLogs}/>
                 </Grid>
             </Grid>
 
