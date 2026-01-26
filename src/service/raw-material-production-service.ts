@@ -2,7 +2,7 @@ import db from "../db";
 import { billOfMaterials } from "../schema/bill-of-materials-schema";
 import { rawMaterials } from "../schema/raw-materials-schema";
 import { and, eq } from "drizzle-orm";
-import { InventoryAdjustmentService } from "./raw-material-inventory-adjustment-service";
+import { RawMaterialInventoryAdjustmentService } from "./raw-material-inventory-adjustment-service";
 import {
     RawMaterialTransactionSourceEnum,
     TransactionTypeEnum,
@@ -83,7 +83,7 @@ export const RawMaterialProductionService = {
                 totalBatchCost += ingredientCost;
 
                 // Deduct Raw Materials
-                await InventoryAdjustmentService.processRawMaterialStockOut(
+                await RawMaterialInventoryAdjustmentService.processRawMaterialStockOut(
                     tx,
                     {
                         rawMaterialId: item.rawMaterialId,
@@ -105,14 +105,17 @@ export const RawMaterialProductionService = {
                 .where(eq(productions.id, productionRecord.id));
 
             // Add Finished Menu Items to Inventory
-            await InventoryAdjustmentService.processMenuItemStockIn(tx, {
-                menuItemId,
-                storeId,
-                quantity: quantityToProduce,
-                notes: `Batch: ${productionBatchId}`,
-                performedBy: userId,
-                // Pass productionRecord.id as sourceDocumentId inside the adjustment service
-            });
+            await RawMaterialInventoryAdjustmentService.processMenuItemStockIn(
+                tx,
+                {
+                    menuItemId,
+                    storeId,
+                    quantity: quantityToProduce,
+                    notes: `Batch: ${productionBatchId}`,
+                    performedBy: userId,
+                    // Pass productionRecord.id as sourceDocumentId inside the adjustment service
+                },
+            );
         });
     },
 };

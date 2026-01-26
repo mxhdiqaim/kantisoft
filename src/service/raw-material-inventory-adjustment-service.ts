@@ -16,7 +16,7 @@ import { rawMaterials } from "../schema/raw-materials-schema";
 /**
  * Service to handle all atomic inventory adjustments (IN or OUT).
  */
-export const InventoryAdjustmentService = {
+export const RawMaterialInventoryAdjustmentService = {
     /**
      * Executes an atomic inventory update, logging the transaction and updating the inventory Master record.
      * @param transaction The raw transaction data from the controller.
@@ -130,12 +130,15 @@ export const InventoryAdjustmentService = {
             notes: string;
         },
     ) {
-        // 1. Get the material name using Standard API to avoid the 'referencedTable' error
+        console.log({ data });
+        // Get the material name using Standard API to avoid the 'referencedTable' error
         const [materialInfo] = await tx
             .select({ name: rawMaterials.name })
             .from(rawMaterials)
             .where(eq(rawMaterials.id, data.rawMaterialId))
             .limit(1);
+
+        console.log({ materialInfo });
 
         // Update Inventory Master FIRST to get the new total
         const [updated] = await tx
@@ -153,6 +156,8 @@ export const InventoryAdjustmentService = {
                 ),
             )
             .returning();
+
+        console.log({ updated });
 
         // Material doesn't even exist in the warehouse
         if (!updated) {

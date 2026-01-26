@@ -29,6 +29,7 @@ export const validateStoreAndExtractDates = async (
             "User must belong to a store and have a defined role to access this feature.",
             StatusCodes.FORBIDDEN,
         );
+        
         return null;
     }
 
