@@ -30,6 +30,17 @@ export const getProductionLogs = async (req: CustomRequest, res: Response) => {
 
         const { storeIds, finalStartDate, finalEndDate } = validated;
 
+        // Build the base conditions (Store filtering is mandatory)
+        const conditions = [inArray(productions.storeId, storeIds)];
+
+        // Only add date filters if they exist (prevents the toISOString error)
+        if (finalStartDate) {
+            conditions.push(gte(productions.createdAt, finalStartDate));
+        }
+        if (finalEndDate) {
+            conditions.push(lte(productions.createdAt, finalEndDate));
+        }
+
         const logs = await db.select({
             id: productions.id,
             batchReference: productions.batchReference,
@@ -43,13 +54,7 @@ export const getProductionLogs = async (req: CustomRequest, res: Response) => {
             .from(productions)
             .innerJoin(menuItems, eq(productions.menuItemId, menuItems.id))
             .leftJoin(users, eq(productions.performedBy, users.id))
-            .where(
-                and(
-                    inArray(productions.storeId, storeIds),
-                    gte(productions.createdAt, finalStartDate!),
-                    lte(productions.createdAt, finalEndDate!)
-                )
-            )
+            .where(and(...conditions)) // Spread the array of conditions
             .orderBy(desc(productions.createdAt));
 
         return res.status(StatusCodes.OK).json(logs);
@@ -70,6 +75,10 @@ export const getProductionSummary = async (req: CustomRequest, res: Response) =>
 
         const { storeIds, finalStartDate, finalEndDate } = validated;
 
+        const conditions = [inArray(productions.storeId, storeIds)];
+        if (finalStartDate) conditions.push(gte(productions.createdAt, finalStartDate));
+        if (finalEndDate) conditions.push(lte(productions.createdAt, finalEndDate));
+
         // One clean query to get all aggregates
         const stats = await db.select({
             totalCost: sql<number>`SUM(${productions.totalIngredientCost})`,
@@ -78,13 +87,7 @@ export const getProductionSummary = async (req: CustomRequest, res: Response) =>
             batchCount: sql<number>`COUNT(${productions.id})`
         })
             .from(productions)
-            .where(
-                and(
-                    inArray(productions.storeId, storeIds),
-                    gte(productions.createdAt, finalStartDate!),
-                    lte(productions.createdAt, finalEndDate!)
-                )
-            );
+            .where(and(...conditions));
 
         const totalCost = Number(stats[0]?.totalCost || 0);
         const totalValue = Number(stats[0]?.totalValue || 0);

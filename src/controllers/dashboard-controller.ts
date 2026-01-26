@@ -65,10 +65,6 @@ export const getSalesSummary = async (req: CustomRequest, res: Response) => {
 
         res.status(StatusCodes.OK).json(salesSummary);
     } catch (error) {
-        // console.error(
-        //     `Error fetching sales summary for period ${period}:`,
-        //     error,
-        // );
         return handleError2(
             res,
             `Failed to retrieve sales summary.`,
@@ -182,7 +178,7 @@ export const getSalesTrend = async (req: CustomRequest, res: Response) => {
         const { storeIds, finalStartDate, finalEndDate, periodUsed, storeQueryType } = validated;
 
 
-        // Handle 'all-time' period by grouping by month
+        // Handle the 'all-time' period by grouping by month
         if (periodUsed === "all-time") {
             const salesTrendByMonth = await db
                 .select({
@@ -258,7 +254,7 @@ export const getSalesTrend = async (req: CustomRequest, res: Response) => {
         // CRITICAL FIX: Combine base where with storeId filter
         // const whereClause = and(baseWhere, eq(orders.storeId, userStoreId));
 
-        // Group by day using PostgreSQL's TO_CHAR for formatting date
+        // Group by day using PostgresSQL's TO_CHAR for formatting date
         const salesTrend = await db
             .select({
                 date: sql<string>`TO_CHAR(${orders.orderDate}, 'YYYY-MM-DD') AS date`,
@@ -453,7 +449,7 @@ export const getMenuProfitMargins = async (req: CustomRequest, res: Response) =>
                     totalCost: Number(totalCost.toFixed(2)),
                     grossProfit: Number(grossProfit.toFixed(2)),
                     marginPercentage: Number(marginPercentage.toFixed(2)),
-                    // 🚩 Business Insight: Alert if margin is below industry standard (typically 60-70%)
+                    // 🚩 Business Insight: Alert if the margin is below an industry standard (typically 60-70%)
                     status: marginPercentage < 35 ? "LOW_MARGIN" : "HEALTHY"
                 };
             }));
