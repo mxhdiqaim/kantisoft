@@ -21,17 +21,6 @@ import {Controller, useForm} from "react-hook-form";
 import {useNavigate} from "react-router-dom";
 import CustomButton from "@/components/ui/button.tsx";
 
-// const defaultValues: RegisterUserType = {
-//     firstName: "",
-//     lastName: "",
-//     email: "",
-//     password: "",
-//     confirmPassword: "",
-//     phone: "",
-//     storeName: "",
-//     storeType: STORE_TYPES[0],
-// };
-
 const Register = () => {
     const navigate = useNavigate();
     const notify = useNotifier();

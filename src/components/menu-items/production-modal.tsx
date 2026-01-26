@@ -3,7 +3,7 @@ import {useGetMenuItemsQuery, useRunProductionMutation} from '@/store/slice';
 import useNotifier from '@/hooks/useNotifier';
 import {Controller, useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {productionRequestSchema, type ProductionRequestType} from "@/types/bom-types.ts";
+import {createProductionSchema, type CreateProductionType} from "@/types/production-types.ts";
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import {StyledTextField} from "@/components/ui";
 import CustomButton from "@/components/ui/button.tsx";
@@ -35,10 +35,10 @@ const ProductionModal = ({open, onClose}: Props) => {
             quantityToProduce: 1
         },
 
-        resolver: yupResolver(productionRequestSchema),
+        resolver: yupResolver(createProductionSchema),
     });
 
-    const onSubmit = async (data: ProductionRequestType) => {
+    const onSubmit = async (data: CreateProductionType) => {
         try {
             await runProduction(data).unwrap();
             notify(`Successfully produced ${data.quantityToProduce} units.`, "success");

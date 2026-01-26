@@ -14,6 +14,7 @@ import CustomButton from "@/components/ui/button.tsx";
 import PeriodSelector from "@/components/ui/period-selector.tsx";
 import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
 import {useSearch} from "@/use-search.ts";
+import WastageFormModal from "@/components/menu-items/wastage-form-modal.tsx";
 // import ProductionSummaryCard from "@/components/production/production-summary-card.tsx";
 
 // import {AccountBalanceWalletOutlined, KitchenOutlined, ReceiptLong, TrendingUp} from '@mui/icons-material';
@@ -22,6 +23,7 @@ const ProductionScreen = () => {
     // const theme = useTheme();
 
     const [productionModalOpen, setProductionModalOpen] = useState(false);
+    const [wastageModalOpen, setWastageModalOpen] = useState(false);
 
     const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
         mode: "onChange",
@@ -55,6 +57,10 @@ const ProductionScreen = () => {
 
     const closeProductionFormModal = () => {
         setProductionModalOpen(false);
+    };
+
+    const closeWastageFormModal = () => {
+        setWastageModalOpen(false);
     };
 
     // const summaryCards = [
@@ -193,11 +199,16 @@ const ProductionScreen = () => {
                 <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2}}>
                     <Typography variant={"h5"}>Productions</Typography>
 
-                    <Box sx={{display: "flex"}}>
+                    <Box sx={{display: "flex", gap: 2}}>
                         <CustomButton
                             variant={"contained"}
                             title={"Make Production"}
                             onClick={openProductionFormModal}
+                        />
+                        <CustomButton
+                            variant={"outlined"}
+                            title={"Record Wastage"}
+                            onClick={() => setWastageModalOpen(true)}
                         />
                     </Box>
                 </Box>
@@ -240,6 +251,11 @@ const ProductionScreen = () => {
             <ProductionModal
                 open={productionModalOpen}
                 onClose={closeProductionFormModal}
+            />
+
+            <WastageFormModal
+                open={wastageModalOpen}
+                onClose={closeWastageFormModal}
             />
         </Box>
     );
