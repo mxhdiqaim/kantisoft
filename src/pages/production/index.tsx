@@ -3,8 +3,7 @@ import {useGetProductionLogsQuery} from '@/store/slice';
 import {useForm} from "react-hook-form";
 import {filterSchema, type TimePeriod} from "@/types";
 import {yupResolver} from "@hookform/resolvers/yup";
-// import {relativeTime} from "@/utils/get-relative-time.ts";
-import {useMemo, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import DataGridTable from "@/components/ui/data-grid-table";
 import type {GridColDef} from "@mui/x-data-grid";
@@ -24,16 +23,7 @@ const ProductionScreen = () => {
 
     const [productionModalOpen, setProductionModalOpen] = useState(false);
 
-    const {data, isLoading: isFetchingProductionLogs} = useGetProductionLogsQuery();
-    const memoizedProductionLogs = useMemoizedArray(data);
-
-    const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
-        initialData: memoizedProductionLogs,
-        searchKeys: ["name", "storeType", "location"],
-    });
-
-
-    const {control, /*watch */} = useForm<{ timePeriod: TimePeriod }>({
+    const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
         mode: "onChange",
         resolver: yupResolver(filterSchema),
         defaultValues: {
@@ -41,9 +31,17 @@ const ProductionScreen = () => {
         },
     });
 
-    // const period = watch("timePeriod");
+    const period = watch("timePeriod");
 
-    // const [lastFetched, setLastFetched] = useState<Date | null>(null);
+    const [lastFetched, setLastFetched] = useState<Date | null>(null);
+
+    const {data, isLoading: isFetchingProductionLogs, isError, fulfilledTimeStamp} = useGetProductionLogsQuery(period);
+    const memoizedProductionLogs = useMemoizedArray(data);
+
+    const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
+        initialData: memoizedProductionLogs,
+        searchKeys: ["itemName", "batchReference", "performedBy"],
+    });
 
     // const {data: summary, isLoading, isError, fulfilledTimeStamp} = useGetProductionSummaryQuery(period);
 
@@ -173,65 +171,51 @@ const ProductionScreen = () => {
         },
     ], []);
 
-    // useEffect(() => {
-    //     if (fulfilledTimeStamp) {
-    //         setLastFetched(new Date(fulfilledTimeStamp));
-    //     }
-    // }, [fulfilledTimeStamp]);
+    useEffect(() => {
+        if (fulfilledTimeStamp) {
+            setLastFetched(new Date(fulfilledTimeStamp));
+        }
+    }, [fulfilledTimeStamp]);
 
     if (isFetchingProductionLogs) return <Box sx={{p: 5, textAlign: 'center'}}><CircularProgress/></Box>;
 
-    // if (isError) {
-    //     return (
-    //         <Typography color="error" align="center" sx={{mt: 4}}>
-    //             Failed to load sales history. Please try again later.
-    //         </Typography>
-    //     );
-    // }
+    if (isError) {
+        return (
+            <Typography color="error" align="center" sx={{mt: 4}}>
+                Request failed. Please try again later.
+            </Typography>
+        );
+    }
 
     return (
         <Box>
             <Box sx={{mx: "auto"}}>
                 <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2}}>
                     <Typography variant={"h5"}>Productions</Typography>
-                    <Box sx={{display: "flex", alignItems: "center"}}>
+
+                    <Box sx={{display: "flex"}}>
                         <CustomButton
                             variant={"contained"}
                             title={"Make Production"}
                             onClick={openProductionFormModal}
-                            sx={{mr: 1}}
-                        />
-                        <PeriodSelector
-                            control={control}
-                            name={"timePeriod"}
                         />
                     </Box>
                 </Box>
-                {/*<Box sx={{display: "flex", justifyContent: "flex-end"}}>*/}
-                {/*    <Typography*/}
-                {/*        variant="h6"*/}
-                {/*        component="span"*/}
-                {/*        color="text.secondary"*/}
-                {/*        align="right"*/}
-                {/*        mb={1}*/}
-                {/*        sx={{*/}
-                {/*            fontWeight: 400,*/}
-                {/*            textAlign: "right",*/}
-                {/*        }}*/}
-                {/*    >*/}
-                {/*        {lastFetched ? `Last updated ${relativeTime(lastFetched)}` : "Fetching data..."}*/}
-                {/*    </Typography>*/}
-                {/*</Box>*/}
             </Box>
 
             <TableSearchActions
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}
-                placeholder={"Search by name, type or location"}
-                // onExportCsv={handleExportCsv}
-                // onExportXlsx={handleExportXlsx}
-            />
+                placeholder={"Search by Batch ID, item name or chef..."}
+                sx={{mb: 4}}
+            >
+                <PeriodSelector
+                    control={control}
+                    name={"timePeriod"}
+                    lastFetched={lastFetched}
+                />
+            </TableSearchActions>
 
             {/*<Grid container spacing={3} mb={4}>*/}
             {/*    {summaryCards.map((card, index) => (*/}
