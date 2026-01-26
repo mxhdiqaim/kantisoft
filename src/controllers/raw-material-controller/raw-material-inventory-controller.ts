@@ -4,14 +4,14 @@ import { CustomRequest } from "../../types/express";
 import { handleError2 } from "../../service/error-handling";
 import { StatusCodes } from "http-status-codes";
 import db from "../../db";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, notInArray, sql } from "drizzle-orm";
 import {rawMaterialInventory} from "../../schema/raw-materials-schema/raw-material-inventory-schema";
 import {rawMaterials} from "../../schema/raw-materials-schema";
 import {unitOfMeasurement} from "../../schema/unit-of-measurement-schema";
 import {UnitConversionService} from "../../service/unit-conversion-service";
 import { RawMaterialTransactionSource, rawMaterialTransactionSourceEnum } from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
 import { RawMaterialTransactionSourceEnum, TransactionTypeEnum, UserRoleEnum } from "../../types/enums";
-import {InventoryAdjustmentService} from "../../service/raw-material-inventory-adjustment-service";
+import {RawMaterialInventoryAdjustmentService} from "../../service/raw-material-inventory-adjustment-service";
 import { determineFinalStoreId } from "../../utils/store-permission-utils";
 import { generateStockReference } from "../../utils/generate-stock-reference";
 
@@ -492,7 +492,7 @@ export const stockInRawMaterialInventory = async (req: CustomRequest, res: Respo
         };
 
         // Process Adjustment via Service
-        const updatedInventory = await InventoryAdjustmentService.processStockAdjustment(
+        const updatedInventory = await RawMaterialInventoryAdjustmentService.processStockAdjustment(
             transactionData,
             quantity, // Presentation quantity
             unitOfMeasurementId // Presentation unit ID
@@ -523,4 +523,45 @@ export const stockInRawMaterialInventory = async (req: CustomRequest, res: Respo
             error instanceof Error ? error : undefined
         );
     }
+};
+
+/**
+ * @description Gets raw materials that are NOT yet in the store's inventory
+ * Useful for the "Add new item to shelf" UI
+ * @route GET /api/v1/raw-materials/inventory/unstocked
+ * @access Admin, Manager
+ */
+export const getUnstockedMaterials = async (req: CustomRequest, res: Response) => {
+   try {
+       const currentUser = req.user?.data;
+       const storeId = currentUser?.storeId;
+
+       if (!storeId) {
+           return handleError2(
+               res,
+               'User does not belong to a store or user ID is missing. Please contact support if you believe this is an error.',
+               StatusCodes.BAD_REQUEST
+           );
+       }
+
+
+       // Subquery: Get all IDs already in inventory for this store
+       const stockedIds = db.select({ id: rawMaterialInventory.rawMaterialId })
+           .from(rawMaterialInventory)
+           .where(eq(rawMaterialInventory.storeId, storeId));
+
+       // Main Query: Get materials NOT in that list
+       const availableToStock = await db.select()
+           .from(rawMaterials)
+           .where(notInArray(rawMaterials.id, stockedIds));
+
+       return res.status(StatusCodes.OK).json(availableToStock);
+   } catch (error) {
+       return handleError2(
+           res,
+           'A server error occurred while getting the unstocked materials.',
+           StatusCodes.INTERNAL_SERVER_ERROR,
+           error instanceof Error ? error : undefined
+       );
+   }
 };

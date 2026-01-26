@@ -5,6 +5,7 @@ const router = Express.Router();
 
 router.get("/", controller.getAllRawMaterialInventory);
 router.get("/:id", controller.getCurrentRawMaterialInventoryStock);
+router.get("/unstocked", controller.getUnstockedMaterials);
 router.patch("/:id", controller.updateRawMaterialInventoryRecord);
 router.post("/create", controller.createRawMaterialInventoryRecord);
 router.post("/:id/stock-in", controller.stockInRawMaterialInventory);

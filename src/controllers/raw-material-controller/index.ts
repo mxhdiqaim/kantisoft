@@ -7,9 +7,10 @@ import {StatusCodes} from "http-status-codes";
 import db from "../../db";
 import { UnitConversionService } from "../../service/unit-conversion-service";
 import { unitOfMeasurement } from "../../schema/unit-of-measurement-schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import {RawMaterialStatusEnum, UserRoleEnum} from "../../types/enums";
 import {determineFinalStoreId} from "../../utils/store-permission-utils";
+import { validateStoreAndExtractDates } from "../../utils/validate-store-dates";
 
 
 /**
@@ -18,22 +19,18 @@ import {determineFinalStoreId} from "../../utils/store-permission-utils";
  * @access Admin, Manager
  */
 export const getAllRawMaterial = async (req: CustomRequest, res: Response) => {
-    const currentUser = req.user?.data;
-    const storeId = currentUser?.storeId;
+    const validated = await validateStoreAndExtractDates(req, res);
+    if (!validated) return; // Error already handled
 
-    if (!storeId) {
+    const { storeIds: finalStoreIds } = validated;
+
+    if (!finalStoreIds) {
         return handleError2(
             res,
             'User does not have an associated store.',
             StatusCodes.BAD_REQUEST
         )
     }
-
-    const userRole = currentUser?.role;
-    const { targetStoreId } = req.query;
-
-    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-    if (!finalStoreId) return;  // Error already handled
 
     try {
         // We join rawMaterials with unitOfMeasurement to get the presentation unit details needed for the display conversion.
@@ -59,7 +56,7 @@ export const getAllRawMaterial = async (req: CustomRequest, res: Response) => {
                 eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id)
             )
             .where(and(
-                eq(rawMaterials.storeId, finalStoreId),
+                inArray(rawMaterials.storeId, finalStoreIds),
                 eq(rawMaterials.status, RawMaterialStatusEnum.ACTIVE)
             ))
             .execute();
@@ -122,10 +119,12 @@ export const getAllRawMaterial = async (req: CustomRequest, res: Response) => {
  * @access Admin, Manager
  */
 export const getSingleRawMaterial = async (req: CustomRequest, res: Response) => {
-    const currentUser = req.user?.data;
-    const storeId = currentUser?.storeId;
+    const validated = await validateStoreAndExtractDates(req, res);
+    if (!validated) return; // Error already handled
 
-    if (!storeId) {
+    const { storeIds } = validated;
+
+    if (!storeIds) {
         return handleError2(
             res,
             'User does not have an associated store.',
@@ -143,13 +142,6 @@ export const getSingleRawMaterial = async (req: CustomRequest, res: Response) =>
             StatusCodes.BAD_REQUEST
         );
     }
-
-    const userRole = currentUser?.role;
-    const { targetStoreId } = req.query;
-
-    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-    if (!finalStoreId) return;  // Error already handled
-
 
     try {
         // We select the necessary fields and join with the unit of the measurement table.
@@ -175,7 +167,7 @@ export const getSingleRawMaterial = async (req: CustomRequest, res: Response) =>
                 eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id)
             )
             .where(and(
-                eq(rawMaterials.storeId, finalStoreId),
+                inArray(rawMaterials.storeId, storeIds),
                 eq(rawMaterials.id, rawMaterialId),
                 eq(rawMaterials.status, RawMaterialStatusEnum.ACTIVE)
             ))

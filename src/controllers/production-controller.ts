@@ -6,17 +6,18 @@ import { StatusCodes } from "http-status-codes";
 import {RawMaterialProductionService} from "../service/raw-material-production-service";
 import db from "../db";
 import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
-import { RawMaterialTransactionSourceEnum, TransactionTypeEnum } from "../types/enums";
+import { RawMaterialTransactionSourceEnum, TransactionTypeEnum, UserRoleEnum } from "../types/enums";
 import { menuItems } from "../schema/menu-items-schema";
 import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 import { nanoid } from "nanoid";
 import { UnitConversionService } from "../service/unit-conversion-service";
-import { InventoryAdjustmentService } from "../service/raw-material-inventory-adjustment-service";
+import { RawMaterialInventoryAdjustmentService } from "../service/raw-material-inventory-adjustment-service";
 import { users } from "../schema/users-schema";
 import { productions } from "../schema/production-schema";
 import { inventory } from "../schema/inventory-schema";
 import { rawMaterialTransactions } from "../schema/raw-materials-schema/raw-material-stock-transaction-schema";
-import { rawMaterials } from "../schema/raw-materials-schema"; // For generating a production batch ID
+import { rawMaterials } from "../schema/raw-materials-schema";
+import { determineFinalStoreId } from "../utils/store-permission-utils"; // For generating a production batch ID
 
 
 /**
@@ -208,34 +209,42 @@ export const runProduction = async (req: CustomRequest, res: Response) => {
  * @route POST /api/v1/production/wastage
  */
 export const recordWastage = async (req: CustomRequest, res: Response) => {
-    const currentUser = req.user?.data;
-    const storeId = currentUser?.storeId;
-    const userId = currentUser?.id;
-
-    if (!userId) {
-        return handleError2(
-            res,
-            'User not found',
-            StatusCodes.BAD_REQUEST
-        );
-    }
-
-    if (!storeId) {
-        return handleError2(
-            res,
-            'User does not have an associated store.',
-            StatusCodes.BAD_REQUEST
-        );
-    }
-
-    const { rawMaterialId, quantityPresentation, unitOfMeasurementId, reason } = req.body;
-
-    if (!rawMaterialId || !quantityPresentation || !unitOfMeasurementId) {
-        return handleError2(res, 'Missing required wastage data.', StatusCodes.BAD_REQUEST);
-    }
-
     try {
+        const currentUser = req.user?.data;
+        const storeId = currentUser?.storeId;
+
+        if (!storeId) {
+            return handleError2(
+                res,
+                'User does not have an associated store.',
+                StatusCodes.BAD_REQUEST
+            );
+        }
+
+        const userId = currentUser?.id;
+
+        if (!userId) {
+            return handleError2(
+                res,
+                'User not found',
+                StatusCodes.BAD_REQUEST
+            );
+        }
+
+        const userRole = currentUser?.role;
+        const { targetStoreId } = req.query;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;  // Error already handled
+
+        const { rawMaterialId, quantityPresentation, unitOfMeasurementId, reason } = req.body;
+
+        if (!rawMaterialId || !quantityPresentation || !unitOfMeasurementId) {
+            return handleError2(res, 'Missing required wastage data.', StatusCodes.BAD_REQUEST);
+        }
         const wasteBatchId = `WASTE-${nanoid(8)}`;
+
+        console.log("Recording wastage:")
 
         await db.transaction(async (tx) => {
             // Convert the wasted amount to Base Units (e.g. 2 kg -> 2000 g)
@@ -247,11 +256,13 @@ export const recordWastage = async (req: CustomRequest, res: Response) => {
                 unitRecord
             );
 
+            console.log({ quantityBase });
+
             // Use our existing service to deduct stock
             // We use 'wastage' as the source so it shows up correctly in reports
-            await InventoryAdjustmentService.processRawMaterialStockOut(tx, {
+            await RawMaterialInventoryAdjustmentService.processRawMaterialStockOut(tx, {
                 rawMaterialId,
-                storeId,
+                storeId: finalStoreId,
                 userId,
                 type: TransactionTypeEnum.GOING_OUT,
                 source: RawMaterialTransactionSourceEnum.WASTAGE,
