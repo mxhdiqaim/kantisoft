@@ -13,8 +13,7 @@ import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 import { TIMEZONE } from "../constant";
 import { billOfMaterials } from "../schema/bill-of-materials-schema";
 import { rawMaterials } from "../schema/raw-materials-schema";
-import { determineFinalStoreId } from "../utils/store-permission-utils";
-import { UserRoleEnum } from "../types/enums";
+import { InventoryTransactionTypeEnum } from "../types/enums";
 
 /**
  * @description Get core sales summary metrics (Revenue, Order Count, Avg Order Value)
@@ -327,12 +326,12 @@ export const getInventoryValuationAndHealth = async (
         // Construct the base WHERE clause with the store ID
         let whereClause: SQL | undefined = inArray(inventory.storeId, storeIds);
 
-        // ADD DATE FILTERING (e.g. filtering inventory records by last modified date)
+        // ADD DATE FILTERING (e.g. filtering inventory records by the last modified date)
         if (finalStartDate && finalEndDate) {
             whereClause = and(
                 whereClause,
-                gte(inventory.lastModified, finalStartDate), // Filter records modified AFTER start date
-                lte(inventory.lastModified, finalEndDate),   // Filter records modified BEFORE end date
+                gte(inventory.lastModified, finalStartDate), // Filter records modified AFTER the start date
+                lte(inventory.lastModified, finalEndDate),   // Filter records modified end date BEFORE
             );
 
             // TODO: will add filter by 'inventory.lastCountDate'
@@ -364,7 +363,7 @@ export const getInventoryValuationAndHealth = async (
             totalInventoryValue += quantity * price;
 
             // Count health status
-            if (quantity > 0 && item.status !== "discontinued") {
+            if (quantity > 0 && item.status !== InventoryTransactionTypeEnum.DISCONTINUED) {
                 inStockItemsCount++;
             }
             if (quantity <= 0) {
