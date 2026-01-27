@@ -1,7 +1,7 @@
-import Receipt from "@/components/sales-history/receipt";
-import ViewSalesHistoryLoading from "@/components/sales-history/spinners/view-sales-history-loading";
+import Receipt from "@/components/sales-history/receipt.tsx";
+import ViewSalesHistoryLoading from "@/components/sales-history/spinners/view-sales-history-loading.tsx";
 import {useGetAllStoresQuery, useGetOrderByIdQuery} from "@/store/slice";
-import {selectActiveStore, setActiveStore} from "@/store/slice/store-slice";
+import {selectActiveStore, setActiveStore} from "@/store/slice/store-slice.ts";
 import {ArrowBackIosNewOutlined, LocalPrintshopOutlined} from "@mui/icons-material";
 import {Box, Typography} from "@mui/material";
 import {useEffect, useRef} from "react";

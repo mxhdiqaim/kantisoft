@@ -50,7 +50,12 @@ import type {
     UpdateRawMaterialType
 } from "@/types/raw-material-types.ts";
 import type {BomTypes, DefineBomSchemaType} from "@/types/bom-types.ts";
-import type {CreateProductionType, CreateWastageType, ProductionType} from "@/types/production-types.ts";
+import type {
+    CreateProductionType,
+    CreateWastageType,
+    ProductionType,
+    ProductionWastageSummaryType
+} from "@/types/production-types.ts";
 
 const baseUrl = getEnvVariable("VITE_APP_API_URL");
 
@@ -699,7 +704,7 @@ export const apiSlice = createApi({
             providesTags: ["ProductionLogs"],
         }),
 
-        getProductionWastageSummary: builder.query<any[], void>({
+        getProductionWastageSummary: builder.query<ProductionWastageSummaryType[], void>({
             query: () => "/production/wastage/summary",
 
             providesTags: ["ProductionWastageSummary"],

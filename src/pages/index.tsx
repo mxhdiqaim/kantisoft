@@ -4,7 +4,6 @@ export {default as DashboardScreen} from "./dashboard";
 
 // Order Tracking and Sales
 export {default as PointOfSaleScreen} from "./point-of-sale";
-export {default as SalesHistoryScreen} from "./records/sales";
 export {default as ViewSalesHistoryScreen} from "./records/sales/view-sales-history";
 export {default as MenuItemScreen} from "./menu-item";
 
@@ -46,4 +45,7 @@ export {default as UnitOfMeasurementsScreen} from "./raw-materials/unit-of-measu
 
 // Production screens
 export {default as ProductionScreen} from "./production"
-export {default as WastageAnalysisScreen} from "./production/wastage-analysis.tsx"
+
+// Records
+export {default as SalesHistoryScreen} from "./records/sales";
+export {default as WastageAnalysisScreen} from "./records/profitability-wastage.tsx"

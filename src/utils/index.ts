@@ -69,9 +69,9 @@ export const getTitle = (period: Period) => {
 };
 
 /**
- * Returns a specific MUI color for a user role to be used in Chips.
+ * Returns a specific MUI colour for a user role to be used in Chips.
  * @param {UserRoleType} role - The role of the user.
- * @returns {ChipProps['color']} A MUI color prop for the Chip component.
+ * @returns {ChipProps['color']} A MUI colour prop for the Chip component.
  */
 export const getRoleChipColor = (role: UserRoleType): ChipProps["color"] => {
     const colors: Record<UserRoleType, ChipProps["color"]> = {
@@ -172,4 +172,11 @@ export const formatDateCustom = (
     const pattern = variant === "short" ? "d MMM, yyyy" : "d MMMM, yyyy";
 
     return format(dateObj, pattern);
+};
+
+export const a11yProps = (index: number) => {
+    return {
+        id: `simple-tab-${index}`,
+        "aria-controls": `simple-tabpanel-${index}`,
+    };
 };
