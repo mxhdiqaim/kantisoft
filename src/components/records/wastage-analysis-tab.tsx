@@ -9,11 +9,11 @@ import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx
 import type {ProductionWastageSummaryType} from "@/types/production-types.ts";
 
 interface Props {
-    data: ProductionWastageSummaryType[]; // Consider creating a more specific type for your data
-    isLoading: boolean;
+    data: ProductionWastageSummaryType[];
+    loading: boolean;
 }
 
-const WastageAnalysisTab = ({data, isLoading}: Props) => {
+const WastageAnalysisTab = ({data, loading}: Props) => {
     const theme = useTheme();
     const COLORS = [theme.palette.error.main, theme.palette.warning.main, theme.palette.info.main, theme.palette.primary.main];
 
@@ -35,7 +35,7 @@ const WastageAnalysisTab = ({data, isLoading}: Props) => {
         {
             flex: 1,
             field: 'totalLost',
-            headerName: 'Qty Lost',
+            headerName: 'Total Cost',
             type: "number",
             width: 150,
             align: "left",
@@ -43,7 +43,7 @@ const WastageAnalysisTab = ({data, isLoading}: Props) => {
             renderCell: (params) => (
                 <TableStyledBox>
                     <Typography variant="body2" fontWeight="medium">
-                        {params.value}
+                        {formatCurrency(params.value)}
                     </Typography>
                 </TableStyledBox>
             ),
@@ -110,7 +110,7 @@ const WastageAnalysisTab = ({data, isLoading}: Props) => {
                 <DataGridTable
                     data={data}
                     columns={columns}
-                    loading={isLoading}
+                    loading={loading}
                     getRowId={() => Math.random().toString(36).substr(2, 9)}
                 />
             </Grid>

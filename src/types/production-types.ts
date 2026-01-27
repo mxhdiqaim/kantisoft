@@ -27,14 +27,18 @@ export const createWastageScheme = yup.object({
 
 export type CreateWastageType = yup.InferType<typeof createWastageScheme>;
 
-// {
-//     "reason": "General kitchen wastage",
-//     "totalLost": 1440,
-//     "financialLoss": 2770
-// }
-
 export type ProductionWastageSummaryType = {
     reason: string;
     totalLost: number;
     financialLoss: number;
+}
+
+export type FinishedGoodsProfitMarginType = {
+    storeQueryType: string;
+    name: string;
+    sellingPrice: number;
+    totalCost: number;
+    grossProfit: number;
+    marginPercentage: number;
+    status: "HEALTHY" | "LOW_MARGIN";
 }

@@ -53,6 +53,7 @@ import type {BomTypes, DefineBomSchemaType} from "@/types/bom-types.ts";
 import type {
     CreateProductionType,
     CreateWastageType,
+    FinishedGoodsProfitMarginType,
     ProductionType,
     ProductionWastageSummaryType
 } from "@/types/production-types.ts";
@@ -167,6 +168,7 @@ export const apiSlice = createApi({
         "ProductionLogs",
         "ProductionSummary",
         "ProductionWastageSummary",
+        "FinishedGoodsProfitMargin"
     ],
     endpoints: (builder) => ({
         // -------------------------
@@ -275,6 +277,12 @@ export const apiSlice = createApi({
                 params: {timePeriod},
             }),
             providesTags: ["SalesTrend"],
+        }),
+
+        getFinishedGoodsProfitMargin: builder.query<FinishedGoodsProfitMarginType[], void>({
+            query: () => '/dashboard/finished-goods-profit-margin',
+
+            providesTags: ["FinishedGoodsProfitMargin"],
         }),
 
         // -------------------------
@@ -736,9 +744,6 @@ export const apiSlice = createApi({
             invalidatesTags: ['RawMaterialInventories', "RawMaterialTransactions", "RawMaterials"],
         }),
 
-        // -------------------------
-        // Margins Endpoints
-        // -------------------------
         getProfitMargins: builder.query<any[], void>({
             query: () => '/catalog/margins',
         }),
@@ -770,6 +775,7 @@ export const {
     useGetSalesSummaryQuery,
     useGetTopSellsQuery,
     useGetSalesTrendQuery,
+    useGetFinishedGoodsProfitMarginQuery,
 
     // User Management Hooks
     useGetAllUsersQuery,

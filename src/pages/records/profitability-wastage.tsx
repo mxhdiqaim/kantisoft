@@ -1,10 +1,11 @@
 import {Box, Typography} from '@mui/material';
 import {type SyntheticEvent, useState} from "react";
-import {useGetProductionWastageSummaryQuery} from "@/store/slice";
+import {useGetFinishedGoodsProfitMarginQuery, useGetProductionWastageSummaryQuery} from "@/store/slice";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import GenericTabs from "@/components/ui/generic-tab.tsx";
 import CustomTabPanel from "@/components/ui/tab-panel.tsx";
 import WastageAnalysisTab from "@/components/records/wastage-analysis-tab.tsx";
+import ProfitOverviewTab from "@/components/records/profit-overview-tab.tsx";
 
 import MoneyIcon from '@mui/icons-material/Money';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
@@ -23,8 +24,14 @@ const tabsArray = [
 ];
 
 const ProfitabilityWastageScreen = () => {
-    const {data, isLoading} = useGetProductionWastageSummaryQuery();
-    const wasteData = useMemoizedArray(data);
+    const {data: wastageSummaryData, isLoading: fetchingWastageSummary} = useGetProductionWastageSummaryQuery();
+    const wasteData = useMemoizedArray(wastageSummaryData);
+
+    const {
+        data: finishedGoodsProfitData,
+        isLoading: fetchingFinishedGoodsData
+    } = useGetFinishedGoodsProfitMarginQuery();
+    const memoizedProfitData = useMemoizedArray(finishedGoodsProfitData);
 
     const [tabValue, setTabValue] = useState(0);
 
@@ -39,10 +46,10 @@ const ProfitabilityWastageScreen = () => {
             </Box>
             <GenericTabs value={tabValue} onChange={handleTabChange} tabs={tabsArray}/>
             <CustomTabPanel value={tabValue} index={0}>
-                <Typography variant="h4" gutterBottom>Profit Overview</Typography>
+                <ProfitOverviewTab data={memoizedProfitData} loading={fetchingFinishedGoodsData}/>
             </CustomTabPanel>
             <CustomTabPanel value={tabValue} index={1}>
-                <WastageAnalysisTab data={wasteData} isLoading={isLoading}/>
+                <WastageAnalysisTab data={wasteData} loading={fetchingWastageSummary}/>
             </CustomTabPanel>
         </Box>
     );

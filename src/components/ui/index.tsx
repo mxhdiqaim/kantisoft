@@ -109,18 +109,32 @@ export const StyledTextField = styled(TextField, {
     },
 }));
 
-export const getRawMaterialStatusChipColor = (status: string) => {
-    switch (status) {
-        case "active":
-            return "success";
-        case "inactive":
-            return "warning";
-        case "archived":
-            return "default";
+export const getTextColor = (text: string) => {
+    switch (text.toLowerCase()) {
+        case "healthy":
+            return "success.main";
+        case "low_margin":
+            return "warning.main";
+        case "unprofitable":
+            return "error.main";
         default:
-            return "default";
+            return "text.primary";
     }
 };
+
+export const getBackgroundColor = (text: string) => {
+    switch (text.toLowerCase()) {
+        case "healthy":
+            return "success.light";
+        case "low_margin":
+            return "warning.light";
+        case "unprofitable":
+            return "error.light";
+        default:
+            return "transparent";
+    }
+};
+
 
 export const DashedCard = styled(CustomCard)(({theme}) => ({
     borderStyle: "dashed",
