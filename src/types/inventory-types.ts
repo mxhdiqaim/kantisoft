@@ -107,3 +107,15 @@ export type AdjustStockResponseType = Omit<InventoryType, "menuItem" | "store">;
 export type InventoryTransactionType = yup.InferType<typeof inventoryTransactionSchema>;
 export type InventoryTransactionResponseType = yup.InferType<typeof inventoryTransactionResponseSchema>;
 // export type EditInventoryType = Partial<InventoryType>;
+
+export type InventoryValuationHealthType = {
+    timePeriod: string;
+    startDate: string;
+    endDate: string;
+    totalInventoryValue: string;
+    totalTrackedItems: number;
+    inStockItemsCount: number;
+    outOfStockItemsCount: number;
+    stockedItemsPercentage: string;
+    storeQueryType: string;
+};

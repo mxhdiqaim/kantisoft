@@ -31,7 +31,8 @@ import type {
     CreateInventoryType,
     InventoryTransactionResponseType,
     InventoryTransactionType,
-    InventoryType
+    InventoryType,
+    InventoryValuationHealthType
 } from "@/types/inventory-types.ts";
 import {getEnvVariable} from "@/utils";
 import type {UnitOfMeasurementType} from "@/types/unit-of-measurement-types.ts";
@@ -170,7 +171,8 @@ export const apiSlice = createApi({
         "ProductionLogs",
         "ProductionSummary",
         "ProductionWastageSummary",
-        "FinishedGoodsProfitMargin"
+        "FinishedGoodsProfitMargin",
+        "InventoryHealthValuation"
     ],
     endpoints: (builder) => ({
         // -------------------------
@@ -273,8 +275,8 @@ export const apiSlice = createApi({
             providesTags: ["TopSells"],
         }),
 
-        getSalesTrend: builder.query<SalesTrendType[], TimePeriod | void>({
-            query: (timePeriod = "week") => ({
+        getSalesTrend: builder.query<SalesTrendType[], TimePeriod>({
+            query: (timePeriod = "today") => ({
                 url: "/dashboard/sales-trend",
                 params: {timePeriod},
             }),
@@ -286,6 +288,15 @@ export const apiSlice = createApi({
 
             providesTags: ["FinishedGoodsProfitMargin"],
         }),
+
+        getInventoryValuationHealth: builder.query<InventoryValuationHealthType, TimePeriod>({
+            query: ({timePeriod = "today"}) => ({
+                url: "/dashboard/inventory-health-valuation",
+                params: {timePeriod},
+            }),
+            providesTags: ["InventoryHealthValuation"],
+        }),
+
 
         // -------------------------
         // Order Endpoints
@@ -774,6 +785,7 @@ export const {
     useGetTopSellsQuery,
     useGetSalesTrendQuery,
     useGetFinishedGoodsProfitMarginQuery,
+    useGetInventoryValuationHealthQuery,
 
     // User Management Hooks
     useGetAllUsersQuery,
