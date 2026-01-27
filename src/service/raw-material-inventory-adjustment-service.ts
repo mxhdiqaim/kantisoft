@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import db from "../db";
-import { rawMaterialInventory } from "../schema/raw-materials-schema/raw-material-inventory-schema";
+import {rawMaterialInventory} from "../schema/raw-materials-schema/raw-material-inventory-schema";
 import {
     InsertRawMaterialTransactionSchemaT,
     rawMaterialTransactions,
 } from "../schema/raw-materials-schema/raw-material-stock-transaction-schema";
-import { UnitConversionService } from "./unit-conversion-service";
-import { and, eq, sql } from "drizzle-orm";
-import { calculateInventoryStatus } from "../helpers";
-import { inventory } from "../schema/inventory-schema";
-import { InventoryTransactionSummaryTypeEnum, InventoryTransactionTypeEnum, TRANSACTION_TYPES } from "../types/enums";
-import { inventoryTransactions } from "../schema/inventory-schema/inventory-transaction-schema";
-import { rawMaterials } from "../schema/raw-materials-schema";
+import {UnitConversionService} from "./unit-conversion-service";
+import {and, eq, sql} from "drizzle-orm";
+import {calculateInventoryStatus} from "../helpers";
+import {inventory} from "../schema/inventory-schema";
+import {InventoryTransactionSummaryTypeEnum, InventoryTransactionTypeEnum, TRANSACTION_TYPES,} from "../types/enums";
+import {inventoryTransactions} from "../schema/inventory-schema/inventory-transaction-schema";
+import {rawMaterials} from "../schema/raw-materials-schema";
 
 /**
  * Service to handle all atomic inventory adjustments (IN or OUT).
@@ -130,15 +130,12 @@ export const RawMaterialInventoryAdjustmentService = {
             notes: string;
         },
     ) {
-        console.log({ data });
         // Get the material name using Standard API to avoid the 'referencedTable' error
         const [materialInfo] = await tx
-            .select({ name: rawMaterials.name })
+            .select({ id: rawMaterials.id, name: rawMaterials.name })
             .from(rawMaterials)
             .where(eq(rawMaterials.id, data.rawMaterialId))
             .limit(1);
-
-        console.log({ materialInfo });
 
         // Update Inventory Master FIRST to get the new total
         const [updated] = await tx
@@ -156,8 +153,6 @@ export const RawMaterialInventoryAdjustmentService = {
                 ),
             )
             .returning();
-
-        console.log({ updated });
 
         // Material doesn't even exist in the warehouse
         if (!updated) {
