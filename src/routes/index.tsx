@@ -201,17 +201,17 @@ export const appRoutes: AppRouteType[] = [
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
             {
+                to: "profitability-wastage",
+                title: "Profitability & Wastage",
+                element: WastageAnalysisScreen,
+                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+            },
+            {
                 to: "activity",
                 title: "System Activity",
                 element: ActivityLogScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
-            {
-                to: "wastage-analysis",
-                title: "Wastage Analysis",
-                element: WastageAnalysisScreen,
-                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-            }
         ]
     },
 
@@ -219,13 +219,13 @@ export const appRoutes: AppRouteType[] = [
     // KITCHEN & PRODUCTION (Operations)
     // ---------------------------------
     {
-        to: "/production",
-        title: "Kitchen Ops",
+        to: "/operations",
+        title: "Operations",
         icon: <KitchenOutlined/>,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
         children: [
             {
-                to: "Overview",
+                to: "production",
                 title: "Production",
                 element: ProductionScreen,
                 roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
@@ -250,7 +250,7 @@ export const appRoutes: AppRouteType[] = [
         children: [
             {
                 to: "users",
-                title: "User Management",
+                title: "Users",
                 element: UsersScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
                 children: [
@@ -297,7 +297,7 @@ export const appRoutes: AppRouteType[] = [
             },
             {
                 to: "stores",
-                title: "Store Management",
+                title: "Stores",
                 element: StoreScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
                 children: [

@@ -4,8 +4,8 @@ export {default as DashboardScreen} from "./dashboard";
 
 // Order Tracking and Sales
 export {default as PointOfSaleScreen} from "./point-of-sale";
-export {default as SalesHistoryScreen} from "./sales-history";
-export {default as ViewSalesHistoryScreen} from "./sales-history/view-sales-history";
+export {default as SalesHistoryScreen} from "./records/sales";
+export {default as ViewSalesHistoryScreen} from "./records/sales/view-sales-history";
 export {default as MenuItemScreen} from "./menu-item";
 
 export {default as ActivityLogScreen} from "./activity-log";
@@ -21,7 +21,7 @@ export {default as ChangePasswordScreen} from "./profile/change-password";
 // Inventory screens
 export {default as InventoryManagementScreen} from "./inventory";
 export {default as SingleInventoryTransactionScreen} from "./inventory/single-inventory-transaction.tsx";
-export {default as InventoryTransactionsScreen} from "./inventory/inventory-transactions";
+export {default as InventoryTransactionsScreen} from "./inventory/inventory-transactions.tsx";
 
 // User screens
 export {default as AddUserScreen} from "./users/add-user";

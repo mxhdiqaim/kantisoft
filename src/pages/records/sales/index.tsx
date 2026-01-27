@@ -1,10 +1,10 @@
 import Spinner from "@/components/sales-history/spinners";
-import SalesHistoryOverviewCard from "@/components/sales-history/sales-history-overview-card";
-import SalesHistoryTable from "@/components/sales-history/sales-history-table";
+import SalesHistoryOverviewCard from "@/components/sales-history/sales-history-overview-card.tsx";
+import SalesHistoryTable from "@/components/sales-history/sales-history-table.tsx";
 import {useGetOrdersByPeriodQuery} from "@/store/slice";
 import {filterSchema, type TimePeriod} from "@/types";
 import {ngnFormatter} from "@/utils";
-import {relativeTime} from "@/utils/get-relative-time";
+import {relativeTime} from "@/utils/get-relative-time.ts";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {DinnerDiningOutlined, DomainVerificationOutlined, MonetizationOn, Person2Outlined} from "@mui/icons-material";
 import {Box, Grid, Typography} from "@mui/material";

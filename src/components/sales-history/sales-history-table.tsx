@@ -3,7 +3,7 @@ import {useAppSelector} from "@/store";
 import {selectCurrentUser} from "@/store/slice/auth-slice";
 import type {OrderType} from "@/types/order-types";
 import {UserRoleEnum} from "@/types/user-types";
-import {ngnFormatter} from "@/utils";
+import {formatCurrency} from "@/utils";
 import {relativeTime} from "@/utils/get-relative-time";
 import {EditOutlined, MoreVert, PrintOutlined, VisibilityOutlined,} from "@mui/icons-material";
 import {Box, Grid, Tooltip, Typography, useTheme} from "@mui/material";
@@ -180,7 +180,7 @@ const SalesHistoryTable = ({orders, loading: isLoadingOrders, period}: Props) =>
                 renderCell: (params) => (
                     <TableStyledBox>
                         <Typography variant="body2" fontWeight="medium">
-                            {ngnFormatter.format(params.value)}{" "}
+                            {formatCurrency(params.value)}
                         </Typography>
                     </TableStyledBox>
                 ),
