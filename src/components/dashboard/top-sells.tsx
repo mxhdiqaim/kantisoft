@@ -1,19 +1,9 @@
 import {useGetTopSellsQuery} from "@/store/slice";
 import type {Period} from "@/types/order-types";
-import {ngnFormatter} from "@/utils";
-import {
-    Box,
-    Card,
-    CardHeader,
-    LinearProgress,
-    List,
-    ListItem,
-    ListItemText,
-    Skeleton,
-    Typography,
-    useTheme,
-} from "@mui/material";
+import {formatCurrency} from "@/utils";
+import {Box, LinearProgress, List, ListItem, ListItemText, Skeleton, Typography, useTheme,} from "@mui/material";
 import {useTranslation} from "react-i18next";
+import CustomCard from "@/components/customs/custom-card.tsx";
 
 interface Props {
     timePeriod: Period;
@@ -35,9 +25,12 @@ const TopSells = ({timePeriod}: Props) => {
     const maxRevenue = Math.max(...(topSells?.map((item) => parseFloat(item.totalRevenueGenerated)) || [0]));
 
     return (
-        <Card sx={{boxShadow: theme.customShadows.card, borderRadius: theme.borderRadius.small, height: "100%"}}>
-            <CardHeader title={`Top Selling ${t("menuItems")}`} subheader={`By revenue for this ${timePeriod}`}/>
-            <Box sx={{px: 2, mt: -2}}>
+        <CustomCard
+            title={`Top Selling ${t("menuItems")}`}
+            subheader={`By revenue for this ${timePeriod}`}
+            sx={{boxShadow: theme.customShadows.card, borderRadius: theme.borderRadius.small, height: "100%"}}
+        >
+            <Box sx={{px: 1, mt: -2}}>
                 <List disablePadding>
                     {topSells?.map((item, index) => {
                         const revenue = parseFloat(item.totalRevenueGenerated);
@@ -57,7 +50,7 @@ const TopSells = ({timePeriod}: Props) => {
                                                 {`Sold: ${item.totalQuantitySold}`}
                                             </Typography>
                                             <Typography variant="body2" color="text.primary" fontWeight="bold">
-                                                {ngnFormatter.format(revenue)}
+                                                {formatCurrency(revenue)}
                                             </Typography>
                                         </Box>
                                     }
@@ -78,7 +71,7 @@ const TopSells = ({timePeriod}: Props) => {
                     })}
                 </List>
             </Box>
-        </Card>
+        </CustomCard>
     );
 };
 

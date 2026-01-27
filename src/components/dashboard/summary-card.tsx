@@ -1,9 +1,9 @@
-import { Typography, Box, Avatar, Grow } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import type { ReactElement } from "react";
+import {Avatar, Box, Grow, Typography} from "@mui/material";
+import {useTheme} from "@mui/material/styles";
+import type {ReactElement} from "react";
 import CountUp from "react-countup";
-import { ngnFormatter } from "@/utils";
-import { CustomCardRef } from "../customs/custom-card";
+import {formatCurrency} from "@/utils";
+import {CustomCardRef} from "../customs/custom-card";
 
 interface Props {
     title: string;
@@ -13,7 +13,7 @@ interface Props {
     index: number;
 }
 
-const SummaryCard = ({ title, value, icon, color, index }: Props) => {
+const SummaryCard = ({title, value, icon, color, index}: Props) => {
     const theme = useTheme();
     const cardColor = color || theme.palette.primary.main;
 
@@ -21,19 +21,10 @@ const SummaryCard = ({ title, value, icon, color, index }: Props) => {
     const numericValue = isNumeric ? value : parseFloat(String(value).replace(/,/g, ""));
 
     return (
-        <Grow in={true} style={{ transformOrigin: "0 0 0" }} timeout={500 + index * 150}>
-            <CustomCardRef
-                sx={{
-                    boxShadow: theme.customShadows.card,
-                    borderRadius: theme.borderRadius.small,
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                }}
-            >
+        <Grow in={true} style={{transformOrigin: "0 0 0"}} timeout={500 + index * 150}>
+            <CustomCardRef variant={"outlined"}>
                 <Box>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                    <Box sx={{display: "flex", alignItems: "center", mb: 2}}>
                         <Avatar
                             sx={{
                                 bgcolor: cardColor,
@@ -47,7 +38,7 @@ const SummaryCard = ({ title, value, icon, color, index }: Props) => {
                             {title}
                         </Typography>
                     </Box>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: "bold" }}>
+                    <Typography variant="h4" component="div" sx={{fontWeight: "bold"}}>
                         {isNumeric ? (
                             <CountUp
                                 start={0}
@@ -57,7 +48,7 @@ const SummaryCard = ({ title, value, icon, color, index }: Props) => {
                                 decimals={Number.isInteger(numericValue) ? 0 : 2}
                             />
                         ) : (
-                            <>{ngnFormatter.format(Number(numericValue))}</>
+                            <>{formatCurrency(Number(numericValue))}</>
                         )}
                     </Typography>
                 </Box>

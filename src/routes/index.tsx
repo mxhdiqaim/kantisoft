@@ -16,6 +16,7 @@ import {
     PointOfSaleScreen,
     ProductionScreen,
     ProfileScreen,
+    ProfitabilityWastageScreen,
     RawMaterialInventoryScreen,
     RawMaterialInventoryTransactionScreen,
     RawMaterialsScreen,
@@ -29,7 +30,6 @@ import {
     ViewSalesHistoryScreen,
     ViewStoreScreen,
     ViewUserScreen,
-    WastageAnalysisScreen,
 } from "@/pages";
 import {type UserRole, UserRoleEnum} from "@/types/user-types";
 import {DashboardOutlined, KitchenOutlined} from "@mui/icons-material";
@@ -203,7 +203,7 @@ export const appRoutes: AppRouteType[] = [
             {
                 to: "profitability-wastage",
                 title: "Profitability & Wastage",
-                element: WastageAnalysisScreen,
+                element: ProfitabilityWastageScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
             {

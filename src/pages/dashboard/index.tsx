@@ -6,13 +6,12 @@ import TopSells from "@/components/dashboard/top-sells";
 import {useGetSalesSummaryQuery} from "@/store/slice";
 import {filterSchema} from "@/types/dashboard-types";
 import type {Period} from "@/types/order-types.ts";
-import {relativeTime} from "@/utils/get-relative-time.ts";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {AttachMoney, PointOfSale, ShoppingCart} from "@mui/icons-material";
 import {Box, Grid, Typography, useTheme} from "@mui/material";
 import {useEffect, useMemo, useState} from "react";
 import {useForm} from "react-hook-form";
-import OverviewHeader from "@/components/ui/custom-header.tsx";
+import PeriodSelector from "@/components/ui/period-selector.tsx";
 
 const Index = () => {
     const theme = useTheme();
@@ -73,25 +72,13 @@ const Index = () => {
 
     return (
         <Box sx={{mx: "auto"}}>
-            <OverviewHeader
-                title={"Dashboard"}
-                control={control}
-                name={"period"}
-            />
-            <Box sx={{display: "flex", justifyContent: "flex-end"}}>
-                <Typography
-                    variant="h6"
-                    component="span"
-                    color="text.secondary"
-                    align="right"
-                    mb={1}
-                    sx={{
-                        fontWeight: 400,
-                        textAlign: "right",
-                    }}
-                >
-                    {lastFetched ? `Last updated ${relativeTime(lastFetched)}` : "Fetching data..."}
-                </Typography>
+            <Box sx={{display: "flex", justifyContent: "space-between"}}>
+                <Typography variant={"h4"}>Dashboard</Typography>
+                <PeriodSelector
+                    control={control}
+                    name={"period"}
+                    lastFetched={lastFetched}
+                />
             </Box>
             <Grid container spacing={3} mb={3}>
                 {summaryCards.map((card, index) => (

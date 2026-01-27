@@ -1,7 +1,8 @@
 import {type Control, Controller, type FieldValues, type Path} from "react-hook-form";
-import {Box, FormControl, InputAdornment, MenuItem, Typography} from "@mui/material";
+import {Box, FormControl, InputAdornment, Typography} from "@mui/material";
 import {StyledTextField} from "@/components/ui/index.tsx";
 import {relativeTime} from "@/utils/get-relative-time.ts";
+import StyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
 
 import Icon from "@/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
@@ -37,13 +38,10 @@ const PeriodSelector = <T extends FieldValues>({control, name, lastFetched}: Pro
                             ),
                         }}
                     >
-                        <MenuItem value={""} disabled>
-                            Select Period
-                        </MenuItem>
-                        <MenuItem value={"today"}>Today</MenuItem>
-                        <MenuItem value={"week"}>This Week</MenuItem>
-                        <MenuItem value={"month"}>This Month</MenuItem>
-                        <MenuItem value={"all-time"}>All Time</MenuItem>
+                        <StyledMenuItem value={"today"} sx={{my: 0.5}}>Today</StyledMenuItem>
+                        <StyledMenuItem value={"week"} sx={{my: 0.5}}>This Week</StyledMenuItem>
+                        <StyledMenuItem value={"month"} sx={{my: 0.5}}>This Month</StyledMenuItem>
+                        <StyledMenuItem value={"all-time"} sx={{my: 0.5}}>All Time</StyledMenuItem>
                     </StyledTextField>
                 </FormControl>
             )}

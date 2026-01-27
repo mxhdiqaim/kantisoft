@@ -48,4 +48,4 @@ export {default as ProductionScreen} from "./production"
 
 // Records
 export {default as SalesHistoryScreen} from "./records/sales";
-export {default as WastageAnalysisScreen} from "./records/profitability-wastage.tsx"
+export {default as ProfitabilityWastageScreen} from "./records/profitability-wastage.tsx"
