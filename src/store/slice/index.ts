@@ -38,11 +38,13 @@ import type {UnitOfMeasurementType} from "@/types/unit-of-measurement-types.ts";
 import type {
     CreateRawMaterialInventoryType,
     CreateRawMaterialType,
+    GetRawMaterialInventoryStockType,
     MultipleRawMaterialInventoryResponseType,
     RawMaterialInventoryTransactionsResponse,
     RawMaterialType,
     SingleRawMaterialInventoryType,
     SingleRawMaterialType,
+    StockInRawMaterialInventoryType,
     StockInRawMaterialType,
     UpdateRawMaterialInventoryResponseType,
     UpdateRawMaterialInventoryType,
@@ -628,7 +630,7 @@ export const apiSlice = createApi({
                     : [{type: "RawMaterialInventories", id: "LIST"}],
         }),
 
-        getRawMaterialInventoryStock: builder.query<any, string>({
+        getRawMaterialInventoryStock: builder.query<GetRawMaterialInventoryStockType, string>({
             query: (id) => `/raw-materials/inventory/${id}`,
             providesTags: (_result, _error, id) => [{type: "RawMaterialInventoryStock", id}],
         }),
@@ -657,7 +659,7 @@ export const apiSlice = createApi({
             ],
         }),
 
-        stockInRawMaterialInventory: builder.mutation<any, StockInRawMaterialType & Pick<RawMaterialType, "id">>({
+        stockInRawMaterialInventory: builder.mutation<StockInRawMaterialInventoryType, StockInRawMaterialType & Pick<RawMaterialType, "id">>({
             query: ({id, ...body}) => ({
                 url: `/raw-materials/inventory/${id}/stock-in`,
                 method: "POST",
@@ -742,10 +744,6 @@ export const apiSlice = createApi({
                 body,
             }),
             invalidatesTags: ['RawMaterialInventories', "RawMaterialTransactions", "RawMaterials"],
-        }),
-
-        getProfitMargins: builder.query<any[], void>({
-            query: () => '/catalog/margins',
         }),
 
     }),
@@ -835,7 +833,4 @@ export const {
     useRecordWastageMutation,
     useGetProductionSummaryQuery,
 
-    // Alerts & Margins Hooks
-    // useGetInventoryAlertsQuery,
-    useGetProfitMarginsQuery,
 } = apiSlice;

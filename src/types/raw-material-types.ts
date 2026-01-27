@@ -204,4 +204,35 @@ export const fetchRawMaterialAndFilterByPeriod = yup.object({
     rawMaterialId: yup.string().uuid().required(),
 });
 
-export type FetchRawMaterialAndFilterByPeriodType = yup.InferType<typeof fetchRawMaterialAndFilterByPeriod>;
+// export type FetchRawMaterialAndFilterByPeriodType = yup.InferType<typeof fetchRawMaterialAndFilterByPeriod>;
+
+export type StockInRawMaterialInventoryType = {
+    id: string;
+    rawMaterialId: string;
+    storeId: string;
+    quantity: number;
+    minStockLevel: number;
+    status: typeof RawMaterialInventoryStatusEnum[keyof typeof RawMaterialInventoryStatusEnum];
+    createdAt: string;
+    lastModified: string;
+    currentQuantityPresentation: number;
+}
+
+export type GetRawMaterialInventoryStockType = {
+    id: string;
+    quantity: number;
+    minStockLevel: number;
+    status: typeof RawMaterialInventoryStatusEnum[keyof typeof RawMaterialInventoryStatusEnum];
+    rawMaterialId: string;
+    storeId: string;
+    createdAt: string;
+    lastModified: string;
+    rawMaterialName: string;
+    latestUnitPrice: number;
+    unitOfMeasurement: {
+        id: string;
+        name: string;
+        symbol: string;
+        conversionFactorToBase: number;
+    };
+}

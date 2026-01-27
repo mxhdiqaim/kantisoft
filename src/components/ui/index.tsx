@@ -122,20 +122,6 @@ export const getTextColor = (text: string) => {
     }
 };
 
-export const getBackgroundColor = (text: string) => {
-    switch (text.toLowerCase()) {
-        case "healthy":
-            return "success.light";
-        case "low_margin":
-            return "warning.light";
-        case "unprofitable":
-            return "error.light";
-        default:
-            return "transparent";
-    }
-};
-
-
 export const DashedCard = styled(CustomCard)(({theme}) => ({
     borderStyle: "dashed",
     boxShadow: "none",
