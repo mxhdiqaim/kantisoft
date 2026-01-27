@@ -710,7 +710,7 @@ export const apiSlice = createApi({
                 method: 'POST',
                 body,
             }),
-            invalidatesTags: ['Inventory', 'RawMaterialStock', "MenuItem"],
+            invalidatesTags: ['Inventory', 'RawMaterialInventories', "MenuItem"],
         }),
 
         getProductionSummary: builder.query<any, TimePeriod>({
@@ -727,7 +727,7 @@ export const apiSlice = createApi({
                 method: 'POST',
                 body,
             }),
-            invalidatesTags: ['RawMaterialStock', "RawMaterialTransactions"],
+            invalidatesTags: ['RawMaterialInventories', "RawMaterialTransactions", "RawMaterials"],
         }),
 
         // -------------------------

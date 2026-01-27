@@ -1,4 +1,4 @@
-import {Box, CircularProgress, Grid, Typography} from '@mui/material';
+import {Box, Grid, Typography} from '@mui/material';
 import {useGetProductionLogsQuery} from '@/store/slice';
 import {useForm} from "react-hook-form";
 import {filterSchema, type TimePeriod} from "@/types";
@@ -182,8 +182,6 @@ const ProductionScreen = () => {
             setLastFetched(new Date(fulfilledTimeStamp));
         }
     }, [fulfilledTimeStamp]);
-
-    if (isFetchingProductionLogs) return <Box sx={{p: 5, textAlign: 'center'}}><CircularProgress/></Box>;
 
     if (isError) {
         return (

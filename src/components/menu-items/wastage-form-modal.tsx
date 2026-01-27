@@ -80,7 +80,7 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
                                     <StyledTextField
                                         {...field}
                                         select
-                                        label="Select Menu Item"
+                                        label="Select Raw Material"
                                         disabled={fetchingRawMaterialInventory}
                                         SelectProps={{
                                             IconComponent: () => null,
