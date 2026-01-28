@@ -1,5 +1,5 @@
 import {type BaseSyntheticEvent} from "react";
-import {Box, Grid, type SxProps, type Theme, useTheme} from "@mui/material";
+import {Box, Grid, Skeleton, type SxProps, type Theme, useTheme} from "@mui/material";
 import SearchField from "@/components/ui/search-field.tsx";
 import type {Control} from "react-hook-form";
 import CustomButton from "@/components/ui/button.tsx";
@@ -20,7 +20,8 @@ interface Props {
     onExportXlsx?: () => void;
     placeholder?: string;
     children?: React.ReactNode;
-    sx?: SxProps<Theme>
+    sx?: SxProps<Theme>;
+    loading?: boolean;
 }
 
 const TableSearchActions = ({
@@ -32,6 +33,7 @@ const TableSearchActions = ({
                                 placeholder = "Search...",
                                 children,
                                 sx,
+                                loading = false,
                             }: Props) => {
     const theme = useTheme();
 
@@ -47,6 +49,16 @@ const TableSearchActions = ({
 
     const showExport = onExportCsv && onExportXlsx;
     const canExport = [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN].includes(currentUser.role);
+
+    if (loading) {
+        return (
+            <Grid container spacing={2} alignItems={"center"} sx={{my: 2, ...sx}}>
+                <Grid size={12} mb={2}>
+                    <Skeleton variant="rectangular" height={56}/>
+                </Grid>
+            </Grid>
+        );
+    }
 
     return (
         <Grid container spacing={2} alignItems={"center"} sx={{my: 2, ...sx}}>

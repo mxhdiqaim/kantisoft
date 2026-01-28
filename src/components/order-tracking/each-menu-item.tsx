@@ -3,15 +3,21 @@ import type {MenuItemType} from "@/types/menu-item-type.ts";
 import {formatCurrency} from "@/utils";
 import {Box, Divider, Typography, useTheme} from "@mui/material";
 import CustomButton from "@/components/ui/button.tsx";
+import type {CartItem} from "@/types/cart-item-type.ts";
 
 interface Props {
     item: MenuItemType;
+    cartItems: CartItem[];
     onAddToCart: (item: MenuItemType) => void;
 }
 
-const EachMenuItem = ({item, onAddToCart}: Props) => {
+const EachMenuItem = ({item, cartItems, onAddToCart}: Props) => {
     const theme = useTheme();
     const inventory = item.inventory;
+
+    const cartItem = cartItems.find(cartItem => cartItem.id === item.id);
+    const cartQuantity = cartItem ? cartItem.quantity : 0;
+
 
     // Determine Colour based on status
     const getStockColor = () => {
@@ -27,6 +33,12 @@ const EachMenuItem = ({item, onAddToCart}: Props) => {
 
         return `In Stock: ${inventory.quantity}`;
     };
+
+    const isButtonDisabled = !inventory ||
+        inventory.status === "outOfStock" ||
+        inventory.quantity <= 0 ||
+        (inventory.quantity != null && cartQuantity >= inventory.quantity);
+
 
     return (
         <CustomCard sx={{
@@ -47,11 +59,11 @@ const EachMenuItem = ({item, onAddToCart}: Props) => {
 
                 <CustomButton
                     fullWidth
-                    title={(!inventory || inventory.status === "outOfStock") ? "Unavailable" : "Add to Cart"}
+                    title={isButtonDisabled ? "Unavailable" : "Add to Cart"}
                     variant="contained"
                     size="small"
                     onClick={() => onAddToCart(item)}
-                    disabled={!inventory || inventory.status === "outOfStock"}
+                    disabled={isButtonDisabled}
                     color={inventory?.status === "lowStock" ? "warning" : "primary"}
                 />
             </Box>

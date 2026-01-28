@@ -290,7 +290,7 @@ export const apiSlice = createApi({
         }),
 
         getInventoryValuationHealth: builder.query<InventoryValuationHealthType, TimePeriod>({
-            query: ({timePeriod = "today"}) => ({
+            query: (timePeriod = "today") => ({
                 url: "/dashboard/inventory-health-valuation",
                 params: {timePeriod},
             }),
@@ -332,7 +332,7 @@ export const apiSlice = createApi({
         // -------------------------
         // Menu Item Endpoints
         // -------------------------
-        getMenuItems: builder.query<MenuItemType[], { page?: number; limit?: number; targetStoreId?: string }>({
+        getMenuItems: builder.query<MenuItemType[], { page?: number; limit?: number }>({
             query: (params = {}) => ({
                 url: "/menu-items",
                 params,

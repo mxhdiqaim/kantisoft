@@ -71,7 +71,10 @@ const OrderCart = ({cartItems, onUpdateQuantity, onRemoveItem, onOpenPaymentDial
                                         </IconButton>
                                     )}
                                     <Typography sx={{mx: 1}}>{item.quantity}</Typography>
-                                    <IconButton onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}>
+                                    <IconButton
+                                        onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                                        disabled={item.inventory?.quantity != null && item.quantity >= item.inventory.quantity}
+                                    >
                                         <Add/>
                                     </IconButton>
                                 </ListItem>
