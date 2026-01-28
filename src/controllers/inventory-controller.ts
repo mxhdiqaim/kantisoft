@@ -146,7 +146,7 @@ export const getTransactionsByMenuItem = async (
 
 /**
  * @desc    Get a summary of all inventory movements within a specified period
- * @route   GET /api/v1/inventory/transactions/report
+ * @route   GET /api/v1/inventory/transactions
  * @access  Private (Store-associated users only)
  * @query   ?timePeriod=week OR ?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
  */
