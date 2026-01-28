@@ -10,9 +10,9 @@ import {logActivity} from "../service/activity-logger";
 import {StatusCodes} from "http-status-codes";
 import {UserRoleEnum} from "../types/enums";
 import {getStoreAndBranchIds} from "../service/store-service";
-import {stores} from "../schema/stores-schema";
 import { MenuItemCostingService } from "../service/menuitem-costing-service";
 import { determineFinalStoreId } from "../utils/store-permission-utils";
+import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 
 /**
  * @desc    Get all menu items with pagination and role-based filtering.
@@ -20,51 +20,20 @@ import { determineFinalStoreId } from "../utils/store-permission-utils";
  * @access  Private (Manager, Admin, User, Guest)
  * @query   page {number} - The page number for pagination.
  * @query   limit {number} - The number of items per page.
- * @query   targetStoreId {string} - For Managers: 'all' for all managed stores, or a specific store ID.
  */
 export const getAllMenuItems = async (req: CustomRequest, res: Response) => {
     try {
-        const currentUser = req.user?.data;
-        const storeId = currentUser?.storeId;
-        // const storeIds = req?.storeIds;
-        const userRole = currentUser?.role;
-        const { targetStoreId, page = '1', limit = '10' } = req.query;
+        const validated = await validateStoreAndExtractDates(req, res);
+        if (!validated) return;
+
+        const { storeIds } = validated;
+        const { page = '1', limit = '10' } = req.query;
 
         const pageNumber = parseInt(page as string, 10);
         const limitNumber = parseInt(limit as string, 10);
         const offset = (pageNumber - 1) * limitNumber;
 
-        if (!storeId) {
-            return handleError2(
-                res,
-                "You must be associated with a store to view menu items.",
-                StatusCodes.FORBIDDEN,
-            );
-        }
-
-        let whereClause;
-
-        if (userRole === UserRoleEnum.MANAGER) {
-            const manageableStoreIds = await getStoreAndBranchIds(storeId);
-            if (!manageableStoreIds) {
-                return handleError2(res, "Associated stores not found.", StatusCodes.NOT_FOUND);
-            }
-
-            if (targetStoreId === "all") {
-                whereClause = inArray(menuItems.storeId, manageableStoreIds);
-            } else if (typeof targetStoreId === 'string' && manageableStoreIds.includes(targetStoreId)) {
-                whereClause = eq(menuItems.storeId, targetStoreId);
-            } else {
-                const currentStore = await db.query.stores.findFirst({
-                    where: eq(stores.id, storeId),
-                    columns: { storeParentId: true },
-                });
-                const mainStoreId = currentStore?.storeParentId || storeId;
-                whereClause = eq(menuItems.storeId, mainStoreId);
-            }
-        } else {
-            whereClause = eq(menuItems.storeId, storeId);
-        }
+        const whereClause = inArray(menuItems.storeId, storeIds);
 
         const [totalItemsResult] = await db.select({ value: count() }).from(menuItems).where(whereClause);
         const totalItems = totalItemsResult.value;
