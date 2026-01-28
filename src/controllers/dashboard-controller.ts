@@ -13,6 +13,7 @@ import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 import { TIMEZONE } from "../constant";
 import { billOfMaterials } from "../schema/bill-of-materials-schema";
 import { rawMaterials } from "../schema/raw-materials-schema";
+import { InventoryTransactionTypeEnum } from "../types/enums";
 
 /**
  * @description Get core sales summary metrics (Revenue, Order Count, Avg Order Value)
@@ -325,12 +326,12 @@ export const getInventoryValuationAndHealth = async (
         // Construct the base WHERE clause with the store ID
         let whereClause: SQL | undefined = inArray(inventory.storeId, storeIds);
 
-        // ADD DATE FILTERING (e.g., filtering inventory records by last modified date)
+        // ADD DATE FILTERING (e.g. filtering inventory records by the last modified date)
         if (finalStartDate && finalEndDate) {
             whereClause = and(
                 whereClause,
-                gte(inventory.lastModified, finalStartDate), // Filter records modified AFTER start date
-                lte(inventory.lastModified, finalEndDate),   // Filter records modified BEFORE end date
+                gte(inventory.lastModified, finalStartDate), // Filter records modified AFTER the start date
+                lte(inventory.lastModified, finalEndDate),   // Filter records modified end date BEFORE
             );
 
             // TODO: will add filter by 'inventory.lastCountDate'
@@ -362,7 +363,7 @@ export const getInventoryValuationAndHealth = async (
             totalInventoryValue += quantity * price;
 
             // Count health status
-            if (quantity > 0 && item.status !== "discontinued") {
+            if (quantity > 0 && item.status !== InventoryTransactionTypeEnum.DISCONTINUED) {
                 inStockItemsCount++;
             }
             if (quantity <= 0) {
@@ -404,55 +405,68 @@ export const getInventoryValuationAndHealth = async (
 /**
  * @description Calculates the cost and profit margin for all menu items in a store.
  * Formula: (Selling Price - Ingredient Cost) / Selling Price * 100
- * @route GET /api/v1/dashboard/menu-profit-margins
+ * @route GET /api/v1/dashboard/finished-goods-profit-margin
  */
-export const getMenuProfitMargins = async (req: CustomRequest, res: Response) => {
-    const currentUser = req.user?.data;
-    const storeId = currentUser?.storeId;
-
-    if (!storeId) {
-        return handleError2(
-            res,
-            "User does not belong to a store.",
-            StatusCodes.BAD_REQUEST,
-        );
-    }
-
+export const getFinishedGoodsProfitMargin = async (req: CustomRequest, res: Response) => {
     try {
+        const validated = await validateStoreAndExtractDates(req, res);
+        if (!validated) return; // Error already handled
+
+        const { storeIds, storeQueryType } = validated;
+
+        // Fetch all data in a single efficient query to avoid N+1 issues
+        // We join MenuItems -> BOM -> RawMaterials restricted to the storeIds
         const report = await db.transaction(async (tx) => {
-            // Fetch all menu items for the store
-            const items = await tx.select().from(menuItems).where(eq(menuItems.storeId, storeId));
+            const rawData = await tx
+                .select({
+                    itemId: menuItems.id,
+                    itemName: menuItems.name,
+                    itemPrice: menuItems.price,
+                    quantityNeeded: billOfMaterials.consumptionQuantityBase,
+                    rawPrice: rawMaterials.latestUnitPrice,
+                })
+                .from(menuItems)
+                .leftJoin(billOfMaterials, and(
+                    eq(billOfMaterials.menuItemId, menuItems.id),
+                    inArray(billOfMaterials.storeId, storeIds) // Ensure BOM belongs to target store
+                ))
+                .leftJoin(rawMaterials, eq(billOfMaterials.rawMaterialId, rawMaterials.id))
+                .where(inArray(menuItems.storeId, storeIds)); // ✅ FIX: Filter by the correct store
 
-            return await Promise.all(items.map(async (item) => {
-                // Fetch BOM for this item with the latest raw material prices
-                const ingredients = await tx
-                    .select({
-                        quantityNeeded: billOfMaterials.consumptionQuantityBase,
-                        currentPricePerBaseUnit: rawMaterials.latestUnitPrice,
-                    })
-                    .from(billOfMaterials)
-                    .innerJoin(rawMaterials, eq(billOfMaterials.rawMaterialId, rawMaterials.id))
-                    .where(eq(billOfMaterials.menuItemId, item.id));
+            // Group the results by Menu Item
+            const itemMap = new Map();
 
-                // Calculate the Total Cost of Ingredients
-                const totalCost = ingredients.reduce((sum, ing) => {
-                    return sum + (ing.quantityNeeded * ing.currentPricePerBaseUnit);
-                }, 0);
+            rawData.forEach((row) => {
+                if (!itemMap.has(row.itemId)) {
+                    itemMap.set(row.itemId, {
+                        name: row.itemName,
+                        sellingPrice: parseFloat(row.itemPrice),
+                        totalCost: 0,
+                    });
+                }
 
-                const sellingPrice = parseFloat(item.price);
-                const grossProfit = sellingPrice - totalCost;
-                const marginPercentage = sellingPrice > 0 ? (grossProfit / sellingPrice) * 100 : 0;
+                const currentItem = itemMap.get(row.itemId);
+                if (row.quantityNeeded && row.rawPrice) {
+                    currentItem.totalCost += (row.quantityNeeded * row.rawPrice);
+                }
+            });
+
+            // Calculate Final Margins
+            return Array.from(itemMap.values()).map(item => {
+                const grossProfit = item.sellingPrice - item.totalCost;
+                const marginPercentage = item.sellingPrice > 0 ? (grossProfit / item.sellingPrice) * 100 : 0;
 
                 return {
+                    storeQueryType,
                     name: item.name,
-                    sellingPrice,
-                    totalCost: Number(totalCost.toFixed(2)),
+                    sellingPrice: item.sellingPrice,
+                    totalCost: Number(item.totalCost.toFixed(2)),
                     grossProfit: Number(grossProfit.toFixed(2)),
                     marginPercentage: Number(marginPercentage.toFixed(2)),
-                    // 🚩 Business Insight: Alert if the margin is below an industry standard (typically 60-70%)
                     status: marginPercentage < 35 ? "LOW_MARGIN" : "HEALTHY"
                 };
-            }));
+            });
+
         });
 
         return res.status(StatusCodes.OK).json(report);

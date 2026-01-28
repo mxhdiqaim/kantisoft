@@ -5,7 +5,7 @@ import { handleError2 } from "../service/error-handling";
 import { StatusCodes } from "http-status-codes";
 import {RawMaterialProductionService} from "../service/raw-material-production-service";
 import db from "../db";
-import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import {and, desc, eq, gte, inArray, lte, or, sql} from "drizzle-orm";
 import { RawMaterialTransactionSourceEnum, TransactionTypeEnum, UserRoleEnum } from "../types/enums";
 import { menuItems } from "../schema/menu-items-schema";
 import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
@@ -17,7 +17,8 @@ import { productions } from "../schema/production-schema";
 import { inventory } from "../schema/inventory-schema";
 import { rawMaterialTransactions } from "../schema/raw-materials-schema/raw-material-stock-transaction-schema";
 import { rawMaterials } from "../schema/raw-materials-schema";
-import { determineFinalStoreId } from "../utils/store-permission-utils"; // For generating a production batch ID
+import { determineFinalStoreId } from "../utils/store-permission-utils";
+import {rawMaterialInventory} from "../schema/raw-materials-schema/raw-material-inventory-schema"; // For generating a production batch ID
 
 
 /**
@@ -242,9 +243,31 @@ export const recordWastage = async (req: CustomRequest, res: Response) => {
         if (!rawMaterialId || !quantityPresentation || !unitOfMeasurementId) {
             return handleError2(res, 'Missing required wastage data.', StatusCodes.BAD_REQUEST);
         }
-        const wasteBatchId = `WASTE-${nanoid(8)}`;
 
-        console.log("Recording wastage:")
+        // We look for the inventory record using the ID provided.
+        // It might be the RawMaterial ID OR the Inventory Record ID.
+        const inventoryRecord = await db.query.rawMaterialInventory.findFirst({
+            where: and(
+                eq(rawMaterialInventory.storeId, finalStoreId),
+                or(
+                    eq(rawMaterialInventory.id, rawMaterialId),
+                    eq(rawMaterialInventory.rawMaterialId, rawMaterialId)
+                )
+            )
+        });
+
+        if (!inventoryRecord) {
+            return handleError2(
+                res,
+                "Material not found in this store's inventory.",
+                StatusCodes.NOT_FOUND
+            );
+        }
+
+        // Always use the actual RawMaterialId for the stock-out service
+        const resolvedRawMaterialId = inventoryRecord.rawMaterialId;
+
+        const wasteBatchId = `WASTE-${nanoid(8)}`;
 
         await db.transaction(async (tx) => {
             // Convert the wasted amount to Base Units (e.g. 2 kg -> 2000 g)
@@ -256,12 +279,10 @@ export const recordWastage = async (req: CustomRequest, res: Response) => {
                 unitRecord
             );
 
-            console.log({ quantityBase });
-
             // Use our existing service to deduct stock
             // We use 'wastage' as the source so it shows up correctly in reports
             await RawMaterialInventoryAdjustmentService.processRawMaterialStockOut(tx, {
-                rawMaterialId,
+                rawMaterialId: resolvedRawMaterialId,
                 storeId: finalStoreId,
                 userId,
                 type: TransactionTypeEnum.GOING_OUT,

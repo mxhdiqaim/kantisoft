@@ -14,6 +14,7 @@ import { RawMaterialTransactionSourceEnum, TransactionTypeEnum, UserRoleEnum } f
 import {RawMaterialInventoryAdjustmentService} from "../../service/raw-material-inventory-adjustment-service";
 import { determineFinalStoreId } from "../../utils/store-permission-utils";
 import { generateStockReference } from "../../utils/generate-stock-reference";
+import { calculateInventoryStatus } from "../../helpers";
 
 /**
  * @description Retrieves all inventory records for a specific Store.
@@ -242,50 +243,64 @@ export const getCurrentRawMaterialInventoryStock = async (req: CustomRequest, re
 /**
  * @description Creates the initial inventory record for a Raw Material in a Store,
  * or updates the minStockLevel if the record already exists (UPSERT).
- * @route POST /api/v1/raw-materials/inventory/:id
+ * @route POST /api/v1/raw-materials/inventory/create
  * @access Admin, Manager
  * @body { rawMaterialId: string, minStockLevel: number, quantity?: number }
  */
 export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: Response) => {
-    const currentUser = req.user?.data;
-    const storeId = currentUser?.storeId;
-
-    if (!storeId) {
-        return handleError2(
-            res,
-            'User does not have an associated store.',
-            StatusCodes.BAD_REQUEST
-        );
-    }
-
-    const userRole = currentUser?.role;
-    const { targetStoreId } = req.query;
-
-    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-    if (!finalStoreId) return;
-
-    const { minStockLevel, quantity, rawMaterialId } = req.body;
-
-    if (rawMaterialId === undefined || typeof rawMaterialId !== "string" || !rawMaterialId) {
-        return handleError2(res, 'Raw Material is required', StatusCodes.BAD_REQUEST);
-    }
-
-    if (minStockLevel === undefined || typeof minStockLevel !== 'number' || minStockLevel < 0) {
-        return handleError2(res, 'Minimum Stock Level is required and must be equal to or greater 0', StatusCodes.BAD_REQUEST);
-    }
-
-    if (typeof quantity !== "number" || quantity < 0) {
-        return handleError2(res, 'Quantity must be equal to or greater 0', StatusCodes.BAD_REQUEST);
-    }
-
     try {
+        const currentUser = req.user?.data;
+        const storeId = currentUser?.storeId;
+
+        if (!storeId) {
+            return handleError2(
+                res,
+                'User does not have an associated store.',
+                StatusCodes.BAD_REQUEST
+            );
+        }
+
+        const userRole = currentUser?.role;
+        const { targetStoreId } = req.query;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;
+
+        const { minStockLevel, quantity, rawMaterialId, unitOfMeasurementId } = req.body;
+
+        if (!rawMaterialId || !unitOfMeasurementId) {
+            return handleError2(res, 'Raw Material and Unit are required', StatusCodes.BAD_REQUEST);
+        }
+
+        if (minStockLevel === undefined || typeof minStockLevel !== 'number' || minStockLevel < 0) {
+            return handleError2(res, 'Minimum Stock Level is required and must be equal to or greater 0', StatusCodes.BAD_REQUEST);
+        }
+
+        if (typeof quantity !== "number" || quantity < 0) {
+            return handleError2(res, 'Quantity must be equal to or greater 0', StatusCodes.BAD_REQUEST);
+        }
+
+        // Resolve Unit and Conversion
+        const unitRecord = await UnitConversionService.fetchUnitById(unitOfMeasurementId);
+
+        if (!unitRecord) {
+            return handleError2(res, 'Invalid Unit of Measurement ID', StatusCodes.NOT_FOUND);
+        }
+
+        // Convert user-facing quantity/minLevel to the system's Base Unit
+        const quantityBase = UnitConversionService.convertToBaseUnit(quantity || 0, unitRecord);
+        const minStockLevelBase = UnitConversionService.convertToBaseUnit(minStockLevel, unitRecord);
+
+        // Status Calculation (Helper to set initial status based on converted values)
+        const initialStatus = calculateInventoryStatus(quantityBase, minStockLevelBase);
+
         // Data to insert or update
         const inventoryData = {
-            rawMaterialId: rawMaterialId,
+            rawMaterialId,
             storeId: finalStoreId,
-            minStockLevel: minStockLevel,
-            quantity: quantity, // if not provided, it defaults to 0
-            // status defaults to 'inStock'
+            minStockLevel: minStockLevelBase,
+            quantity: quantityBase, // if not provided, it defaults to 0
+            status: initialStatus,
         };
 
         const [inventoryRecord] = await db.insert(rawMaterialInventory)
@@ -297,6 +312,7 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
                 // If conflicted, only update the minStockLevel
                 set: {
                     minStockLevel: sql`excluded."minStockLevel"`,
+                    lastModified: new Date(),
                 },
 
                 setWhere: eq(rawMaterialInventory.storeId, finalStoreId),
