@@ -16,6 +16,9 @@ import type {Period} from "@/types/order-types.ts";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {filterSchema} from "@/types/dashboard-types.ts";
 import PeriodSelector from "@/components/ui/period-selector.tsx";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+import useNotifier from "@/hooks/useNotifier.ts";
 
 import MoneyIcon from '@mui/icons-material/Money';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
@@ -34,6 +37,7 @@ const tabsArray = [
 ];
 
 const ProfitabilityWastageScreen = () => {
+    const notify = useNotifier();
     const {control, watch} = useForm<{ period: Period }>({
         mode: "onChange",
         resolver: yupResolver(filterSchema),
@@ -43,7 +47,12 @@ const ProfitabilityWastageScreen = () => {
     });
     const period = watch("period");
 
-    const {data: wastageSummaryData, isLoading: fetchingWastageSummary} = useGetProductionWastageSummaryQuery();
+    const {
+        data: wastageSummaryData,
+        isLoading: fetchingWastageSummary,
+        isError,
+        error
+    } = useGetProductionWastageSummaryQuery();
     const wasteData = useMemoizedArray(wastageSummaryData);
 
     const {data: healthData, isLoading: fetchingHealth} = useGetInventoryValuationHealthQuery(period);
@@ -61,12 +70,17 @@ const ProfitabilityWastageScreen = () => {
         setTabValue(newTabValue);
     };
 
-
     useEffect(() => {
         if (fulfilledTimeStamp) {
             setLastFetched(new Date(fulfilledTimeStamp));
         }
     }, [fulfilledTimeStamp]);
+
+    if (isError) {
+        notify(` Failed to load page. Please try again later.`, "error");
+        const apiError = getApiError(error, `Failed to load page.`);
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
+    }
 
     return (
         <Box>

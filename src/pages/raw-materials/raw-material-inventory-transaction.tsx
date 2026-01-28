@@ -1,21 +1,23 @@
-import {Box, Chip, FormControl, Grid, InputAdornment, MenuItem, Skeleton, Typography, useTheme} from "@mui/material";
+import {Box, Chip, FormControl, Grid, InputAdornment, MenuItem, Typography, useTheme} from "@mui/material";
 import {useGetAllRawMaterialsQuery, useGetRawMaterialInventoryTransactionsQuery} from "@/store/slice";
 import type {GridColDef} from "@mui/x-data-grid";
 import {useEffect, useMemo, useState} from "react";
 import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
 import {camelCaseToTitleCase} from "@/utils";
 import {getTransactionTypeChipColor, StyledTextField} from "@/components/ui";
-import {formatDateTimeCustom, relativeTime} from "@/utils/get-relative-time.ts";
+import {formatDateTimeCustom} from "@/utils/get-relative-time.ts";
 import DataGridTable from "@/components/ui/data-grid-table";
 import {Controller, useForm} from "react-hook-form";
 import {type TimePeriod} from "@/types";
 import {yupResolver} from "@hookform/resolvers/yup";
-import OverviewHeader from "@/components/ui/custom-header.tsx";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import {useSearch} from "@/use-search.ts";
 import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
 import {fetchRawMaterialAndFilterByPeriod} from "@/types/raw-material-types.ts";
-import CustomCard from "@/components/customs/custom-card.tsx";
+import PeriodSelector from "@/components/ui/period-selector.tsx";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+import useNotifier from "@/hooks/useNotifier.ts";
 
 import Icon from "@/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
@@ -27,6 +29,7 @@ type FormValues = {
 
 const RawMaterialInventoryTransaction = () => {
     const theme = useTheme();
+    const notify = useNotifier();
 
     const {
         control,
@@ -49,30 +52,22 @@ const RawMaterialInventoryTransaction = () => {
         data,
         isLoading,
         isError,
-        fulfilledTimeStamp
+        fulfilledTimeStamp,
+        error,
     } = useGetRawMaterialInventoryTransactionsQuery({timePeriod: period, rawMaterialId});
-
-    const {data: rawMaterialData, isLoading: isFetchingRawMaterial} = useGetAllRawMaterialsQuery(undefined, {
-        skip: !open,
-    });
-
-    const memoizedRawMaterial = useMemoizedArray(rawMaterialData);
-
-    const [lastFetched, setLastFetched] = useState<Date | null>(null);
-    // const [selectedRow, setSelectedRow] = useState<SingleRawMaterialInventoryTransaction | null>(null);
-
-    // console.log("selectedRow:", selectedRow);
-
-    const memoizedData = useMemoizedArray(data?.transactions || []);
+    const memoizedData = useMemoizedArray(data?.transactions);
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
         initialData: memoizedData,
         searchKeys: ["reference", "source", "type", "notes"],
     });
 
-    // const handleMenuClick = (_event: MouseEvent<HTMLElement>, row: SingleRawMaterialInventoryTransaction) => {
-    //     setSelectedRow(row);
-    // };
+    const {data: rawMaterialData, isLoading: isFetchingRawMaterial} = useGetAllRawMaterialsQuery(undefined, {
+        skip: !open,
+    });
+    const memoizedRawMaterial = useMemoizedArray(rawMaterialData);
+
+    const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
     const columns: GridColDef[] = useMemo(() => [
         {
@@ -214,45 +209,21 @@ const RawMaterialInventoryTransaction = () => {
         }
     }, [fulfilledTimeStamp]);
 
-    if (isLoading) {
-        return (
-            <>
-                <Skeleton variant="text" width={400} height={48}/>
-                <Skeleton variant="text" width={200} height={24} sx={{mb: 3}}/>
-                <Skeleton variant="rectangular" width="100%" height={500}/>
-            </>
-        );
-    }
-
-    if (isError || !data) {
-        console.log("error:", isError);
-        return <Box>Something went wrong</Box>
+    if (isError) {
+        notify(`Failed to load Transactions. Please try again later.`, "error");
+        const apiError = getApiError(error, `Failed to load Transactions.`);
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
     }
 
     return (
-        <Box>
-            <OverviewHeader
-                title={"Raw Material Transactions"}
-                // timePeriod={data.timePeriod as TimePeriod}
-                control={control}
-                // getTimeTitle={getTitle}
-                name={"timePeriod"}
-                // timeTitle={"Transactions"}
-            />
-            <Box sx={{display: "flex", justifyContent: "flex-end"}}>
-                <Typography
-                    variant="h6"
-                    component="span"
-                    color="text.secondary"
-                    align="right"
-                    mb={1}
-                    sx={{
-                        fontWeight: 400,
-                        textAlign: "right",
-                    }}
-                >
-                    {lastFetched ? `Last updated ${relativeTime(lastFetched)}` : "Fetching data..."}
-                </Typography>
+        <Box sx={{mx: "auto"}}>
+            <Box sx={{display: "flex", justifyContent: "space-between"}}>
+                <Typography variant={"h4"}>Raw Material Transactions</Typography>
+                <PeriodSelector
+                    control={control}
+                    name={"timePeriod"}
+                    lastFetched={lastFetched}
+                />
             </Box>
             <Grid container spacing={2}>
                 <Grid size={{xs: 12, md: 8}}>
@@ -263,48 +234,49 @@ const RawMaterialInventoryTransaction = () => {
                         placeholder={"Search by reference, type, source or notes"}
                     />
                 </Grid>
-                <Grid size={{xs: 12, md: 4}}>
-                    <CustomCard>
-                        <Controller
-                            name="rawMaterialId"
-                            control={control}
-                            render={({field}) => (
-                                <FormControl fullWidth>
-                                    <StyledTextField
-                                        {...field}
-                                        select
-                                        label="Raw Material"
-                                        placeholder="Select Raw Material"
-                                        disabled={isFetchingRawMaterial}
-                                        SelectProps={{
-                                            IconComponent: () => null,
-                                            endAdornment: (
-                                                <InputAdornment position="end">
-                                                    <Icon
-                                                        src={ArrowDownIconSvg}
-                                                        alt={"Dropdown Arrow"}
-                                                        sx={{width: 15, height: 15}}
-                                                    />
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                        error={Boolean(errors.rawMaterialId)}
-                                        helperText={errors.rawMaterialId?.message}
-                                    >
-                                        <MenuItem value={""} disabled>
-                                            Select Raw Material
+                <Grid
+                    size={{xs: 12, md: 4}}
+                    sx={{justifyContent: "center", display: "flex", alignItems: "center"}}
+                >
+                    <Controller
+                        name="rawMaterialId"
+                        control={control}
+                        render={({field}) => (
+                            <FormControl fullWidth>
+                                <StyledTextField
+                                    {...field}
+                                    select
+                                    label="Raw Material"
+                                    placeholder="Select Raw Material"
+                                    disabled={isFetchingRawMaterial}
+                                    SelectProps={{
+                                        IconComponent: () => null,
+                                        endAdornment: (
+                                            <InputAdornment position="end">
+                                                <Icon
+                                                    src={ArrowDownIconSvg}
+                                                    alt={"Dropdown Arrow"}
+                                                    sx={{width: 15, height: 15}}
+                                                />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                    error={Boolean(errors.rawMaterialId)}
+                                    helperText={errors.rawMaterialId?.message}
+                                >
+                                    <MenuItem value={""} disabled>
+                                        Select Raw Material
+                                    </MenuItem>
+                                    {memoizedRawMaterial?.map((rawMaterial) => (
+                                        <MenuItem key={rawMaterial.id} value={rawMaterial.id}
+                                                  sx={{textTransform: "capitalize"}}>
+                                            {rawMaterial.name}
                                         </MenuItem>
-                                        {memoizedRawMaterial?.map((rawMaterial) => (
-                                            <MenuItem key={rawMaterial.id} value={rawMaterial.id}
-                                                      sx={{textTransform: "capitalize"}}>
-                                                {rawMaterial.name}
-                                            </MenuItem>
-                                        ))}
-                                    </StyledTextField>
-                                </FormControl>
-                            )}
-                        />
-                    </CustomCard>
+                                    ))}
+                                </StyledTextField>
+                            </FormControl>
+                        )}
+                    />
                 </Grid>
             </Grid>
 

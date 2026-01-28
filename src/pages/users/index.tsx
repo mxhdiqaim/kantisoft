@@ -1,5 +1,4 @@
 import ApiErrorDisplay from "@/components/feedback/api-error-display";
-import UsersPageLoading from "@/components/users/loading";
 
 import {getApiError} from "@/helpers/get-api-error";
 import useNotifier from "@/hooks/useNotifier";
@@ -344,10 +343,6 @@ const UsersPage = () => {
         [anchorEl, selectedRowId, navigate, currentUser],
     );
 
-    if (isLoading) {
-        return <UsersPageLoading/>;
-    }
-
     if (isError) {
         const apiError = getApiError(error, "Failed to load users. Please try again later.");
         notify(apiError.message, "error");
@@ -357,7 +352,7 @@ const UsersPage = () => {
     return (
         <Box>
             <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
-                <Typography variant="h4">User Management</Typography>
+                <Typography variant="h4">Users</Typography>
                 {currentUser && (currentUser.role === UserRoleEnum.MANAGER || currentUser.role === UserRoleEnum.ADMIN) && (
                     <CustomButton
                         title={"New User"}
@@ -377,7 +372,7 @@ const UsersPage = () => {
             />
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData ?? []} columns={columns} loading={isLoading}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
                 </Grid>
             </Grid>
             <ChangeStoreDialog

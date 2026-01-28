@@ -1,6 +1,6 @@
 import {useDeleteInventoryRecordMutation, useGetAllInventoryQuery, useMarkAsDiscontinuedMutation} from "@/store/slice";
 import type {InventoryType} from "@/types/inventory-types.ts";
-import {Box, Chip, Grid, Skeleton, Tooltip, Typography, useTheme} from "@mui/material";
+import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
 import type {GridColDef, GridRenderCellParams} from "@mui/x-data-grid";
 import {type MouseEvent, useMemo, useState} from "react";
 import DataGridTable from "@/components/ui/data-grid-table";
@@ -22,6 +22,7 @@ import {getInventoryStatusChipColor} from "@/components/ui";
 import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
 import {camelCaseToTitleCase} from "@/utils"
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 
 import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -70,7 +71,6 @@ const InventoryManagement = () => {
 
     const handleOpenAdjustStockModal = () => {
         setAdjustStockModalOpen(true);
-        // setSelectedRow(null);
     };
 
     const handleCloseAdjustStockModal = () => {
@@ -130,7 +130,6 @@ const InventoryManagement = () => {
             width: 120,
             align: "left",
             headerAlign: "left",
-            // valueGetter: (params) => params.row.menuItem?.itemCode ?? "",
             renderCell: (params) => (
                 <TableStyledBox>
                     <Typography variant="body2">{params.value}</Typography>
@@ -266,24 +265,10 @@ const InventoryManagement = () => {
         },
     ], [selectedRow, isDiscontinuing, handleOpenAdjustStockModal])
 
-    if (isLoading) {
-        return (
-            <>
-                <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
-                    <Skeleton variant="text" width={250} height={48}/>
-                    <Skeleton variant="rectangular" width={140} height={40} sx={{borderRadius: 2}}/>
-                </Box>
-                <Grid container spacing={2}>
-                    <Grid size={12}>
-                        <Skeleton variant="rectangular" width="100%" height={500} sx={{borderRadius: 1}}/>
-                    </Grid>
-                </Grid>
-            </>
-        );
-    }
-
     if (isError) {
-        return <Typography color="error">Error loading inventory: {JSON.stringify(error)}</Typography>;
+        notify(`Failed to load inventory.`, "error");
+        const apiError = getApiError(error, `Failed to load inventory.`);
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
     }
 
     return (

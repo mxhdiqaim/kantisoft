@@ -1,5 +1,5 @@
-import { Box, Paper, Skeleton, Typography, useTheme } from "@mui/material";
-import type { FC, ReactNode } from "react";
+import {Box, Paper, Skeleton, Typography, useTheme} from "@mui/material";
+import type {FC, ReactNode} from "react";
 
 interface Props {
     isLoading: boolean;
@@ -10,14 +10,14 @@ interface Props {
     subValue?: string | number;
 }
 
-const SalesHistoryOverviewCard: FC<Props> = ({ title, value, icon, color, subValue, isLoading }) => {
+const SalesHistoryOverviewCard: FC<Props> = ({title, value, icon, color, subValue, isLoading}) => {
     const theme = useTheme();
     const paletteColor = theme.palette[color];
 
     if (isLoading) {
         return (
-            <Box sx={{ mx: "auto" }}>
-                <Skeleton variant="rectangular" height={118} sx={{ borderRadius: theme.borderRadius.small }} />
+            <Box sx={{mx: "auto"}}>
+                <Skeleton variant="rectangular" height={118} sx={{borderRadius: theme.borderRadius.small}}/>
             </Box>
         );
     }
@@ -60,10 +60,10 @@ const SalesHistoryOverviewCard: FC<Props> = ({ title, value, icon, color, subVal
                 {icon}
             </Box>
             <Box>
-                <Typography variant="h5" component={"div"} sx={{ fontWeight: "bold", lineHeight: 1.2 }}>
+                <Typography variant="h5" component={"div"} sx={{fontWeight: "bold", lineHeight: 1.2}}>
                     {value}
                 </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                <Typography variant="body2" sx={{opacity: 0.8}}>
                     {title}
                 </Typography>
                 {subValue && (

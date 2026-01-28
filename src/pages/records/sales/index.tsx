@@ -1,21 +1,23 @@
-import Spinner from "@/components/sales-history/spinners";
 import SalesHistoryOverviewCard from "@/components/sales-history/sales-history-overview-card.tsx";
 import SalesHistoryTable from "@/components/sales-history/sales-history-table.tsx";
 import {useGetOrdersByPeriodQuery} from "@/store/slice";
 import {filterSchema, type TimePeriod} from "@/types";
-import {ngnFormatter} from "@/utils";
-import {relativeTime} from "@/utils/get-relative-time.ts";
+import {formatCurrency} from "@/utils";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {DinnerDiningOutlined, DomainVerificationOutlined, MonetizationOn, Person2Outlined} from "@mui/icons-material";
 import {Box, Grid, Typography} from "@mui/material";
 import {useEffect, useState} from "react";
 import {useForm} from "react-hook-form";
-import OverviewHeader from "@/components/ui/custom-header.tsx";
 import {UserRoleEnum, UserStatusEnum} from "@/types/user-types.ts";
 import {useSelector} from "react-redux";
 import {selectCurrentUser} from "@/store/slice/auth-slice.ts";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+import useNotifier from "@/hooks/useNotifier.ts";
+import PeriodSelector from "@/components/ui/period-selector.tsx";
 
 const SalesHistory = () => {
+    const notify = useNotifier();
     const currentUser = useSelector(selectCurrentUser);
     const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
         mode: "onChange",
@@ -27,7 +29,7 @@ const SalesHistory = () => {
 
     const period = watch("timePeriod");
 
-    const {data: ordersData, isLoading, isError, fulfilledTimeStamp} = useGetOrdersByPeriodQuery(period);
+    const {data: ordersData, isLoading, isError, fulfilledTimeStamp, error} = useGetOrdersByPeriodQuery(period);
 
     const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
@@ -41,40 +43,21 @@ const SalesHistory = () => {
         }
     }, [fulfilledTimeStamp]);
 
-    if (isLoading) return <Spinner/>;
-
     if (isError) {
-        return (
-            <Typography color="error" align="center" sx={{mt: 4}}>
-                Failed to load sales history. Please try again later.
-            </Typography>
-        );
+        notify(` Failed to load sales history. Please try again later.`, "error");
+        const apiError = getApiError(error, `Failed to load sales history.`);
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
     }
 
     return (
         <Box sx={{mx: "auto"}}>
-            <OverviewHeader
-                title={"Sales"}
-                // timePeriod={period}
-                control={control}
-                // getTimeTitle={getTitle}
-                name={"timePeriod"}
-                // timeTitle={"Sales History"}
-            />
-            <Box sx={{display: "flex", justifyContent: "flex-end"}}>
-                <Typography
-                    variant="h6"
-                    component="span"
-                    color="text.secondary"
-                    align="right"
-                    mb={1}
-                    sx={{
-                        fontWeight: 400,
-                        textAlign: "right",
-                    }}
-                >
-                    {lastFetched ? `Last updated ${relativeTime(lastFetched)}` : "Fetching data..."}
-                </Typography>
+            <Box sx={{display: "flex", justifyContent: "space-between"}}>
+                <Typography variant={"h4"}>Sales History</Typography>
+                <PeriodSelector
+                    control={control}
+                    name={"timePeriod"}
+                    lastFetched={lastFetched}
+                />
             </Box>
 
             {adminOrManager && (
@@ -84,7 +67,7 @@ const SalesHistory = () => {
                             title="Total Sales Balance"
                             color="success"
                             icon={<MonetizationOn/>}
-                            value={ngnFormatter.format(Number(ordersData?.totalRevenue ?? 0))}
+                            value={formatCurrency(Number(ordersData?.totalRevenue ?? 0))}
                             isLoading={isLoading}
                         />
                     </Grid>
@@ -119,7 +102,7 @@ const SalesHistory = () => {
                 </Grid>
             )}
 
-            <SalesHistoryTable orders={ordersData?.orders ?? []} loading={isLoading} period={period}/>
+            <SalesHistoryTable orders={ordersData.orders} loading={isLoading} period={period}/>
         </Box>
     );
 };

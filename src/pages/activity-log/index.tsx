@@ -6,7 +6,6 @@ import {UserRoleEnum} from "@/types/user-types";
 import {useMemo, useState} from "react";
 import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
 import {type GridColDef} from "@mui/x-data-grid";
-import ActivityLogSkeleton from "@/components/activity-log/loading";
 import ApiErrorDisplay from "@/components/feedback/api-error-display";
 import {getApiError} from "@/helpers/get-api-error";
 import useNotifier from "@/hooks/useNotifier";
@@ -148,10 +147,6 @@ const ActivityLogPage = () => {
                 <Typography color="error">You do not have permission to view activity logs.</Typography>
             </Box>
         );
-    }
-
-    if (isLoading) {
-        return <ActivityLogSkeleton rows={10} columns={columns.length}/>;
     }
 
     if (isError && !data) {

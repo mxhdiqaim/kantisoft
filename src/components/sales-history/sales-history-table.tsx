@@ -43,7 +43,7 @@ const SalesHistoryTable = ({orders, loading: isLoadingOrders, period}: Props) =>
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
         initialData: memoizedOrders,
-        searchKeys: ["reference", "id"],
+        searchKeys: ["reference", "seller.firstName", "seller.lastName", "paymentMethod", "orderStatus"],
     });
 
     const [orderToPrint, setOrderToPrint] = useState<OrderType | null>(null);
@@ -331,11 +331,11 @@ const SalesHistoryTable = ({orders, loading: isLoadingOrders, period}: Props) =>
                 handleSearch={handleSearch}
                 onExportCsv={handleExportCsv}
                 onExportXlsx={handleExportXlsx}
-                placeholder={"Search by Order Reference or ID"}
+                placeholder={"Search by Reference, Seller, Order Status..."}
             />
             <Grid container spacing={2} sx={{mt: 2}}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData ?? []} columns={columns} loading={loading}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={loading}/>
                 </Grid>
             </Grid>
         </Box>

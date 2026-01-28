@@ -7,10 +7,15 @@ import {useSearch} from "@/use-search.ts";
 import DataGridTable from "@/components/ui/data-grid-table";
 import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
 import type {GridColDef} from "@mui/x-data-grid";
-import MenuItemsPageSkeleton from "@/components/menu-items/loading";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+import useNotifier from "@/hooks/useNotifier.ts";
+import {useTranslation} from "react-i18next";
 
 const UnitOfMeasurements = () => {
-    const {data, isLoading} = useGetAllUnitOfMeasurementsQuery();
+    const {t} = useTranslation();
+    const notify = useNotifier();
+    const {data, isLoading, isError, error} = useGetAllUnitOfMeasurementsQuery();
     const memoizedData = useMemoizedArray(data);
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
@@ -109,7 +114,11 @@ const UnitOfMeasurements = () => {
         [],
     );
 
-    if (isLoading) return <MenuItemsPageSkeleton/>;
+    if (isError) {
+        notify(`Failed to load ${t("measurement")}.`, "error");
+        const apiError = getApiError(error, `Failed to load ${t("measurement")}.`);
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
+    }
 
     return (
         <Box>
@@ -121,7 +130,7 @@ const UnitOfMeasurements = () => {
             />
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData ?? []} columns={columns} loading={isLoading}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
                 </Grid>
             </Grid>
         </Box>

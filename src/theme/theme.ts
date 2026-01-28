@@ -1,4 +1,4 @@
-import { createTheme, responsiveFontSizes, type ThemeOptions } from "@mui/material/styles";
+import {createTheme, responsiveFontSizes, type ThemeOptions} from "@mui/material/styles";
 import "@mui/x-data-grid/themeAugmentation";
 
 declare module "@mui/x-data-grid" {
@@ -90,12 +90,12 @@ const baseThemeOptions: ThemeOptions = {
             textTransform: "none",
             fontWeight: 600,
         },
-        h1: { fontSize: "2.5rem", fontWeight: 600 },
-        h2: { fontSize: "2rem", fontWeight: 600 },
-        h3: { fontSize: "1.75rem", fontWeight: 600 },
-        h4: { fontSize: "1.5rem", fontWeight: 600 },
-        h5: { fontSize: "1.25rem", fontWeight: 600 },
-        h6: { fontSize: "1rem", fontWeight: 700 },
+        h1: {fontSize: "2.5rem", fontWeight: 600},
+        h2: {fontSize: "2rem", fontWeight: 600},
+        h3: {fontSize: "1.75rem", fontWeight: 600},
+        h4: {fontSize: "1.5rem", fontWeight: 600},
+        h5: {fontSize: "1.25rem", fontWeight: 600},
+        h6: {fontSize: "1rem", fontWeight: 700},
     },
     palette: {
         primary: {
@@ -234,13 +234,13 @@ const baseThemeOptions: ThemeOptions = {
             styleOverrides: {
                 // Override the styles for the 'success' variant
                 filledSuccess: {
-                    backgroundColor: "green", // Your custom success color
+                    backgroundColor: "green", // Your custom success colour
                 },
                 // Override the styles for the 'error' variant
                 filledError: {
-                    backgroundColor: "#d32f2f", // Your custom error color
+                    backgroundColor: "#d32f2f", // Your custom error colour
                 },
-                // You can also customize other variants
+                // You can also customise other variants
                 filledWarning: {
                     backgroundColor: "orange",
                 },

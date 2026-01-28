@@ -16,28 +16,31 @@ import type {RawMaterialType} from "@/types/raw-material-types.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import ViewRawMaterialDrawer from "@/components/raw-material/view-raw-material-drawer.tsx";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+import {useTranslation} from "react-i18next";
 
 import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import MenuItemsPageSkeleton from "@/components/menu-items/loading";
 
 const RawMaterials = () => {
     const theme = useTheme();
+    const {t} = useTranslation();
     const notify = useNotifier();
     const [formModalOpen, setFormModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [selectedRow, setSelectedRow] = useState<RawMaterialType | null>(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
 
-    const {data: rawMaterialData, isLoading: isFetchingRawMaterial} = useGetAllRawMaterialsQuery();
-
-    const [deleteRawMaterial, {isLoading: isDeleting}] = useDeleteRawMaterialMutation();
+    const {data: rawMaterialData, isLoading: isFetchingRawMaterial, isError, error} = useGetAllRawMaterialsQuery();
     const memoizedRawMaterialData = useMemoizedArray(rawMaterialData);
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
         initialData: memoizedRawMaterialData,
         searchKeys: ["name", "symbol", "unitOfMeasurementFamily", "isBaseUnit", "conversionFactorToBase"],
     });
+
+    const [deleteRawMaterial, {isLoading: isDeleting}] = useDeleteRawMaterialMutation();
 
     const handleMenuClick = (_event: MouseEvent<HTMLElement>, row: RawMaterialType) => {
         setSelectedRow(row);
@@ -236,7 +239,11 @@ const RawMaterials = () => {
         [isDeleting, handleDrawerOpen, theme],
     );
 
-    if (isFetchingRawMaterial) return <MenuItemsPageSkeleton/>;
+    if (isError) {
+        notify(`Failed to load ${t("rawMaterial")}.`, "error");
+        const apiError = getApiError(error, `Failed to load ${t("rawMaterial")}.`);
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
+    }
 
     return (
         <Box>

@@ -1,4 +1,3 @@
-import StoresPageLoading from "@/components/stores/loading";
 import {useDeleteStoreMutation, useGetAllStoresQuery} from "@/store/slice";
 import {AddOutlined, DeleteOutline, EditOutlined, MoreVert, VisibilityOutlined} from "@mui/icons-material";
 import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
@@ -16,6 +15,7 @@ import TableSearchActions from "@/components/ui/data-grid-table/table-search-act
 import {useSearch} from "@/use-search.ts";
 import CustomButton from "@/components/ui/button.tsx";
 import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 
 const StoresPage = () => {
     const theme = useTheme();
@@ -23,7 +23,7 @@ const StoresPage = () => {
     const {t} = useTranslation();
     const notify = useNotifier();
 
-    const {data: storesData, isLoading, isError} = useGetAllStoresQuery();
+    const {data: storesData, isLoading, isError, error} = useGetAllStoresQuery();
     const [deleteStore, {isLoading: isDeleting}] = useDeleteStoreMutation();
 
     const memoizedStores = useMemo(() => storesData || [], [storesData]);
@@ -219,34 +219,32 @@ const StoresPage = () => {
         [anchorEl, selectedRowId, navigate, theme.borderRadius.small, storesData, t],
     );
 
-    if (isLoading) return <StoresPageLoading/>;
-
     if (isError) {
-        return (
-            <Typography color="error" align="center" sx={{mt: 4}}>
-                Failed to load stores. Please try again later.
-            </Typography>
-        );
+        notify(`Failed to load ${t("store")}. Please try again later.`, "error");
+        const apiError = getApiError(error, `Failed to load ${t("store")}.`);
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
     }
 
     return (
         <Box>
             <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
-                <Typography variant="h4">{t("store")} Management</Typography>
-                <CustomButton title={`New ${t("store")}`} variant="contained" startIcon={<AddOutlined/>}
-                              onClick={() => navigate("/admin/stores/new")}/>
+                <Typography variant="h4">{t("store")}</Typography>
+                <CustomButton
+                    title={`New ${t("store")}`}
+                    variant="contained"
+                    startIcon={<AddOutlined/>}
+                    onClick={() => navigate("/admin/stores/new")}
+                />
             </Box>
             <TableSearchActions
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}
                 placeholder={"Search by name, type or location"}
-                // onExportCsv={handleExportCsv}
-                // onExportXlsx={handleExportXlsx}
             />
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} loading={isLoading} columns={columns}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
                 </Grid>
             </Grid>
 

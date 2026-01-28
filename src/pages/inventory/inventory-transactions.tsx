@@ -1,21 +1,24 @@
-import {Box, Chip, Grid, Skeleton, Typography} from "@mui/material";
+import {Box, Chip, Grid, Typography} from "@mui/material";
 import {useGetInventoryTransactionsQuery} from "@/store/slice";
 import type {GridColDef} from "@mui/x-data-grid";
 import {useEffect, useMemo, useState} from "react";
 import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
 import DataGridTable from "@/components/ui/data-grid-table";
-import OverviewHeader from "@/components/ui/custom-header.tsx";
-import {camelCaseToTitleCase, getTitle} from "@/utils";
+import {camelCaseToTitleCase} from "@/utils";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {filterSchema, type TimePeriod} from "@/types";
-import {relativeTime} from "@/utils/get-relative-time.ts";
 import {getTransactionChipColor, getTransactionTypeChipColor} from "@/components/ui";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import {useSearch} from "@/use-search.ts";
 import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
+import PeriodSelector from "@/components/ui/period-selector.tsx";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+import useNotifier from "@/hooks/useNotifier.ts";
 
 const InventoryTransactions = () => {
+    const notify = useNotifier();
     const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
         mode: "onChange",
         resolver: yupResolver(filterSchema),
@@ -26,9 +29,15 @@ const InventoryTransactions = () => {
 
     const period = watch("timePeriod");
 
-    const {data, isLoading, isError, fulfilledTimeStamp} = useGetInventoryTransactionsQuery({timePeriod: period});
+    const {
+        data,
+        isLoading,
+        isError,
+        fulfilledTimeStamp,
+        error
+    } = useGetInventoryTransactionsQuery({timePeriod: period});
 
-    const memoizedData = useMemoizedArray(data?.transactions || []);
+    const memoizedData = useMemoizedArray(data?.transactions);
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
         initialData: memoizedData,
@@ -96,45 +105,21 @@ const InventoryTransactions = () => {
         }
     }, [fulfilledTimeStamp]);
 
-    if (isLoading) {
-        return (
-            <>
-                <Skeleton variant="text" width={400} height={48}/>
-                <Skeleton variant="text" width={200} height={24} sx={{mb: 3}}/>
-                <Skeleton variant="rectangular" width="100%" height={500}/>
-            </>
-        );
-    }
-
     if (isError) {
-        console.log("error:", isError);
-        return <Box>Something went wrong</Box>
+        notify(` Failed to load transactions. Please try again later.`, "error");
+        const apiError = getApiError(error, `Failed to load transactions.`);
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
     }
 
     return (
-        <Box>
-            <OverviewHeader
-                title={"Inventory Transactions"}
-                timePeriod={data.timePeriod as TimePeriod}
-                control={control}
-                getTimeTitle={getTitle}
-                name={"timePeriod"}
-                timeTitle={"Transactions"}
-            />
-            <Box sx={{display: "flex", justifyContent: "flex-end"}}>
-                <Typography
-                    variant="h6"
-                    component="span"
-                    color="text.secondary"
-                    align="right"
-                    mb={1}
-                    sx={{
-                        fontWeight: 400,
-                        textAlign: "right",
-                    }}
-                >
-                    {lastFetched ? `Last updated ${relativeTime(lastFetched)}` : "Fetching data..."}
-                </Typography>
+        <Box sx={{mx: "auto"}}>
+            <Box sx={{display: "flex", justifyContent: "space-between"}}>
+                <Typography variant={"h4"}>Inventory Transactions</Typography>
+                <PeriodSelector
+                    control={control}
+                    name={"timePeriod"}
+                    lastFetched={lastFetched}
+                />
             </Box>
 
             <TableSearchActions
@@ -146,8 +131,7 @@ const InventoryTransactions = () => {
 
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}
-                                   getRowId={() => Math.random().toString(36).substr(2, 9)}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
                 </Grid>
             </Grid>
         </Box>

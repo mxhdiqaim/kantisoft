@@ -23,7 +23,6 @@ import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import {getMenuItemsInventoryStatusChip} from "@/components/ui";
 import {relativeTime} from "@/utils/get-relative-time.ts";
 import {useNavigate} from "react-router-dom";
-import MenuItemsPageSkeleton from "@/components/menu-items/loading";
 
 import {DeleteOutline, EditOutlined, MoreVert, RestaurantMenuOutlined} from "@mui/icons-material";
 
@@ -36,6 +35,7 @@ const MenuItems = () => {
     const currentUser = useAppSelector(selectCurrentUser);
 
     const {data: menuItems, isLoading, isError, error} = useGetMenuItemsQuery({});
+
     const [deleteMenuItem, {isLoading: isDeleting}] = useDeleteMenuItemMutation();
 
     const flattenedMenuItems = useMemo(() => {
@@ -334,8 +334,6 @@ const MenuItems = () => {
         ],
         [theme, anchorEl, selectedRowId, currentUser, handleOpenFormModal],
     );
-
-    if (isLoading) return <MenuItemsPageSkeleton/>;
 
     if (isError) {
         notify(`Failed to load ${t("menuItem")}.`, "error");
