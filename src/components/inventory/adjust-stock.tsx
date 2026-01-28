@@ -1,6 +1,6 @@
 import type {FC} from "react";
 import {useEffect} from "react";
-import {Box, FormControl, Grid, InputLabel, MenuItem, Select, TextField} from "@mui/material";
+import {Box, FormControl, Grid, InputAdornment, MenuItem} from "@mui/material";
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import {Controller, useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
@@ -15,6 +15,10 @@ import {useAdjustStockMutation} from "@/store/slice";
 import useNotifier from "@/hooks/useNotifier.ts";
 import {getApiError} from "@/helpers/get-api-error.ts";
 import CustomButton from "@/components/ui/button.tsx";
+import {StyledTextField} from "@/components/ui";
+
+import Icon from "@/components/ui/icon.tsx";
+import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
     open: boolean;
@@ -85,15 +89,35 @@ const AdjustStock: FC<Props> = ({open, onClose, inventoryItem}) => {
                             name="transactionType"
                             control={control}
                             render={({field}) => (
-                                <FormControl fullWidth error={!!errors.transactionType}>
-                                    <InputLabel>Transaction Type</InputLabel>
-                                    <Select {...field} label="Transaction Type" sx={{textTransform: "capitalize"}}>
+                                <FormControl fullWidth>
+                                    <StyledTextField
+                                        {...field}
+                                        select
+                                        label="Select Transaction Type"
+                                        SelectProps={{
+                                            IconComponent: () => null,
+                                            endAdornment: (
+                                                <InputAdornment position="end">
+                                                    <Icon
+                                                        src={ArrowDownIconSvg}
+                                                        alt={"Dropdown Arrow"}
+                                                        sx={{width: 15, height: 15}}
+                                                    />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        error={Boolean(errors.menuItemId)}
+                                        helperText={errors.menuItemId?.message}
+                                    >
+                                        <MenuItem value={""} disabled>
+                                            Select Transaction Type
+                                        </MenuItem>
                                         {TRANSACTION_TYPE.map((type) => (
                                             <MenuItem key={type} value={type} sx={{textTransform: "capitalize"}}>
                                                 {type.replace(/([A-Z])/g, ' $1').trim()}
                                             </MenuItem>
                                         ))}
-                                    </Select>
+                                    </StyledTextField>
                                 </FormControl>
                             )}
                         />
@@ -103,7 +127,7 @@ const AdjustStock: FC<Props> = ({open, onClose, inventoryItem}) => {
                             name="quantityAdjustment"
                             control={control}
                             render={({field}) => (
-                                <TextField
+                                <StyledTextField
                                     {...field}
                                     fullWidth
                                     label="Quantity Adjustment"
@@ -119,12 +143,12 @@ const AdjustStock: FC<Props> = ({open, onClose, inventoryItem}) => {
                             name="notes"
                             control={control}
                             render={({field}) => (
-                                <TextField
+                                <StyledTextField
                                     {...field}
                                     fullWidth
                                     label="Notes (Optional)"
-                                    multiline
-                                    rows={3}
+                                    // multiline
+                                    // rows={3}
                                     error={!!errors.notes}
                                     helperText={errors.notes?.message}
                                 />
