@@ -1,6 +1,6 @@
 import type {FC} from "react";
 import {useEffect} from "react";
-import {Box, FormControl, Grid, InputAdornment, MenuItem, TextField,} from "@mui/material";
+import {Box, FormControl, Grid, InputAdornment, MenuItem} from "@mui/material";
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import {Controller, useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
@@ -10,9 +10,10 @@ import useNotifier from "@/hooks/useNotifier.ts";
 import {getApiError} from "@/helpers/get-api-error.ts";
 import CustomButton from "@/components/ui/button.tsx";
 import {StyledTextField} from "@/components/ui";
+import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+
 import Icon from "@/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 
 interface Props {
     open: boolean;
@@ -118,7 +119,7 @@ const CreateInventoryRecord: FC<Props> = ({open, onClose}) => {
                             name="quantity"
                             control={control}
                             render={({field}) => (
-                                <TextField
+                                <StyledTextField
                                     {...field}
                                     fullWidth
                                     label="Initial Quantity"
@@ -134,7 +135,7 @@ const CreateInventoryRecord: FC<Props> = ({open, onClose}) => {
                             name="minStockLevel"
                             control={control}
                             render={({field}) => (
-                                <TextField
+                                <StyledTextField
                                     {...field}
                                     fullWidth
                                     label="Minimum Stock Level"

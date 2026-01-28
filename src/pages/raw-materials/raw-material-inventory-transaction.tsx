@@ -279,8 +279,7 @@ const RawMaterialInventoryTransaction = () => {
                     />
                 </Grid>
             </Grid>
-
-
+            
             <Grid container spacing={2}>
                 <Grid size={12}>
                     <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
