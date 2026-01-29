@@ -37,6 +37,8 @@ const InventoryManagement = () => {
     const {data: inventoryData, isLoading, isError, error} = useGetAllInventoryQuery();
     const memoizedInventories = useMemoizedArray(inventoryData);
 
+    console.log("Inventory Data: ", inventoryData);
+
     const [markAsDiscontinued, {isLoading: isDiscontinuing}] = useMarkAsDiscontinuedMutation();
     const [deleteInventoryRecord, {isLoading: isDeleting}] = useDeleteInventoryRecordMutation();
 

@@ -8,7 +8,7 @@ import {
     adjustStockSchema,
     type AdjustStockType,
     type InventoryType,
-    TRANSACTION_TYPE,
+    STOCK_ADJUSTMENT_TYPE,
     TransactionTypeEnum
 } from "@/types/inventory-types.ts";
 import {useAdjustStockMutation} from "@/store/slice";
@@ -110,9 +110,9 @@ const AdjustStock: FC<Props> = ({open, onClose, inventoryItem}) => {
                                         helperText={errors.menuItemId?.message}
                                     >
                                         <MenuItem value={""} disabled>
-                                            Select Transaction Type
+                                            Select Adjustment Type
                                         </MenuItem>
-                                        {TRANSACTION_TYPE.map((type) => (
+                                        {STOCK_ADJUSTMENT_TYPE.map((type) => (
                                             <MenuItem key={type} value={type} sx={{textTransform: "capitalize"}}>
                                                 {type.replace(/([A-Z])/g, ' $1').trim()}
                                             </MenuItem>

@@ -8,6 +8,7 @@ export const InventoryStatusEnum = {
     ADJUSTMENT: "adjustment",
     DISCONTINUED: "discontinued",
 } as const;
+export const INVENTORY_STATUS = Object.values(InventoryStatusEnum);
 
 export const TransactionTypeEnum = {
     SALE: "sale",
@@ -16,13 +17,19 @@ export const TransactionTypeEnum = {
     ADJUSTMENT_IN: "adjustmentIn",
     ADJUSTMENT_OUT: "adjustmentOut",
     PURCHASE_RECEIVE: "purchaseReceive",
-    // COMING_IN: "comingIn",
-    // GOING_OUT: "goingOut",
+    COMING_IN: "comingIn",
+    GOING_OUT: "goingOut",
+} as const;
+export const TRANSACTION_TYPE = Object.values(TransactionTypeEnum);
+
+export const StockAdjustmentTypeEnum = {
+    RETURN: "return",
+    ADJUSTMENT_IN: "adjustmentIn",
+    PURCHASE_RECEIVE: "purchaseReceive",
+    COMING_IN: "comingIn",
 } as const;
 
-export const INVENTORY_STATUS = Object.values(InventoryStatusEnum);
-
-export const TRANSACTION_TYPE = Object.values(TransactionTypeEnum);
+export const STOCK_ADJUSTMENT_TYPE = Object.values(StockAdjustmentTypeEnum);
 
 // Schema for creating an inventory item
 export const createInventorySchema = yup.object({
