@@ -180,3 +180,8 @@ export const a11yProps = (index: number) => {
         "aria-controls": `simple-tabpanel-${index}`,
     };
 };
+
+export const formatNumber = (value: number): string => {
+    return new Intl.NumberFormat().format(value);
+};
+

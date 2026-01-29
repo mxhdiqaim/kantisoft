@@ -13,7 +13,7 @@ import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
 import {formatRelativeDateTime} from "@/utils/get-relative-time.ts";
-import {camelCaseToTitleCase} from "@/utils";
+import {camelCaseToTitleCase, formatNumber} from "@/utils";
 import {getInventoryStatusChipColor} from "@/components/ui";
 import type {MultipleRawMaterialInventoryResponseType} from "@/types/raw-material-types.ts";
 import InventoryDetailsDrawer from "@/components/raw-material/inventory-details-drawer.tsx";
@@ -24,8 +24,6 @@ const RawMaterialInventory = () => {
 
     const {data, isLoading} = useGetAllRawMaterialInventoryQuery();
     const memoizedInventoryData = useMemoizedArray(data);
-
-    console.log("Stock In Raw Material Inventory Data:", memoizedInventoryData);
 
     const [formModalOpen, setFormModalOpen] = useState(false);
     const [openInventoryDetailDrawer, setOpenInventoryDetailDrawer] = useState(false);
@@ -92,7 +90,7 @@ const RawMaterialInventory = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography variant="body2">{params.value}</Typography>
+                        <Typography variant="body2">{formatNumber(params.value)}</Typography>
                     </TableStyledBox>
                 ),
             },
@@ -125,7 +123,7 @@ const RawMaterialInventory = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography variant="body2">{params.value}</Typography>
+                        <Typography variant="body2">{formatNumber(params.value)}</Typography>
                     </TableStyledBox>
                 ),
             },
@@ -202,13 +200,13 @@ const RawMaterialInventory = () => {
                             onClick={handleInventoryDrawerOpen}
                             sx={{borderRadius: theme.borderRadius.small, mx: 1}}
                         >
-                            View Inventory
+                            View
                         </TableStyledMenuItem>
                         <TableStyledMenuItem
                             onClick={handleOpenFormModal}
                             sx={{borderRadius: theme.borderRadius.small, mx: 1}}
                         >
-                            Edit Raw Material
+                            Adjust Min Stock
                         </TableStyledMenuItem>
                         <TableStyledMenuItem
                             onClick={handleStockInDrawerOpen}
@@ -217,19 +215,19 @@ const RawMaterialInventory = () => {
                             Stock In
                         </TableStyledMenuItem>
 
-                        <TableStyledMenuItem
-                            // onClick={() => setDeleteModalOpen(true)}
-                            // disabled={isDeleting}
-                            sx={{
-                                mt: 1,
-                                mx: 1,
-                                border: `1px solid ${theme.palette.error.main}`,
-                                borderRadius: theme.borderRadius.small,
-                                color: theme.palette.error.main,
-                            }}
-                        >
-                            Delete Raw Material
-                        </TableStyledMenuItem>
+                        {/*<TableStyledMenuItem*/}
+                        {/*    // onClick={() => setDeleteModalOpen(true)}*/}
+                        {/*    disabled*/}
+                        {/*    sx={{*/}
+                        {/*        mt: 1,*/}
+                        {/*        mx: 1,*/}
+                        {/*        border: `1px solid ${theme.palette.error.main}`,*/}
+                        {/*        borderRadius: theme.borderRadius.small,*/}
+                        {/*        color: theme.palette.error.main,*/}
+                        {/*    }}*/}
+                        {/*>*/}
+                        {/*    Delete*/}
+                        {/*</TableStyledMenuItem>*/}
                     </CustomButton>
                 ),
             },
@@ -241,10 +239,10 @@ const RawMaterialInventory = () => {
         <Box>
             <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
                 <Typography variant="h4" component="h1">
-                    Raw Material Stock
+                    Raw Material Inventory
                 </Typography>
                 <CustomButton
-                    title={"Add Inventory"}
+                    title={"Add to Inventory"}
                     variant="contained"
                     startIcon={<AddIcon/>}
                     onClick={handleOpenFormModal}
