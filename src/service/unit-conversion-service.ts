@@ -1,6 +1,6 @@
-import {unitOfMeasurement, UnitOfMeasurementSchemaT,} from "../schema/unit-of-measurement-schema";
+import { unitOfMeasurement, UnitOfMeasurementSchemaT } from "../schema/unit-of-measurement-schema";
 import db from "../db";
-import {eq} from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 /**
  * Utility class for handling all unit conversion logic.
@@ -84,5 +84,10 @@ export const UnitConversionService = {
 
         // Example: 50 (per g) * 1000 (factor) = N5000 (per kg)
         return pricePerBaseUnit * targetUnit.conversionFactorToBase;
+    },
+
+    // Validates that two units belong to the same measurement family
+    validateFamilyMatch(materialFamily: string, unitFamily: string): boolean {
+        return materialFamily === unitFamily;
     },
 };

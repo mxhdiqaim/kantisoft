@@ -280,11 +280,36 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
             return handleError2(res, 'Quantity must be equal to or greater 0', StatusCodes.BAD_REQUEST);
         }
 
-        // Resolve Unit and Conversion
-        const unitRecord = await UnitConversionService.fetchUnitById(unitOfMeasurementId);
+        // Fetch BOTH the Raw Material and the Unit in parallel
+        const [materialRecord, unitRecord] = await Promise.all([
+            db.query.rawMaterials.findFirst({
+                where: eq(rawMaterials.id, rawMaterialId),
+                // Ensure your rawMaterials table includes its unit information
+                with: { unitOfMeasurement: true }
+            }),
+
+            UnitConversionService.fetchUnitById(unitOfMeasurementId)
+        ]);
+
+        if (!materialRecord) {
+            return handleError2(res, 'Raw Material not found', StatusCodes.NOT_FOUND);
+        }
 
         if (!unitRecord) {
-            return handleError2(res, 'Invalid Unit of Measurement ID', StatusCodes.NOT_FOUND);
+            return handleError2(res, 'Invalid Unit of Measurement', StatusCodes.NOT_FOUND);
+        }
+
+        // CRITICAL: Cross-Family Validation
+        // Assuming rawMaterials has a unitOfMeasurementId or a family field
+        const materialFamily = materialRecord.unitOfMeasurement.unitOfMeasurementFamily;
+        const selectedUnitFamily = unitRecord.unitOfMeasurementFamily;
+
+        if (materialFamily !== selectedUnitFamily) {
+            return handleError2(
+                res,
+                `Incompatible Units: This material is tracked by ${materialFamily}, but you selected a ${selectedUnitFamily} unit.`,
+                StatusCodes.BAD_REQUEST
+            );
         }
 
         // Convert user-facing quantity/minLevel to the system's Base Unit
@@ -366,7 +391,7 @@ export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: 
     if (!finalStoreId) return;
 
     const { id: inventoryRecordId } = req.params;
-    const { minStockLevel, } = req.body;
+    const { minStockLevel } = req.body;
 
     if (!inventoryRecordId) {
         return handleError2(res, 'Raw Material is required', StatusCodes.BAD_REQUEST);

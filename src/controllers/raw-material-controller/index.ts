@@ -48,6 +48,7 @@ export const getAllRawMaterial = async (req: CustomRequest, res: Response) => {
                 name: unitOfMeasurement.name,
                 symbol: unitOfMeasurement.symbol,
                 conversionFactorToBase: unitOfMeasurement.conversionFactorToBase,
+                unitOfMeasurementFamily: unitOfMeasurement.unitOfMeasurementFamily
             }
         })
             .from(rawMaterials)
