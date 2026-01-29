@@ -61,6 +61,9 @@ export const getAllRawMaterialInventory = async (req: CustomRequest, res: Respon
                                 id: true,
                                 name: true,
                                 symbol: true,
+                                unitOfMeasurementFamily: true,
+                                isBaseUnit: true,
+                                conversionFactorToBase: true
                             }
                         }
                     }
@@ -88,9 +91,10 @@ export const getAllRawMaterialInventory = async (req: CustomRequest, res: Respon
             latestUnitPrice: item.rawMaterial.latestUnitPrice,
 
             unitOfMeasurement: {
-                id: item.rawMaterial.unitOfMeasurement.id,
-                name: item.rawMaterial.unitOfMeasurement.name,
-                symbol: item.rawMaterial.unitOfMeasurement.symbol,
+                // id: item.rawMaterial.unitOfMeasurement.id,
+                // name: item.rawMaterial.unitOfMeasurement.name,
+                // symbol: item.rawMaterial.unitOfMeasurement.symbol,
+                ...item.rawMaterial.unitOfMeasurement,
             },
 
             storeId: item.store.id,
