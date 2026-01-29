@@ -129,6 +129,7 @@ export type MultipleRawMaterialInventoryResponseType = {
         id: string;
         name: string;
         symbol: string;
+        unitOfMeasurementFamily: string;
     },
     storeId: string;
     storeName: string;
@@ -136,11 +137,11 @@ export type MultipleRawMaterialInventoryResponseType = {
 
 export const RawMaterialTransactionSourceEnum = {
     PURCHASE_RECEIPT: "purchaseReceipt",
-    PRODUCTION_USAGE: "productionUsage",
+    // PRODUCTION_USAGE: "productionUsage",
     INVENTORY_ADJUSTMENT: "inventoryAdjustment",
-    WASTAGE: "wastage",
+    // WASTAGE: "wastage",
     TRANSFER_IN: "transferIn",
-    TRANSFER_OUT: "transferOut",
+    // TRANSFER_OUT: "transferOut",
 } as const;
 
 export const RAW_MATERIAL_TRANSACTION_SOURCE = Object.values(RawMaterialTransactionSourceEnum);

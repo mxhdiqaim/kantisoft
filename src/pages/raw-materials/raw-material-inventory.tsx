@@ -276,7 +276,7 @@ const RawMaterialInventory = () => {
                     open={openStockInDrawer}
                     onOpen={() => setOpenStockInDrawer(true)}
                     onClose={handleStockInDrawerClose}
-                    rawMaterialId={selectedRow?.rawMaterialId as string}
+                    rawMaterialInventory={selectedRow}
                 />
             )}
 

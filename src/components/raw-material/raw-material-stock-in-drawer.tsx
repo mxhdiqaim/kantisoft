@@ -1,4 +1,4 @@
-import {type FC} from "react";
+import {type FC, useEffect} from "react";
 import {Box, FormControl, Grid, InputAdornment, MenuItem, Stack} from "@mui/material";
 import DataDrawer from "@/components/ui/data-drawer.tsx";
 import {drawerPaperProps} from "@/components/styles";
@@ -10,6 +10,7 @@ import CustomButton from "@/components/ui/button.tsx";
 import {Controller, useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {
+    type MultipleRawMaterialInventoryResponseType,
     RAW_MATERIAL_TRANSACTION_SOURCE,
     stockInRawMaterialSchema,
     type StockInRawMaterialType,
@@ -17,6 +18,7 @@ import {
 import CustomCard from "@/components/customs/custom-card.tsx";
 import {camelCaseToTitleCase} from "@/utils";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+import {useUnitFilter} from "@/hooks/use-unit-filter.ts";
 
 import Icon from "@/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
@@ -25,14 +27,13 @@ interface Props {
     open: boolean;
     onOpen: () => void;
     onClose: () => void;
-    rawMaterialId: string;
+    rawMaterialInventory: MultipleRawMaterialInventoryResponseType;
 }
 
-const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterialId}) => {
+const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterialInventory}) => {
     const notify = useNotifier();
 
     const {data: measurementUnit, isLoading: isMeasurementLoading} = useGetAllUnitOfMeasurementsQuery();
-
     const memoizedMeasurement = useMemoizedArray(measurementUnit);
 
     const [stockInRawMaterialInventory, {isLoading}] = useStockInRawMaterialInventoryMutation();
@@ -41,15 +42,24 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
         control,
         handleSubmit,
         reset,
+        setValue,
         formState: {errors},
     } = useForm({
         defaultValues: {},
         resolver: yupResolver(stockInRawMaterialSchema),
     });
 
+    // USE THE CUSTOM HOOK HERE
+    const {filteredUnits, selectedUnitSymbol} = useUnitFilter({
+        control,
+        allUnits: memoizedMeasurement,
+        // In the drawer, the material is already known from props
+        selectedMaterialFamily: rawMaterialInventory?.unitOfMeasurement?.unitOfMeasurementFamily,
+    });
+
     const onSubmit = async (data: StockInRawMaterialType) => {
         try {
-            await stockInRawMaterialInventory({...data, id: rawMaterialId});
+            await stockInRawMaterialInventory({...data, id: rawMaterialInventory.rawMaterialId});
             notify("Stock in Successfully!", "success");
             onClose();
             reset();
@@ -59,6 +69,13 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
             notify(apiError.message, "error");
         }
     };
+
+    // Auto-select unit if only one exists or to provide a default
+    useEffect(() => {
+        if (filteredUnits.length > 0) {
+            setValue("unitOfMeasurementId", filteredUnits[0].id);
+        }
+    }, [filteredUnits, setValue]);
 
     return (
         <DataDrawer
@@ -120,30 +137,12 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
                                         <StyledTextField
                                             {...field}
                                             select
-                                            label="Unit Of Measurement"
+                                            label="Unit"
                                             disabled={isMeasurementLoading}
-                                            SelectProps={{
-                                                IconComponent: () => null,
-                                                endAdornment: (
-                                                    <InputAdornment position="end">
-                                                        <Icon
-                                                            src={ArrowDownIconSvg}
-                                                            alt={"Dropdown Arrow"}
-                                                            sx={{width: 15, height: 15}}
-                                                        />
-                                                    </InputAdornment>
-                                                ),
-                                            }}
-                                            error={Boolean(errors.unitOfMeasurementId)}
-                                            helperText={errors.unitOfMeasurementId?.message}
                                         >
-                                            <MenuItem value={""} disabled>
-                                                Select Measurement Unit
-                                            </MenuItem>
-                                            {memoizedMeasurement.map((measurement) => (
-                                                <MenuItem key={measurement.id} value={measurement.id}
-                                                          sx={{textTransform: "capitalize"}}>
-                                                    {measurement.name}
+                                            {filteredUnits.map((unit) => (
+                                                <MenuItem key={unit.id} value={unit.id}>
+                                                    {unit.name} ({unit.symbol})
                                                 </MenuItem>
                                             ))}
                                         </StyledTextField>
@@ -161,6 +160,11 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
                                             {...field}
                                             label="Quantity"
                                             type="number"
+                                            InputProps={{
+                                                endAdornment: selectedUnitSymbol && (
+                                                    <InputAdornment position="end">{selectedUnitSymbol}</InputAdornment>
+                                                ),
+                                            }}
                                             error={Boolean(errors.quantity)}
                                             helperText={errors.quantity?.message}
                                         />
