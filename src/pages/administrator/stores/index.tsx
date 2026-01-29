@@ -6,7 +6,6 @@ import type {GridColDef, GridRenderCellParams} from "@mui/x-data-grid";
 import type {StoreType} from "@/types/store-types.ts";
 import {type MouseEvent, useMemo, useState} from "react";
 import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
-import StoreDeleteConfirmation from "@/components/stores/store-delete-confirmation.tsx";
 import useNotifier from "@/hooks/useNotifier.ts";
 import {getApiError} from "@/helpers/get-api-error.ts";
 import DataGridTable from "@/components/ui/data-grid-table";
@@ -15,10 +14,11 @@ import {useSearch} from "@/use-search.ts";
 import CustomButton from "@/components/ui/button.tsx";
 import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+import DeleteConfirmationModal from "@/components/ui/delete-confimation-modal.tsx";
 
 import {AddOutlined, DeleteOutline, EditOutlined, MoreVert, VisibilityOutlined} from "@mui/icons-material";
 
-const StoresPage = () => {
+const StoresScreen = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const {t} = useTranslation();
@@ -35,30 +35,27 @@ const StoresPage = () => {
     });
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+    const [selectedRow, setSelectedRow] = useState<StoreType | null>(null);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
-    const [storeToDelete, setStoreToDelete] = useState<StoreType | null>(null);
-    const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const handleMenuClick = (_event: MouseEvent<HTMLElement>, row: StoreType) => {
+        setSelectedRow(row);
+    };
 
-    const handleMenuClick = (event: MouseEvent<HTMLElement>, rowId: string) => {
-        setAnchorEl(event.currentTarget);
-        setSelectedRowId(rowId);
+    const handleCloseDeleteModal = () => {
+        setDeleteModalOpen(false);
+        setSelectedRow(null);
     };
 
     const handleMenuClose = () => {
         setAnchorEl(null);
-        setSelectedRowId(null);
-    };
-
-    const handleDeleteClick = (store: StoreType) => {
-        setStoreToDelete(store);
-        setDeleteDialogOpen(true);
+        setSelectedRow(null);
     };
 
     const handleConfirmDelete = async () => {
-        if (!storeToDelete) return;
+        if (!selectedRow) return;
         try {
-            await deleteStore(storeToDelete.id).unwrap();
+            await deleteStore(selectedRow.id).unwrap();
             notify("Store deleted successfully", "success");
         } catch (error) {
             const defaultMessage = "Failed to delete store";
@@ -66,8 +63,7 @@ const StoresPage = () => {
             notify(apiError.message, "error");
             console.log(error);
         } finally {
-            setDeleteDialogOpen(false);
-            setStoreToDelete(null);
+            handleCloseDeleteModal();
         }
     };
 
@@ -182,10 +178,6 @@ const StoresPage = () => {
                         handleMenuClose();
                     };
 
-                    const handleDelete = () => {
-                        handleDeleteClick(params.row);
-                        handleMenuClose();
-                    };
                     return (
                         <CustomButton
                             variant={"text"}
@@ -193,7 +185,7 @@ const StoresPage = () => {
                                 borderRadius: "10px",
                                 color: theme.palette.text.primary,
                             }}
-                            onClick={(e) => handleMenuClick(e, params.row.id)}
+                            onClick={(e) => handleMenuClick(e, params.row)}
                             startIcon={
                                 <Tooltip title="More Actions" placement={"top"}>
                                     <MoreVert/>
@@ -208,7 +200,10 @@ const StoresPage = () => {
                                 <EditOutlined sx={{mr: 1}}/>
                                 Edit
                             </TableStyledMenuItem>
-                            <TableStyledMenuItem onClick={handleDelete} disabled={isDeleteDisabled}>
+                            <TableStyledMenuItem
+                                onClick={() => setDeleteModalOpen(true)}
+                                disabled={isDeleteDisabled || params.row.branchType === "main"}
+                            >
                                 <DeleteOutline sx={{mr: 1}}/>
                                 Delete
                             </TableStyledMenuItem>
@@ -217,7 +212,7 @@ const StoresPage = () => {
                 },
             },
         ],
-        [anchorEl, selectedRowId, navigate, theme.borderRadius.small, storesData, t],
+        [anchorEl, navigate, theme.borderRadius.small, storesData, t],
     );
 
     if (isError) {
@@ -249,15 +244,16 @@ const StoresPage = () => {
                 </Grid>
             </Grid>
 
-            <StoreDeleteConfirmation
-                open={isDeleteDialogOpen}
-                onClose={() => setDeleteDialogOpen(false)}
+            <DeleteConfirmationModal
+                open={deleteModalOpen}
+                onClose={handleCloseDeleteModal}
                 onConfirm={handleConfirmDelete}
-                storeName={storeToDelete?.name ?? ""}
                 isLoading={isDeleting}
+                title="Delete Store?"
+                message="You won't be able to revert this action."
             />
         </Box>
     );
 };
 
-export default StoresPage;
+export default StoresScreen;

@@ -33,8 +33,6 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
     const notify = useNotifier();
     const isEditMode = !!rawMaterialInventory;
 
-    console.log({rawMaterialInventory});
-
     const {data: rawMaterialData, isLoading: isFetchingRawMaterial} = useGetAllRawMaterialsQuery(undefined, {
         skip: !open,
     });
