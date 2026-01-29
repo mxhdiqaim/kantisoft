@@ -12,9 +12,11 @@ router.use("/inventory", rawMaterialInventory);
 router.use("/transactions", rawMaterialStockTransaction);
 
 router.get("/", controller.getAllRawMaterial);
+router.get("/deleted", controller.getDeletedRawMaterials);
 router.get("/:id", controller.getSingleRawMaterial);
 router.post("/create", controller.createRawMaterial);
 router.patch("/:id", controller.updateRawMaterial);
+router.patch("/:id/recover", controller.recoverRawMaterial);
 router.delete("/:id", controller.deleteRawMaterial);
 
 export default router;

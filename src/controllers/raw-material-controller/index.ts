@@ -48,6 +48,7 @@ export const getAllRawMaterial = async (req: CustomRequest, res: Response) => {
                 name: unitOfMeasurement.name,
                 symbol: unitOfMeasurement.symbol,
                 conversionFactorToBase: unitOfMeasurement.conversionFactorToBase,
+                unitOfMeasurementFamily: unitOfMeasurement.unitOfMeasurementFamily
             }
         })
             .from(rawMaterials)
@@ -525,5 +526,106 @@ export const deleteRawMaterial = async (req: CustomRequest, res: Response) => {
             StatusCodes.INTERNAL_SERVER_ERROR,
             error instanceof Error ? error : undefined
         );
+    }
+};
+
+/**
+ * @description Retrieves a list of softly deleted Raw Materials.
+ * @route GET /api/v1/raw-materials/deleted
+ * @access Admin, Manager
+ */
+export const getDeletedRawMaterials = async (req: CustomRequest, res: Response) => {
+    const validated = await validateStoreAndExtractDates(req, res);
+    if (!validated) return;
+
+    const { storeIds } = validated;
+
+    try {
+        const results = await db.select({
+            id: rawMaterials.id,
+            name: rawMaterials.name,
+            status: rawMaterials.status,
+            deletedAt: rawMaterials.lastModified, // This tracks when it was last updated (deleted)
+            unitOfMeasurement: {
+                name: unitOfMeasurement.name,
+                symbol: unitOfMeasurement.symbol,
+            }
+        })
+            .from(rawMaterials)
+            .leftJoin(unitOfMeasurement, eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id))
+            .where(and(
+                inArray(rawMaterials.storeId, storeIds),
+                eq(rawMaterials.status, RawMaterialStatusEnum.DELETED)
+            ))
+            .execute();
+
+        return res.status(StatusCodes.OK).json(results);
+    } catch (error) {
+        return handleError2(res, 'Failed to fetch deleted materials.', StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
+    }
+};
+
+/**
+ * @description Restores a softly deleted Raw Material by setting its status back to 'active'.
+ * @route PATCH /api/v1/raw-materials/:id/recover
+ * @access Admin, Manager
+ */
+export const recoverRawMaterial = async (req: CustomRequest, res: Response) => {
+    const currentUser = req.user?.data;
+    const storeId = currentUser?.storeId;
+    const { id: rawMaterialId } = req.params;
+
+    if (!storeId || !rawMaterialId) {
+        return handleError2(res, 'Store or Raw Material not found.', StatusCodes.BAD_REQUEST);
+    }
+
+    const userRole = currentUser?.role;
+    const { targetStoreId } = req.query;
+
+    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+    if (!finalStoreId) return;
+
+    try {
+        // Check if the material exists and is actually deleted
+        const materialToRecover = await db.query.rawMaterials.findFirst({
+            where: and(
+                eq(rawMaterials.id, rawMaterialId),
+                eq(rawMaterials.storeId, finalStoreId)
+            )
+        });
+
+        if (!materialToRecover) {
+            return handleError2(res, 'Material not found.', StatusCodes.NOT_FOUND);
+        }
+
+        if (materialToRecover.status !== RawMaterialStatusEnum.DELETED) {
+            return handleError2(res, 'This material is not deleted.', StatusCodes.BAD_REQUEST);
+        }
+
+        // Perform the recovery update
+        const [recoveredMaterial] = await db.update(rawMaterials)
+            .set({
+                status: RawMaterialStatusEnum.ACTIVE,
+                lastModified: new Date()
+            })
+            .where(and(
+                eq(rawMaterials.id, rawMaterialId),
+                eq(rawMaterials.storeId, finalStoreId)
+            ))
+            .returning();
+
+        return res.status(StatusCodes.OK).json(`${recoveredMaterial.name} has been restored.`);
+
+    } catch (error: any) {
+        // Handle Unique Constraint Violation (if an active material with the same name exists)
+        if (error.code === '23505' || error.cause?.code === '23505') {
+            return handleError2(
+                res,
+                'Cannot recover: An active material with this name already exists in this store.',
+                StatusCodes.CONFLICT
+            );
+        }
+
+        return handleError2(res, 'Failed to recover material.', StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
     }
 };
