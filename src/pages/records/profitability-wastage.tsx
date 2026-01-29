@@ -83,7 +83,7 @@ const ProfitabilityWastageScreen = () => {
     }
 
     return (
-        <Box>
+        <Box sx={{mx: "auto"}}>
             <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
                 <Typography variant={"h5"}>Profitability & Wastage</Typography>
 

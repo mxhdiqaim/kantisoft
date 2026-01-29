@@ -1,5 +1,4 @@
 import {useDeleteStoreMutation, useGetAllStoresQuery} from "@/store/slice";
-import {AddOutlined, DeleteOutline, EditOutlined, MoreVert, VisibilityOutlined} from "@mui/icons-material";
 import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
 import {useNavigate} from "react-router-dom";
 import {useTranslation} from "react-i18next";
@@ -16,6 +15,8 @@ import {useSearch} from "@/use-search.ts";
 import CustomButton from "@/components/ui/button.tsx";
 import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+
+import {AddOutlined, DeleteOutline, EditOutlined, MoreVert, VisibilityOutlined} from "@mui/icons-material";
 
 const StoresPage = () => {
     const theme = useTheme();

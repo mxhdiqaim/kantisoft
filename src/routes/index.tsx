@@ -25,6 +25,7 @@ import {
     SingleInventoryTransactionScreen,
     StoreFormScreen,
     StoreScreen,
+    TrashBinScreen,
     UnitOfMeasurementsScreen,
     UsersScreen,
     ViewSalesHistoryScreen,
@@ -324,6 +325,12 @@ export const appRoutes: AppRouteType[] = [
                     },
                 ]
             },
+            {
+                to: "trash-bin",
+                title: "Trash Bin",
+                element: TrashBinScreen,
+                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+            }
         ]
     },
 

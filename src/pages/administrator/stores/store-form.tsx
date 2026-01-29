@@ -1,7 +1,7 @@
-import {getApiError} from "@/helpers/get-api-error";
-import useNotifier from "@/hooks/useNotifier";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import useNotifier from "@/hooks/useNotifier.ts";
 import {useCreateStoreMutation, useGetStoreByIdQuery, useUpdateStoreMutation} from "@/store/slice";
-import {createStoreSchema, type CreateStoreType, STORE_TYPES} from "@/types/store-types";
+import {createStoreSchema, type CreateStoreType, STORE_TYPES} from "@/types/store-types.ts";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {ArrowBackIosNewOutlined} from "@mui/icons-material";
 import {

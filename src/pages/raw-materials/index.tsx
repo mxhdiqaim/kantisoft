@@ -1,4 +1,4 @@
-import {Box, Grid, Stack, Tooltip, Typography, useTheme} from "@mui/material";
+import {Box, Grid, Tooltip, Typography, useTheme} from "@mui/material";
 import {useDeleteRawMaterialMutation, useGetAllRawMaterialsQuery} from "@/store/slice";
 import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
 import {useSearch} from "@/use-search.ts";
@@ -14,11 +14,11 @@ import CustomButton from "@/components/ui/button.tsx";
 import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
 import type {RawMaterialType} from "@/types/raw-material-types.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
-import CustomModal from "@/components/customs/custom-modal.tsx";
 import ViewRawMaterialDrawer from "@/components/raw-material/view-raw-material-drawer.tsx";
 import {getApiError} from "@/helpers/get-api-error.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import {useTranslation} from "react-i18next";
+import DeleteConfirmationModal from "@/components/ui/delete-confimation-modal.tsx";
 
 import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -283,41 +283,14 @@ const RawMaterials = () => {
                 />
             )}
 
-            <CustomModal
+            <DeleteConfirmationModal
                 open={deleteModalOpen}
                 onClose={handleCloseDeleteModal}
-                modalStyles={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    textAlign: "center",
-                    maxWidth: {xs: "90vw", sm: 500},
-                }}
-            >
-                <Typography variant="h6" fontWeight="600">
-                    Delete Raw Material?
-                </Typography>
-                <Typography sx={{mt: 1, fontSize: ".8rem"}} variant={"body1"}>
-                    You won&apos;t be able to revert this action.
-                </Typography>
-
-                <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{mt: 3}}>
-                    <CustomButton
-                        title="Yes, Delete"
-                        variant="contained"
-                        onClick={handleDeleteFactory}
-                        disabled={isDeleting}
-                        color="error"
-                        sx={{width: "fit-content"}}
-                    />
-                    <CustomButton
-                        title="Cancel"
-                        onClick={handleCloseDeleteModal}
-                        disabled={isDeleting}
-                        sx={{width: "fit-content"}}
-                    />
-                </Stack>
-            </CustomModal>
+                onConfirm={handleDeleteFactory}
+                isLoading={isDeleting}
+                title="Delete Raw Material?"
+                message="You won't be able to revert this action."
+            />
         </Box>
     );
 };

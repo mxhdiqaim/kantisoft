@@ -9,11 +9,6 @@ export {default as MenuItemScreen} from "./menu-item";
 
 export {default as ActivityLogScreen} from "./activity-log";
 
-// Store Screens
-export {default as StoreScreen} from "./stores";
-export {default as StoreFormScreen} from "./stores/store-form";
-export {default as ViewStoreScreen} from "./stores/view-store";
-
 export {default as ProfileScreen} from "./profile";
 export {default as ChangePasswordScreen} from "./profile/change-password";
 
@@ -21,12 +16,6 @@ export {default as ChangePasswordScreen} from "./profile/change-password";
 export {default as InventoryManagementScreen} from "./inventory";
 export {default as SingleInventoryTransactionScreen} from "./inventory/single-inventory-transaction.tsx";
 export {default as InventoryTransactionsScreen} from "./inventory/inventory-transactions.tsx";
-
-// User screens
-export {default as AddUserScreen} from "./users/add-user";
-export {default as UsersScreen} from "./users";
-export {default as EditUserScreen} from "./users/edit-user";
-export {default as ViewUserScreen} from "./users/view-user";
 
 // Auth screens
 export {default as LoginScreen} from "./auth/login";
@@ -49,3 +38,13 @@ export {default as ProductionScreen} from "./production"
 // Records
 export {default as SalesHistoryScreen} from "./records/sales";
 export {default as ProfitabilityWastageScreen} from "./records/profitability-wastage.tsx"
+
+// Administrator
+export {default as TrashBinScreen} from "./administrator/trash-bin";
+export {default as AddUserScreen} from "@/pages/administrator/users/add-user";
+export {default as UsersScreen} from "./administrator/users";
+export {default as EditUserScreen} from "@/pages/administrator/users/edit-user";
+export {default as ViewUserScreen} from "@/pages/administrator/users/view-user";
+export {default as StoreScreen} from "./administrator/stores";
+export {default as StoreFormScreen} from "@/pages/administrator/stores/store-form";
+export {default as ViewStoreScreen} from "@/pages/administrator/stores/view-store";

@@ -39,6 +39,7 @@ import type {UnitOfMeasurementType} from "@/types/unit-of-measurement-types.ts";
 import type {
     CreateRawMaterialInventoryType,
     CreateRawMaterialType,
+    DeletedRawMaterialType,
     GetRawMaterialInventoryStockType,
     MultipleRawMaterialInventoryResponseType,
     RawMaterialInventoryTransactionsResponse,
@@ -161,6 +162,7 @@ export const apiSlice = createApi({
         "InventoryTransactions",
         "RawMaterials",
         "RawMaterial",
+        "DeletedRawMaterials",
         "UnitOfMeasurements",
         "RawMaterialInventory",
         "RawMaterialInventories",
@@ -627,6 +629,29 @@ export const apiSlice = createApi({
             ],
         }),
 
+        getAllDeletedRawMaterials: builder.query<DeletedRawMaterialType[], void>({
+            query: () => "/raw-materials/deleted",
+            providesTags: (result) =>
+                result
+                    ? [...result.map(({id}) => ({type: "DeletedRawMaterials" as const, id})), {
+                        type: "DeletedRawMaterials",
+                        id: "LIST"
+                    }]
+                    : [{type: "DeletedRawMaterials", id: "LIST"}],
+        }),
+
+        recoverRawMaterial: builder.mutation<void, string>({
+            query: (id) => ({
+                url: `/raw-materials/${id}/recover`,
+                method: "PATCH",
+            }),
+            invalidatesTags: (_result, _error, id) => [
+                {type: "RawMaterial", id},
+                {type: "RawMaterials", id: "LIST"},
+                {type: "DeletedRawMaterials", id: "LIST"},
+            ],
+        }),
+
         // -------------------------
         // Raw Material Inventory Endpoints
         // -------------------------
@@ -825,6 +850,8 @@ export const {
     useGetSingleRawMaterialQuery,
     useUpdateRawMaterialMutation,
     useDeleteRawMaterialMutation,
+    useGetAllDeletedRawMaterialsQuery,
+    useRecoverRawMaterialMutation,
 
     // Raw Material Inventory Hooks
     useGetAllRawMaterialInventoryQuery,

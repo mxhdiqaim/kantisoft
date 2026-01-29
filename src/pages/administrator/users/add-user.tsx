@@ -1,4 +1,4 @@
-import UserForm from "../../components/users/user-form";
+import UserForm from "../../../components/users/user-form.tsx";
 // import { useCreateUserMutation, useGetUserByIdQuery } from "@/store/slice";
 // import { useParams } from "react-router-dom";
 // import UserFormSkeleton from "@/components/users/loading/user-form-skeleton";
@@ -28,7 +28,7 @@ const AddUser = () => {
 
     // Render the UserForm and pass the fetched user data to it
     // return <h1>Add New User</h1>;
-    return <UserForm />;
+    return <UserForm/>;
 };
 
 export default AddUser;

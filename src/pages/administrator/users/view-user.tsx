@@ -1,11 +1,11 @@
-import ApiErrorDisplay from "@/components/feedback/api-error-display";
-import ViewUserSkeleton from "@/components/users/loading/view-user-skeleton";
-import {getApiError} from "@/helpers/get-api-error";
-import useNotifier from "@/hooks/useNotifier";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+import ViewUserSkeleton from "@/components/users/loading/view-user-skeleton.tsx";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import useNotifier from "@/hooks/useNotifier.ts";
 import {useAppSelector} from "@/store";
 import {useDeleteUserMutation, useGetUserByIdQuery, useUpdateUserMutation} from "@/store/slice";
-import {selectCurrentUser} from "@/store/slice/auth-slice";
-import {roleHierarchy, type UserRoleType, type UserType} from "@/types/user-types";
+import {selectCurrentUser} from "@/store/slice/auth-slice.ts";
+import {roleHierarchy, type UserRoleType, type UserType} from "@/types/user-types.ts";
 import {ArrowBackIosNewOutlined, BlockOutlined, DeleteOutline, EditOutlined} from "@mui/icons-material";
 import {Avatar, Box, Button, Card, CardContent, Chip, Divider, Grid, Typography} from "@mui/material";
 import {format} from "date-fns";

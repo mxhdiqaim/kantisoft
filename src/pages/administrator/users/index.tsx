@@ -1,10 +1,10 @@
-import ApiErrorDisplay from "@/components/feedback/api-error-display";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 
-import {getApiError} from "@/helpers/get-api-error";
-import useNotifier from "@/hooks/useNotifier";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import useNotifier from "@/hooks/useNotifier.ts";
 import {useAppSelector} from "@/store";
 import {useChangeUserStoreMutation, useGetAllStoresQuery, useGetAllUsersQuery} from "@/store/slice";
-import {selectCurrentUser} from "@/store/slice/auth-slice";
+import {selectCurrentUser} from "@/store/slice/auth-slice.ts";
 import {roleHierarchy, UserRoleEnum, UserStatusEnum, type UserType} from "@/types/user-types.ts";
 
 import {AddOutlined, EditOutlined, MoreVert, StorefrontOutlined, VisibilityOutlined} from "@mui/icons-material";
@@ -18,7 +18,7 @@ import DataGridTable from "@/components/ui/data-grid-table";
 import ChangeStoreDialog from "@/components/users/change-store-modal.tsx";
 import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
 import {useSearch} from "@/use-search.ts";
-import {exportToCsv, exportToXlsx, getExportFormattedData} from "@/utils/export-data-utils";
+import {exportToCsv, exportToXlsx, getExportFormattedData} from "@/utils/export-data-utils.ts";
 import CustomButton from "@/components/ui/button.tsx";
 import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
 import {getUserStatusChipColor} from "@/components/ui";

@@ -1,4 +1,4 @@
-import ViewStoreLoading from "@/components/stores/loading/view-store-loading";
+import ViewStoreLoading from "@/components/stores/loading/view-store-loading.tsx";
 import {useGetStoreByIdQuery} from "@/store/slice";
 import {ArrowBackIosNewOutlined, EditOutlined} from "@mui/icons-material";
 import {Box, Button, Chip, Divider, Grid, Paper, Typography, useTheme} from "@mui/material";

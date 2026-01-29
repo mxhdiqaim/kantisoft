@@ -232,3 +232,14 @@ export type GetRawMaterialInventoryStockType = {
         unitOfMeasurementFamily: string;
     };
 }
+
+export type DeletedRawMaterialType = {
+    id: string;
+    name: string;
+    status: typeof RawMaterialStatusEnum[keyof typeof RawMaterialStatusEnum];
+    deletedAt: string;
+    unitOfMeasurement: {
+        name: string;
+        symbol: string;
+    };
+}
