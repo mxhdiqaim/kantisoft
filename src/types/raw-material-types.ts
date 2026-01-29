@@ -81,16 +81,14 @@ export const RawMaterialInventoryStatusEnum = {
     ON_ORDER: "onOrder",
 } as const;
 
-export const RAW_MATERIAL_INVENTORY_STATUS = Object.values(RawMaterialInventoryStatusEnum);
+// export const RAW_MATERIAL_INVENTORY_STATUS = Object.values(RawMaterialInventoryStatusEnum);
 
-export const rawMaterialInventorySchema = yup.object({
+export const createRawMaterialInventorySchema = yup.object({
     rawMaterialId: yup.string().uuid().required("Raw Material ID is required."),
     quantity: yup.number().required("Quantity is required.").min(0, "Quantity must be at least 0."),
+    unitOfMeasurementId: yup.string().uuid().required("Unit of Measurement is required."),
     minStockLevel: yup.number().required("Minimum stock level is required.").min(0, "Minimum stock level must be at least 0."),
-    // status: yup.string().oneOf(RAW_MATERIAL_INVENTORY_STATUS).required("Inventory status is required."),
 });
-
-export const createRawMaterialInventorySchema = rawMaterialInventorySchema;
 
 export type CreateRawMaterialInventoryType = yup.InferType<typeof createRawMaterialInventorySchema>;
 
@@ -104,7 +102,6 @@ export type SingleRawMaterialInventoryType = {
     createdAt: string;
     lastModified: string;
 }
-
 
 export type UpdateRawMaterialInventoryType = Pick<CreateRawMaterialInventoryType, "minStockLevel"> & {
     id: string;
@@ -154,8 +151,6 @@ export const RawMaterialTransactionTypeEnum = {
 } as const;
 
 export const RAW_MATERIAL_TRANSACTION_TYPE = Object.values(RawMaterialTransactionTypeEnum);
-
-// @body { unitOfMeasurementId: string, source: RawMaterialTransactionSource, quantity: number, documentRefId: string, notes?: string }
 
 export const stockInRawMaterialSchema = yup.object({
     source: yup.string().oneOf(RAW_MATERIAL_TRANSACTION_SOURCE).required("Transaction source is required."),
@@ -234,5 +229,6 @@ export type GetRawMaterialInventoryStockType = {
         name: string;
         symbol: string;
         conversionFactorToBase: number;
+        unitOfMeasurementFamily: string;
     };
 }

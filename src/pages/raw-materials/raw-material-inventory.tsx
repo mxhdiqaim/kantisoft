@@ -21,9 +21,11 @@ import RawMaterialStockInDrawer from "@/components/raw-material/raw-material-sto
 
 const RawMaterialInventory = () => {
     const theme = useTheme();
-    const {data, isLoading} = useGetAllRawMaterialInventoryQuery();
 
+    const {data, isLoading} = useGetAllRawMaterialInventoryQuery();
     const memoizedInventoryData = useMemoizedArray(data);
+
+    console.log("Stock In Raw Material Inventory Data:", memoizedInventoryData);
 
     const [formModalOpen, setFormModalOpen] = useState(false);
     const [openInventoryDetailDrawer, setOpenInventoryDetailDrawer] = useState(false);

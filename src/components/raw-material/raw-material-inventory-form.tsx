@@ -1,12 +1,12 @@
-import {type FC, useEffect} from "react";
+import {type FC, useEffect, useMemo} from "react";
 import {Box, FormControl, Grid, InputAdornment, MenuItem} from "@mui/material";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import {Controller, useForm} from "react-hook-form";
+import {Controller, useForm, useWatch} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {
     createRawMaterialInventorySchema,
     type CreateRawMaterialInventoryType,
-    type SingleRawMaterialInventoryType,
+    type MultipleRawMaterialInventoryResponseType,
     type UpdateRawMaterialInventoryType,
 } from "@/types/raw-material-types.ts";
 import {StyledTextField} from "@/components/ui";
@@ -14,6 +14,7 @@ import Icon from "@/components/ui/icon.tsx";
 import {
     useCreateRawMaterialInventoryMutation,
     useGetAllRawMaterialsQuery,
+    useGetAllUnitOfMeasurementsQuery,
     useUpdateRawMaterialInventoryMutation
 } from "@/store/slice";
 import CustomButton from "@/components/ui/button.tsx";
@@ -25,18 +26,26 @@ import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 interface Props {
     open: boolean;
     onClose: () => void;
-    rawMaterialInventory?: SingleRawMaterialInventoryType | null;
+    rawMaterialInventory?: MultipleRawMaterialInventoryResponseType | null;
 }
 
 const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventory}) => {
     const notify = useNotifier();
     const isEditMode = !!rawMaterialInventory;
 
+    console.log({rawMaterialInventory});
+
     const {data: rawMaterialData, isLoading: isFetchingRawMaterial} = useGetAllRawMaterialsQuery(undefined, {
         skip: !open,
     });
 
     const memoizedRawMaterial = useMemoizedArray(rawMaterialData);
+
+    const {data: unitOfMeasurements, isLoading: fetchingMeasurements} = useGetAllUnitOfMeasurementsQuery(undefined, {
+        skip: !open,
+    });
+
+    const memoizedUnitOfMeasurements = useMemoizedArray(unitOfMeasurements);
 
     const [createRawMaterialInventory, {
         isLoading: isCreating,
@@ -54,21 +63,59 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
         control,
         handleSubmit,
         reset: resetForm,
+        setValue,
         formState: {errors},
     } = useForm({
         defaultValues: {
             rawMaterialId: "",
+            unitOfMeasurementId: "",
             quantity: 0,
             minStockLevel: 0,
         },
         resolver: yupResolver(createRawMaterialInventorySchema),
     });
 
+    // Move all useWatch calls to the top level
+    const currentUnitId = useWatch({control, name: "unitOfMeasurementId"});
+    const selectedMaterialId = useWatch({control, name: "rawMaterialId"});
+
+    // Use the values in useMemo (no hooks inside here any more)
+    const selectedUnitSymbol = useMemo(() => {
+        return memoizedUnitOfMeasurements?.find(u => u.id === currentUnitId)?.symbol || "";
+    }, [currentUnitId, memoizedUnitOfMeasurements]);
+
+    const selectedMaterial = useMemo(() => {
+        return memoizedRawMaterial?.find((m) => m.id === selectedMaterialId);
+    }, [selectedMaterialId, memoizedRawMaterial]);
+
+    // Normalise family (ensure it exists before calling toLowerCase)
+    const requiredFamily = useMemo(() => {
+        return selectedMaterial?.unitOfMeasurement?.unitOfMeasurementFamily?.toLowerCase();
+    }, [selectedMaterial]);
+
+    // Filter units
+    const filteredUnits = useMemo(() => {
+        if (!requiredFamily) return [];
+
+        return memoizedUnitOfMeasurements?.filter(
+            (unit) => unit.unitOfMeasurementFamily?.toLowerCase() === requiredFamily
+        );
+    }, [requiredFamily, memoizedUnitOfMeasurements]);
+
     const handleClose = () => {
         onClose();
         resetCreateMutation();
         resetUpdateMutation();
     };
+
+    // Optional UX: Auto-select the first compatible unit when material changes
+    useEffect(() => {
+        if (filteredUnits && filteredUnits.length > 0 && !isEditMode) {
+            setValue("unitOfMeasurementId", filteredUnits[0].id);
+        } else if (!isEditMode) {
+            setValue("unitOfMeasurementId", "");
+        }
+    }, [filteredUnits, setValue, isEditMode]);
 
     useEffect(() => {
         if (isCreateSuccess || isUpdateSuccess) {
@@ -82,12 +129,14 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                 rawMaterialId: rawMaterialInventory.rawMaterialId,
                 minStockLevel: rawMaterialInventory.minStockLevel,
                 quantity: rawMaterialInventory.quantity,
+                unitOfMeasurementId: rawMaterialInventory.unitOfMeasurement.id,
             });
         } else if (!open) {
             resetForm({
                 rawMaterialId: "",
                 quantity: 0,
                 minStockLevel: 0,
+                unitOfMeasurementId: ""
             });
         }
     }, [rawMaterialInventory, open, resetForm]);
@@ -166,20 +215,56 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                         </Grid>
                     )}
                     {!isEditMode && (
-                        <Grid size={{sm: 12, md: 6}}>
+                        <Grid size={12}>
                             <Controller
-                                name="quantity"
+                                name="unitOfMeasurementId"
                                 control={control}
                                 render={({field}) => (
                                     <FormControl fullWidth>
                                         <StyledTextField
                                             {...field}
-                                            label="Quantity"
-                                            type="number"
-                                            error={Boolean(errors.quantity)}
-                                            helperText={errors.quantity?.message}
-                                        />
+                                            select
+                                            label="Unit Of Measurement"
+                                            disabled={fetchingMeasurements || !selectedMaterialId}
+                                            error={Boolean(errors.unitOfMeasurementId)}
+                                            helperText={errors.unitOfMeasurementId?.message}
+                                        >
+                                            <MenuItem value="" disabled>Select Unit</MenuItem>
+                                            {filteredUnits?.map((unit) => (
+                                                <MenuItem
+                                                    key={unit.id}
+                                                    value={unit.id}
+                                                    sx={{textTransform: "capitalize"}}
+                                                >
+                                                    {unit.name} ({unit.symbol})
+                                                </MenuItem>
+                                            ))}
+                                        </StyledTextField>
                                     </FormControl>
+                                )}
+                            />
+                        </Grid>
+                    )}
+                    {!isEditMode && (
+                        <Grid size={{sm: 12, md: 6}}>
+                            <Controller
+                                name="quantity"
+                                control={control}
+                                render={({field}) => (
+                                    <StyledTextField
+                                        {...field}
+                                        label="Quantity"
+                                        type="number"
+                                        fullWidth
+                                        // ADDED ADORNMENT
+                                        InputProps={{
+                                            endAdornment: selectedUnitSymbol && (
+                                                <InputAdornment position="end">{selectedUnitSymbol}</InputAdornment>
+                                            ),
+                                        }}
+                                        error={Boolean(errors.quantity)}
+                                        helperText={errors.quantity?.message}
+                                    />
                                 )}
                             />
                         </Grid>
@@ -189,15 +274,20 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                             name="minStockLevel"
                             control={control}
                             render={({field}) => (
-                                <FormControl fullWidth>
-                                    <StyledTextField
-                                        {...field}
-                                        label="Minimum Stock Level"
-                                        type="number"
-                                        error={Boolean(errors.minStockLevel)}
-                                        helperText={errors.minStockLevel?.message}
-                                    />
-                                </FormControl>
+                                <StyledTextField
+                                    {...field}
+                                    fullWidth
+                                    label="Low Stock Alert Level"
+                                    type="number"
+                                    // ADDED ADORNMENT
+                                    InputProps={{
+                                        endAdornment: selectedUnitSymbol && (
+                                            <InputAdornment position="end">{selectedUnitSymbol}</InputAdornment>
+                                        ),
+                                    }}
+                                    error={Boolean(errors.minStockLevel)}
+                                    helperText={errors.minStockLevel?.message}
+                                />
                             )}
                         />
                     </Grid>
