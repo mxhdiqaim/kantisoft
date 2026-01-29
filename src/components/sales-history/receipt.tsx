@@ -39,7 +39,7 @@ const Receipt = forwardRef<HTMLDivElement, Props>(({order, storeData}, ref) => {
                 borderRadius: theme.shape?.borderRadius ?? 1,
             }}
         >
-            {/* --- Print-only CSS Styles for Thermal Printer --- */}
+            {/* Print-only CSS Styles for Thermal Printer */}
             <style type="text/css">
                 {`
                     /* Rule for screen display */
@@ -162,7 +162,7 @@ const Receipt = forwardRef<HTMLDivElement, Props>(({order, storeData}, ref) => {
                 `}
             </style>
 
-            {/* --- Print-Only Header (Store Info & Logo) --- */}
+            {/* Print-Only Header (Store Info & Logo) */}
             <Box className="print-only" sx={{textAlign: "center", mb: 2}}>
                 {/* Placeholder for Logo */}
                 {/* If you have a logo URL, use it here: */}
@@ -178,7 +178,7 @@ const Receipt = forwardRef<HTMLDivElement, Props>(({order, storeData}, ref) => {
                 <Divider sx={{my: 1}}/>
             </Box>
 
-            {/* --- Receipt Header (Order Reference & Status) --- */}
+            {/* Receipt Header (Order Reference & Status) */}
             <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "flex-start", my: 1}}>
                 <Box>
                     <Typography variant="h6" sx={{fontWeight: "bold", color: theme.palette.text.primary}}>
@@ -198,7 +198,7 @@ const Receipt = forwardRef<HTMLDivElement, Props>(({order, storeData}, ref) => {
 
             <Divider sx={{mb: 1}}/>
 
-            {/* --- Order Details Grid (Stacked Vertically) --- */}
+            {/* Order Details Grid (Stacked Vertically) */}
             <Grid container spacing={0.5} sx={{mb: 1}}>
                 <Grid size={{xs: 12, sm: 6}} sx={{my: 1}}>
                     <Typography variant="body2" color="text.secondary">
@@ -249,9 +249,9 @@ const Receipt = forwardRef<HTMLDivElement, Props>(({order, storeData}, ref) => {
                 )}
             </Grid>
 
-            {/* --- Order Items Table --- */}
+            {/* Order Items Table */}
             <Typography variant="body1" sx={{mb: 0.5, fontWeight: "bold"}}>
-                Items
+                Purchased Items
             </Typography>
             <TableContainer>
                 <Table size="small">
@@ -293,7 +293,7 @@ const Receipt = forwardRef<HTMLDivElement, Props>(({order, storeData}, ref) => {
 
             <Divider sx={{my: 1}}/>
 
-            {/* --- Grand Total --- */}
+            {/* Grand Total */}
             <Box sx={{display: "flex", justifyContent: "flex-end", mb: 1}}>
                 <Box sx={{textAlign: "right"}}>
                     <Typography variant="body1" color="text.secondary">
@@ -320,7 +320,7 @@ const Receipt = forwardRef<HTMLDivElement, Props>(({order, storeData}, ref) => {
 
             <Divider sx={{my: 1}}/>
 
-            {/* --- Thank You Message & Refund Policy --- */}
+            {/* Thank You Message & Refund Policy */}
             <Box className="print-only" sx={{textAlign: "center", my: 2}}>
                 <Typography variant="body1" sx={{fontWeight: "bold", mb: 0.5}}>
                     THANK YOU FOR YOUR BUSINESS!
@@ -330,13 +330,13 @@ const Receipt = forwardRef<HTMLDivElement, Props>(({order, storeData}, ref) => {
                 </Typography>
             </Box>
 
-            {/* --- Print-Only Footer (Application Owner) --- */}
+            {/* Print-Only Footer (Application Owner) */}
             <Box
                 className="print-only"
                 sx={{textAlign: "center", mt: 2, pt: 1, borderTop: `1px dashed ${theme.palette.divider}`}}
             >
                 <Typography variant="caption" color="text.secondary">
-                    Powered by Kantisoft subsidiary of Haxene Limited | www.kantisoft.com
+                    Powered by Kantisoft Limited | www.kantisoft.com
                 </Typography>
             </Box>
         </Paper>

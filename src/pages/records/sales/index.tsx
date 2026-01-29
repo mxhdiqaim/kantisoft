@@ -102,7 +102,7 @@ const SalesHistory = () => {
                 </Grid>
             )}
 
-            <SalesHistoryTable orders={ordersData.orders} loading={isLoading} period={period}/>
+            <SalesHistoryTable orders={ordersData?.orders || []} loading={isLoading} period={period}/>
         </Box>
     );
 };

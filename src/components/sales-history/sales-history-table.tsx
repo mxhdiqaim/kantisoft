@@ -30,7 +30,7 @@ export interface Props {
     period: string;
 }
 
-const SalesHistoryTable = ({orders, loading: isLoadingOrders, period}: Props) => {
+const SalesHistoryTable = ({orders, loading: isLoadingOrders = true, period}: Props) => {
     const theme = useTheme();
     const navigate = useNavigate();
     const notify = useNotifier();
