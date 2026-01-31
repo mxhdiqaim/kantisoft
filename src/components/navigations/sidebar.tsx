@@ -72,21 +72,32 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
         }
     };
 
-    const [expandedItem, setExpandedItem] = useState<string | null>(null);
+    // Track expanded items by level: { 0: "/catalog", 1: "menu-items" }
+    const [expandedItems, setExpandedItems] = useState<Record<number, string>>({});
 
-    const handleItemClick = (route: AppRouteType) => {
+    const handleItemClick = (route: AppRouteType, level: number) => {
         if (showDrawer) return;
 
-        if (toggleDrawer) {
-            // Close drawer on mobile when a final link is clicked
-            if (!route.children) {
-                toggleDrawer(!drawerState);
-            }
-        }
-
         if (route.children) {
-            // If clicking the already open item, close it. Otherwise, set the new one.
-            setExpandedItem((prev) => (prev === route.to ? null : route.to));
+            setExpandedItems((prev) => {
+                // If clicking the same item, close it and all its children levels
+                if (prev[level] === route.to) {
+                    const newState = {...prev};
+                    Object.keys(newState).forEach(key => {
+                        if (Number(key) >= level) delete newState[Number(key)];
+                    });
+                    return newState;
+                }
+                // Otherwise, set this level to the new route and clear deeper levels
+                const newState = {...prev, [level]: route.to};
+                Object.keys(newState).forEach(key => {
+                    if (Number(key) > level) delete newState[Number(key)];
+                });
+                return newState;
+            });
+        } else if (toggleDrawer && (screenSize === "mobile" || screenSize === "tablet")) {
+            // Close a drawer on mobile when a leaf node is clicked
+            toggleDrawer(false);
         }
     };
 
@@ -110,16 +121,15 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
     };
 
     const renderMenuItem = (route: AppRouteType, index: number, level: number = 0, parentPath: string = "") => {
-        const fullPath = parentPath + route.to;
+        const fullPath = (parentPath + "/" + route.to).replace(/\/+/g, "/");
 
         const isActive = location.pathname.startsWith(fullPath);
         const isSelected = location.pathname === fullPath;
 
-        // Check if this specific route is the currently expanded one
-        const isExpanded = expandedItem === route.to;
+        // Check if this level's active item matches this route
+        const isExpanded = expandedItems[level] === route.to;
 
         const hasChildren = route.children && route.children.length > 0;
-
         const linkProps = !hasChildren ? {component: Link, to: fullPath} : {};
 
         return (
@@ -127,7 +137,7 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
                 <ListItem disablePadding sx={{px: 2, py: 0.5}}>
                     <ListItemButton
                         selected={isSelected}
-                        onClick={() => handleItemClick(route)}
+                        onClick={() => handleItemClick(route, level)}
                         {...linkProps}
                         sx={{
                             borderRadius: level > 0 ? 2 : theme.borderRadius.small,
@@ -175,10 +185,7 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
                         {hasChildren && (
                             <Box
                                 component={isExpanded ? ExpandLessOutlinedIcon : ExpandMoreOutlinedIcon}
-                                sx={{
-                                    fontSize: 20,
-                                    color: theme.palette.text.secondary,
-                                }}
+                                sx={{fontSize: 20}}
                             />
                         )}
                     </ListItemButton>
@@ -198,14 +205,21 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
     };
 
     useEffect(() => {
-        // Find which top-level route contains the current URL
-        const activeParent = appRoutes.find(route =>
-            route.children && location.pathname.startsWith(route.to)
-        );
+        const newExpanded: Record<number, string> = {};
 
-        if (activeParent) {
-            setExpandedItem(activeParent.to);
-        }
+        // Helper to find the path in the tree
+        const findActivePaths = (routes: AppRouteType[], currentLevel: number) => {
+            for (const route of routes) {
+                const isParentOfCurrent = location.pathname.includes(route.to);
+                if (isParentOfCurrent && route.children) {
+                    newExpanded[currentLevel] = route.to;
+                    findActivePaths(route.children, currentLevel + 1);
+                }
+            }
+        };
+
+        findActivePaths(appRoutes, 0);
+        setExpandedItems(newExpanded);
     }, [location.pathname]);
 
     useEffect(() => {
