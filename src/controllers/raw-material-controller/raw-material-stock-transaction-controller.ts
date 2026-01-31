@@ -141,10 +141,10 @@ export const getRawMaterialInventoryTransactions = async (req: CustomRequest, re
 
         const { rawMaterialId } = req.query; // Optional filter
 
-        // 1. Construct the Base WHERE clause (Store Filter)
+        // Construct the Base WHERE clause (Store Filter)
         let whereClause: SQL | undefined = inArray(rawMaterialTransactions.storeId, storeIds);
 
-        // 2. Apply the Date Filter (Copied from getInventoryTransactions)
+        // Apply the Date Filter (Copied from getInventoryTransactions)
         if (finalStartDate && finalEndDate) {
             whereClause = and(
                 whereClause,
@@ -153,8 +153,8 @@ export const getRawMaterialInventoryTransactions = async (req: CustomRequest, re
             );
         }
 
-        // 3. Add the Raw Material Filter if provided
-        if (rawMaterialId) {
+        // Add the Raw Material Filter if provided
+        if (rawMaterialId && rawMaterialId !== "all") {
             whereClause = and(whereClause, eq(rawMaterialTransactions.rawMaterialId, rawMaterialId as string));
         }
 
