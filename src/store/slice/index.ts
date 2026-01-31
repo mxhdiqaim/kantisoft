@@ -58,6 +58,7 @@ import type {
     CreateProductionType,
     CreateWastageType,
     FinishedGoodsProfitMarginType,
+    ProductionSummaryType,
     ProductionType,
     ProductionWastageSummaryType
 } from "@/types/production-types.ts";
@@ -765,14 +766,6 @@ export const apiSlice = createApi({
             invalidatesTags: ['Inventory', 'RawMaterialInventories', "MenuItem", "ProductionLogs"],
         }),
 
-        getProductionSummary: builder.query<any, TimePeriod>({
-            query: (timePeriod = "today") => ({
-                url: "/production/summary",
-                params: {timePeriod},
-            }),
-            providesTags: ["ProductionSummary"],
-        }),
-
         recordWastage: builder.mutation<void, CreateWastageType>({
             query: (body) => ({
                 url: '/production/wastage',
@@ -780,6 +773,14 @@ export const apiSlice = createApi({
                 body,
             }),
             invalidatesTags: ['RawMaterialInventories', "RawMaterialTransactions", "RawMaterials"],
+        }),
+
+        getProductionSummary: builder.query<ProductionSummaryType, TimePeriod>({
+            query: (timePeriod = "today") => ({
+                url: "/production/summary",
+                params: {timePeriod},
+            }),
+            providesTags: ["ProductionSummary"],
         }),
 
     }),

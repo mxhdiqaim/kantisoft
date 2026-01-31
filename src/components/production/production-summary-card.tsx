@@ -11,10 +11,12 @@ interface Props {
     icon: ReactElement;
     color?: string;
     index: number;
+    loading?: boolean;
 }
 
-const ProductionSummaryCard = ({title, value, icon, color, index}: Props) => {
-    console.log(value);
+const ProductionSummaryCard = (props: Props) => {
+    console.log({props});
+    const {title, value, icon, color, index, loading} = props;
     const theme = useTheme();
     const cardColor = color || theme.palette.primary.main;
 
@@ -22,6 +24,7 @@ const ProductionSummaryCard = ({title, value, icon, color, index}: Props) => {
         if (typeof value === 'number') {
             return (
                 <CountUp
+                    key={value} // Add key to re-trigger animation on value change
                     start={0}
                     end={value}
                     duration={2}
@@ -33,7 +36,12 @@ const ProductionSummaryCard = ({title, value, icon, color, index}: Props) => {
         if (typeof value === 'string' && value.includes('%')) {
             return <>{value}</>;
         }
-        return <>{ngnFormatter.format(Number(String(value).replace(/,/g, '')))}</>;
+        // Assuming this is for currency which might be a string from the API
+        const numericValue = Number(String(value).replace(/,/g, ''));
+        if (isNaN(numericValue)) {
+            return <>{value}</>
+        }
+        return <>{ngnFormatter.format(numericValue)}</>;
     };
 
     return (
@@ -64,7 +72,7 @@ const ProductionSummaryCard = ({title, value, icon, color, index}: Props) => {
                         </Typography>
                     </Box>
                     <Typography variant="h4" component="div" sx={{fontWeight: "bold"}}>
-                        {renderValue()}
+                        {loading ? "..." : renderValue()}
                     </Typography>
                 </Box>
             </CustomCardRef>

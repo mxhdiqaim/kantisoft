@@ -42,3 +42,11 @@ export type FinishedGoodsProfitMarginType = {
     marginPercentage: number;
     status: "HEALTHY" | "LOW_MARGIN";
 }
+
+export type ProductionSummaryType = {
+    grossProductionMargin: string;
+    itemsProducedCount: number;
+    numberOfBatches: number;
+    potentialRevenueCreated: number;
+    totalCostOfIngredients: number;
+}

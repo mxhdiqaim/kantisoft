@@ -1,5 +1,5 @@
-import {Box, Grid, Typography} from '@mui/material';
-import {useGetProductionLogsQuery} from '@/store/slice';
+import {Box, Grid, Typography, useTheme} from '@mui/material';
+import {useGetProductionLogsQuery, useGetProductionSummaryQuery} from '@/store/slice';
 import {useForm} from "react-hook-form";
 import {filterSchema, type TimePeriod} from "@/types";
 import {yupResolver} from "@hookform/resolvers/yup";
@@ -15,12 +15,12 @@ import PeriodSelector from "@/components/ui/period-selector.tsx";
 import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
 import {useSearch} from "@/use-search.ts";
 import WastageFormModal from "@/components/menu-items/wastage-form-modal.tsx";
-// import ProductionSummaryCard from "@/components/production/production-summary-card.tsx";
+import ProductionSummaryCard from "@/components/production/production-summary-card.tsx";
 
-// import {AccountBalanceWalletOutlined, KitchenOutlined, ReceiptLong, TrendingUp} from '@mui/icons-material';
+import {AccountBalanceWalletOutlined, KitchenOutlined, ReceiptLong, TrendingUp} from '@mui/icons-material';
 
 const ProductionScreen = () => {
-    // const theme = useTheme();
+    const theme = useTheme();
 
     const [productionModalOpen, setProductionModalOpen] = useState(false);
     const [wastageModalOpen, setWastageModalOpen] = useState(false);
@@ -45,11 +45,7 @@ const ProductionScreen = () => {
         searchKeys: ["itemName", "batchReference", "performedBy"],
     });
 
-    // const {data: summary, isLoading, isError, fulfilledTimeStamp} = useGetProductionSummaryQuery(period);
-
-    // const memoizedSummary = useMemoizedObject(summary);
-
-    // console.log("Production memoizedSummary:", memoizedSummary);
+    const {data: summary, isLoading /* isError, fulfilledTimeStamp */} = useGetProductionSummaryQuery(period);
 
     const openProductionFormModal = () => {
         setProductionModalOpen(true);
@@ -63,32 +59,32 @@ const ProductionScreen = () => {
         setWastageModalOpen(false);
     };
 
-    // const summaryCards = [
-    //     {
-    //         title: "Cost of Ingredients",
-    //         value: memoizedSummary.totalCostOfIngredients || 0,
-    //         icon: <ReceiptLong/>,
-    //         color: theme.palette.error.main, // Represents money spent
-    //     },
-    //     {
-    //         title: "Potential Revenue Created",
-    //         value: memoizedSummary?.potentialRevenueCreated || 0,
-    //         icon: <TrendingUp/>,
-    //         color: theme.palette.success.main, // Represents value added
-    //     },
-    //     {
-    //         title: "Items Produced",
-    //         value: memoizedSummary?.itemsProducedCount || 0,
-    //         icon: <KitchenOutlined/>,
-    //         color: theme.palette.info.main,
-    //     },
-    //     {
-    //         title: "Production Margin",
-    //         value: memoizedSummary?.grossProductionMargin || "0%",
-    //         icon: <AccountBalanceWalletOutlined/>,
-    //         color: theme.palette.warning.main,
-    //     }
-    // ];
+    const summaryCards = useMemo(() => [
+        {
+            title: "Cost of Ingredients",
+            value: summary?.totalCostOfIngredients || 0,
+            icon: <ReceiptLong/>,
+            color: theme.palette.error.main, // Represents money spent
+        },
+        {
+            title: "Potential Revenue Created",
+            value: summary?.potentialRevenueCreated || 0,
+            icon: <TrendingUp/>,
+            color: theme.palette.success.main, // Represents value added
+        },
+        {
+            title: "Items Produced",
+            value: summary?.itemsProducedCount || 0,
+            icon: <KitchenOutlined/>,
+            color: theme.palette.info.main,
+        },
+        {
+            title: "Production Margin",
+            value: summary?.grossProductionMargin || "0%",
+            icon: <AccountBalanceWalletOutlined/>,
+            color: theme.palette.warning.main,
+        }
+    ], [summary, theme.palette]);
 
     const columns: GridColDef[] = useMemo(() => [
         {
@@ -226,19 +222,20 @@ const ProductionScreen = () => {
                 />
             </TableSearchActions>
 
-            {/*<Grid container spacing={3} mb={4}>*/}
-            {/*    {summaryCards.map((card, index) => (*/}
-            {/*        <Grid size={{xs: 12, sm: 6, md: 3}} key={card.title}>*/}
-            {/*            <ProductionSummaryCard*/}
-            {/*                index={index}*/}
-            {/*                title={card.title}*/}
-            {/*                value={card.value}*/}
-            {/*                icon={card.icon}*/}
-            {/*                color={card.color}*/}
-            {/*            />*/}
-            {/*        </Grid>*/}
-            {/*    ))}*/}
-            {/*</Grid>*/}
+            <Grid container spacing={3} mb={4}>
+                {summaryCards.map((card, index) => (
+                    <Grid size={{xs: 12, sm: 6, md: 3}} key={card.title}>
+                        <ProductionSummaryCard
+                            index={index}
+                            title={card.title}
+                            value={card.value}
+                            icon={card.icon}
+                            color={card.color}
+                            loading={isLoading}
+                        />
+                    </Grid>
+                ))}
+            </Grid>
 
             <Grid container spacing={2}>
                 <Grid size={12}>
