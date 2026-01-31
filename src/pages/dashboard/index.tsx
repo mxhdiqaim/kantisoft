@@ -8,7 +8,7 @@ import {filterSchema} from "@/types/dashboard-types";
 import type {Period} from "@/types/order-types.ts";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {AttachMoney, PointOfSale, ShoppingCart} from "@mui/icons-material";
-import {Box, Grid, Typography, useTheme} from "@mui/material";
+import {Box, CircularProgress, Grid, Typography, useTheme} from "@mui/material";
 import {useEffect, useMemo, useState} from "react";
 import {useForm} from "react-hook-form";
 import PeriodSelector from "@/components/ui/period-selector.tsx";
@@ -23,7 +23,7 @@ const Index = () => {
         },
     });
     const period = watch("period");
-    const {data: salesSummary, isLoading, isError, fulfilledTimeStamp} = useGetSalesSummaryQuery(period);
+    const {data: salesSummary, isLoading, isFetching, isError, fulfilledTimeStamp} = useGetSalesSummaryQuery(period);
 
     const summaryCards = useMemo(() => {
         if (!salesSummary) return [];
@@ -73,7 +73,10 @@ const Index = () => {
     return (
         <Box sx={{mx: "auto"}}>
             <Box sx={{display: "flex", justifyContent: "space-between"}}>
-                <Typography variant={"h4"}>Dashboard</Typography>
+                <Box sx={{display: 'flex', alignItems: 'center', gap: 2, mt: -5}}>
+                    <Typography variant={"h4"}>Dashboard</Typography>
+                    {isFetching && <CircularProgress size={24}/>}
+                </Box>
                 <PeriodSelector
                     control={control}
                     name={"period"}
