@@ -45,7 +45,12 @@ const ProductionScreen = () => {
         searchKeys: ["itemName", "batchReference", "performedBy"],
     });
 
-    const {data: summary, isLoading /* isError, fulfilledTimeStamp */} = useGetProductionSummaryQuery(period);
+    const {
+        data: summary,
+        isLoading,
+        isError: summaryError,
+        fulfilledTimeStamp: summaryFulfilledTimeStamp
+    } = useGetProductionSummaryQuery(period);
 
     const openProductionFormModal = () => {
         setProductionModalOpen(true);
@@ -174,12 +179,13 @@ const ProductionScreen = () => {
     ], []);
 
     useEffect(() => {
-        if (fulfilledTimeStamp) {
-            setLastFetched(new Date(fulfilledTimeStamp));
+        const lastTimestamp = summaryFulfilledTimeStamp || fulfilledTimeStamp;
+        if (lastTimestamp) {
+            setLastFetched(new Date(lastTimestamp));
         }
-    }, [fulfilledTimeStamp]);
+    }, [fulfilledTimeStamp, summaryFulfilledTimeStamp]);
 
-    if (isError) {
+    if (isError || summaryError) {
         return (
             <Typography color="error" align="center" sx={{mt: 4}}>
                 Request failed. Please try again later.
