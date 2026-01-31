@@ -101,13 +101,11 @@ export const getProductionSummary = async (req: CustomRequest, res: Response) =>
             : 0;
 
         return res.status(StatusCodes.OK).json({
-            summary: {
-                totalCostOfIngredients: totalCost,
-                potentialRevenueCreated: totalValue,
-                grossProductionMargin: `${profitMargin.toFixed(2)}%`,
-                itemsProducedCount: totalItems,
-                numberOfBatches: stats[0]?.batchCount || 0
-            }
+            totalCostOfIngredients: totalCost,
+            potentialRevenueCreated: totalValue,
+            grossProductionMargin: `${profitMargin.toFixed(2)}%`,
+            itemsProducedCount: totalItems,
+            numberOfBatches: stats[0]?.batchCount || 0
         });
 
     } catch (error) {
