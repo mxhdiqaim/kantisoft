@@ -57,9 +57,9 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
 
     const handleStoreSelect = (store: StoreType) => {
         dispatch(setActiveStore(store));
+
         // Reset the entire API state to force refetching of all data for the new store
         dispatch(apiSlice.util.resetApiState());
-        // handleMenuClose();
     };
 
     const handleLogout = async () => {
@@ -72,20 +72,30 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
         }
     };
 
-    const [expandedItems, setExpandedItems] = useState<string[]>([]);
+    const [expandedItem, setExpandedItem] = useState<string | null>(null);
+    // const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
     const handleItemClick = (route: AppRouteType) => {
         if (showDrawer) return;
 
         if (toggleDrawer) {
-            toggleDrawer(!drawerState);
+            // toggleDrawer(!drawerState);
+            // Optional: Close drawer on mobile when a final link is clicked
+            if (!route.children) {
+                toggleDrawer(!drawerState);
+            }
         }
 
         if (route.children) {
-            setExpandedItems((prev) =>
-                prev.includes(route.to) ? prev.filter((item) => item !== route.to) : [...prev, route.to],
-            );
+            // If clicking the already open item, close it. Otherwise, set the new one.
+            setExpandedItem((prev) => (prev === route.to ? null : route.to));
         }
+
+        // if (route.children) {
+        //     setExpandedItems((prev) =>
+        //         prev.includes(route.to) ? prev.filter((item) => item !== route.to) : [...prev, route.to],
+        //     );
+        // }
     };
 
     const filterRoutes = (routes: AppRouteType[]): AppRouteType[] => {
@@ -112,7 +122,12 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
 
         const isActive = location.pathname.startsWith(fullPath);
         const isSelected = location.pathname === fullPath;
-        const isExpanded = expandedItems.includes(route.to);
+
+        // Check if this specific route is the currently expanded one
+        const isExpanded = expandedItem === route.to;
+
+        // const isExpanded = expandedItems.includes(route.to);
+
         const hasChildren = route.children && route.children.length > 0;
 
         const linkProps = !hasChildren ? {component: Link, to: fullPath} : {};
@@ -191,6 +206,17 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
             </Fragment>
         );
     };
+
+    useEffect(() => {
+        // Find which top-level route contains the current URL
+        const activeParent = appRoutes.find(route =>
+            route.children && location.pathname.startsWith(route.to)
+        );
+
+        if (activeParent) {
+            setExpandedItem(activeParent.to);
+        }
+    }, [location.pathname]);
 
     useEffect(() => {
         if (stores && stores.length > 0 && currentUser) {
