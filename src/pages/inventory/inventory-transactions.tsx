@@ -32,6 +32,7 @@ const InventoryTransactions = () => {
     const {
         data,
         isLoading,
+        isFetching,
         isError,
         fulfilledTimeStamp,
         error
@@ -131,7 +132,7 @@ const InventoryTransactions = () => {
 
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching}/>
                 </Grid>
             </Grid>
         </Box>

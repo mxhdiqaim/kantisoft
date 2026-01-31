@@ -29,7 +29,14 @@ const SalesHistory = () => {
 
     const period = watch("timePeriod");
 
-    const {data: ordersData, isLoading, isError, fulfilledTimeStamp, error} = useGetOrdersByPeriodQuery(period);
+    const {
+        data: ordersData,
+        isLoading,
+        isFetching,
+        isError,
+        fulfilledTimeStamp,
+        error
+    } = useGetOrdersByPeriodQuery(period);
 
     const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
@@ -102,7 +109,7 @@ const SalesHistory = () => {
                 </Grid>
             )}
 
-            <SalesHistoryTable orders={ordersData?.orders || []} loading={isLoading} period={period}/>
+            <SalesHistoryTable orders={ordersData?.orders || []} loading={isLoading || isFetching} period={period}/>
         </Box>
     );
 };

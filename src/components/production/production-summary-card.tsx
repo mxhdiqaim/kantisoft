@@ -15,7 +15,6 @@ interface Props {
 }
 
 const ProductionSummaryCard = (props: Props) => {
-    console.log({props});
     const {title, value, icon, color, index, loading} = props;
     const theme = useTheme();
     const cardColor = color || theme.palette.primary.main;

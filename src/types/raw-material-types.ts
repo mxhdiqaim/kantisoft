@@ -197,7 +197,7 @@ export type RawMaterialInventoryTransactionsResponse = Omit<InventoryTransaction
 
 export const fetchRawMaterialAndFilterByPeriod = yup.object({
     timePeriod: timePeriodSchema,
-    rawMaterialId: yup.string().uuid().required(),
+    rawMaterialId: yup.string().required("Raw Material is required").typeError("Raw Material must be selected"),
 });
 
 // export type FetchRawMaterialAndFilterByPeriodType = yup.InferType<typeof fetchRawMaterialAndFilterByPeriod>;

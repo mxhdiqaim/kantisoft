@@ -3,7 +3,7 @@ import {useGetAllRawMaterialsQuery, useGetRawMaterialInventoryTransactionsQuery}
 import type {GridColDef} from "@mui/x-data-grid";
 import {useEffect, useMemo, useState} from "react";
 import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
-import {camelCaseToTitleCase} from "@/utils";
+import {camelCaseToTitleCase, formatNumber} from "@/utils";
 import {getTransactionTypeChipColor, StyledTextField} from "@/components/ui";
 import {formatDateTimeCustom} from "@/utils/get-relative-time.ts";
 import DataGridTable from "@/components/ui/data-grid-table";
@@ -51,6 +51,7 @@ const RawMaterialInventoryTransaction = () => {
     const {
         data,
         isLoading,
+        isFetching,
         isError,
         fulfilledTimeStamp,
         error,
@@ -62,9 +63,7 @@ const RawMaterialInventoryTransaction = () => {
         searchKeys: ["reference", "source", "type", "notes"],
     });
 
-    const {data: rawMaterialData, isLoading: isFetchingRawMaterial} = useGetAllRawMaterialsQuery(undefined, {
-        skip: !open,
-    });
+    const {data: rawMaterialData, isLoading: isFetchingRawMaterial} = useGetAllRawMaterialsQuery();
     const memoizedRawMaterial = useMemoizedArray(rawMaterialData);
 
     const [lastFetched, setLastFetched] = useState<Date | null>(null);
@@ -74,20 +73,7 @@ const RawMaterialInventoryTransaction = () => {
             flex: 1,
             field: "reference",
             headerName: "Reference",
-            minWidth: 180,
-            align: "left",
-            headerAlign: "left",
-            renderCell: (params) => (
-                <TableStyledBox>
-                    <Typography variant="body2">{params.value}</Typography>
-                </TableStyledBox>
-            ),
-        },
-        {
-            flex: 1,
-            field: "notes",
-            headerName: "Notes",
-            minWidth: 220,
+            minWidth: 200,
             align: "left",
             headerAlign: "left",
             renderCell: (params) => (
@@ -116,6 +102,19 @@ const RawMaterialInventoryTransaction = () => {
         },
         {
             flex: 1,
+            field: "rawMaterialName",
+            headerName: "Raw Material",
+            minWidth: 180,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{params.value}</Typography>
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
             field: "quantity",
             headerName: "Quantity",
             type: "number",
@@ -124,7 +123,7 @@ const RawMaterialInventoryTransaction = () => {
             headerAlign: "left",
             renderCell: (params) => (
                 <TableStyledBox>
-                    <Typography variant="body2">{params.value}</Typography>
+                    <Typography variant="body2">{formatNumber(params.value)} ({params.row.unitSymbol})</Typography>
                 </TableStyledBox>
             ),
         },
@@ -148,8 +147,8 @@ const RawMaterialInventoryTransaction = () => {
         },
         {
             flex: 1,
-            field: "rawMaterialName",
-            headerName: "Raw Material",
+            field: "performedBy",
+            headerName: "Performed By",
             minWidth: 180,
             align: "left",
             headerAlign: "left",
@@ -162,13 +161,26 @@ const RawMaterialInventoryTransaction = () => {
         {
             flex: 1,
             field: "transactionDate",
-            headerName: "Transaction Time",
+            headerName: "Date",
             minWidth: 200,
             align: "left",
             headerAlign: "left",
             renderCell: (params) => (
                 <TableStyledBox>
                     <Typography variant="body2">{formatDateTimeCustom(params.value)}</Typography>
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: "notes",
+            headerName: "Notes",
+            minWidth: 220,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{params.value}</Typography>
                 </TableStyledBox>
             ),
         },
@@ -218,7 +230,9 @@ const RawMaterialInventoryTransaction = () => {
     return (
         <Box sx={{mx: "auto"}}>
             <Box sx={{display: "flex", justifyContent: "space-between"}}>
-                <Typography variant={"h4"}>Raw Material Transactions</Typography>
+                <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
+                    <Typography variant={"h4"}>Raw Material Transactions</Typography>
+                </Box>
                 <PeriodSelector
                     control={control}
                     name={"timePeriod"}
@@ -267,6 +281,9 @@ const RawMaterialInventoryTransaction = () => {
                                     <MenuItem value={""} disabled>
                                         Select Raw Material
                                     </MenuItem>
+                                    <MenuItem value={"all"}>
+                                        All materials
+                                    </MenuItem>
                                     {memoizedRawMaterial?.map((rawMaterial) => (
                                         <MenuItem key={rawMaterial.id} value={rawMaterial.id}
                                                   sx={{textTransform: "capitalize"}}>
@@ -279,10 +296,10 @@ const RawMaterialInventoryTransaction = () => {
                     />
                 </Grid>
             </Grid>
-            
+
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching}/>
                 </Grid>
             </Grid>
         </Box>

@@ -13,7 +13,8 @@ interface Props {
     index: number;
 }
 
-const SummaryCard = ({title, value, icon, color, index}: Props) => {
+const SummaryCard = (props: Props) => {
+    const {title, value, icon, color, index} = props;
     const theme = useTheme();
     const cardColor = color || theme.palette.primary.main;
 
