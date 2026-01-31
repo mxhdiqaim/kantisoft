@@ -57,9 +57,9 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
 
     const handleStoreSelect = (store: StoreType) => {
         dispatch(setActiveStore(store));
+
         // Reset the entire API state to force refetching of all data for the new store
         dispatch(apiSlice.util.resetApiState());
-        // handleMenuClose();
     };
 
     const handleLogout = async () => {
@@ -72,19 +72,32 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
         }
     };
 
-    const [expandedItems, setExpandedItems] = useState<string[]>([]);
+    // Track expanded items by level: { 0: "/catalog", 1: "menu-items" }
+    const [expandedItems, setExpandedItems] = useState<Record<number, string>>({});
 
-    const handleItemClick = (route: AppRouteType) => {
+    const handleItemClick = (route: AppRouteType, level: number) => {
         if (showDrawer) return;
 
-        if (toggleDrawer) {
-            toggleDrawer(!drawerState);
-        }
-
         if (route.children) {
-            setExpandedItems((prev) =>
-                prev.includes(route.to) ? prev.filter((item) => item !== route.to) : [...prev, route.to],
-            );
+            setExpandedItems((prev) => {
+                // If clicking the same item, close it and all its children levels
+                if (prev[level] === route.to) {
+                    const newState = {...prev};
+                    Object.keys(newState).forEach(key => {
+                        if (Number(key) >= level) delete newState[Number(key)];
+                    });
+                    return newState;
+                }
+                // Otherwise, set this level to the new route and clear deeper levels
+                const newState = {...prev, [level]: route.to};
+                Object.keys(newState).forEach(key => {
+                    if (Number(key) > level) delete newState[Number(key)];
+                });
+                return newState;
+            });
+        } else if (toggleDrawer && (screenSize === "mobile" || screenSize === "tablet")) {
+            // Close a drawer on mobile when a leaf node is clicked
+            toggleDrawer(false);
         }
     };
 
@@ -108,13 +121,15 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
     };
 
     const renderMenuItem = (route: AppRouteType, index: number, level: number = 0, parentPath: string = "") => {
-        const fullPath = parentPath + route.to;
+        const fullPath = (parentPath + "/" + route.to).replace(/\/+/g, "/");
 
         const isActive = location.pathname.startsWith(fullPath);
         const isSelected = location.pathname === fullPath;
-        const isExpanded = expandedItems.includes(route.to);
-        const hasChildren = route.children && route.children.length > 0;
 
+        // Check if this level's active item matches this route
+        const isExpanded = expandedItems[level] === route.to;
+
+        const hasChildren = route.children && route.children.length > 0;
         const linkProps = !hasChildren ? {component: Link, to: fullPath} : {};
 
         return (
@@ -122,7 +137,7 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
                 <ListItem disablePadding sx={{px: 2, py: 0.5}}>
                     <ListItemButton
                         selected={isSelected}
-                        onClick={() => handleItemClick(route)}
+                        onClick={() => handleItemClick(route, level)}
                         {...linkProps}
                         sx={{
                             borderRadius: level > 0 ? 2 : theme.borderRadius.small,
@@ -170,10 +185,7 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
                         {hasChildren && (
                             <Box
                                 component={isExpanded ? ExpandLessOutlinedIcon : ExpandMoreOutlinedIcon}
-                                sx={{
-                                    fontSize: 20,
-                                    color: theme.palette.text.secondary,
-                                }}
+                                sx={{fontSize: 20}}
                             />
                         )}
                     </ListItemButton>
@@ -191,6 +203,24 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
             </Fragment>
         );
     };
+
+    useEffect(() => {
+        const newExpanded: Record<number, string> = {};
+
+        // Helper to find the path in the tree
+        const findActivePaths = (routes: AppRouteType[], currentLevel: number) => {
+            for (const route of routes) {
+                const isParentOfCurrent = location.pathname.includes(route.to);
+                if (isParentOfCurrent && route.children) {
+                    newExpanded[currentLevel] = route.to;
+                    findActivePaths(route.children, currentLevel + 1);
+                }
+            }
+        };
+
+        findActivePaths(appRoutes, 0);
+        setExpandedItems(newExpanded);
+    }, [location.pathname]);
 
     useEffect(() => {
         if (stores && stores.length > 0 && currentUser) {
