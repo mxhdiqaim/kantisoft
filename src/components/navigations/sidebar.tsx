@@ -73,14 +73,12 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
     };
 
     const [expandedItem, setExpandedItem] = useState<string | null>(null);
-    // const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
     const handleItemClick = (route: AppRouteType) => {
         if (showDrawer) return;
 
         if (toggleDrawer) {
-            // toggleDrawer(!drawerState);
-            // Optional: Close drawer on mobile when a final link is clicked
+            // Close drawer on mobile when a final link is clicked
             if (!route.children) {
                 toggleDrawer(!drawerState);
             }
@@ -90,12 +88,6 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
             // If clicking the already open item, close it. Otherwise, set the new one.
             setExpandedItem((prev) => (prev === route.to ? null : route.to));
         }
-
-        // if (route.children) {
-        //     setExpandedItems((prev) =>
-        //         prev.includes(route.to) ? prev.filter((item) => item !== route.to) : [...prev, route.to],
-        //     );
-        // }
     };
 
     const filterRoutes = (routes: AppRouteType[]): AppRouteType[] => {
@@ -125,8 +117,6 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
 
         // Check if this specific route is the currently expanded one
         const isExpanded = expandedItem === route.to;
-
-        // const isExpanded = expandedItems.includes(route.to);
 
         const hasChildren = route.children && route.children.length > 0;
 
