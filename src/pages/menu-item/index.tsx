@@ -314,7 +314,7 @@ const MenuItems = () => {
                                     Edit
                                 </TableStyledMenuItem>
                                 <TableStyledMenuItem
-                                    onClick={() => navigate(`/catalog/menu-items/${params.row.id}/recipe`)}>
+                                    onClick={() => navigate(`/products/menu-items/${params.row.id}/recipe`)}>
                                     <RestaurantMenuOutlined sx={{mr: 1}}/>
                                     Manage Recipe
                                 </TableStyledMenuItem>

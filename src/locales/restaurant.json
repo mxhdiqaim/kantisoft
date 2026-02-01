@@ -1,7 +1,7 @@
 {
   "dashboard": "Dashboard",
   "orderTracking": "Point of Sale",
-  "salesHistory": "Sales History",
+  "history": "History",
   "viewSalesHistory": "View Sales History",
   "menuItem": "Menu Item",
   "menuItems": "Menu Items",
@@ -26,5 +26,6 @@
   "activityLog": "Activity Log",
   "viewActivityLog": "View Activity Log",
   "user": "User",
-  "menuItemStock": "Menu Items Stock"
+  "menuItemStock": "Menu Items Stock",
+  "posAndSales": "POS & Sales"
 }

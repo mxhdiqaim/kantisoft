@@ -92,7 +92,7 @@ const BillOfMaterialsScreen = () => {
         try {
             await defineBom({menuItemId: menuItemId!, bomItems: data.bomItems}).unwrap();
             notify("Recipe updated successfully!", "success");
-            navigate('/catalog/menu-items');
+            navigate('/products/menu-items');
         } catch (error) {
             const defaultMessage = `Failed to save recipe. Please try again.`;
             const apiError = getApiError(error, defaultMessage);

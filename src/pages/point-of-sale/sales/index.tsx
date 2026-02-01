@@ -59,7 +59,7 @@ const SalesHistory = () => {
     return (
         <Box sx={{mx: "auto"}}>
             <Box sx={{display: "flex", justifyContent: "space-between"}}>
-                <Typography variant={"h4"}>Sales History</Typography>
+                <Typography variant={"h4"}>History</Typography>
                 <PeriodSelector
                     control={control}
                     name={"timePeriod"}

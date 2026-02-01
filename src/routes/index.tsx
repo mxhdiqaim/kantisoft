@@ -81,7 +81,7 @@ export const appRoutes: AppRouteType[] = [
     // ---------------------------------
     {
         to: "/pos-sale",
-        title: "POS & Sales",
+        title: "posAndSales",
         icon: <AddAlertOutlinedIcon/>,
         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST],
         children: [
@@ -93,7 +93,7 @@ export const appRoutes: AppRouteType[] = [
             },
             {
                 to: "history",
-                title: "History",
+                title: "history",
                 element: SalesHistoryScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
                 children: [
@@ -112,14 +112,14 @@ export const appRoutes: AppRouteType[] = [
     // PRODUCT CATALOG (Definitions)
     // ---------------------------------
     {
-        to: "/catalog",
-        title: "Catalog",
+        to: "/products",
+        title: "Products",
         icon: <RestaurantMenuOutlinedIcon/>,
         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST],
         children: [
             {
                 to: "menu-items",
-                title: "menuItem",
+                title: "menuItems",
                 element: MenuItemScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
                 children: [
