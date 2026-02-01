@@ -1,10 +1,10 @@
 import useNotifier from "@/hooks/useNotifier.ts";
 import {useAppSelector} from "@/store";
-import {selectCurrentUser} from "@/store/slice/auth-slice";
-import type {OrderType} from "@/types/order-types";
-import {UserRoleEnum} from "@/types/user-types";
+import {selectCurrentUser} from "@/store/slice/auth-slice.ts";
+import type {OrderType} from "@/types/order-types.ts";
+import {UserRoleEnum} from "@/types/user-types.ts";
 import {formatCurrency} from "@/utils";
-import {relativeTime} from "@/utils/get-relative-time";
+import {relativeTime} from "@/utils/get-relative-time.ts";
 import {EditOutlined, MoreVert, PrintOutlined, VisibilityOutlined,} from "@mui/icons-material";
 import {Box, Grid, Tooltip, Typography, useTheme} from "@mui/material";
 import {type GridColDef} from "@mui/x-data-grid";
@@ -12,14 +12,14 @@ import {type MouseEvent, useEffect, useMemo, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useReactToPrint} from "react-to-print";
 import TableStyledBox from "../ui/data-grid-table/table-styled-box.tsx";
-import Receipt from "./receipt";
+import Receipt from "./receipt.tsx";
 import {useGetAllStoresQuery} from "@/store/slice";
 import {useDispatch, useSelector} from "react-redux";
-import {selectActiveStore, setActiveStore} from "@/store/slice/store-slice";
+import {selectActiveStore, setActiveStore} from "@/store/slice/store-slice.ts";
 import DataGridTable from "@/components/ui/data-grid-table";
 import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
 import {useSearch} from "@/use-search.ts";
-import {exportToCsv, exportToXlsx, getExportFormattedData} from "@/utils/export-data-utils";
+import {exportToCsv, exportToXlsx, getExportFormattedData} from "@/utils/export-data-utils.ts";
 import CustomButton from "@/components/ui/button.tsx";
 import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
@@ -245,7 +245,7 @@ const SalesHistoryTable = ({orders, loading: isLoadingOrders = true, period}: Pr
                 renderCell: (params) => {
 
                     const handleView = () => {
-                        navigate(`/records/sales/${params.row.id}/view`);
+                        navigate(`/pos-sale/history/${params.row.id}/view`);
                         handleMenuClose();
                     };
                     const handleEdit = () => {

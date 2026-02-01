@@ -91,6 +91,20 @@ export const appRoutes: AppRouteType[] = [
                 element: PointOfSaleScreen,
                 roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER, UserRoleEnum.USER, UserRoleEnum.GUEST],
             },
+            {
+                to: "history",
+                title: "History",
+                element: SalesHistoryScreen,
+                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
+                children: [
+                    {
+                        to: ":id/view",
+                        element: ViewSalesHistoryScreen,
+                        hidden: true,
+                        roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+                    }
+                ]
+            },
         ]
     },
 
@@ -175,20 +189,6 @@ export const appRoutes: AppRouteType[] = [
         icon: <HistoryEduIcon/>,
         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
         children: [
-            {
-                to: "sales",
-                title: "Sales History",
-                element: SalesHistoryScreen,
-                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-                children: [
-                    {
-                        to: ":id/view",
-                        element: ViewSalesHistoryScreen,
-                        hidden: true,
-                        roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-                    }
-                ]
-            },
             {
                 to: "inventory-logs",
                 title: "Menu Item Logs",
@@ -326,8 +326,8 @@ export const appRoutes: AppRouteType[] = [
                 ]
             },
             {
-                to: "trash-bin",
-                title: "Trash Bin",
+                to: "trash",
+                title: "Trash",
                 element: TrashBinScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             }

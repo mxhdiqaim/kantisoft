@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {type OrderType} from "@/types/order-types"; // Assuming you have an OrderType
-import type {StoreType} from "@/types/store-types";
+import {type OrderType} from "@/types/order-types.ts";
+import type {StoreType} from "@/types/store-types.ts";
 import {formatCurrency} from "@/utils";
 import {
     Box,

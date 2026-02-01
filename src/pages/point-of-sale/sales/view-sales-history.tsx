@@ -1,4 +1,4 @@
-import Receipt from "@/components/sales-history/receipt.tsx";
+import Receipt from "@/components/point-of-sale/receipt.tsx";
 import ViewSalesHistoryLoading from "@/components/sales-history/spinners/view-sales-history-loading.tsx";
 import {useGetAllStoresQuery, useGetOrderByIdQuery} from "@/store/slice";
 import {selectActiveStore, setActiveStore} from "@/store/slice/store-slice.ts";
