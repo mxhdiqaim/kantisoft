@@ -8,7 +8,7 @@ import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import useNotifier from "@/hooks/useNotifier.ts";
 import ViewRawMaterialSkeleton from "@/components/spinners/view-raw-material-skeleton.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import {camelCaseToTitleCase, formatCurrency} from "@/utils";
+import {camelCaseToTitleCase, formatCurrency, formatNumber} from "@/utils";
 import {getInventoryStatusChipColor} from "@/components/ui";
 import {formatDateCustom, formatRelativeDateTime} from "@/utils/get-relative-time.ts";
 import CustomButton from "@/components/ui/button.tsx";
@@ -30,6 +30,8 @@ const InventoryDetailsDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterialId
     const {data, isLoading, error} = useGetRawMaterialInventoryStockQuery(rawMaterialId, {
         skip: !rawMaterialId,
     });
+
+    console.log({data})
 
     const handleCloseFormModal = () => {
         setFormModalOpen(false);
@@ -76,7 +78,7 @@ const InventoryDetailsDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterialId
                                             Quantity
                                         </Typography>
                                         <Typography variant="body1" fontWeight={500}>
-                                            {data.quantity}
+                                            {formatNumber(data.quantity)} ({data.unitOfMeasurement.symbol})
                                         </Typography>
                                     </Grid>
                                     <Grid size={{xs: 12, sm: 6}}>
@@ -97,7 +99,7 @@ const InventoryDetailsDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterialId
                                             Minimum Stock
                                         </Typography>
                                         <Typography variant="body1" fontWeight={500}>
-                                            {data.minStockLevel}
+                                            {formatNumber(data.minStockLevel)} ({data.unitOfMeasurement.symbol})
                                         </Typography>
                                     </Grid>
                                     <Grid size={{xs: 12, sm: 6}}>
@@ -121,7 +123,7 @@ const InventoryDetailsDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterialId
                                             Date Added
                                         </Typography>
                                         <Typography variant="body1" fontWeight={500}>
-                                            {formatDateCustom(data.createdAt)}
+                                            {formatDateCustom(data.createdAt, "long")}
                                         </Typography>
                                     </Grid>
                                 </Grid>

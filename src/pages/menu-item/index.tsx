@@ -145,19 +145,6 @@ const MenuItems = () => {
         () => [
             {
                 flex: 1,
-                field: "itemCode",
-                headerName: "Item Code",
-                minWidth: 150,
-                renderCell: (params) => (
-                    <TableStyledBox>
-                        <Typography variant="body2" className="capitalize">
-                            {params?.value}
-                        </Typography>
-                    </TableStyledBox>
-                ),
-            },
-            {
-                flex: 1,
                 field: "name",
                 headerName: "Name",
                 minWidth: 150,
@@ -175,6 +162,19 @@ const MenuItems = () => {
                             }}
                         >
                             {params.value}
+                        </Typography>
+                    </TableStyledBox>
+                ),
+            },
+            {
+                flex: 1,
+                field: "itemCode",
+                headerName: "SKU",
+                minWidth: 150,
+                renderCell: (params) => (
+                    <TableStyledBox>
+                        <Typography variant="body2" className="capitalize">
+                            {params?.value}
                         </Typography>
                     </TableStyledBox>
                 ),

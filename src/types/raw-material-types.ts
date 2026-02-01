@@ -132,7 +132,7 @@ export type MultipleRawMaterialInventoryResponseType = {
         unitOfMeasurementFamily: string;
     },
     storeId: string;
-    storeName: string;
+    storeName?: string;
 };
 
 export const RawMaterialTransactionSourceEnum = {
