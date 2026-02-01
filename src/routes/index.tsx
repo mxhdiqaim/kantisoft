@@ -183,6 +183,12 @@ export const appRoutes: AppRouteType[] = [
                 element: RawMaterialInventoryScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
             },
+            {
+                to: "transactions",
+                title: "Transactions",
+                element: RawMaterialInventoryTransactionScreen,
+                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+            },
         ]
     },
 
@@ -196,17 +202,11 @@ export const appRoutes: AppRouteType[] = [
         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
         children: [
             // {
-            //     to: "inventory-logs",
-            //     title: "Menu Item Logs",
-            //     element: InventoryTransactionsScreen,
+            //     to: "material-logs",
+            //     title: "Raw Material Logs",
+            //     element: RawMaterialInventoryTransactionScreen,
             //     roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             // },
-            {
-                to: "material-logs",
-                title: "Raw Material Logs",
-                element: RawMaterialInventoryTransactionScreen,
-                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-            },
             {
                 to: "profitability-wastage",
                 title: "Profitability & Wastage",
