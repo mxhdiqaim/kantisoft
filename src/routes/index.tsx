@@ -133,6 +133,21 @@ export const appRoutes: AppRouteType[] = [
                 ]
             },
             {
+                to: "inventory",
+                title: "Inventory",
+                element: InventoryManagementScreen,
+                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
+                children: [
+                    {
+                        to: ":id/transactions",
+                        title: "menuItemTransactions",
+                        element: SingleInventoryTransactionScreen,
+                        hidden: true,
+                        roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
+                    },
+                ]
+            },
+            {
                 to: "raw-materials",
                 title: "Raw Materials",
                 element: RawMaterialsScreen,
@@ -156,21 +171,21 @@ export const appRoutes: AppRouteType[] = [
         icon: <InventoryOutlinedIcon/>,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER, UserRoleEnum.USER],
         children: [
-            {
-                to: "finished-goods", // Was "Inventory Management"
-                title: "menuItemStock",
-                element: InventoryManagementScreen,
-                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
-                children: [
-                    {
-                        to: ":id/transactions",
-                        title: "menuItemTransactions",
-                        element: SingleInventoryTransactionScreen,
-                        hidden: true,
-                        roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
-                    },
-                ]
-            },
+            // {
+            //     to: "finished-goods", // Was "Inventory Management"
+            //     title: "menuItemStock",
+            //     element: InventoryManagementScreen,
+            //     roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
+            //     children: [
+            //         {
+            //             to: ":id/transactions",
+            //             title: "menuItemTransactions",
+            //             element: SingleInventoryTransactionScreen,
+            //             hidden: true,
+            //             roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
+            //         },
+            //     ]
+            // },
             {
                 to: "materials", // Your new Bulk Stock controller
                 title: "Raw Material Stock",

@@ -5,12 +5,12 @@ import type {GridColDef, GridRenderCellParams} from "@mui/x-data-grid";
 import {type MouseEvent, useMemo, useState} from "react";
 import DataGridTable from "@/components/ui/data-grid-table";
 import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
-import CreateInventoryRecord from "@/components/inventory/create-inventory-record.tsx";
+import CreateInventoryForm from "@/components/inventory/create-inventory-form.tsx";
 import {useTranslation} from "react-i18next";
 import CustomButton from "@/components/ui/button.tsx";
 import useNotifier from "@/hooks/useNotifier.ts";
 import {getApiError} from "@/helpers/get-api-error.ts";
-import AdjustStock from "@/components/inventory/adjust-stock.tsx";
+import InventoryAdjustmentForm from "@/components/inventory/inventory-adjustment-form.tsx";
 import {useNavigate} from "react-router-dom";
 import {useSearch} from "@/use-search.ts";
 import {useSelector} from "react-redux";
@@ -26,6 +26,7 @@ import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 
 import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import DeleteConfirmationModal from "@/components/ui/delete-confimation-modal.tsx";
 
 const InventoryManagement = () => {
     const {t} = useTranslation();
@@ -36,8 +37,6 @@ const InventoryManagement = () => {
 
     const {data: inventoryData, isLoading, isError, error} = useGetAllInventoryQuery();
     const memoizedInventories = useMemoizedArray(inventoryData);
-
-    console.log("Inventory Data: ", inventoryData);
 
     const [markAsDiscontinued, {isLoading: isDiscontinuing}] = useMarkAsDiscontinuedMutation();
     const [deleteInventoryRecord, {isLoading: isDeleting}] = useDeleteInventoryRecordMutation();
@@ -53,8 +52,13 @@ const InventoryManagement = () => {
 
     const [formModalOpen, setFormModalOpen] = useState(false);
     const [adjustStockModalOpen, setAdjustStockModalOpen] = useState(false);
-
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [selectedRow, setSelectedRow] = useState<InventoryType | null>(null);
+
+    const handleCloseDeleteModal = () => {
+        setDeleteModalOpen(false);
+        setSelectedRow(null);
+    };
 
     const handleMenuClick = (_event: MouseEvent<HTMLElement>, row: InventoryType) => {
         setSelectedRow(row);
@@ -96,15 +100,16 @@ const InventoryManagement = () => {
     };
 
     const handleDelete = async () => {
-        if (!selectedRow) return;
-
-        try {
-            await deleteInventoryRecord(selectedRow.menuItemId).unwrap();
-            notify("Item has been deleted.", "success");
-        } catch (err) {
-            const defaultMessage = "Failed to delete item.";
-            const apiError = getApiError(err, defaultMessage);
-            notify(apiError.message, "error");
+        if (selectedRow) {
+            try {
+                await deleteInventoryRecord(selectedRow.menuItemId).unwrap();
+                notify("Item has been deleted.", "success");
+                handleCloseDeleteModal();
+            } catch (err) {
+                const defaultMessage = "Failed to delete item.";
+                const apiError = getApiError(err, defaultMessage);
+                notify(apiError.message, "error");
+            }
         }
     };
 
@@ -119,7 +124,7 @@ const InventoryManagement = () => {
             renderCell: (params) => (
                 <TableStyledBox
                     sx={{cursor: 'pointer', ":hover": {textDecoration: "underline"}}}
-                    onClick={() => navigate(`/stock/finished-goods/${params.row.menuItemId}/transactions`)}
+                    onClick={() => navigate(`/products/inventory/${params.row.menuItemId}/transactions`)}
                 >
                     <Typography variant="body2">{params.value.name}</Typography>
                 </TableStyledBox>
@@ -219,12 +224,6 @@ const InventoryManagement = () => {
                             </Tooltip>
                         }
                     >
-                        {/*<TableStyledMenuItem*/}
-                        {/*    onClick={openProductionFormModal}*/}
-                        {/*    sx={{borderRadius: theme.borderRadius.small, mx: 1}}*/}
-                        {/*>*/}
-                        {/*    Produce*/}
-                        {/*</TableStyledMenuItem>*/}
                         <TableStyledMenuItem
                             onClick={handleOpenAdjustStockModal}
                             sx={{borderRadius: theme.borderRadius.small, mx: 1}}
@@ -249,7 +248,7 @@ const InventoryManagement = () => {
                             Discontinue
                         </TableStyledMenuItem>
                         <TableStyledMenuItem
-                            onClick={handleDelete}
+                            onClick={() => setDeleteModalOpen(true)}
                             disabled={isDeleting}
                             sx={{
                                 mt: 1,
@@ -277,11 +276,11 @@ const InventoryManagement = () => {
         <>
             <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
                 <Typography variant="h4" component="h1">
-                    {t('menuItemStock')}
+                    {t('inventory')}
                 </Typography>
                 {canInteract && (
                     <CustomButton
-                        title={"Add Record"}
+                        title={"Add Inventory"}
                         variant="contained"
                         startIcon={<AddIcon/>}
                         onClick={handleOpenFormModal}
@@ -292,7 +291,7 @@ const InventoryManagement = () => {
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}
-                placeholder={`Search ${t('menuItemStock')}...`}
+                placeholder={`Search ${t('inventory')}...`}
             />
 
             <Grid container spacing={2}>
@@ -300,8 +299,20 @@ const InventoryManagement = () => {
                     <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
                 </Grid>
             </Grid>
-            <CreateInventoryRecord open={formModalOpen} onClose={handleCloseFormModal}/>
-            <AdjustStock open={adjustStockModalOpen} onClose={handleCloseAdjustStockModal} inventoryItem={selectedRow}/>
+            <CreateInventoryForm open={formModalOpen} onClose={handleCloseFormModal}/>
+            <InventoryAdjustmentForm
+                open={adjustStockModalOpen}
+                onClose={handleCloseAdjustStockModal}
+                inventoryItem={selectedRow}
+            />
+
+            <DeleteConfirmationModal
+                open={deleteModalOpen}
+                onClose={handleCloseDeleteModal}
+                onConfirm={handleDelete}
+                isLoading={isDeleting}
+                title={`Delete ${t("inventory")}?`}
+            />
         </>
     );
 };

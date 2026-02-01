@@ -27,5 +27,6 @@
   "viewActivityLog": "View Activity Log",
   "user": "User",
   "menuItemStock": "Product Stock",
-  "posAndSales": "POS & Sales"
+  "posAndSales": "POS & Sales",
+  "inventory": "Inventory"
 }
