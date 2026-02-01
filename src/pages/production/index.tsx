@@ -37,7 +37,13 @@ const ProductionScreen = () => {
 
     const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
-    const {data, isLoading: isFetchingProductionLogs, isError, fulfilledTimeStamp} = useGetProductionLogsQuery(period);
+    const {
+        data,
+        isLoading: isFetchingProductionLogs,
+        isFetching,
+        isError,
+        fulfilledTimeStamp
+    } = useGetProductionLogsQuery(period);
     const memoizedProductionLogs = useMemoizedArray(data);
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
@@ -245,7 +251,8 @@ const ProductionScreen = () => {
 
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isFetchingProductionLogs}/>
+                    <DataGridTable data={filteredData} columns={columns}
+                                   loading={isFetchingProductionLogs || isFetching}/>
                 </Grid>
             </Grid>
 

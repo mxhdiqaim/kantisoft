@@ -124,7 +124,7 @@ const InventoryManagement = () => {
             renderCell: (params) => (
                 <TableStyledBox
                     sx={{cursor: 'pointer', ":hover": {textDecoration: "underline"}}}
-                    onClick={() => navigate(`/products/inventory/${params.row.menuItemId}/transactions`)}
+                    onClick={() => navigate(`/menu-items/inventory/${params.row.menuItemId}/transactions`)}
                 >
                     <Typography variant="body2">{params.value.name}</Typography>
                 </TableStyledBox>

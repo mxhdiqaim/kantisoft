@@ -318,15 +318,15 @@ export const appRoutes: AppRouteType[] = [
                 ]
             },
             {
-                to: "trash",
-                title: "Trash",
-                element: TrashBinScreen,
+                to: "activities",
+                title: "Activities",
+                element: ActivityLogScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
             {
-                to: "activity",
-                title: "System Activity",
-                element: ActivityLogScreen,
+                to: "trash",
+                title: "Trash",
+                element: TrashBinScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
         ]

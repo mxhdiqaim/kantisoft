@@ -15,7 +15,7 @@ import {useTranslation} from "react-i18next";
 const UnitOfMeasurements = () => {
     const {t} = useTranslation();
     const notify = useNotifier();
-    const {data, isLoading, isError, error} = useGetAllUnitOfMeasurementsQuery();
+    const {data, isLoading, isFetching, isError, error} = useGetAllUnitOfMeasurementsQuery();
     const memoizedData = useMemoizedArray(data);
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
@@ -130,7 +130,7 @@ const UnitOfMeasurements = () => {
             />
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching}/>
                 </Grid>
             </Grid>
         </Box>
