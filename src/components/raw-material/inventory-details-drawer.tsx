@@ -47,7 +47,7 @@ const InventoryDetailsDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterialId
 
     return (
         <DataDrawer
-            title={"Inventory Details"}
+            title={"Details"}
             anchor={"right"}
             open={open}
             onOpen={onOpen}
