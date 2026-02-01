@@ -2,7 +2,6 @@ import { Router } from "express";
 import * as controller from "../controllers/inventory-controller";
 import { isAuthorized } from "../middlewares/is-authorised-middleware";
 import { UserRoleEnum } from "../types/enums";
-// import { isManager } from "../middlewares/is-manager-middleware";
 
 const router = Router();
 
@@ -18,7 +17,13 @@ router.patch("/adjust-stock/:id", controller.adjustStock);
 router.patch(
     "/discontinue/:id",
     isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
-    controller.markAsDiscontinued,
+    controller.discontinueInventory,
+);
+
+router.patch(
+    "/continue/:id",
+    isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
+    controller.continueInventory,
 );
 
 router.delete(

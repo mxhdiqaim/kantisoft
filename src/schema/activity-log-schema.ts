@@ -41,6 +41,7 @@ export const activityActionEnum = pgEnum("activityAction", [
     "INVENTORY_DISCONTINUED",
     "INVENTORY_RECORD_DELETED",
     "USER_STORE_CHANGED",
+    "INVENTORY_CONTINUED",
 ]);
 
 export const entityTypeEnum = pgEnum("entityType", [
@@ -50,6 +51,7 @@ export const entityTypeEnum = pgEnum("entityType", [
     "store",
     "activity",
     "inventory",
+    "rawMaterial",
 ]);
 
 export const activityLog = pgTable("activityLog", {

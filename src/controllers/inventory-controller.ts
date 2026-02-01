@@ -740,7 +740,7 @@ export const decrementStockForOrder = async (
  * @route   PATCH /api/v1/inventory/discontinue/:menuItemId
  * @access  Private (Manager/Admin only)
  */
-export const markAsDiscontinued = async (
+export const discontinueInventory = async (
     req: CustomRequest,
     res: Response,
 ) => {
@@ -930,5 +930,79 @@ export const getInventoryAlerts = async (req: CustomRequest, res: Response) => {
         });
     } catch (error: any) {
         return handleError2(res, "Failed to fetch Inventory Alerts", StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
+    }
+};
+
+/**
+ * @desc    Restore a discontinued inventory record to 'active'.
+ * @route   PATCH /api/v1/inventory/continue/:menuItemId
+ * @access  Private (Manager/Admin only)
+ */
+export const continueInventory = async (
+    req: CustomRequest,
+    res: Response,
+) => {
+    try {
+        const currentUser = req.user?.data;
+        const storeId = currentUser?.storeId;
+        const userId = currentUser?.id;
+        const userRole = currentUser?.role;
+
+        if (!storeId) {
+            return handleError2(
+                res,
+                "You must be associated with a store.",
+                StatusCodes.FORBIDDEN,
+            );
+        }
+
+        const { id: menuItemId } = req.params;
+        const { targetStoreId } = req.query;
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;
+
+        const [updatedInventory] = await db
+            .update(inventory)
+            .set({
+                status: InventoryTransactionTypeEnum.IN_STOCK,
+                lastModified: new Date(),
+            })
+            .where(
+                and(
+                    eq(inventory.menuItemId, menuItemId),
+                    eq(inventory.storeId, finalStoreId),
+                    // Only update if it is currently discontinued
+                    eq(inventory.status, InventoryTransactionTypeEnum.DISCONTINUED),
+                ),
+            )
+            .returning();
+
+        if (!updatedInventory) {
+            return handleError2(
+                res,
+                "Inventory record not found or is not currently discontinued.",
+                StatusCodes.NOT_FOUND,
+            );
+        }
+
+        // Log activity
+        await logActivity({
+            userId: userId,
+            storeId: finalStoreId,
+            action: "INVENTORY_CONTINUED",
+            entityId: updatedInventory.id,
+            entityType: "inventory",
+            details: `Inventory for Menu Item ${menuItemId} has been reactivated.`,
+        });
+
+        res.status(StatusCodes.OK).json(updatedInventory);
+    } catch (error) {
+        handleError2(
+            res,
+            "Problem reactivating inventory, please try again.",
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined,
+        );
     }
 };

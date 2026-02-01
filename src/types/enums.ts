@@ -47,6 +47,10 @@ export const InventoryTransactionSummaryTypeEnum = {
     PRODUCTION_IN: "productionIn",
 } as const;
 
+export const INVENTORY_TRANSACTION_SUMMARY_TYPES = Object.values(
+    InventoryTransactionSummaryTypeEnum,
+);
+
 // export const UnitOfMeasurementFamilyEnum = {
 //     WEIGHT: "weight",
 //     VOLUME: "volume",
@@ -84,10 +88,6 @@ export const RawMaterialTransactionSourceEnum = {
     TRANSFER_OUT: "transferOut",
     PRODUCTION_CONSUMPTION: "productionConsumption",
 } as const;
-
-export const INVENTORY_TRANSACTION_SUMMARY_TYPES = Object.values(
-    InventoryTransactionSummaryTypeEnum,
-);
 
 // export const MenuItemTransactionSourceEnum = {
 //     PRODUCTION_OUTPUT: "productionOutput",
