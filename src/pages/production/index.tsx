@@ -194,10 +194,10 @@ const ProductionScreen = () => {
     }
 
     return (
-        <Box>
+        <Box sx={{mx: "auto"}}>
             <Box sx={{mx: "auto"}}>
                 <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2}}>
-                    <Typography variant={"h5"}>Productions</Typography>
+                    <Typography variant={"h5"}>Overview</Typography>
 
                     <Box sx={{display: "flex", gap: 2}}>
                         <CustomButton

@@ -16,7 +16,6 @@ import {
     PointOfSaleScreen,
     ProductionScreen,
     ProfileScreen,
-    ProfitabilityWastageScreen,
     RawMaterialInventoryScreen,
     RawMaterialInventoryTransactionScreen,
     RawMaterialsScreen,
@@ -38,7 +37,6 @@ import AddAlertOutlinedIcon from "@mui/icons-material/AddAlertOutlined";
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 import RestaurantMenuOutlinedIcon from "@mui/icons-material/RestaurantMenuOutlined";
 import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
-import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
 
 export interface AppRouteType {
     to: string;
@@ -195,45 +193,33 @@ export const appRoutes: AppRouteType[] = [
     // ---------------------------------
     // REPORTS & RECORDS
     // ---------------------------------
-    {
-        to: "/records",
-        title: "Reports & Records",
-        icon: <HistoryEduIcon/>,
-        roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-        children: [
-            // {
-            //     to: "material-logs",
-            //     title: "Raw Material Logs",
-            //     element: RawMaterialInventoryTransactionScreen,
-            //     roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-            // },
-            {
-                to: "profitability-wastage",
-                title: "Profitability & Wastage",
-                element: ProfitabilityWastageScreen,
-                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-            },
-            {
-                to: "activity",
-                title: "System Activity",
-                element: ActivityLogScreen,
-                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-            },
-        ]
-    },
+    // {
+    //     to: "/records",
+    //     title: "Reports & Records",
+    //     icon: <HistoryEduIcon/>,
+    //     roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+    //     children: [
+    //         {
+    //             to: "profitability-wastage",
+    //             title: "Profitability & Wastage",
+    //             element: ProfitabilityWastageScreen,
+    //             roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+    //         }
+    //     ]
+    // },
 
     // ---------------------------------
     // KITCHEN & PRODUCTION (Operations)
     // ---------------------------------
     {
-        to: "/operations",
-        title: "Operations",
+        to: "/production",
+        title: "Production",
         icon: <KitchenOutlined/>,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
         children: [
             {
-                to: "production",
-                title: "Production",
+                to: "list",
+                title: "List",
                 element: ProductionScreen,
                 roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
             },
@@ -336,7 +322,13 @@ export const appRoutes: AppRouteType[] = [
                 title: "Trash",
                 element: TrashBinScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-            }
+            },
+            {
+                to: "activity",
+                title: "System Activity",
+                element: ActivityLogScreen,
+                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+            },
         ]
     },
 
