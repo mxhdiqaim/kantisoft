@@ -158,13 +158,13 @@ const ActivityLogPage = () => {
     return (
         <Box>
             <Typography variant="h4" gutterBottom>
-                Activity Log
+                List
             </Typography>
             <TableSearchActions
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}
-                placeholder={"Search Activity Logs..."}
+                placeholder={"Search by details, user, role, store, or action"}
             />
             <Grid container spacing={2}>
                 <Grid size={12}>

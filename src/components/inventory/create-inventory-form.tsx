@@ -20,7 +20,7 @@ interface Props {
     onClose: () => void;
 }
 
-const CreateInventoryRecord: FC<Props> = ({open, onClose}) => {
+const CreateInventoryForm: FC<Props> = ({open, onClose}) => {
     const notify = useNotifier();
 
     const {data: menuItemsData, isLoading: isLoadingMenuItems} = useGetMenuItemsQuery({});
@@ -70,7 +70,7 @@ const CreateInventoryRecord: FC<Props> = ({open, onClose}) => {
         <CustomModal
             open={open}
             onClose={onClose}
-            title="Create Inventory Record"
+            title="New Inventory"
         >
             <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{mt: 3}}>
                 <Grid container spacing={3}>
@@ -150,7 +150,7 @@ const CreateInventoryRecord: FC<Props> = ({open, onClose}) => {
                 <Box sx={{display: "flex", justifyContent: "flex-end", gap: 2, mt: 2}}>
                     <CustomButton title={"Close"} onClick={onClose}/>
                     <CustomButton
-                        title={isLoading ? "Creating..." : "Create Record"}
+                        title={isLoading ? "Creating..." : "Create"}
                         type="submit"
                         variant={"contained"}
                         disabled={isLoading}
@@ -161,4 +161,4 @@ const CreateInventoryRecord: FC<Props> = ({open, onClose}) => {
     );
 };
 
-export default CreateInventoryRecord;
+export default CreateInventoryForm;

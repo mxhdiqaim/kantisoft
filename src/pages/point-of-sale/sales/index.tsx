@@ -1,5 +1,5 @@
-import SalesHistoryOverviewCard from "@/components/sales-history/sales-history-overview-card.tsx";
-import SalesHistoryTable from "@/components/sales-history/sales-history-table.tsx";
+import SalesHistoryOverviewCard from "@/components/point-of-sale/sales-history-overview-card.tsx";
+import SalesHistoryTable from "@/components/point-of-sale/sales-history-table.tsx";
 import {useGetOrdersByPeriodQuery} from "@/store/slice";
 import {filterSchema, type TimePeriod} from "@/types";
 import {formatCurrency} from "@/utils";
@@ -59,7 +59,7 @@ const SalesHistory = () => {
     return (
         <Box sx={{mx: "auto"}}>
             <Box sx={{display: "flex", justifyContent: "space-between"}}>
-                <Typography variant={"h4"}>Sales History</Typography>
+                <Typography variant={"h4"}>History</Typography>
                 <PeriodSelector
                     control={control}
                     name={"timePeriod"}

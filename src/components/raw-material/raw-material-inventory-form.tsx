@@ -6,7 +6,7 @@ import {yupResolver} from "@hookform/resolvers/yup";
 import {
     createRawMaterialInventorySchema,
     type CreateRawMaterialInventoryType,
-    type MultipleRawMaterialInventoryResponseType,
+    type GetRawMaterialInventoryStockType,
     type UpdateRawMaterialInventoryType,
 } from "@/types/raw-material-types.ts";
 import {StyledTextField} from "@/components/ui";
@@ -26,7 +26,7 @@ import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 interface Props {
     open: boolean;
     onClose: () => void;
-    rawMaterialInventory?: MultipleRawMaterialInventoryResponseType | null;
+    rawMaterialInventory?: GetRawMaterialInventoryStockType | null;
 }
 
 const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventory}) => {
@@ -165,7 +165,7 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
         <CustomModal
             open={open}
             onClose={onClose}
-            title={isEditMode ? "Update Raw Material Inventory" : "Create Raw Material Inventory"}
+            title={isEditMode ? "Edit Inventory" : "Create Inventory"}
         >
             <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{mt: 3}}>
                 <Grid container spacing={2}>
@@ -293,7 +293,7 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                 <Box sx={{display: "flex", justifyContent: "flex-end", gap: 2, mt: 2}}>
                     <CustomButton title={"Close"} onClick={onClose} variant="outlined"/>
                     <CustomButton
-                        title={isLoading ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update Record" : "Create Record")}
+                        title={isLoading ? (isEditMode ? "Saving..." : "Creating...") : (isEditMode ? "Save" : "Create")}
                         type="submit"
                         variant={"contained"}
                         disabled={isLoading}

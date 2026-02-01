@@ -26,7 +26,7 @@ interface Props {
     inventoryItem: InventoryType | null;
 }
 
-const AdjustStock: FC<Props> = ({open, onClose, inventoryItem}) => {
+const InventoryAdjustmentForm: FC<Props> = ({open, onClose, inventoryItem}) => {
     const notify = useNotifier();
     const [adjustStock, {isLoading, isSuccess}] = useAdjustStockMutation();
 
@@ -80,7 +80,7 @@ const AdjustStock: FC<Props> = ({open, onClose, inventoryItem}) => {
         <CustomModal
             open={open}
             onClose={onClose}
-            title={`Adjust Stock for ${inventoryItem?.menuItem?.name ?? 'Item'}`}
+            title={`Inventory adjustment for ${inventoryItem?.menuItem?.name ?? 'Item'}`}
         >
             <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{mt: 3}}>
                 <Grid container spacing={3}>
@@ -147,8 +147,6 @@ const AdjustStock: FC<Props> = ({open, onClose, inventoryItem}) => {
                                     {...field}
                                     fullWidth
                                     label="Notes (Optional)"
-                                    // multiline
-                                    // rows={3}
                                     error={!!errors.notes}
                                     helperText={errors.notes?.message}
                                 />
@@ -162,7 +160,7 @@ const AdjustStock: FC<Props> = ({open, onClose, inventoryItem}) => {
                         type="submit"
                         variant="contained"
                         disabled={isLoading}
-                        title={isLoading ? "Adjusting..." : "Adjust Stock"}
+                        title={isLoading ? "Adjusting..." : "Adjust Inventory"}
                     />
                 </Box>
             </Box>
@@ -170,4 +168,4 @@ const AdjustStock: FC<Props> = ({open, onClose, inventoryItem}) => {
     );
 };
 
-export default AdjustStock;
+export default InventoryAdjustmentForm;

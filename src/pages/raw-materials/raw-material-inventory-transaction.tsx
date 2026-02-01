@@ -231,7 +231,7 @@ const RawMaterialInventoryTransaction = () => {
         <Box sx={{mx: "auto"}}>
             <Box sx={{display: "flex", justifyContent: "space-between"}}>
                 <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
-                    <Typography variant={"h4"}>Raw Material Transactions</Typography>
+                    <Typography variant={"h4"}>Transactions</Typography>
                 </Box>
                 <PeriodSelector
                     control={control}

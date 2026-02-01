@@ -1,30 +1,42 @@
-import Receipt from "@/components/sales-history/receipt.tsx";
+import Receipt from "@/components/point-of-sale/receipt.tsx";
 import ViewSalesHistoryLoading from "@/components/sales-history/spinners/view-sales-history-loading.tsx";
 import {useGetAllStoresQuery, useGetOrderByIdQuery} from "@/store/slice";
 import {selectActiveStore, setActiveStore} from "@/store/slice/store-slice.ts";
-import {ArrowBackIosNewOutlined, LocalPrintshopOutlined} from "@mui/icons-material";
-import {Box, Typography} from "@mui/material";
+import {Box} from "@mui/material";
 import {useEffect, useRef} from "react";
 import {useDispatch, useSelector} from "react-redux";
 import {useNavigate, useParams} from "react-router-dom";
 import CustomButton from "@/components/ui/button.tsx";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+import useNotifier from "@/hooks/useNotifier.ts";
+import {useTranslation} from "react-i18next";
+
+import {ArrowBackIosNewOutlined, LocalPrintshopOutlined} from "@mui/icons-material";
+import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 
 const ViewSalesHistory = () => {
-    const navigate = useNavigate();
+    const {t} = useTranslation();
+    const notify = useNotifier();
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const {id} = useParams();
+    const activeStore = useSelector(selectActiveStore);
+
     const printRef = useRef<HTMLDivElement>(null);
 
     const {
         data: order,
         isLoading: isOrdersLoading,
         isError,
+        error,
     } = useGetOrderByIdQuery(id!, {
         skip: !id,
     });
 
     const {data: stores, isLoading: isLoadingStores} = useGetAllStoresQuery();
-    const activeStore = useSelector(selectActiveStore);
+    const memoizedStores = useMemoizedArray(stores);
+
 
     const loading = isOrdersLoading || isLoadingStores;
 
@@ -33,15 +45,18 @@ const ViewSalesHistory = () => {
     };
 
     useEffect(() => {
-        if (!activeStore && stores && stores.length > 0) {
-            dispatch(setActiveStore(stores[0]));
+        if (!activeStore && memoizedStores && memoizedStores.length > 0) {
+            dispatch(setActiveStore(memoizedStores[0]));
         }
-    }, [activeStore, stores, dispatch]);
+    }, [activeStore, memoizedStores, dispatch]);
 
     if (loading) return <ViewSalesHistoryLoading/>;
 
-    if (isError || !order) {
-        return <Typography>Failed to load order details.</Typography>;
+    if (isError) {
+        notify(`Failed to load ${t("history")}.`, "error");
+        const apiError = getApiError(error, `Failed to load ${t("history")}.`);
+
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
     }
 
     return (

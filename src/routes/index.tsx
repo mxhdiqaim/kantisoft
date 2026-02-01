@@ -16,7 +16,6 @@ import {
     PointOfSaleScreen,
     ProductionScreen,
     ProfileScreen,
-    ProfitabilityWastageScreen,
     RawMaterialInventoryScreen,
     RawMaterialInventoryTransactionScreen,
     RawMaterialsScreen,
@@ -38,7 +37,6 @@ import AddAlertOutlinedIcon from "@mui/icons-material/AddAlertOutlined";
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 import RestaurantMenuOutlinedIcon from "@mui/icons-material/RestaurantMenuOutlined";
 import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
-import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
 
 export interface AppRouteType {
     to: string;
@@ -81,7 +79,7 @@ export const appRoutes: AppRouteType[] = [
     // ---------------------------------
     {
         to: "/pos-sale",
-        title: "POS & Sales",
+        title: "posAndSales",
         icon: <AddAlertOutlinedIcon/>,
         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST],
         children: [
@@ -91,6 +89,20 @@ export const appRoutes: AppRouteType[] = [
                 element: PointOfSaleScreen,
                 roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER, UserRoleEnum.USER, UserRoleEnum.GUEST],
             },
+            {
+                to: "history",
+                title: "history",
+                element: SalesHistoryScreen,
+                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
+                children: [
+                    {
+                        to: ":id/view",
+                        element: ViewSalesHistoryScreen,
+                        hidden: true,
+                        roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+                    }
+                ]
+            },
         ]
     },
 
@@ -98,14 +110,14 @@ export const appRoutes: AppRouteType[] = [
     // PRODUCT CATALOG (Definitions)
     // ---------------------------------
     {
-        to: "/catalog",
-        title: "Catalog",
+        to: "/menu-items",
+        title: "menuItems",
         icon: <RestaurantMenuOutlinedIcon/>,
         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST],
         children: [
             {
-                to: "menu-items",
-                title: "menuItem",
+                to: "list",
+                title: "List",
                 element: MenuItemScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
                 children: [
@@ -119,9 +131,24 @@ export const appRoutes: AppRouteType[] = [
                 ]
             },
             {
-                to: "raw-materials",
-                title: "Raw Materials",
-                element: RawMaterialsScreen,
+                to: "inventory",
+                title: "Inventory",
+                element: InventoryManagementScreen,
+                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
+                children: [
+                    {
+                        to: ":id/transactions",
+                        title: "menuItemTransactions",
+                        element: SingleInventoryTransactionScreen,
+                        hidden: true,
+                        roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
+                    },
+                ]
+            },
+            {
+                to: "transactions",
+                title: "Transactions",
+                element: InventoryTransactionsScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
             {
@@ -137,31 +164,28 @@ export const appRoutes: AppRouteType[] = [
     // INVENTORY & STOCK (Tracking)
     // ---------------------------------
     {
-        to: "/stock",
-        title: "Stock Management",
+        to: "/raw-materials",
+        title: "Raw Material",
         icon: <InventoryOutlinedIcon/>,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER, UserRoleEnum.USER],
         children: [
             {
-                to: "finished-goods", // Was "Inventory Management"
-                title: "menuItemStock",
-                element: InventoryManagementScreen,
+                to: "list",
+                title: "List",
+                element: RawMaterialsScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
-                children: [
-                    {
-                        to: ":id/transactions",
-                        title: "menuItemTransactions",
-                        element: SingleInventoryTransactionScreen,
-                        hidden: true,
-                        roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
-                    },
-                ]
             },
             {
-                to: "materials", // Your new Bulk Stock controller
-                title: "Raw Material Stock",
+                to: "inventory",
+                title: "Inventory",
                 element: RawMaterialInventoryScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
+            },
+            {
+                to: "transactions",
+                title: "Transactions",
+                element: RawMaterialInventoryTransactionScreen,
+                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
         ]
     },
@@ -169,65 +193,33 @@ export const appRoutes: AppRouteType[] = [
     // ---------------------------------
     // REPORTS & RECORDS
     // ---------------------------------
-    {
-        to: "/records",
-        title: "Reports & Records",
-        icon: <HistoryEduIcon/>,
-        roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-        children: [
-            {
-                to: "sales",
-                title: "Sales History",
-                element: SalesHistoryScreen,
-                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-                children: [
-                    {
-                        to: ":id/view",
-                        element: ViewSalesHistoryScreen,
-                        hidden: true,
-                        roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-                    }
-                ]
-            },
-            {
-                to: "inventory-logs",
-                title: "Menu Item Logs",
-                element: InventoryTransactionsScreen,
-                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-            },
-            {
-                to: "material-logs",
-                title: "Raw Material Logs",
-                element: RawMaterialInventoryTransactionScreen,
-                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-            },
-            {
-                to: "profitability-wastage",
-                title: "Profitability & Wastage",
-                element: ProfitabilityWastageScreen,
-                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-            },
-            {
-                to: "activity",
-                title: "System Activity",
-                element: ActivityLogScreen,
-                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-            },
-        ]
-    },
+    // {
+    //     to: "/records",
+    //     title: "Reports & Records",
+    //     icon: <HistoryEduIcon/>,
+    //     roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+    //     children: [
+    //         {
+    //             to: "profitability-wastage",
+    //             title: "Profitability & Wastage",
+    //             element: ProfitabilityWastageScreen,
+    //             roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+    //         }
+    //     ]
+    // },
 
     // ---------------------------------
     // KITCHEN & PRODUCTION (Operations)
     // ---------------------------------
     {
-        to: "/operations",
-        title: "Operations",
+        to: "/production",
+        title: "Production",
         icon: <KitchenOutlined/>,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
         children: [
             {
-                to: "production",
-                title: "Production",
+                to: "list",
+                title: "List",
                 element: ProductionScreen,
                 roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
             },
@@ -326,11 +318,17 @@ export const appRoutes: AppRouteType[] = [
                 ]
             },
             {
-                to: "trash-bin",
-                title: "Trash Bin",
+                to: "trash",
+                title: "Trash",
                 element: TrashBinScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-            }
+            },
+            {
+                to: "activity",
+                title: "System Activity",
+                element: ActivityLogScreen,
+                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+            },
         ]
     },
 

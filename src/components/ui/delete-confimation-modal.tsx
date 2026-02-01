@@ -8,7 +8,7 @@ interface Props {
     onConfirm: () => void;
     isLoading: boolean;
     title: string;
-    message: string;
+    message?: string;
 }
 
 const DeleteConfirmationModal = ({open, onClose, onConfirm, isLoading, title, message}: Props) => {
@@ -27,9 +27,12 @@ const DeleteConfirmationModal = ({open, onClose, onConfirm, isLoading, title, me
             <Typography variant="h6" fontWeight="600">
                 {title}
             </Typography>
-            <Typography sx={{mt: 1, fontSize: ".8rem"}} variant={"body1"}>
-                {message}
-            </Typography>
+            
+            {message && (
+                <Typography sx={{mt: 1, fontSize: ".8rem"}} variant={"body1"}>
+                    {message}
+                </Typography>
+            )}
 
             <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{mt: 3}}>
                 <CustomButton

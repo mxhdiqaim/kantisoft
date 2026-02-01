@@ -2,7 +2,7 @@ import CustomModal from "@/components/customs/custom-modal";
 import {selectCurrentUser} from "@/store/slice/auth-slice";
 import {selectActiveStore} from "@/store/slice/store-slice";
 import type {CartItem} from "@/types/cart-item-type";
-import {createOrderSchema, type CreateOrderType} from "@/types/order-types.ts";
+import {createOrderSchema, type CreateOrderType, OrderPaymentMethod, OrderStatus} from "@/types/order-types.ts";
 import {formatCurrency} from "@/utils";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {DialogActions, FormControl, FormControlLabel, FormHelperText, Radio, RadioGroup,} from "@mui/material";
@@ -29,30 +29,20 @@ const PaymentModal = ({open, onClose, onCompleteSale, cartItems, isLoading}: Pro
         control,
         handleSubmit,
         reset,
-        // watch,
-        // setValue,
-        // setError,
-        // clearErrors,
         formState: {errors, isValid},
     } = useForm<CreateOrderType>({
         mode: "onChange",
-        resolver: yupResolver(createOrderSchema),
         defaultValues: {
             sellerId: seller?.id || "",
             storeId: activeStore?.id || "",
-            paymentMethod: "cash",
-            orderStatus: "completed",
+            paymentMethod: OrderPaymentMethod.CASH,
+            orderStatus: OrderStatus.PENDING,
             items: [],
             amountReceived: 0,
         },
+
+        resolver: yupResolver(createOrderSchema),
     });
-
-    // const paymentMethod = watch("paymentMethod");
-    // const amountReceived = watch("amountReceived", 0);
-
-    // const change = amountReceived - total;
-
-    // const isCashPaymentInsufficient = paymentMethod === "cash" && amountReceived < total;
 
     const onSubmit = (data: CreateOrderType) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars

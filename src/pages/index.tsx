@@ -2,9 +2,11 @@
 export {default as HomeScreen} from "./home";
 export {default as DashboardScreen} from "./dashboard";
 
-// Order Tracking and Sales
+// POS & Sales screens
 export {default as PointOfSaleScreen} from "./point-of-sale";
-export {default as ViewSalesHistoryScreen} from "./records/sales/view-sales-history";
+export {default as SalesHistoryScreen} from "./point-of-sale/sales";
+export {default as ViewSalesHistoryScreen} from "@/pages/point-of-sale/sales/view-sales-history";
+
 export {default as MenuItemScreen} from "./menu-item";
 
 export {default as ActivityLogScreen} from "./activity-log";
@@ -36,7 +38,6 @@ export {default as UnitOfMeasurementsScreen} from "./raw-materials/unit-of-measu
 export {default as ProductionScreen} from "./production"
 
 // Records
-export {default as SalesHistoryScreen} from "./records/sales";
 export {default as ProfitabilityWastageScreen} from "./records/profitability-wastage.tsx"
 
 // Administrator

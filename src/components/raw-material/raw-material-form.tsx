@@ -114,7 +114,7 @@ const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
         <CustomModal
             open={open}
             onClose={onClose}
-            title={isEditMode ? "Update Raw Material" : "Create Raw Material"}
+            title={isEditMode ? "Edit Raw Material" : "Create Raw Material"}
         >
             <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{mt: 3}}>
                 <Grid container spacing={3}>
@@ -211,7 +211,7 @@ const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
                 <Box sx={{display: "flex", justifyContent: "flex-end", gap: 2, mt: 2}}>
                     <CustomButton title={"Close"} onClick={onClose}/>
                     <CustomButton
-                        title={isLoading ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update Record" : "Create Record")}
+                        title={isLoading ? (isEditMode ? "Saving..." : "Creating...") : (isEditMode ? "Save" : "Create")}
                         type="submit"
                         variant={"contained"}
                         disabled={isLoading}

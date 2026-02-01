@@ -1,6 +1,6 @@
 import {useMemo} from "react";
 import {useNavigate, useParams} from "react-router-dom";
-import {Box, Chip, Grid, Skeleton, Typography} from "@mui/material";
+import {Box, Chip, CircularProgress, Grid, Typography} from "@mui/material";
 import {useGetAllInventoryQuery, useGetTransactionsByMenuItemQuery} from "@/store/slice";
 import DataGridTable from "@/components/ui/data-grid-table";
 import type {GridColDef} from "@mui/x-data-grid";
@@ -9,7 +9,8 @@ import {relativeTime} from "@/utils/get-relative-time.ts";
 import CustomButton from "@/components/ui/button.tsx";
 import {ArrowBackIosNewOutlined} from "@mui/icons-material";
 import {getTransactionChipColor} from "@/components/ui";
-import {AppBreadcrumbs} from "@/helpers";
+// import {AppBreadcrumbs} from "@/helpers";
+import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 
 const SingleInventoryTransaction = () => {
     const {id: menuItemId} = useParams<{ id: string }>();
@@ -21,6 +22,8 @@ const SingleInventoryTransaction = () => {
         isError: isErrorTransactions,
         error: transactionsError,
     } = useGetTransactionsByMenuItemQuery({menuItemId: menuItemId!}, {skip: !menuItemId});
+
+    const memoizedTransactions = useMemoizedArray(transactions);
 
     const {data: inventoryData, isLoading: isLoadingInventory} = useGetAllInventoryQuery();
 
@@ -122,16 +125,6 @@ const SingleInventoryTransaction = () => {
         },
     ], []);
 
-    if (isLoadingTransactions || isLoadingInventory) {
-        return (
-            <>
-                <Skeleton variant="text" width={400} height={48}/>
-                <Skeleton variant="text" width={200} height={24} sx={{mb: 3}}/>
-                <Skeleton variant="rectangular" width="100%" height={500}/>
-            </>
-        );
-    }
-
     if (!menuItemId) {
         return <Typography color="error">Menu Item ID is missing.</Typography>;
     }
@@ -142,7 +135,7 @@ const SingleInventoryTransaction = () => {
 
     return (
         <>
-            <AppBreadcrumbs/>
+            {/*<AppBreadcrumbs/>*/}
             <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
                 <CustomButton
                     title={"Go Back"}
@@ -155,16 +148,20 @@ const SingleInventoryTransaction = () => {
                     <Typography variant="h4" component="h1">
                         Transaction History
                     </Typography>
-                    <Typography variant="subtitle1" color="text.secondary" sx={{mb: 3}}>
-                        {inventoryItem?.menuItem.name} (SKU: {inventoryItem?.menuItem.itemCode})
-                    </Typography>
+                    {isLoadingInventory ? (
+                        <CircularProgress size={25}/>
+                    ) : (
+                        <Typography variant="subtitle1" color="text.secondary" sx={{mb: 3}}>
+                            {inventoryItem?.menuItem.name} (SKU: {inventoryItem?.menuItem.itemCode})
+                        </Typography>
+                    )}
                 </Box>
             </Box>
 
             <Grid container spacing={2}>
                 <Grid size={12}>
                     <DataGridTable
-                        data={transactions || []}
+                        data={memoizedTransactions}
                         columns={columns}
                         loading={isLoadingTransactions}
                     />

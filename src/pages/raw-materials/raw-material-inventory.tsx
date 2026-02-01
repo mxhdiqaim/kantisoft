@@ -206,7 +206,7 @@ const RawMaterialInventory = () => {
                             onClick={handleOpenFormModal}
                             sx={{borderRadius: theme.borderRadius.small, mx: 1}}
                         >
-                            Adjust Min Stock
+                            Edit Min Stock
                         </TableStyledMenuItem>
                         <TableStyledMenuItem
                             onClick={handleStockInDrawerOpen}
@@ -239,10 +239,10 @@ const RawMaterialInventory = () => {
         <Box>
             <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
                 <Typography variant="h4" component="h1">
-                    Raw Material Inventory
+                    Inventory
                 </Typography>
                 <CustomButton
-                    title={"Add to Inventory"}
+                    title={"Inventory"}
                     variant="contained"
                     startIcon={<AddIcon/>}
                     onClick={handleOpenFormModal}
