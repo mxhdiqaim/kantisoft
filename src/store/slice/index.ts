@@ -541,9 +541,20 @@ export const apiSlice = createApi({
             ],
         }),
 
-        markAsDiscontinued: builder.mutation<InventoryType, string>({
+        discontinueInventory: builder.mutation<InventoryType, string>({
             query: (menuItemId) => ({
                 url: `/inventory/discontinue/${menuItemId}`,
+                method: "PATCH",
+            }),
+            invalidatesTags: (_result, _error, menuItemId) => [
+                {type: "Inventory", id: menuItemId},
+                {type: "Inventory", id: "LIST"},
+            ],
+        }),
+
+        continueInventory: builder.mutation<InventoryType, string>({
+            query: (menuItemId) => ({
+                url: `/inventory/continue/${menuItemId}`,
                 method: "PATCH",
             }),
             invalidatesTags: (_result, _error, menuItemId) => [
@@ -838,7 +849,8 @@ export const {
     useGetInventoryTransactionsQuery,
     useCreateInventoryRecordMutation,
     useAdjustStockMutation,
-    useMarkAsDiscontinuedMutation,
+    useDiscontinueInventoryMutation,
+    useContinueInventoryMutation,
     useDeleteInventoryRecordMutation,
     useGetInventoryAlertsQuery,
 

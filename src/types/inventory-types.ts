@@ -17,8 +17,8 @@ export const TransactionTypeEnum = {
     ADJUSTMENT_IN: "adjustmentIn",
     ADJUSTMENT_OUT: "adjustmentOut",
     PURCHASE_RECEIVE: "purchaseReceive",
-    COMING_IN: "comingIn",
-    GOING_OUT: "goingOut",
+    // COMING_IN: "comingIn",
+    // GOING_OUT: "goingOut",
 } as const;
 export const TRANSACTION_TYPE = Object.values(TransactionTypeEnum);
 
@@ -40,7 +40,7 @@ export const createInventorySchema = yup.object({
 
 export const adjustStockSchema = yup.object({
     menuItemId: yup.string().uuid().required("MenuItem not selected"),
-    quantityAdjustment: yup.number().integer().min(0).required("Quantity adjustment is required"),
+    quantityAdjustment: yup.number().integer().required("Quantity adjustment is required").typeError("Quantity adjustment must be a number"),
     transactionType: yup.string().oneOf(TRANSACTION_TYPE).default("adjustmentIn").required("Transaction type is required"),
     notes: yup.string().optional(),
 })

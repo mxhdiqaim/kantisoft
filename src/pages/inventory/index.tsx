@@ -1,4 +1,9 @@
-import {useDeleteInventoryRecordMutation, useGetAllInventoryQuery, useMarkAsDiscontinuedMutation} from "@/store/slice";
+import {
+    useContinueInventoryMutation,
+    useDeleteInventoryRecordMutation,
+    useDiscontinueInventoryMutation,
+    useGetAllInventoryQuery
+} from "@/store/slice";
 import type {InventoryType} from "@/types/inventory-types.ts";
 import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
 import type {GridColDef, GridRenderCellParams} from "@mui/x-data-grid";
@@ -38,7 +43,8 @@ const InventoryManagement = () => {
     const {data: inventoryData, isLoading, isError, error} = useGetAllInventoryQuery();
     const memoizedInventories = useMemoizedArray(inventoryData);
 
-    const [markAsDiscontinued, {isLoading: isDiscontinuing}] = useMarkAsDiscontinuedMutation();
+    const [discontinueInventory, {isLoading: isDiscontinuing}] = useDiscontinueInventoryMutation();
+    const [continueInventory, {isLoading: isContinuing}] = useContinueInventoryMutation();
     const [deleteInventoryRecord, {isLoading: isDeleting}] = useDeleteInventoryRecordMutation();
 
     const canInteract = currentUser?.status === UserStatusEnum.ACTIVE &&
@@ -84,13 +90,23 @@ const InventoryManagement = () => {
         setSelectedRow(null);
     };
 
-    const handleDiscontinue = async () => {
-        console.log("Discontinue: ", selectedRow);
-
+    const handleContinue = async () => {
         if (!selectedRow) return;
 
         try {
-            await markAsDiscontinued(selectedRow.menuItemId).unwrap();
+            await continueInventory(selectedRow.menuItemId).unwrap();
+            notify("Item has been restored.", "success");
+        } catch (err) {
+            const defaultMessage = "Failed to continue item.";
+            const apiError = getApiError(err, defaultMessage);
+            notify(apiError.message, "error");
+        }
+    };
+    const handleDiscontinue = async () => {
+        if (!selectedRow) return;
+
+        try {
+            await discontinueInventory(selectedRow.menuItemId).unwrap();
             notify("Item has been discontinued.", "success");
         } catch (err) {
             const defaultMessage = "Failed to discontinue item.";
@@ -230,11 +246,22 @@ const InventoryManagement = () => {
                         >
                             Adjust Stock
                         </TableStyledMenuItem>
+                        {/*<TableStyledMenuItem*/}
+                        {/*    disabled={true}*/}
+                        {/*    sx={{borderRadius: theme.borderRadius.small, mx: 1}}*/}
+                        {/*>*/}
+                        {/*    Edit*/}
+                        {/*</TableStyledMenuItem>*/}
                         <TableStyledMenuItem
-                            disabled={true}
-                            sx={{borderRadius: theme.borderRadius.small, mx: 1}}
+                            onClick={handleContinue}
+                            disabled={isContinuing || params.row.status !== "discontinued"}
+                            sx={{
+                                color: theme.palette.success.main,
+                                borderRadius: theme.borderRadius.small,
+                                mx: 1
+                            }}
                         >
-                            Edit
+                            Continue
                         </TableStyledMenuItem>
                         <TableStyledMenuItem
                             onClick={handleDiscontinue}
@@ -264,7 +291,7 @@ const InventoryManagement = () => {
                 )
             ),
         },
-    ], [selectedRow, isDiscontinuing, handleOpenAdjustStockModal])
+    ], [selectedRow, isDiscontinuing, handleOpenAdjustStockModal, isContinuing])
 
     if (isError) {
         notify(`Failed to load inventory.`, "error");
@@ -296,7 +323,11 @@ const InventoryManagement = () => {
 
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
+                    <DataGridTable
+                        data={filteredData}
+                        columns={columns}
+                        loading={isLoading || isDiscontinuing || isContinuing}
+                    />
                 </Grid>
             </Grid>
             <CreateInventoryForm open={formModalOpen} onClose={handleCloseFormModal}/>
