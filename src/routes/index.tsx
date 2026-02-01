@@ -112,13 +112,13 @@ export const appRoutes: AppRouteType[] = [
     // PRODUCT CATALOG (Definitions)
     // ---------------------------------
     {
-        to: "/products",
+        to: "/menu-items",
         title: "menuItems",
         icon: <RestaurantMenuOutlinedIcon/>,
         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST],
         children: [
             {
-                to: "menu-items",
+                to: "list",
                 title: "List",
                 element: MenuItemScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
