@@ -115,7 +115,7 @@ const InventoryTransactions = () => {
     return (
         <Box sx={{mx: "auto"}}>
             <Box sx={{display: "flex", justifyContent: "space-between"}}>
-                <Typography variant={"h4"}>Inventory Transactions</Typography>
+                <Typography variant={"h4"}>Transactions</Typography>
                 <PeriodSelector
                     control={control}
                     name={"timePeriod"}

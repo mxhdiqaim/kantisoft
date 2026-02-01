@@ -113,13 +113,13 @@ export const appRoutes: AppRouteType[] = [
     // ---------------------------------
     {
         to: "/products",
-        title: "Products",
+        title: "menuItems",
         icon: <RestaurantMenuOutlinedIcon/>,
         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST],
         children: [
             {
                 to: "menu-items",
-                title: "menuItems",
+                title: "List",
                 element: MenuItemScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
                 children: [
@@ -148,9 +148,9 @@ export const appRoutes: AppRouteType[] = [
                 ]
             },
             {
-                to: "raw-materials",
-                title: "Raw Materials",
-                element: RawMaterialsScreen,
+                to: "transactions",
+                title: "Transactions",
+                element: InventoryTransactionsScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
             {
@@ -166,29 +166,20 @@ export const appRoutes: AppRouteType[] = [
     // INVENTORY & STOCK (Tracking)
     // ---------------------------------
     {
-        to: "/stock",
-        title: "Stock Management",
+        to: "/raw-materials",
+        title: "Raw Material",
         icon: <InventoryOutlinedIcon/>,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER, UserRoleEnum.USER],
         children: [
-            // {
-            //     to: "finished-goods", // Was "Inventory Management"
-            //     title: "menuItemStock",
-            //     element: InventoryManagementScreen,
-            //     roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
-            //     children: [
-            //         {
-            //             to: ":id/transactions",
-            //             title: "menuItemTransactions",
-            //             element: SingleInventoryTransactionScreen,
-            //             hidden: true,
-            //             roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
-            //         },
-            //     ]
-            // },
             {
-                to: "materials", // Your new Bulk Stock controller
-                title: "Raw Material Stock",
+                to: "list",
+                title: "List",
+                element: RawMaterialsScreen,
+                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
+            },
+            {
+                to: "inventory",
+                title: "Inventory",
                 element: RawMaterialInventoryScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
             },
@@ -204,12 +195,12 @@ export const appRoutes: AppRouteType[] = [
         icon: <HistoryEduIcon/>,
         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
         children: [
-            {
-                to: "inventory-logs",
-                title: "Menu Item Logs",
-                element: InventoryTransactionsScreen,
-                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-            },
+            // {
+            //     to: "inventory-logs",
+            //     title: "Menu Item Logs",
+            //     element: InventoryTransactionsScreen,
+            //     roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+            // },
             {
                 to: "material-logs",
                 title: "Raw Material Logs",

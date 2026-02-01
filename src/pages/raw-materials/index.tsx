@@ -210,13 +210,13 @@ const RawMaterials = () => {
                             sx={{borderRadius: theme.borderRadius.small, mx: 1}}
                             onClick={handleDrawerOpen}
                         >
-                            View Raw Material
+                            View
                         </TableStyledMenuItem>
                         <TableStyledMenuItem
                             onClick={handleOpenFormModal}
                             sx={{borderRadius: theme.borderRadius.small, mx: 1}}
                         >
-                            Edit Raw Material
+                            Edit
                         </TableStyledMenuItem>
 
                         <TableStyledMenuItem
@@ -230,7 +230,7 @@ const RawMaterials = () => {
                                 color: theme.palette.error.main,
                             }}
                         >
-                            Delete Raw Material
+                            Delete
                         </TableStyledMenuItem>
                     </CustomButton>
                 ),
@@ -249,10 +249,10 @@ const RawMaterials = () => {
         <Box>
             <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
                 <Typography variant="h4" component="h1">
-                    Raw Materials
+                    List
                 </Typography>
                 <CustomButton
-                    title={"Create Raw Material"}
+                    title={"Raw Material"}
                     variant="contained"
                     startIcon={<AddIcon/>}
                     onClick={handleOpenCreateModal}
