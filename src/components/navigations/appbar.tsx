@@ -19,12 +19,16 @@ import {
     MenuItem,
     Toolbar,
     Tooltip,
+    Typography,
     useTheme,
 } from "@mui/material";
 import {type FC} from "react";
 import {useSelector} from "react-redux";
-import {useNavigate} from "react-router-dom";
+import {useLocation, useNavigate} from "react-router-dom";
 import CustomButton from "@/components/ui/button.tsx";
+import {findRouteByPath} from "@/utils/routes.ts";
+import {appRoutes} from "@/routes";
+import {useTranslation} from "react-i18next";
 
 export interface Props {
     toggleDrawer?: (open: boolean) => void;
@@ -33,11 +37,18 @@ export interface Props {
 
 const AppbarComponent: FC<Props> = ({toggleDrawer, drawerState}) => {
     const theme = useTheme();
+    const {t} = useTranslation();
     const {isFullscreen, toggleFullscreen} = useFullscreen();
     const navigate = useNavigate();
+    const {pathname} = useLocation();
     const notify = useNotifier();
 
     const currentUser = useSelector(selectCurrentUser);
+
+    // Find the current route object based on the pathname
+    const currentRoute = findRouteByPath(appRoutes, pathname);
+    const pageTitle = currentRoute?.title || "Home"; // Fallback to "Home" if no title is found
+
     const [logout, {isLoading: isLoggingOut}] = useLogoutMutation();
 
     const handleLogout = async () => {
@@ -75,6 +86,12 @@ const AppbarComponent: FC<Props> = ({toggleDrawer, drawerState}) => {
                     >
                         <MenuOutlinedIcon/>
                     </IconButton>
+                </Box>
+
+                <Box sx={{flexGrow: 1, display: {xs: "none", md: "inline"}}}>
+                    <Typography variant="h5" color={"#353F46"} fontWeight={600}>
+                        {t(pageTitle)}
+                    </Typography>
                 </Box>
 
                 <Box sx={{flexGrow: 1}}/>

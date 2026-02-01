@@ -151,12 +151,6 @@ export const appRoutes: AppRouteType[] = [
                 element: InventoryTransactionsScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
-            {
-                to: "measurements",
-                title: "Measurements",
-                element: UnitOfMeasurementsScreen,
-                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
-            },
         ]
     },
 
@@ -186,6 +180,12 @@ export const appRoutes: AppRouteType[] = [
                 title: "Transactions",
                 element: RawMaterialInventoryTransactionScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+            },
+            {
+                to: "measurements",
+                title: "Measurements",
+                element: UnitOfMeasurementsScreen,
+                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
             },
         ]
     },
