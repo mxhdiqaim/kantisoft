@@ -6,7 +6,7 @@ import {yupResolver} from "@hookform/resolvers/yup";
 import {
     createRawMaterialInventorySchema,
     type CreateRawMaterialInventoryType,
-    type GetRawMaterialInventoryStockType,
+    type MultipleRawMaterialInventoryResponseType,
     type UpdateRawMaterialInventoryType,
 } from "@/types/raw-material-types.ts";
 import {StyledTextField} from "@/components/ui";
@@ -26,7 +26,7 @@ import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 interface Props {
     open: boolean;
     onClose: () => void;
-    rawMaterialInventory?: GetRawMaterialInventoryStockType | null;
+    rawMaterialInventory?: MultipleRawMaterialInventoryResponseType | null;
 }
 
 const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventory}) => {
