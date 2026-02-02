@@ -15,9 +15,7 @@ import production from "./production-routes";
 import categories from "./categories-routes";
 
 import { protectedRoute } from "../config/jwt-config";
-import { checkUserHasStore } from "../middlewares/check-user-has-store";
-import { isAuthorized } from "../middlewares/is-authorised-middleware";
-import { UserRoleEnum } from "../types/enums";
+import { validateStoreAccess } from "../middlewares/validate-store-access";
 import { StatusCodes } from "http-status-codes";
 import { handleTargetStore } from "../middlewares/handle-target-store-middleware";
 
@@ -40,44 +38,18 @@ router.use(protectedRoute);
 // Global middleware to handle store targeting for Managers
 router.use(handleTargetStore);
 
-// Inventory management routes
-router.use("/inventory", inventory);
-
-// Activity log is for Managers & admin only
-router.use(
-    "/activities",
-    isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
-    activities,
-);
-
-// Raw Material
-router.use(
-    "/raw-materials",
-    isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
-    rawMaterials,
-);
-
-// Bill of Materials routes
-router.use(
-    "/bill-of-materials",
-    isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
-    billOfMaterial,
-);
-
-// Production routes
-router.use(
-    "/production",
-    isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
-    production,
-);
-
 // These routes need to be protected and scoped to the user's store
-router.use("/stores", checkUserHasStore, stores);
-router.use("/users", checkUserHasStore, users);
-router.use("/menu-items", checkUserHasStore, menuItems);
-router.use("/orders", checkUserHasStore, orders);
-router.use("/dashboard", checkUserHasStore, dashboard);
-router.use("/unit-of-measurement", checkUserHasStore, unitOfMeasurement);
-router.use("/categories", checkUserHasStore, categories);
+router.use("/stores", validateStoreAccess, stores);
+router.use("/users", validateStoreAccess, users);
+router.use("/menu-items", validateStoreAccess, menuItems);
+router.use("/orders", validateStoreAccess, orders);
+router.use("/dashboard", validateStoreAccess, dashboard);
+router.use("/unit-of-measurement", validateStoreAccess, unitOfMeasurement);
+router.use("/activities", validateStoreAccess, activities);
+router.use("/raw-materials", validateStoreAccess, rawMaterials);
+router.use("/inventory", validateStoreAccess, inventory);
+router.use("/production", validateStoreAccess, production);
+router.use("/bill-of-materials", validateStoreAccess, billOfMaterial);
+router.use("/categories", validateStoreAccess, categories);
 
 export default router;
