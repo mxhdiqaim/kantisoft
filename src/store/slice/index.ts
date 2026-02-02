@@ -349,6 +349,7 @@ export const apiSlice = createApi({
                     ? [...result.map(({id}) => ({type: "MenuItem" as const, id})), {type: "MenuItem", id: "LIST"}]
                     : [{type: "MenuItem", id: "LIST"}],
         }),
+
         createMenuItem: builder.mutation<MenuItemType, AddMenuItemType>({
             query: (newMenuItem) => ({
                 url: "/menu-items/create",
@@ -357,13 +358,15 @@ export const apiSlice = createApi({
             }),
             invalidatesTags: [{type: "MenuItem", id: "LIST"}],
         }),
+
         deleteMenuItem: builder.mutation<void, string>({
             query: (id) => ({
                 url: `/menu-items/${id}`,
                 method: "DELETE",
             }),
-            invalidatesTags: [{type: "MenuItem", id: "LIST"}],
+            invalidatesTags: (_result, _error, id) => [{type: "MenuItem", id}, {type: "MenuItem", id: "LIST"}],
         }),
+
         updateMenuItem: builder.mutation<MenuItemType, Partial<MenuItemType> & Pick<MenuItemType, "id">>({
             query: ({id, ...patch}) => ({
                 url: `/menu-items/${id}`,

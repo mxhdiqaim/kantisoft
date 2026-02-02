@@ -3,7 +3,7 @@
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import {getApiError} from "@/helpers/get-api-error.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
-import {useCreateMenuItemMutation, useUpdateMenuItemMutation} from "@/store/slice";
+import {useCreateMenuItemMutation, useGetAllCategoriesQuery, useUpdateMenuItemMutation} from "@/store/slice";
 import {
     type AddMenuItemType,
     createMenuItemSchema,
@@ -11,11 +11,14 @@ import {
     type MenuItemType,
 } from "@/types/menu-item-type.ts";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {Box, Grid, Typography} from "@mui/material";
+import {Box, FormControl, Grid, InputAdornment, MenuItem, Typography} from "@mui/material";
 import {useEffect} from "react";
 import {Controller, useForm} from "react-hook-form";
 import CustomButton from "@/components/ui/button.tsx";
 import {StyledTextField} from "@/components/ui";
+import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+import Icon from "@/components/ui/icon.tsx";
+import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
     open: boolean;
@@ -23,20 +26,19 @@ interface Props {
     menuItemToEdit?: MenuItemType | null;
 }
 
-const defaultValues: AddMenuItemType = {
-    name: "",
-    price: 0,
-    isAvailable: true,
-    itemCode: undefined,
-};
-
 const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
     const notify = useNotifier();
+
     const [createMenuItem, {isLoading: isCreating}] = useCreateMenuItemMutation();
     const [updateMenuItem, {isLoading: isUpdating}] = useUpdateMenuItemMutation();
 
     const isEditMode = !!menuItemToEdit;
-    const isLoading = isCreating || isUpdating;
+
+    const {data: categoriesData, isLoading: fetchingCategory} = useGetAllCategoriesQuery(undefined, {
+        skip: !open,
+    });
+
+    const memoizedCategories = useMemoizedArray(categoriesData);
 
     const {
         control,
@@ -44,10 +46,14 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
         reset,
         formState: {errors},
     } = useForm({
-        defaultValues,
         mode: "onBlur",
-        // eslint-disable-next-line
-        // @ts-ignore
+        defaultValues: {
+            name: "",
+            price: 0,
+            itemCode: undefined,
+            sku: undefined,
+        },
+
         resolver: yupResolver(createMenuItemSchema),
     });
 
@@ -79,10 +85,17 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
             if (isEditMode) {
                 reset(menuItemToEdit);
             } else {
-                reset(defaultValues);
+                reset({
+                    name: "",
+                    price: 0,
+                    itemCode: undefined,
+                    sku: undefined,
+                });
             }
         }
     }, [open, isEditMode, menuItemToEdit, reset]);
+
+    const isLoading = isCreating || isUpdating;
 
     return (
         <CustomModal open={open} onClose={onClose}>
@@ -92,7 +105,7 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
                 </Typography>
                 <Box component={"form"} onSubmit={handleSubmit(onSubmit)}>
                     <Grid container spacing={2}>
-                        <Grid size={12}>
+                        <Grid size={{xs: 12, md: 6}}>
                             <Controller
                                 name="name"
                                 control={control}
@@ -107,7 +120,7 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
                                 )}
                             />
                         </Grid>
-                        <Grid size={12}>
+                        <Grid size={{xs: 12, md: 6}}>
                             <Controller
                                 name="price"
                                 control={control}
@@ -119,15 +132,51 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
                                         type="number"
                                         error={!!errors.price}
                                         helperText={errors.price?.message}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            field.onChange(value === "" ? "" : Number(value));
-                                        }}
                                     />
                                 )}
                             />
                         </Grid>
-                        <Grid size={12}>
+                        <Grid size={{xs: 12, sm: 6}}>
+                            <Controller
+                                name="categoryId"
+                                control={control}
+                                render={({field}) => (
+                                    <FormControl fullWidth>
+                                        <StyledTextField
+                                            {...field}
+                                            select
+                                            label="Category"
+                                            disabled={fetchingCategory}
+                                            SelectProps={{
+                                                IconComponent: () => null,
+                                                endAdornment: (
+                                                    <InputAdornment position="end">
+                                                        <Icon
+                                                            src={ArrowDownIconSvg}
+                                                            alt={"Dropdown Arrow"}
+                                                            sx={{width: 15, height: 15}}
+                                                        />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                            error={Boolean(errors.categoryId)}
+                                            helperText={errors.categoryId?.message}
+                                        >
+                                            <MenuItem value={""} disabled>
+                                                Select Category
+                                            </MenuItem>
+                                            {memoizedCategories.map((category) => (
+                                                <MenuItem key={category.id} value={category.id}
+                                                          sx={{textTransform: "capitalize"}}>
+                                                    {category.name}
+                                                </MenuItem>
+                                            ))}
+                                        </StyledTextField>
+                                    </FormControl>
+                                )}
+                            />
+                        </Grid>
+                        <Grid size={{xs: 12, md: 6}}>
                             <Controller
                                 name="itemCode"
                                 control={control}
@@ -139,10 +188,22 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
                                         type="number"
                                         error={!!errors.itemCode}
                                         helperText={errors.itemCode?.message}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            field.onChange(value === "" ? undefined : Number(value));
-                                        }}
+                                    />
+                                )}
+                            />
+                        </Grid>
+                        <Grid size={{xs: 12, md: 6}}>
+                            <Controller
+                                name="sku"
+                                control={control}
+                                render={({field}) => (
+                                    <StyledTextField
+                                        {...field}
+                                        fullWidth
+                                        label="SKU (Optional)"
+                                        type="number"
+                                        error={!!errors.sku}
+                                        helperText={errors.sku?.message}
                                     />
                                 )}
                             />

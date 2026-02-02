@@ -21,7 +21,6 @@ import {UserRoleEnum} from "@/types/user-types.ts";
 import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import {getMenuItemsInventoryStatusChip} from "@/components/ui";
-import {relativeTime} from "@/utils/get-relative-time.ts";
 import {useNavigate} from "react-router-dom";
 
 import {DeleteOutline, EditOutlined, MoreVert, RestaurantMenuOutlined} from "@mui/icons-material";
@@ -34,7 +33,7 @@ const MenuItems = () => {
 
     const currentUser = useAppSelector(selectCurrentUser);
 
-    const {data: menuItems, isLoading, isError, error} = useGetMenuItemsQuery({});
+    const {data: menuItems, isLoading, isFetching, isError, error} = useGetMenuItemsQuery({});
 
     const [deleteMenuItem, {isLoading: isDeleting}] = useDeleteMenuItemMutation();
 
@@ -53,7 +52,7 @@ const MenuItems = () => {
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
         initialData: memoizedMenuItems,
-        searchKeys: ["name", "itemCode"],
+        searchKeys: ["name", "itemCode", "sku"],
     });
 
     const [formModalOpen, setFormModalOpen] = useState(false);
@@ -147,14 +146,13 @@ const MenuItems = () => {
                 flex: 1,
                 field: "name",
                 headerName: "Name",
-                minWidth: 150,
+                minWidth: 220,
                 renderCell: (params) => (
                     <TableStyledBox>
                         <Typography
                             variant="body2"
                             sx={{
                                 fontWeight: 400,
-                                textTransform: "capitalize",
                                 color: theme.palette.text.primary,
                                 backgroundColor: theme.palette.background.paper,
                                 padding: "4px 8px",
@@ -162,19 +160,6 @@ const MenuItems = () => {
                             }}
                         >
                             {params.value}
-                        </Typography>
-                    </TableStyledBox>
-                ),
-            },
-            {
-                flex: 1,
-                field: "itemCode",
-                headerName: "SKU",
-                minWidth: 150,
-                renderCell: (params) => (
-                    <TableStyledBox>
-                        <Typography variant="body2" className="capitalize">
-                            {params?.value}
                         </Typography>
                     </TableStyledBox>
                 ),
@@ -215,21 +200,6 @@ const MenuItems = () => {
             },
             {
                 flex: 1,
-                field: "inventoryQuantity",
-                headerName: "Quantity",
-                minWidth: 120,
-                align: "left",
-                headerAlign: "left",
-                renderCell: (params) => (
-                    <TableStyledBox>
-                        <Typography variant="body2">
-                            {params.value ?? ""}
-                        </Typography>
-                    </TableStyledBox>
-                ),
-            },
-            {
-                flex: 1,
                 field: "inventoryMinStockLevel",
                 headerName: "Minimum Stock",
                 minWidth: 150,
@@ -245,15 +215,43 @@ const MenuItems = () => {
             },
             {
                 flex: 1,
-                field: "inventoryLastCountDate",
-                headerName: "Last Count Date",
-                minWidth: 150,
+                field: "inventoryQuantity",
+                headerName: "Quantity",
+                minWidth: 120,
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
                         <Typography variant="body2">
-                            {params?.value ? relativeTime(new Date(params?.value)) : ""}
+                            {params.value ?? ""}
+                        </Typography>
+                    </TableStyledBox>
+                ),
+            },
+            {
+                flex: 1,
+                field: "itemCode",
+                headerName: "SKU",
+                minWidth: 150,
+                renderCell: (params) => (
+                    <TableStyledBox>
+                        <Typography variant="body2" className="capitalize">
+                            {params?.value}
+                        </Typography>
+                    </TableStyledBox>
+                ),
+            },
+            {
+                flex: 1,
+                field: "sku",
+                headerName: "SKU",
+                minWidth: 220,
+                align: "left",
+                headerAlign: "left",
+                renderCell: (params) => (
+                    <TableStyledBox>
+                        <Typography variant="body2">
+                            {params?.value}
                         </Typography>
                     </TableStyledBox>
                 ),
@@ -369,12 +367,12 @@ const MenuItems = () => {
                 handleSearch={handleSearch}
                 onExportCsv={handleExportCsv}
                 onExportXlsx={handleExportXlsx}
-                placeholder={`Search ${t("menuItem")} by name or item code`}
+                placeholder={`Search ${t("menuItem")} by name, sku or item code`}
             />
 
             <Grid container spacing={2} sx={{mt: 2}}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching}/>
                 </Grid>
             </Grid>
 
