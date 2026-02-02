@@ -162,6 +162,13 @@
       "when": 1769990639899,
       "tag": "0022_fresh_mongoose",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1770006405638,
+      "tag": "0023_condemned_human_robot",
+      "breakpoints": true
     }
   ]
 }

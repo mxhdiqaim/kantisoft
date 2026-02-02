@@ -1,5 +1,4 @@
 import {
-    boolean,
     numeric,
     pgTable,
     text,
@@ -27,7 +26,7 @@ export const menuItems = pgTable(
 
         price: numeric("price", { precision: 10, scale: 2 }).notNull(),
         storeId: uuid("storeId").references(() => stores.id),
-        isAvailable: boolean("isAvailable").notNull().default(true),
+        // isAvailable: boolean("isAvailable").notNull().default(true),
         createdAt: timestamp("createdAt").defaultNow().notNull(),
         lastModified: timestamp("lastModified")
             .defaultNow()
