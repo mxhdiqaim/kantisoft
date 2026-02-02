@@ -53,7 +53,7 @@ export const getAllInventory = async (req: CustomRequest, res: Response) => {
             where: eq(inventory.storeId, finalStoreId),
             orderBy: [desc(inventory.lastModified)],
             with: {
-                menuItem: { columns: { name: true, itemCode: true } },
+                menuItem: { columns: { name: true, itemCode: true, sku: true } },
                 store: { columns: { name: true } },
             },
         });
