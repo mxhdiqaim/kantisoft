@@ -1,13 +1,13 @@
-import { and, desc, eq, inArray, ne } from "drizzle-orm";
-import { Response } from "express";
+import {and, desc, eq, inArray, ne} from "drizzle-orm";
+import {Response} from "express";
 import db from "../db";
-import { categories } from "../schema/categories-schema";
-import { handleError2 } from "../service/error-handling";
-import { CustomRequest } from "../types/express";
-import { StatusCodes } from "http-status-codes";
-import { UserRoleEnum } from "../types/enums";
-import { determineFinalStoreId } from "../utils/store-permission-utils";
-import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
+import {categories} from "../schema/categories-schema";
+import {handleError2} from "../service/error-handling";
+import {CustomRequest} from "../types/express";
+import {StatusCodes} from "http-status-codes";
+import {UserRoleEnum} from "../types/enums";
+import {determineFinalStoreId} from "../utils/store-permission-utils";
+import {validateStoreAndExtractDates} from "../utils/validate-store-dates";
 
 /**
  * @desc    Get all categories for the active store(s)
@@ -38,7 +38,7 @@ export const getAllCategories = async (req: CustomRequest, res: Response) => {
 
 /**
  * @desc    Create a new product category
- * @route   POST /api/v1/categories
+ * @route   POST /api/v1/categories/create
  */
 export const createCategory = async (req: CustomRequest, res: Response) => {
     try {

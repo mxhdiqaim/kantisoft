@@ -1,9 +1,9 @@
-import {NextFunction, Response} from "express";
-import {handleError2} from "../service/error-handling";
-import {CustomRequest} from "../types/express";
-import {StatusCodes} from "http-status-codes";
-import {determineFinalStoreId} from "../utils/store-permission-utils";
-import {UserRoleEnum} from "../types/enums";
+import { NextFunction, Response } from "express";
+import { handleError2 } from "../service/error-handling";
+import { CustomRequest } from "../types/express";
+import { StatusCodes } from "http-status-codes";
+import { determineFinalStoreId } from "../utils/store-permission-utils";
+import { UserRoleEnum } from "../types/enums";
 
 /**
  * Middleware to ensure that Admins and Users must be associated to a store.
@@ -26,15 +26,13 @@ export const validateStoreAccess = async (
             );
         }
 
-        const targetStoreId =
-            (req.query.targetStoreId as string) ||
-            (req.body.targetStoreId as string);
+        const { targetStoreId } = req.query;
 
         const finalStoreId = await determineFinalStoreId(
             res,
             userRole as UserRoleEnum,
             storeId,
-            targetStoreId,
+            targetStoreId as string,
         );
 
         if (!finalStoreId) return; // determineFinalStoreId already sent the response

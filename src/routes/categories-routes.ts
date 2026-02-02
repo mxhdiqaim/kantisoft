@@ -14,13 +14,13 @@ router.post(
 );
 
 router.patch(
-    "/",
+    "/:id",
     isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
     controller.updateCategory,
 );
 
 router.delete(
-    "/",
+    "/:id",
     isAuthorized([UserRoleEnum.MANAGER, UserRoleEnum.ADMIN]),
     controller.deleteCategory,
 );
