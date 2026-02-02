@@ -45,26 +45,22 @@ export const adjustStockSchema = yup.object({
     notes: yup.string().optional(),
 })
 
-// Schema for a full inventory object, matching the API response
-export const inventorySchema = extendBaseSchema({
-    menuItemId: yup.string().uuid().required(),
-    storeId: yup.string().uuid().required(),
-    quantity: yup.number().integer().min(0).required(),
-    minStockLevel: yup.number().integer().min(0).optional(),
-    status: yup.string().oneOf(INVENTORY_STATUS).default("inStock").required(),
-    lastCountDate: yup.date().optional().nullable(),
-    menuItem: yup
-        .object({
-            name: yup.string().required(),
-            itemCode: yup.string().required(),
-        })
-        .optional(),
-    store: yup
-        .object({
-            name: yup.string().required(),
-        })
-        .optional(),
-});
+export type InventoryType = {
+    menuItemId: string;
+    storeId: string;
+    quantity: number;
+    minStockLevel?: number;
+    status: (typeof INVENTORY_STATUS)[number];
+    lastCountDate?: string | null;
+    menuItem?: {
+        name: string;
+        itemCode: string;
+        sku?: string;
+    };
+    store?: {
+        name: string;
+    };
+};
 
 export const inventoryTransactionSchema = extendBaseSchema({
     menuItemId: yup.string().uuid().required("MenuItem not selected"),
@@ -108,7 +104,6 @@ export const inventoryTransactionResponseSchema = yup.object({
 })
 
 export type CreateInventoryType = yup.InferType<typeof createInventorySchema>;
-export type InventoryType = yup.InferType<typeof inventorySchema>;
 export type AdjustStockType = yup.InferType<typeof adjustStockSchema>;
 export type AdjustStockResponseType = Omit<InventoryType, "menuItem" | "store">;
 export type InventoryTransactionType = yup.InferType<typeof inventoryTransactionSchema>;

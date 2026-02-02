@@ -27,9 +27,13 @@ const SingleInventoryTransaction = () => {
 
     const {data: inventoryData, isLoading: isLoadingInventory} = useGetAllInventoryQuery();
 
+    console.log("Inventory Data:", inventoryData);
+
     const inventoryItem = useMemo(() => {
         return inventoryData?.find(item => item.menuItemId === menuItemId);
     }, [inventoryData, menuItemId]);
+
+    console.log("Inventory Item:", inventoryItem);
 
     const columns: GridColDef[] = useMemo(() => [
         {
@@ -152,7 +156,7 @@ const SingleInventoryTransaction = () => {
                         <CircularProgress size={25}/>
                     ) : (
                         <Typography variant="subtitle1" color="text.secondary" sx={{mb: 3}}>
-                            {inventoryItem?.menuItem.name} (SKU: {inventoryItem?.menuItem.itemCode})
+                            {inventoryItem?.menuItem.name} (SKU: {inventoryItem?.menuItem.sku})
                         </Typography>
                     )}
                 </Box>
