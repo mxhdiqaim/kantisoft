@@ -4,7 +4,7 @@ import {Box, FormControl, Grid} from "@mui/material";
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import {Controller, useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {useCreateCategoryMutation} from "@/store/slice";
+import {useCreateCategoryMutation, useUpdateCategoryMutation} from "@/store/slice";
 import useNotifier from "@/hooks/useNotifier.ts";
 import {getApiError} from "@/helpers/get-api-error.ts";
 import CustomButton from "@/components/ui/button.tsx";
@@ -14,12 +14,12 @@ import {type CategoryType, createCategorySchema, type CreateCategoryType} from "
 interface Props {
     open: boolean;
     onClose: () => void;
-    data?: CategoryType | null;
+    categoryData?: CategoryType | null;
 }
 
-const CategoryFormModal: FC<Props> = ({open, onClose, data}) => {
+const CategoryFormModal: FC<Props> = ({open, onClose, categoryData}) => {
     const notify = useNotifier();
-    const isEditMode = !!data;
+    const isEditMode = !!categoryData;
 
     const [createCategory, {
         isLoading: isCreating,
@@ -27,11 +27,11 @@ const CategoryFormModal: FC<Props> = ({open, onClose, data}) => {
         reset: resetCreateMutation
     }] = useCreateCategoryMutation();
 
-    // const [updateRawMaterial, {
-    //     isLoading: isUpdating,
-    //     isSuccess: isUpdateSuccess,
-    //     reset: resetUpdateMutation
-    // }] = useUpdateRawMaterialMutation();
+    const [updateCategory, {
+        isLoading: isUpdating,
+        isSuccess: isUpdateSuccess,
+        reset: resetUpdateMutation
+    }] = useUpdateCategoryMutation();
 
     const {
         control,
@@ -49,20 +49,20 @@ const CategoryFormModal: FC<Props> = ({open, onClose, data}) => {
     const handleClose = () => {
         onClose();
         resetCreateMutation();
-        // resetUpdateMutation();
+        resetUpdateMutation();
     };
 
     useEffect(() => {
-        if (isCreateSuccess /* || isUpdateSuccess */) {
+        if (isCreateSuccess || isUpdateSuccess) {
             handleClose();
         }
-    }, [isCreateSuccess, /* isUpdateSuccess */]);
+    }, [isCreateSuccess, isUpdateSuccess]);
 
     useEffect(() => {
-        if (data && open) {
+        if (categoryData && open) {
             resetForm({
-                name: data.name,
-                description: data.description,
+                name: categoryData.name,
+                description: categoryData.description,
             });
         } else if (!open) {
             resetForm({
@@ -70,18 +70,18 @@ const CategoryFormModal: FC<Props> = ({open, onClose, data}) => {
                 description: "",
             });
         }
-    }, [data, open, resetForm]);
+    }, [categoryData, open, resetForm]);
 
     const onSubmit = async (data: CreateCategoryType) => {
 
         try {
-            // if (isEditMode && data) {
-            //     await updateRawMaterial({id: data.id, ...data}).unwrap();
-            //     notify("Category Updated Successfully!", "success");
-            // } else {
-            await createCategory(data).unwrap();
-            notify("Category Added Successfully!", "success");
-            // }
+            if (isEditMode && categoryData) {
+                await updateCategory({id: categoryData.id, ...data}).unwrap();
+                notify("Category Updated Successfully!", "success");
+            } else {
+                await createCategory(data).unwrap();
+                notify("Category Added Successfully!", "success");
+            }
         } catch (error) {
             const defaultMessage = `Failed to ${isEditMode ? 'update' : 'create'} Category. Please try again.`;
             const apiError = getApiError(error, defaultMessage);
@@ -89,7 +89,7 @@ const CategoryFormModal: FC<Props> = ({open, onClose, data}) => {
         }
     };
 
-    const isLoading = isCreating /* || isUpdating */;
+    const isLoading = isCreating || isUpdating;
 
     return (
         <CustomModal

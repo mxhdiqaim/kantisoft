@@ -177,6 +177,7 @@ export const apiSlice = createApi({
         "ProductionWastageSummary",
         "FinishedGoodsProfitMargin",
         "InventoryHealthValuation",
+        "Category",
         "Categories"
     ],
     endpoints: (builder) => ({
@@ -802,7 +803,10 @@ export const apiSlice = createApi({
         getAllCategories: builder.query<CategoryType[], void>({
             query: () => "/categories",
 
-            providesTags: ["Categories"],
+            providesTags: (result) =>
+                result
+                    ? [...result.map(({id}) => ({type: 'Category' as const, id})), {type: 'Category', id: 'LIST'}]
+                    : [{type: 'Category', id: 'LIST'}],
         }),
 
         createCategory: builder.mutation<void, CreateCategoryType>({
@@ -811,7 +815,24 @@ export const apiSlice = createApi({
                 method: "POST",
                 body,
             }),
-            invalidatesTags: ["Categories"],
+            invalidatesTags: [{type: 'Category', id: 'LIST'}],
+        }),
+
+        updateCategory: builder.mutation<void, Partial<CategoryType> & Pick<CategoryType, "id">>({
+            query: ({id, ...patch}) => ({
+                url: `/categories/${id}`,
+                method: "PATCH",
+                body: patch,
+            }),
+            invalidatesTags: (_result, _error, {id}) => [{type: "Category", id}, {type: 'Category', id: 'LIST'}],
+        }),
+
+        deleteCategory: builder.mutation<{ message: string }, string>({
+            query: (id) => ({
+                url: `/categories/${id}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: (_result, _error, id) => [{type: "Category", id}, {type: 'Category', id: 'LIST'}],
         })
 
     }),
@@ -908,5 +929,7 @@ export const {
     // Category Hooks
     useGetAllCategoriesQuery,
     useCreateCategoryMutation,
+    useUpdateCategoryMutation,
+    useDeleteCategoryMutation
 
 } = apiSlice;
