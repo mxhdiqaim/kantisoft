@@ -62,6 +62,7 @@ import type {
     ProductionType,
     ProductionWastageSummaryType
 } from "@/types/production-types.ts";
+import type {CategoryType, CreateCategoryType} from "@/types/categories-types.ts";
 
 const baseUrl = getEnvVariable("VITE_APP_API_URL");
 
@@ -175,7 +176,8 @@ export const apiSlice = createApi({
         "ProductionSummary",
         "ProductionWastageSummary",
         "FinishedGoodsProfitMargin",
-        "InventoryHealthValuation"
+        "InventoryHealthValuation",
+        "Categories"
     ],
     endpoints: (builder) => ({
         // -------------------------
@@ -794,6 +796,24 @@ export const apiSlice = createApi({
             providesTags: ["ProductionSummary"],
         }),
 
+        // -------------------------
+        // Category Endpoints
+        // -------------------------
+        getAllCategories: builder.query<CategoryType[], void>({
+            query: () => "/categories",
+
+            providesTags: ["Categories"],
+        }),
+
+        createCategory: builder.mutation<void, CreateCategoryType>({
+            query: (body) => ({
+                url: "/categories/create",
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: ["Categories"],
+        })
+
     }),
 });
 
@@ -884,5 +904,9 @@ export const {
     useRunProductionMutation,
     useRecordWastageMutation,
     useGetProductionSummaryQuery,
+
+    // Category Hooks
+    useGetAllCategoriesQuery,
+    useCreateCategoryMutation,
 
 } = apiSlice;

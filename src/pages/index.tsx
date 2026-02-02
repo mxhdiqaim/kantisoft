@@ -38,14 +38,17 @@ export {default as UnitOfMeasurementsScreen} from "./raw-materials/unit-of-measu
 export {default as ProductionScreen} from "./production"
 
 // Records
-export {default as ProfitabilityWastageScreen} from "./records/profitability-wastage.tsx"
+// export {default as ProfitabilityWastageScreen} from "./records/profitability-wastage.tsx"
 
 // Administrator
 export {default as TrashBinScreen} from "./administrator/trash-bin";
-export {default as AddUserScreen} from "@/pages/administrator/users/add-user";
+export {default as AddUserScreen} from "./administrator/users/add-user";
 export {default as UsersScreen} from "./administrator/users";
-export {default as EditUserScreen} from "@/pages/administrator/users/edit-user";
-export {default as ViewUserScreen} from "@/pages/administrator/users/view-user";
+export {default as EditUserScreen} from "./administrator/users/edit-user";
+export {default as ViewUserScreen} from "./administrator/users/view-user";
 export {default as StoreScreen} from "./administrator/stores";
-export {default as StoreFormScreen} from "@/pages/administrator/stores/store-form";
-export {default as ViewStoreScreen} from "@/pages/administrator/stores/view-store";
+export {default as StoreFormScreen} from "./administrator/stores/store-form";
+export {default as ViewStoreScreen} from "./administrator/stores/view-store";
+
+// Categories
+export {default as CategoriesScreen} from "./categories";

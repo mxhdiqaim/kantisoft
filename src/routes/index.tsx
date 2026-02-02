@@ -3,6 +3,7 @@ import {
     ActivityLogScreen,
     AddUserScreen,
     BillOfMaterialsScreen,
+    CategoriesScreen,
     ChangePasswordScreen,
     DashboardScreen,
     EditUserScreen,
@@ -151,6 +152,12 @@ export const appRoutes: AppRouteType[] = [
                 element: InventoryTransactionsScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
+            {
+                to: "categories",
+                title: "Categories",
+                element: CategoriesScreen,
+                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
+            }
         ]
     },
 
@@ -215,21 +222,8 @@ export const appRoutes: AppRouteType[] = [
         to: "/production",
         title: "Production",
         icon: <KitchenOutlined/>,
+        element: ProductionScreen,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
-        children: [
-            {
-                to: "list",
-                title: "List",
-                element: ProductionScreen,
-                roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
-            },
-            // {
-            //     to: "wastage",
-            //     title: "Wastage Entry",
-            //     element: RecordWastageScreen, // Dedicated entry screen
-            //     roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
-            // },
-        ]
     },
 
     // ---------------------------------
@@ -237,7 +231,7 @@ export const appRoutes: AppRouteType[] = [
     // ---------------------------------
     {
         to: "/admin",
-        title: "Administration",
+        title: "Administrator",
         icon: <GroupOutlinedIcon/>,
         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
         children: [
