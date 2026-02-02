@@ -206,7 +206,7 @@ export const createMenuItem = async (req: CustomRequest, res: Response) => {
         if (!storeId) {
             return handleError2(
                 res,
-                "Store ID not found for the authenticated user.",
+                "Store not found for the authenticated user.",
                 StatusCodes.FORBIDDEN,
             );
         }

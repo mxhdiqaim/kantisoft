@@ -10,6 +10,7 @@ import * as rawMaterialInventory from "../schema/raw-materials-schema/raw-materi
 import * as billOfMaterials from "../schema/bill-of-materials-schema";
 import * as unitOfMeasurement from "../schema/unit-of-measurement-schema";
 import * as productions from "../schema/production-schema";
+import * as categories from "../schema/categories-schema";
 
 import * as menuItemsRelations from "../schema/relations/menu-items-relation";
 import * as ordersRelations from "../schema/relations/orders-relation";
@@ -20,6 +21,7 @@ import * as unitOfMeasurementRelations from "../schema/relations/unit-of-measure
 import * as rawMaterialsRelations from "../schema/relations/raw-material-relation";
 import * as rawMaterialInventoryRelations from "../schema/relations/raw-material-inventory-relation";
 import * as billOfMaterialsRelations from "../schema/relations/bill-of-material-relation";
+import * as categoriesRelations from "../schema/relations/categories-relation";
 
 const relations = {
     ...menuItemsRelations,
@@ -31,6 +33,7 @@ const relations = {
     ...rawMaterialsRelations,
     ...rawMaterialInventoryRelations,
     ...billOfMaterialsRelations,
+    ...categoriesRelations,
 };
 
 const schema = {
@@ -46,6 +49,7 @@ const schema = {
     ...billOfMaterials,
     ...unitOfMeasurement,
     ...productions,
+    ...categories,
 
     ...relations,
 };

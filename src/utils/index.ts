@@ -16,3 +16,29 @@ export const getEnvVariable = (key: string): string => {
 
     return value;
 };
+
+/**
+ * Generates a clean, readable SKU.
+ * Example: "Drink", "Coca-Cola 500 ml" -> "DRK-COCA-500ML"
+ */
+export const generateSKU = (categoryName: string, itemName: string): string => {
+    // Get the first 3 letters of the category (e.g. "Drinks" -> "DRK")
+    const catPrefix =
+        categoryName
+            .replace(/[aeiou]/gi, "") // Remove vowels for better abbreviation
+            .substring(0, 3)
+            .toUpperCase() || "GEN";
+
+    // Get the first 2 words of the item name
+    const itemParts = itemName
+        .split(" ")
+        .filter((word) => word.length > 1)
+        .map((word) => word.substring(0, 4).toUpperCase());
+
+    const itemPrefix = itemParts.slice(0, 2).join("-");
+
+    // add a small random suffix to ensure uniqueness before DB check
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+
+    return `${catPrefix}-${itemPrefix}-${randomSuffix}`;
+};

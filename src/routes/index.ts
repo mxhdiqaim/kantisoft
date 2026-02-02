@@ -12,6 +12,7 @@ import unitOfMeasurement from "./unit-of-measurement-routes";
 import rawMaterials from "./raw-material-routes";
 import billOfMaterial from "./bill-of-material-routes";
 import production from "./production-routes";
+import categories from "./categories-routes";
 
 import { protectedRoute } from "../config/jwt-config";
 import { checkUserHasStore } from "../middlewares/check-user-has-store";
@@ -77,5 +78,6 @@ router.use("/menu-items", checkUserHasStore, menuItems);
 router.use("/orders", checkUserHasStore, orders);
 router.use("/dashboard", checkUserHasStore, dashboard);
 router.use("/unit-of-measurement", checkUserHasStore, unitOfMeasurement);
+router.use("/categories", checkUserHasStore, categories);
 
 export default router;
