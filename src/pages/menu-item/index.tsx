@@ -1,4 +1,4 @@
-import {type MouseEvent, useMemo, useState} from "react";
+import {type MouseEvent, useCallback, useMemo, useState} from "react";
 import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
 import {useDeleteMenuItemMutation, useGetMenuItemsQuery} from "@/store/slice";
 import useNotifier from "@/hooks/useNotifier";
@@ -21,7 +21,7 @@ import {UserRoleEnum} from "@/types/user-types.ts";
 import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import {getMenuItemsInventoryStatusChip} from "@/components/ui";
-import {useNavigate} from "react-router-dom";
+import BillOfMaterialsDrawer from "@/components/menu-items/bom-drawer.tsx";
 
 import {DeleteOutline, EditOutlined, MoreVert, RestaurantMenuOutlined} from "@mui/icons-material";
 
@@ -29,7 +29,6 @@ const MenuItems = () => {
     const theme = useTheme();
     const notify = useNotifier();
     const {t} = useTranslation();
-    const navigate = useNavigate();
 
     const currentUser = useAppSelector(selectCurrentUser);
 
@@ -58,7 +57,8 @@ const MenuItems = () => {
     const [formModalOpen, setFormModalOpen] = useState(false);
     const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItemType | null>(null);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+    const [selectedRow, setSelectedRow] = useState<MenuItemType | null>(null);
+    const [openRecipeDrawer, setOpenRecipeDrawer] = useState(false);
 
     const totalMenuItems = useMemo(() => menuItems?.length || 0, [menuItems]);
 
@@ -71,6 +71,10 @@ const MenuItems = () => {
         setSelectedMenuItem(null);
         setFormModalOpen(false);
     };
+
+    const handleStockInDrawerClose = useCallback(() => {
+        setOpenRecipeDrawer(false);
+    }, []);
 
     // Define custom formatters for MenuItemsTable
     const menuItemsFieldFormatters = useMemo(
@@ -118,14 +122,14 @@ const MenuItems = () => {
         exportToXlsx(dataToExport, filename, "Sales History", columns); // Uses generic utility
     };
 
-    const handleMenuClick = (event: MouseEvent<HTMLElement>, rowId: string) => {
+    const handleMenuClick = (event: MouseEvent<HTMLElement>, row: MenuItemType) => {
         setAnchorEl(event.currentTarget);
-        setSelectedRowId(rowId);
+        setSelectedRow(row);
     };
 
     const handleMenuClose = () => {
         setAnchorEl(null);
-        setSelectedRowId(null);
+        setSelectedRow(null);
     };
 
     const handleDelete = async (rowId: string) => {
@@ -312,14 +316,14 @@ const MenuItems = () => {
                                     Edit
                                 </TableStyledMenuItem>
                                 <TableStyledMenuItem
-                                    onClick={() => navigate(`/inventory/menu-items/${params.row.id}/recipe`)}>
+                                    onClick={() => setOpenRecipeDrawer(true)}>
                                     <RestaurantMenuOutlined sx={{mr: 1}}/>
-                                    Manage Recipe
+                                    Recipe
                                 </TableStyledMenuItem>
                                 <TableStyledMenuItem
                                     onClick={() => handleDelete(params.row.id)}
                                     sx={{color: "error.main"}}
-                                    disabled={isDeleting && selectedRowId === params.row.id}
+                                    disabled={isDeleting && selectedRow.id === params.row.id}
                                 >
                                     <DeleteOutline sx={{mr: 1}}/>
                                     Delete
@@ -330,7 +334,7 @@ const MenuItems = () => {
                 },
             },
         ],
-        [theme, anchorEl, selectedRowId, currentUser, handleOpenFormModal],
+        [theme, anchorEl, selectedRow, currentUser, handleOpenFormModal],
     );
 
     if (isError) {
@@ -377,6 +381,15 @@ const MenuItems = () => {
             </Grid>
 
             <MenuItemFormModal open={formModalOpen} onClose={handleCloseFormModal} menuItemToEdit={selectedMenuItem}/>
+
+            {selectedRow?.id && (
+                <BillOfMaterialsDrawer
+                    open={openRecipeDrawer}
+                    onOpen={() => setOpenRecipeDrawer(true)}
+                    onClose={handleStockInDrawerClose}
+                    menuItemId={selectedRow.id}
+                />
+            )}
         </Box>
     );
 };

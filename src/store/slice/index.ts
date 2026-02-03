@@ -487,8 +487,11 @@ export const apiSlice = createApi({
             query: () => "/inventory",
             providesTags: (result) =>
                 result
-                    ? [...result.map(({id}) => ({type: "Inventory" as const, id})), {type: "Inventory", id: "LIST"}]
-                    : [{type: "Inventory", id: "LIST"}],
+                    ? [...result.map(({menuItemId}) => ({type: "Inventory" as const, menuItemId})), {
+                        type: "Inventory",
+                        menuItemId: "LIST"
+                    }]
+                    : [{type: "Inventory", menuItemId: "LIST"}],
         }),
 
         getTransactionsByMenuItem: builder.query<InventoryTransactionType[], {

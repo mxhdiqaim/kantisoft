@@ -2,7 +2,6 @@ import {type ComponentType, type ReactNode} from "react";
 import {
     ActivityLogScreen,
     AddUserScreen,
-    BillOfMaterialsScreen,
     CategoriesScreen,
     ChangePasswordScreen,
     DashboardScreen,
@@ -121,15 +120,6 @@ export const appRoutes: AppRouteType[] = [
                 title: "menuItems",
                 element: MenuItemScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
-                children: [
-                    {
-                        to: ":id/recipe", // Define BOM here
-                        title: "Manage Recipe",
-                        element: BillOfMaterialsScreen,
-                        hidden: true,
-                        roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-                    }
-                ]
             },
             {
                 to: "goods",

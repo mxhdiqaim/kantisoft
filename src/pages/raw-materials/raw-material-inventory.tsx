@@ -15,7 +15,7 @@ import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-men
 import {formatRelativeDateTime} from "@/utils/get-relative-time.ts";
 import {camelCaseToTitleCase, formatNumber} from "@/utils";
 import {getInventoryStatusChipColor} from "@/components/ui";
-import type {MultipleRawMaterialInventoryResponseType} from "@/types/raw-material-types.ts";
+import type {GetRawMaterialInventoryStockType,} from "@/types/raw-material-types.ts";
 import InventoryDetailsDrawer from "@/components/raw-material/inventory-details-drawer.tsx";
 import RawMaterialStockInDrawer from "@/components/raw-material/raw-material-stock-in-drawer.tsx";
 
@@ -28,14 +28,14 @@ const RawMaterialInventory = () => {
     const [formModalOpen, setFormModalOpen] = useState(false);
     const [openInventoryDetailDrawer, setOpenInventoryDetailDrawer] = useState(false);
     const [openStockInDrawer, setOpenStockInDrawer] = useState(false);
-    const [selectedRow, setSelectedRow] = useState<MultipleRawMaterialInventoryResponseType | null>(null);
+    const [selectedRow, setSelectedRow] = useState<GetRawMaterialInventoryStockType | null>(null);
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
         initialData: memoizedInventoryData,
         searchKeys: ["rawMaterialName", "status", "latestUnitPrice", "storeName"],
     });
 
-    const handleMenuClick = (_event: MouseEvent<HTMLElement>, row: MultipleRawMaterialInventoryResponseType) => {
+    const handleMenuClick = (_event: MouseEvent<HTMLElement>, row: GetRawMaterialInventoryStockType) => {
         setSelectedRow(row);
     };
 
@@ -47,18 +47,6 @@ const RawMaterialInventory = () => {
     const handleOpenFormModal = () => {
         setFormModalOpen(true);
     };
-
-    const handleInventoryDrawerOpen = useCallback(() => {
-        setOpenInventoryDetailDrawer(true);
-    }, []);
-
-    const handleInventoryDrawerClose = useCallback(() => {
-        setOpenInventoryDetailDrawer(false);
-    }, []);
-
-    const handleStockInDrawerOpen = useCallback(() => {
-        setOpenStockInDrawer(true);
-    }, []);
 
     const handleStockInDrawerClose = useCallback(() => {
         setOpenStockInDrawer(false);
@@ -197,7 +185,7 @@ const RawMaterialInventory = () => {
                         }
                     >
                         <TableStyledMenuItem
-                            onClick={handleInventoryDrawerOpen}
+                            onClick={() => setOpenInventoryDetailDrawer(true)}
                             sx={{borderRadius: theme.borderRadius.small, mx: 1}}
                         >
                             View
@@ -209,7 +197,7 @@ const RawMaterialInventory = () => {
                             Edit Min Stock
                         </TableStyledMenuItem>
                         <TableStyledMenuItem
-                            onClick={handleStockInDrawerOpen}
+                            onClick={() => setOpenStockInDrawer(true)}
                             sx={{borderRadius: theme.borderRadius.small, mx: 1}}
                         >
                             Stock In
@@ -266,7 +254,7 @@ const RawMaterialInventory = () => {
                 <InventoryDetailsDrawer
                     open={openInventoryDetailDrawer}
                     onOpen={() => setOpenInventoryDetailDrawer(true)}
-                    onClose={handleInventoryDrawerClose}
+                    onClose={() => setOpenInventoryDetailDrawer(false)}
                     rawMaterialId={selectedRow?.rawMaterialId as string}
                 />
             )}

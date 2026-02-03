@@ -53,7 +53,6 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
     const {filteredUnits, selectedUnitSymbol} = useUnitFilter({
         control,
         allUnits: memoizedMeasurement,
-        // In the drawer, the material is already known from props
         selectedMaterialFamily: rawMaterialInventory?.unitOfMeasurement?.unitOfMeasurementFamily,
     });
 
@@ -70,7 +69,7 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
         }
     };
 
-    // Auto-select unit if only one exists or to provide a default
+    // Auto-select a unit if only one exists or to provide a default
     useEffect(() => {
         if (filteredUnits.length > 0) {
             setValue("unitOfMeasurementId", filteredUnits[0].id);
