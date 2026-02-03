@@ -312,7 +312,7 @@ const MenuItems = () => {
                                     Edit
                                 </TableStyledMenuItem>
                                 <TableStyledMenuItem
-                                    onClick={() => navigate(`/menu-items/list/${params.row.id}/recipe`)}>
+                                    onClick={() => navigate(`/inventory/menu-items/${params.row.id}/recipe`)}>
                                     <RestaurantMenuOutlined sx={{mr: 1}}/>
                                     Manage Recipe
                                 </TableStyledMenuItem>
@@ -343,7 +343,7 @@ const MenuItems = () => {
         <Box>
             <Grid container spacing={2} mb={2}>
                 <Grid size={{xs: 12, md: 6}}>
-                    <Typography variant="h4">{t("menuItem")}</Typography>
+                    <Typography variant="h4">{t("menuItems")}</Typography>
                     <Typography variant="subtitle1">
                         Total {t("menuItem")}: {totalMenuItems}
                     </Typography>

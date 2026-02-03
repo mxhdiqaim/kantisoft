@@ -53,7 +53,7 @@ const InventoryManagement = () => {
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
         initialData: memoizedInventories,
-        searchKeys: ["menuItem.name", "menuItem.itemCode"],
+        searchKeys: ["status", "menuItem"],
     });
 
     const [formModalOpen, setFormModalOpen] = useState(false);
@@ -140,7 +140,7 @@ const InventoryManagement = () => {
             renderCell: (params) => (
                 <TableStyledBox
                     sx={{cursor: 'pointer', ":hover": {textDecoration: "underline"}}}
-                    onClick={() => navigate(`/menu-items/inventory/${params.row.menuItemId}/transactions`)}
+                    onClick={() => navigate(`/inventory/goods/${params.row.menuItemId}/transactions`)}
                 >
                     <Typography variant="body2">{params.value.name}</Typography>
                 </TableStyledBox>
@@ -303,7 +303,7 @@ const InventoryManagement = () => {
         <>
             <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
                 <Typography variant="h4" component="h1">
-                    {t('inventory')}
+                    Goods
                 </Typography>
                 {canInteract && (
                     <CustomButton
