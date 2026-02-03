@@ -62,3 +62,13 @@ export interface ActivityLogResponse {
 }
 
 export type DrawerAnchor = "left" | "bottom" | "right" | "top";
+
+export const localSyncStatusEnum = {
+    SYNCED: "synced",
+    PENDING: "pending",
+    ERROR: "error"
+} as const;
+
+export const LOCAL_SYNC_STATUS_VALUES = Object.values(localSyncStatusEnum)
+
+export type LocalSyncStatus = (typeof LOCAL_SYNC_STATUS_VALUES)[number];

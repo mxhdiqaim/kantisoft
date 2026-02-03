@@ -6,7 +6,7 @@ import type {
     TopSellsItemType,
     TopSellsParamType,
 } from "@/types/dashboard-types.ts";
-import type {AddMenuItemType, MenuItemType} from "@/types/menu-item-type.ts";
+import type {CreateMenuItemType, MenuItemType} from "@/types/menu-item-type.ts";
 import type {
     CreateOrderType,
     OrdersByPeriodResponse,
@@ -350,7 +350,7 @@ export const apiSlice = createApi({
                     : [{type: "MenuItem", id: "LIST"}],
         }),
 
-        createMenuItem: builder.mutation<MenuItemType, AddMenuItemType>({
+        createMenuItem: builder.mutation<MenuItemType, CreateMenuItemType>({
             query: (newMenuItem) => ({
                 url: "/menu-items/create",
                 method: "POST",

@@ -1,7 +1,7 @@
-import {extendBaseSchema} from "@/types";
 import * as yup from "yup";
+import {type BaseSchema, type LocalSyncStatus} from "@/types";
 
-const coreMenuItemSchema = yup.object({
+export const createMenuItemSchema = yup.object({
     name: yup.string().required("Name is required").min(2, "Name must be at least 2 characters"),
     categoryId: yup.string().uuid().required("Category is required").typeError("Category must be selected"),
     itemCode: yup.number().optional().min(100, "Item code must be at least 100"),
@@ -11,11 +11,10 @@ const coreMenuItemSchema = yup.object({
         .typeError("Price must be a number")
         .positive("Price must be greater than 0")
         .required("Price is required"),
-    // isAvailable: yup.boolean().required().default(true),
 });
 
-export const createMenuItemSchema = coreMenuItemSchema;
 export type CreateMenuItemType = yup.InferType<typeof createMenuItemSchema>;
+export type EditMenuItemType = Partial<CreateMenuItemType>;
 
 export const MenuItemInventoryStatusEnum = {
     IN_STOCK: "inStock",
@@ -27,34 +26,26 @@ export const INVENTORY_STATUS_VALUES = Object.values(MenuItemInventoryStatusEnum
 
 export type MenuItemInventoryType = (typeof INVENTORY_STATUS_VALUES)[number];
 
-// Schema for a full menu item object, including base fields like id and timestamps
-export const menuItemSchema = extendBaseSchema({
-    name: yup.string().required("Name is required").min(2, "Name must be at least 2 characters"),
-    description: yup.string().optional(),
-    itemCode: yup.number().optional().min(100, "Item code must be at least 100"),
-    sku: yup.string().optional().typeError("SKU must be a string"),
-    price: yup
-        .number()
-        .typeError("Price must be a number")
-        .positive("Price must be greater than 0")
-        .required("Price is required"),
-    storeId: yup.string().uuid().required(),
-    store: yup.object({
-        name: yup.string().required(),
-    }),
-    inventory: yup.object({
-        quantity: yup.number().integer().min(0).required(),
-        status: yup.string().oneOf(INVENTORY_STATUS_VALUES).default(MenuItemInventoryStatusEnum.IN_STOCK).required(),
-        minStockLevel: yup.number().integer().min(0).optional(),
-        lastCountDate: yup.string().required(),
-    }).optional().nullable(),
-});
-
 // Inferred type for a full menu item object
-export type MenuItemType = yup.InferType<typeof menuItemSchema>;
-// export type MenuItemType = any;
-// Inferred type for creating a menu item, ensuring consistency
-export type AddMenuItemType = Pick<MenuItemType, "name" | "price" | "isAvailable"> & {
+export type MenuItemType = BaseSchema & {
+    name: string;
+    description?: string;
     itemCode?: number;
+    sku?: string;
+    price: number;
+    categoryId: string;
+    storeId: string;
+    store: {
+        name: string;
+    };
+    inventory?: {
+        quantity: number;
+        status: MenuItemInventoryType;
+        minStockLevel?: number;
+        lastCountDate: string;
+    }
 };
-export type EditMenuItemType = Partial<MenuItemType>;
+
+export type LocalMenuItemType = Omit<MenuItemType, "createdAt" | "lastModified"> & {
+    syncStatus: LocalSyncStatus;
+};

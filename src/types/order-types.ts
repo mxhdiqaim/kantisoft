@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {extendBaseSchema, ORDER_PERIODS} from "@/types";
 import * as yup from "yup";
-import {menuItemSchema, type MenuItemType} from "./menu-item-type";
+import {type MenuItemType} from "./menu-item-type";
 
 export const OrderStatus = {
     CANCELED: "canceled",
@@ -79,24 +79,6 @@ const coreOrderItemSchema = createOrderItemPayloadSchema.shape({
 
 // Schema for a full order item object, including base fields like id and timestamps
 export const orderItemSchema = extendBaseSchema(coreOrderItemSchema);
-
-export const singleOrderSchema = extendBaseSchema(
-    orderSchema.shape({
-        ...extendBaseSchema,
-        reference: yup.string().nullable(),
-        menuItemId: yup.string().uuid().required(),
-        orderId: yup.string().uuid().required(),
-        storeId: yup.string().uuid().required(),
-        priceAtOrder: yup.number().nonNullable(),
-        quantity: yup.number().nullable().default(1),
-        subTotal: yup.number().nonNullable().default(0),
-        orderItems: yup.array().of(menuItemSchema).required(),
-        seller: yup.object({
-            firstName: yup.string().required("First name is required"),
-            lastName: yup.string().required("Last name is required"),
-        }),
-    }),
-);
 
 export const createOrderSchema = yup.object({
     sellerId: yup.string().required(),

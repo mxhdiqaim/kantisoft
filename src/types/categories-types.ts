@@ -1,4 +1,5 @@
 import * as yup from "yup";
+import type {LocalSyncStatus} from "@/types/index.ts";
 
 export const createCategorySchema = yup.object({
     name: yup.string().required("Name is required"),
@@ -14,4 +15,8 @@ export type CategoryType = {
     storeId: string;
     createdAt: string;
     lastModified: string;
+}
+
+export type LocalCategoryType = Omit<CategoryType, "createdAt" | "lastModified"> & {
+    syncStatus: LocalSyncStatus;
 }

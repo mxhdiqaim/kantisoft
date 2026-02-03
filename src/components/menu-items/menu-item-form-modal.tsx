@@ -1,12 +1,10 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import {getApiError} from "@/helpers/get-api-error.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
 import {useCreateMenuItemMutation, useGetAllCategoriesQuery, useUpdateMenuItemMutation} from "@/store/slice";
 import {
-    type AddMenuItemType,
     createMenuItemSchema,
+    type CreateMenuItemType,
     type EditMenuItemType,
     type MenuItemType,
 } from "@/types/menu-item-type.ts";
@@ -17,6 +15,7 @@ import {Controller, useForm} from "react-hook-form";
 import CustomButton from "@/components/ui/button.tsx";
 import {StyledTextField} from "@/components/ui";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+
 import Icon from "@/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
@@ -52,33 +51,11 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
             price: 0,
             itemCode: undefined,
             sku: undefined,
+            categoryId: "",
         },
 
         resolver: yupResolver(createMenuItemSchema),
     });
-
-    const onSubmit = async (data: AddMenuItemType | EditMenuItemType) => {
-        try {
-            const payload = {...data, itemCode: data.itemCode || undefined};
-            if (isEditMode && menuItemToEdit) {
-                await updateMenuItem({
-                    id: menuItemToEdit.id,
-                    ...(payload as EditMenuItemType),
-                }).unwrap();
-                notify("Menu item updated successfully!", "success");
-            } else {
-                await createMenuItem(payload as AddMenuItemType).unwrap();
-                notify("Menu item added successfully!", "success");
-            }
-            onClose();
-        } catch (error) {
-            const defaultMessage = `Failed to ${isEditMode ? "update" : "add"} menu item.`;
-            const apiError = getApiError(error, defaultMessage);
-
-            notify(apiError.message, "error");
-            console.log(`Failed to ${isEditMode ? "update" : "create"} menu item:`, error);
-        }
-    };
 
     useEffect(() => {
         if (open) {
@@ -90,10 +67,34 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
                     price: 0,
                     itemCode: undefined,
                     sku: undefined,
+                    categoryId: "",
                 });
             }
         }
     }, [open, isEditMode, menuItemToEdit, reset]);
+
+    const onSubmit = async (data: CreateMenuItemType | EditMenuItemType) => {
+        try {
+            const payload = {...data, itemCode: data.itemCode || undefined};
+            if (isEditMode && menuItemToEdit) {
+                await updateMenuItem({
+                    id: menuItemToEdit.id,
+                    ...(payload as EditMenuItemType),
+                }).unwrap();
+                notify("Menu item updated successfully!", "success");
+            } else {
+                await createMenuItem(payload as CreateMenuItemType).unwrap();
+                notify("Menu item added successfully!", "success");
+            }
+            onClose();
+        } catch (error) {
+            const defaultMessage = `Failed to ${isEditMode ? "update" : "add"} menu item.`;
+            const apiError = getApiError(error, defaultMessage);
+
+            notify(apiError.message, "error");
+            console.log(`Failed to ${isEditMode ? "update" : "create"} menu item:`, error);
+        }
+    };
 
     const isLoading = isCreating || isUpdating;
 

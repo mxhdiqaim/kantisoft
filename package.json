@@ -21,6 +21,7 @@
     "@sentry/react": "^10.28.0",
     "@sentry/tracing": "^7.120.4",
     "date-fns": "^4.1.0",
+    "dexie": "^4.3.0",
     "file-saver": "^2.0.5",
     "i18next": "^25.3.2",
     "jwt-decode": "^4.0.0",
