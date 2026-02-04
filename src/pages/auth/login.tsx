@@ -3,11 +3,12 @@ import useNotifier from "@/hooks/useNotifier";
 import {useLoginMutation} from "@/store/slice";
 import {loginUserType, type LoginUserType} from "@/types/user-types";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {Box, FormControl, FormHelperText, Grid, Link as MuiLink, TextField, Typography, useTheme} from "@mui/material";
+import {Box, FormControl, FormHelperText, Grid, Link as MuiLink, Typography, useTheme} from "@mui/material";
 
 import {Controller, useForm} from "react-hook-form";
 import {Link, useNavigate} from "react-router-dom";
 import CustomButton from "@/components/ui/button.tsx";
+import {StyledTextField} from "@/components/ui";
 
 const defaultValues = {
     email: "",
@@ -86,7 +87,7 @@ const Login = () => {
                                 control={control}
                                 rules={{required: true}}
                                 render={({field: {value, onChange, onBlur}}) => (
-                                    <TextField
+                                    <StyledTextField
                                         autoFocus
                                         label="Email"
                                         value={value}
@@ -108,7 +109,7 @@ const Login = () => {
                                 control={control}
                                 rules={{required: true}}
                                 render={({field: {value, onChange, onBlur}}) => (
-                                    <TextField
+                                    <StyledTextField
                                         value={value}
                                         onBlur={onBlur}
                                         label="Password"
@@ -151,14 +152,6 @@ const Login = () => {
                                 disabled={loading}
                             />
                         </Box>
-                        {/*<Box sx={{textAlign: "center", mt: 2}}>*/}
-                        {/*    <Typography variant="body1">*/}
-                        {/*        Don&apos;t have an account?{" "}*/}
-                        {/*        <Button variant="text" onClick={() => navigate("/register")}>*/}
-                        {/*            Register*/}
-                        {/*        </Button>*/}
-                        {/*    </Typography>*/}
-                        {/*</Box>*/}
                     </Box>
                 </Box>
             </Grid>

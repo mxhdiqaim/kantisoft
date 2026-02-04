@@ -10,8 +10,8 @@ export class OfflineDatabase extends Dexie {
         super('KantiSoftOfflineDB');
         this.version(1).stores({
             // The primary key is 'id'. We index fields used in 'where' clauses.
-            categories: 'id, name, description, storeId, syncStatus',
-            menuItems: 'id, name, description, itemCode, sku, price, categoryId, storeId, store, inventory, syncStatus'
+            categories: 'id, name, storeId, syncStatus',
+            menuItems: 'id, name, sku, storeId, syncStatus'
         });
     }
 }

@@ -7,6 +7,7 @@ import "./index.css";
 import {SnackbarProvider} from "notistack";
 import * as Sentry from "@sentry/react";
 import {getEnvVariable} from "@/utils";
+import {SyncProvider} from "@/context/sync-context.tsx";
 
 const VITE_APP_SENTRY_DSN = getEnvVariable("VITE_APP_SENTRY_DSN");
 
@@ -24,17 +25,19 @@ Sentry.init({
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <Provider store={store}>
-            <SnackbarProvider
-                maxSnack={3}
-                autoHideDuration={3000}
-                variant="default"
-                anchorOrigin={{
-                    vertical: "top",
-                    horizontal: "center",
-                }}
-            >
-                <App/>
-            </SnackbarProvider>
+            <SyncProvider>
+                <SnackbarProvider
+                    maxSnack={3}
+                    autoHideDuration={3000}
+                    variant="default"
+                    anchorOrigin={{
+                        vertical: "top",
+                        horizontal: "center",
+                    }}
+                >
+                    <App/>
+                </SnackbarProvider>
+            </SyncProvider>
         </Provider>
     </StrictMode>,
 );

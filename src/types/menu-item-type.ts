@@ -27,12 +27,12 @@ export const INVENTORY_STATUS_VALUES = Object.values(MenuItemInventoryStatusEnum
 export type MenuItemInventoryType = (typeof INVENTORY_STATUS_VALUES)[number];
 
 // Inferred type for a full menu item object
-export type MenuItemType = BaseSchema & {
+export interface MenuItemType extends BaseSchema {
     name: string;
     description?: string;
     itemCode?: number;
     sku?: string;
-    price: number;
+    price: number | string;
     categoryId: string;
     storeId: string;
     store: {

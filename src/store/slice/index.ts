@@ -1,4 +1,4 @@
-import type {ActivityLogEntry, ActivityLogResponse} from "@/types";
+import {type ActivityLogEntry, type ActivityLogResponse, localSyncStatusEnum, type QueryParamType} from "@/types";
 import type {
     InventoryAlertType,
     SalesTrendType,
@@ -6,7 +6,7 @@ import type {
     TopSellsItemType,
     TopSellsParamType,
 } from "@/types/dashboard-types.ts";
-import type {CreateMenuItemType, MenuItemType} from "@/types/menu-item-type.ts";
+import type {CreateMenuItemType, LocalMenuItemType, MenuItemType} from "@/types/menu-item-type.ts";
 import type {
     CreateOrderType,
     OrdersByPeriodResponse,
@@ -63,6 +63,7 @@ import type {
     ProductionWastageSummaryType
 } from "@/types/production-types.ts";
 import type {CategoryType, CreateCategoryType} from "@/types/categories-types.ts";
+import {localDb} from "@/db/local-db.ts";
 
 const baseUrl = getEnvVariable("VITE_APP_API_URL");
 
@@ -338,12 +339,35 @@ export const apiSlice = createApi({
         // -------------------------
         // Menu Item Endpoints
         // -------------------------
-        getMenuItems: builder.query<MenuItemType[], { page?: number; limit?: number }>({
+        getMenuItems: builder.query<MenuItemType[], QueryParamType>({
             query: (params = {}) => ({
                 url: "/menu-items",
                 params,
             }),
             transformResponse: (response: { data: MenuItemType[] }) => response.data,
+
+            // THE SEEDING LOGIC
+            async onCacheEntryAdded(_arg, {cacheDataLoaded}) {
+                try {
+                    // Wait for the first response to arrive from the backend
+                    const {data} = await cacheDataLoaded;
+
+                    if (data && data.length > 0) {
+                        // Bulk save to Dexie.
+                        // .bulkPut is better than .add because it updates existing records
+                        const localData: LocalMenuItemType[] = data.map(item => ({
+                            ...item,
+                            syncStatus: localSyncStatusEnum.SYNCED // Mark as already on server
+                        }));
+
+                        await localDb.menuItems.bulkPut(localData);
+                        console.log("Dexie Hydrated: Menu Items stored locally.");
+                    }
+                } catch (error) {
+                    console.error("Failed to seed Dexie:", error);
+                }
+            },
+
             providesTags: (result) =>
                 result
                     ? [...result.map(({id}) => ({type: "MenuItem" as const, id})), {type: "MenuItem", id: "LIST"}]
@@ -356,6 +380,36 @@ export const apiSlice = createApi({
                 method: "POST",
                 body: newMenuItem,
             }),
+
+            async onQueryStarted(newMenuItem, {queryFulfilled}) {
+                // Generate a temporary UUID for the local record
+                const tempId = crypto.randomUUID();
+
+                // Optimistically add to Dexie
+                await localDb.menuItems.add({
+                    ...newMenuItem,
+                    id: tempId,
+                    syncStatus: localSyncStatusEnum.PENDING,
+                    // We provide defaults for fields the backend usually handles
+                    store: {name: "Syncing..."},
+                } as any);
+
+                try {
+                    const {data: createdItem} = await queryFulfilled;
+
+                    // Success! Replace the temp record with the real backend record
+                    await localDb.menuItems.delete(tempId);
+                    await localDb.menuItems.add({
+                        ...createdItem,
+                        syncStatus: localSyncStatusEnum.SYNCED
+                    });
+                } catch {
+                    // Failure! We leave it in Dexie as PENDING.
+                    // Our SyncProvider will try to push it later.
+                    console.log("Creation failed/offline. Item preserved in Dexie.");
+                }
+            },
+
             invalidatesTags: [{type: "MenuItem", id: "LIST"}],
         }),
 

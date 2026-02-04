@@ -1,6 +1,6 @@
-import {type MouseEvent, useCallback, useMemo, useState} from "react";
+import {type MouseEvent, useCallback, useEffect, useMemo, useState} from "react";
 import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
-import {useDeleteMenuItemMutation, useGetMenuItemsQuery} from "@/store/slice";
+import {useDeleteMenuItemMutation} from "@/store/slice";
 import useNotifier from "@/hooks/useNotifier";
 import MenuItemFormModal from "@/components/menu-items/menu-item-form-modal.tsx";
 import type {MenuItemType} from "@/types/menu-item-type";
@@ -15,15 +15,16 @@ import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx
 import {camelCaseToTitleCase, formatCurrency} from "@/utils";
 import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
 import {useSearch} from "@/use-search.ts";
-import {exportToCsv, exportToXlsx, getExportFormattedData} from "@/utils/export-data-utils.ts";
 import CustomButton from "@/components/ui/button.tsx";
 import {UserRoleEnum} from "@/types/user-types.ts";
 import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import {getMenuItemsInventoryStatusChip} from "@/components/ui";
 import BillOfMaterialsDrawer from "@/components/menu-items/bom-drawer.tsx";
+import {useOfflineMenuItems} from "@/hooks/use-offline-menuitems.ts";
 
 import {DeleteOutline, EditOutlined, MoreVert, RestaurantMenuOutlined} from "@mui/icons-material";
+import {localSyncStatusEnum} from "@/types";
 
 const MenuItems = () => {
     const theme = useTheme();
@@ -32,7 +33,8 @@ const MenuItems = () => {
 
     const currentUser = useAppSelector(selectCurrentUser);
 
-    const {data: menuItems, isLoading, isFetching, isError, error} = useGetMenuItemsQuery({});
+    // const {data: menuItems, isLoading, isFetching, isError, error} = useGetMenuItemsQuery({});
+    const {items: menuItems, isLoading, isError, error} = useOfflineMenuItems({});
 
     const [deleteMenuItem, {isLoading: isDeleting}] = useDeleteMenuItemMutation();
 
@@ -76,51 +78,51 @@ const MenuItems = () => {
         setOpenRecipeDrawer(false);
     }, []);
 
-    // Define custom formatters for MenuItemsTable
-    const menuItemsFieldFormatters = useMemo(
-        () => ({
-            itemCode: (row: MenuItemType) => row.itemCode,
-            name: (row: MenuItemType) => row.name,
-            price: (row: MenuItemType) => row.price,
-            store: (row: MenuItemType) => row.store?.name,
-            inventoryQuantity: (row: MenuItemType) => row.inventory?.quantity ?? "",
-            inventoryStockStatus: (row: MenuItemType) => row.inventory?.status ?? "",
-        }),
-        [],
-    );
+    // // Define custom formatters for MenuItemsTable
+    // const menuItemsFieldFormatters = useMemo(
+    //     () => ({
+    //         itemCode: (row: MenuItemType) => row.itemCode,
+    //         name: (row: MenuItemType) => row.name,
+    //         price: (row: MenuItemType) => row.price,
+    //         store: (row: MenuItemType) => row.store?.name,
+    //         inventoryQuantity: (row: MenuItemType) => row.inventory?.quantity ?? "",
+    //         inventoryStockStatus: (row: MenuItemType) => row.inventory?.status ?? "",
+    //     }),
+    //     [],
+    // );
 
-    const prepareExportData = () => {
-        return getExportFormattedData(
-            filteredData, // Your data source
-            columns,      // Your column definitions
-            menuItemsFieldFormatters // Your specific formatters
-        );
-    };
+    // const prepareExportData = () => {
+    //     return getExportFormattedData(
+    //         filteredData, // Your data source
+    //         columns, // Your column definitions
+    //         menuItemsFieldFormatters // Your specific formatters
+    //     );
+    // };
 
-    const handleExportCsv = () => {
-        const dataToExport = prepareExportData();
+    // const handleExportCsv = () => {
+    //     const dataToExport = prepareExportData();
+    //
+    //     if (dataToExport.length === 0) {
+    //         notify("No data to export.", "error");
+    //         return;
+    //     }
+    //
+    //     const filename = `menu_items_data.csv`;
+    //     exportToCsv(dataToExport, filename); // Uses generic utility
+    // };
 
-        if (dataToExport.length === 0) {
-            notify("No data to export.", "error");
-            return;
-        }
-
-        const filename = `menu_items_data.csv`;
-        exportToCsv(dataToExport, filename); // Uses generic utility
-    };
-
-    // Export to XLSX function
-    const handleExportXlsx = () => {
-        const dataToExport = prepareExportData();
-
-        if (dataToExport.length === 0) {
-            notify("No data to export.", "error");
-            return;
-        }
-
-        const filename = `menu_items_data.xlsx`;
-        exportToXlsx(dataToExport, filename, "Sales History", columns); // Uses generic utility
-    };
+    // // Export to XLSX function
+    // const handleExportXlsx = () => {
+    //     const dataToExport = prepareExportData();
+    //
+    //     if (dataToExport.length === 0) {
+    //         notify("No data to export.", "error");
+    //         return;
+    //     }
+    //
+    //     const filename = `menu_items_data.xlsx`;
+    //     exportToXlsx(dataToExport, filename, "Sales History", columns); // Uses generic utility
+    // };
 
     const handleMenuClick = (event: MouseEvent<HTMLElement>, row: MenuItemType) => {
         setAnchorEl(event.currentTarget);
@@ -164,6 +166,17 @@ const MenuItems = () => {
                             }}
                         >
                             {params.value}
+
+                            {params.row.syncStatus === localSyncStatusEnum.PENDING && (
+                                <Tooltip title="Syncing with server...">
+                                    <Chip
+                                        label="Offline"
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{height: 20, fontSize: '0.65rem'}}
+                                    />
+                                </Tooltip>
+                            )}
                         </Typography>
                     </TableStyledBox>
                 ),
@@ -337,8 +350,15 @@ const MenuItems = () => {
         [theme, anchorEl, selectedRow, currentUser, handleOpenFormModal],
     );
 
-    if (isError) {
-        notify(`Failed to load ${t("menuItem")}.`, "error");
+    // Keep the useEffect for the "Warning" toasts (when we HAVE data, but sync fails)
+    useEffect(() => {
+        // If there's a background error, but we already have items to show
+        if (isError && menuItems && menuItems.length > 0) {
+            notify(`Syncing ${t("menuItem")} failed, viewing offline`, "warning");
+        }
+    }, [isError, menuItems?.length, notify, t]);
+
+    if (isError && (!menuItems || menuItems.length === 0)) {
         const apiError = getApiError(error, `Failed to load ${t("menuItem")}.`);
         return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
     }
@@ -369,14 +389,14 @@ const MenuItems = () => {
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}
-                onExportCsv={handleExportCsv}
-                onExportXlsx={handleExportXlsx}
+                // onExportCsv={handleExportCsv}
+                // onExportXlsx={handleExportXlsx}
                 placeholder={`Search ${t("menuItem")} by name, sku or item code`}
             />
 
             <Grid container spacing={2} sx={{mt: 2}}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
                 </Grid>
             </Grid>
 
