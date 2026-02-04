@@ -7,7 +7,6 @@ import GuardedRoute from "@/routes/guarded-route";
 import {useAppSelector} from "@/store";
 import {useLogoutMutation} from "@/store/slice";
 import {selectCurrentUser, selectTokenExp} from "@/store/slice/auth-slice";
-
 import {ThemeProvider} from "@/theme";
 import {ScrollToTop} from "@/utils";
 import {type JSX, useEffect, useRef} from "react";
@@ -15,7 +14,6 @@ import {ErrorBoundary} from "react-error-boundary";
 import {useTranslation} from "react-i18next";
 import {useSelector} from "react-redux";
 import {BrowserRouter as Router, Route, Routes, useNavigate} from "react-router-dom";
-
 import {FullscreenProvider} from "./context/fullscreen-context";
 import {selectActiveStore} from "./store/slice/store-slice";
 import "@/config/i18next-config";
@@ -118,7 +116,6 @@ const AppContent = () => {
             <ErrorBoundary FallbackComponent={ErrorFallback}>
                 <AuthGuard currentUser={currentUser}/>
                 <Routes>{renderRoutes(appRoutes)}</Routes>
-                {/*<Routes>{appRoutes.map((route, index) => renterRoute(route, index))}</Routes>*/}
             </ErrorBoundary>
         </>
     );

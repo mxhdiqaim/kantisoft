@@ -3,15 +3,12 @@ import * as yup from "yup";
 
 export const ORDER_PERIODS = ["today", "week", "month", "all-time"] as const;
 
-// Base schema type that all other schemas will extend
-export const baseSchema = yup.object().shape({
-    id: yup.string().uuid().required(), // uuid string
-    createdAt: yup.string().required(), // ISO date
-    lastModified: yup.string().required(), // ISO date
-});
-
 // Type inference from the base schema
-export type BaseSchema = yup.InferType<typeof baseSchema>;
+export type BaseSchema = {
+    id: string;
+    createdAt: string;
+    lastModified: string;
+}
 
 export const extendBaseSchema = <T extends yup.AnyObject>(fields: T): yup.ObjectSchema<any> => {
     return yup.object({
@@ -66,9 +63,12 @@ export type DrawerAnchor = "left" | "bottom" | "right" | "top";
 export const localSyncStatusEnum = {
     SYNCED: "synced",
     PENDING: "pending",
-    ERROR: "error"
+    ERROR: "error",
+    SYNCING: "syncing"
 } as const;
 
 export const LOCAL_SYNC_STATUS_VALUES = Object.values(localSyncStatusEnum)
 
 export type LocalSyncStatus = (typeof LOCAL_SYNC_STATUS_VALUES)[number];
+
+export type QueryParamType = { page?: number; limit?: number };

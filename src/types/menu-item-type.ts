@@ -3,7 +3,7 @@ import {type BaseSchema, type LocalSyncStatus} from "@/types";
 
 export const createMenuItemSchema = yup.object({
     name: yup.string().required("Name is required").min(2, "Name must be at least 2 characters"),
-    categoryId: yup.string().uuid().required("Category is required").typeError("Category must be selected"),
+    categoryId: yup.string().uuid("Category must be selected").required("Category is required").typeError("Category must be selected"),
     itemCode: yup.number().optional().min(100, "Item code must be at least 100"),
     sku: yup.string().optional().typeError("SKU must be a string"),
     price: yup
@@ -27,12 +27,12 @@ export const INVENTORY_STATUS_VALUES = Object.values(MenuItemInventoryStatusEnum
 export type MenuItemInventoryType = (typeof INVENTORY_STATUS_VALUES)[number];
 
 // Inferred type for a full menu item object
-export type MenuItemType = BaseSchema & {
+export interface MenuItemType extends BaseSchema {
     name: string;
     description?: string;
     itemCode?: number;
     sku?: string;
-    price: number;
+    price: number | string;
     categoryId: string;
     storeId: string;
     store: {

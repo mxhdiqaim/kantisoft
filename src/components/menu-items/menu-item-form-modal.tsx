@@ -60,7 +60,7 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
     useEffect(() => {
         if (open) {
             if (isEditMode) {
-                reset(menuItemToEdit);
+                reset(menuItemToEdit as CreateMenuItemType);
             } else {
                 reset({
                     name: "",
@@ -74,8 +74,10 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
     }, [open, isEditMode, menuItemToEdit, reset]);
 
     const onSubmit = async (data: CreateMenuItemType | EditMenuItemType) => {
+        const isOffline = !navigator.onLine;
+        const payload = {...data, itemCode: data.itemCode || undefined};
+
         try {
-            const payload = {...data, itemCode: data.itemCode || undefined};
             if (isEditMode && menuItemToEdit) {
                 await updateMenuItem({
                     id: menuItemToEdit.id,
@@ -88,11 +90,18 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
             }
             onClose();
         } catch (error) {
+            // Handle Offline Case: Close modal and notify
+            if (isOffline || error?.status === 'FETCH_ERROR') {
+                notify("Working offline: Item saved locally and will sync later.", "warning");
+                onClose(); // Close the modal because onQueryStarted already saved it to Dexie!
+                return;
+            }
+
+            // Handle Actual Backend Errors (Validation, etc.)
             const defaultMessage = `Failed to ${isEditMode ? "update" : "add"} menu item.`;
             const apiError = getApiError(error, defaultMessage);
-
             notify(apiError.message, "error");
-            console.log(`Failed to ${isEditMode ? "update" : "create"} menu item:`, error);
+            console.log(`Failed to ${isEditMode ? "update" : "add"} menu item:`, error);
         }
     };
 
