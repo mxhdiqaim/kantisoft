@@ -1,4 +1,4 @@
-import {type MouseEvent, useCallback, useEffect, useMemo, useState} from "react";
+import {type MouseEvent, useCallback, useMemo, useState} from "react";
 import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
 import {useDeleteMenuItemMutation} from "@/store/slice";
 import useNotifier from "@/hooks/useNotifier";
@@ -360,13 +360,13 @@ const MenuItems = () => {
         [theme, anchorEl, selectedRow, currentUser, handleOpenFormModal],
     );
 
-    // Keep the useEffect for the "Warning" toasts (when we HAVE data, but sync fails)
-    useEffect(() => {
-        // If there's a background error, but we already have items to show
-        if (isError && menuItems && menuItems.length > 0) {
-            notify(`Syncing ${t("menuItem")} failed, viewing offline`, "warning");
-        }
-    }, [isError, menuItems?.length, notify, t]);
+    // // Keep the useEffect for the "Warning" toasts (when we HAVE data, but sync fails)
+    // useEffect(() => {
+    //     // If there's a background error, but we already have items to show
+    //     if (isError && menuItems && menuItems.length > 0) {
+    //         notify(`Syncing ${t("menuItem")} failed, viewing offline`, "warning");
+    //     }
+    // }, [isError, menuItems?.length, notify, t]);
 
     if (isError && (!menuItems || menuItems.length === 0)) {
         const apiError = getApiError(error, `Failed to load ${t("menuItem")}.`);

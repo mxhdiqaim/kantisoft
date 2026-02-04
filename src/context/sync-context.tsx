@@ -1,4 +1,4 @@
-import {useCreateMenuItemMutation} from "@/store/slice";
+import {useCreateMenuItemMutation, useUpdateMenuItemMutation} from "@/store/slice";
 import {useEffect} from "react";
 import {localDb} from "@/db/local-db.ts";
 import {localSyncStatusEnum} from "@/types";
@@ -6,6 +6,7 @@ import type {CreateMenuItemType} from "@/types/menu-item-type.ts";
 
 export const SyncProvider = ({children}: { children: React.ReactNode }) => {
     const [createMenuItem] = useCreateMenuItemMutation();
+    const [updateMenuItem] = useUpdateMenuItemMutation();
 
     useEffect(() => {
         const handleSync = async () => {
@@ -18,22 +19,39 @@ export const SyncProvider = ({children}: { children: React.ReactNode }) => {
                 .toArray();
 
             for (const item of pendingItems) {
+                console.log({item})
                 try {
+                    // Mark as SYNCING locally first
+                    // This stops the next loop iteration from picking it up
+                    await localDb.menuItems.update(item.id, {syncStatus: localSyncStatusEnum.SYNCING});
+
+                    const isUpdate = !item.id.startsWith('temp-');
                     // Extract only the fields the API expects
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const {syncStatus, id, store, inventory, storeId, ...validApiData} = item;
+                    const {syncStatus, store, inventory, storeId, ...validApiData} = item;
 
-                    // Attempt to create on server
-                    await createMenuItem(validApiData as CreateMenuItemType).unwrap();
+                    if (isUpdate) {
+                        await updateMenuItem({id: item.id, ...validApiData}).unwrap();
+                        // For updates, we just mark as synced because the ID didn't change
+                        await localDb.menuItems.update(item.id, {syncStatus: localSyncStatusEnum.SYNCED});
+                    } else {
+                        // For creations, we get a NEW ID from the server
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        const {id: tempIdForCleaning, ...createData} = validApiData;
+                        const serverResult = await createMenuItem(createData as CreateMenuItemType).unwrap();
+
+                        // Remove the temp record entirely
+                        await localDb.menuItems.delete(item.id);
+
+                        // Add the official server record
+                        await localDb.menuItems.add({
+                            ...serverResult,
+                            syncStatus: localSyncStatusEnum.SYNCED
+                        });
+                    }
 
                     // Success: Clean up local DB
-                    // Note: Since the backend might generate a new ID/SKU,
-                    // your mutation's onQueryStarted handles the ID swap.
-                    // Here we just mark the current record as synced if it wasn't swapped.
-                    await localDb.menuItems.update(item.id, {
-                        syncStatus: localSyncStatusEnum.SYNCED
-                    });
-
+                    await localDb.menuItems.update(item.id, {syncStatus: localSyncStatusEnum.SYNCED});
                 } catch (error) {
                     // Check if it's a permanent validation error (400-409)
                     // or a temporary network/server error (500 or 0)
@@ -58,7 +76,7 @@ export const SyncProvider = ({children}: { children: React.ReactNode }) => {
         window.addEventListener('online', handleSync);
         handleSync();
         return () => window.removeEventListener('online', handleSync);
-    }, [createMenuItem]);
+    }, [createMenuItem, updateMenuItem]);
 
     return <>{children}</>;
 };

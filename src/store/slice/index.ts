@@ -383,24 +383,24 @@ export const apiSlice = createApi({
 
             async onQueryStarted(newMenuItem, {queryFulfilled, getState}) {
                 const tempId = crypto.randomUUID();
+                const actualTempId = `temp-${tempId}`;
+
                 const state = getState() as RootState;
                 const activeStore = state.store?.activeStore; // Get your current store name for the UI
 
                 // Map CreateMenuItemType -> LocalMenuItemType (Optimistic)
                 const optimisticItem = {
                     ...newMenuItem,
-                    id: tempId,
+                    id: actualTempId,
                     storeId: activeStore?.id || "",
                     syncStatus: localSyncStatusEnum.PENDING,
                     // Mocking the nested objects so the UI table renders nicely
                     store: {name: activeStore?.name || "Syncing..."},
                     inventory: {
                         quantity: 0,
-                        status: "outOfStock", // Default for new items
+                        status: "", // Default for new items
                         lastCountDate: new Date().toISOString()
                     },
-                    createdAt: new Date().toISOString(),
-                    lastModified: new Date().toISOString()
                 };
 
                 await localDb.menuItems.add(optimisticItem as LocalMenuItemType);
@@ -409,7 +409,8 @@ export const apiSlice = createApi({
                     const {data: createdItem} = await queryFulfilled;
 
                     // Replace temp with real data (now includes backend-generated SKU, itemCode, etc.)
-                    await localDb.menuItems.delete(tempId);
+                    await localDb.menuItems.delete(actualTempId);
+
                     await localDb.menuItems.add({
                         ...createdItem,
                         syncStatus: localSyncStatusEnum.SYNCED
@@ -436,6 +437,34 @@ export const apiSlice = createApi({
                 method: "PATCH",
                 body: patch,
             }),
+
+            async onQueryStarted({id, ...patch}, {queryFulfilled}) {
+                // Get the current item from Dexie to preserve existing data (like inventory)
+                const existingItem = await localDb.menuItems.get(id);
+
+                if (existingItem) {
+                    // Apply the patch to Dexie immediately
+                    await localDb.menuItems.update(id, {
+                        ...patch,
+                        // If online, use a temporary status so SyncProvider ignores it
+                        syncStatus: navigator.onLine ? localSyncStatusEnum.SYNCING : localSyncStatusEnum.PENDING
+                    });
+                }
+
+                try {
+                    const {data: updatedItem} = await queryFulfilled;
+
+                    // Sync successful: Update with fresh data from server (e.g., new SKU)
+                    await localDb.menuItems.update(id, {
+                        ...updatedItem,
+                        syncStatus: localSyncStatusEnum.SYNCED
+                    });
+                } catch {
+                    // Offline/Error: Leave it as PENDING.
+                    // The SyncProvider needs to be updated to handle PATCH as well.
+                    console.log("Update saved locally. Will sync later.");
+                }
+            },
             invalidatesTags: (_result, _error, {id}) => [
                 {type: "MenuItem", id},
                 {type: "MenuItem", id: "LIST"},

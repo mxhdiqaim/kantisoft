@@ -63,7 +63,8 @@ export type DrawerAnchor = "left" | "bottom" | "right" | "top";
 export const localSyncStatusEnum = {
     SYNCED: "synced",
     PENDING: "pending",
-    ERROR: "error"
+    ERROR: "error",
+    SYNCING: "syncing"
 } as const;
 
 export const LOCAL_SYNC_STATUS_VALUES = Object.values(localSyncStatusEnum)

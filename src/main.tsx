@@ -31,7 +31,7 @@ createRoot(document.getElementById("root")!).render(
                     autoHideDuration={3000}
                     variant="default"
                     anchorOrigin={{
-                        vertical: "top",
+                        vertical: "bottom",
                         horizontal: "center",
                     }}
                 >

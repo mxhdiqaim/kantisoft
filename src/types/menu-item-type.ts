@@ -46,6 +46,6 @@ export interface MenuItemType extends BaseSchema {
     }
 };
 
-export type LocalMenuItemType = MenuItemType & {
+export type LocalMenuItemType = Omit<MenuItemType, "createdAt" | "lastModified"> & {
     syncStatus: LocalSyncStatus;
 };
