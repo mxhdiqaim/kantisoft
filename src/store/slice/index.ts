@@ -381,35 +381,44 @@ export const apiSlice = createApi({
                 body: newMenuItem,
             }),
 
-            async onQueryStarted(newMenuItem, {queryFulfilled}) {
-                // Generate a temporary UUID for the local record
+            async onQueryStarted(newMenuItem, {queryFulfilled, getState}) {
                 const tempId = crypto.randomUUID();
+                const state = getState() as RootState;
+                const activeStore = state.store?.activeStore; // Get your current store name for the UI
 
-                // Optimistically add to Dexie
-                await localDb.menuItems.add({
+                // Map CreateMenuItemType -> LocalMenuItemType (Optimistic)
+                const optimisticItem = {
                     ...newMenuItem,
                     id: tempId,
+                    storeId: activeStore?.id || "",
                     syncStatus: localSyncStatusEnum.PENDING,
-                    // We provide defaults for fields the backend usually handles
-                    store: {name: "Syncing..."},
-                } as any);
+                    // Mocking the nested objects so the UI table renders nicely
+                    store: {name: activeStore?.name || "Syncing..."},
+                    inventory: {
+                        quantity: 0,
+                        status: "outOfStock", // Default for new items
+                        lastCountDate: new Date().toISOString()
+                    },
+                    createdAt: new Date().toISOString(),
+                    lastModified: new Date().toISOString()
+                };
+
+                await localDb.menuItems.add(optimisticItem as LocalMenuItemType);
 
                 try {
                     const {data: createdItem} = await queryFulfilled;
 
-                    // Success! Replace the temp record with the real backend record
+                    // Replace temp with real data (now includes backend-generated SKU, itemCode, etc.)
                     await localDb.menuItems.delete(tempId);
                     await localDb.menuItems.add({
                         ...createdItem,
                         syncStatus: localSyncStatusEnum.SYNCED
                     });
                 } catch {
-                    // Failure! We leave it in Dexie as PENDING.
-                    // Our SyncProvider will try to push it later.
-                    console.log("Creation failed/offline. Item preserved in Dexie.");
+                    // Keep the optimistic item with tempId so user can still see/edit it
+                    console.log("Offline: Item saved to Dexie with PENDING status.");
                 }
             },
-
             invalidatesTags: [{type: "MenuItem", id: "LIST"}],
         }),
 

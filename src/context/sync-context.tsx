@@ -1,43 +1,62 @@
-import {useEffect} from 'react';
-import {localDb} from "@/db/local-db.ts";
 import {useCreateMenuItemMutation} from "@/store/slice";
+import {useEffect} from "react";
+import {localDb} from "@/db/local-db.ts";
 import {localSyncStatusEnum} from "@/types";
+import type {CreateMenuItemType} from "@/types/menu-item-type.ts";
 
 export const SyncProvider = ({children}: { children: React.ReactNode }) => {
     const [createMenuItem] = useCreateMenuItemMutation();
 
     useEffect(() => {
         const handleSync = async () => {
+            // Only proceed if online
             if (!navigator.onLine) return;
 
-            // Find all pending menu items in Dexie
             const pendingItems = await localDb.menuItems
                 .where('syncStatus')
                 .equals(localSyncStatusEnum.PENDING)
                 .toArray();
 
-            // Push them to the backend using the RTK Mutation
             for (const item of pendingItems) {
                 try {
-                    // We strip the local 'syncStatus' before sending to backend
+                    // Extract only the fields the API expects
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const {syncStatus, ...backendData} = item;
-                    await createMenuItem(backendData).unwrap();
+                    const {syncStatus, id, store, inventory, storeId, ...validApiData} = item;
 
-                    // If successful, update local status to 'synced'
-                    await localDb.menuItems.update(item.id, {syncStatus: localSyncStatusEnum.SYNCED});
+                    // Attempt to create on server
+                    await createMenuItem(validApiData as CreateMenuItemType).unwrap();
+
+                    // Success: Clean up local DB
+                    // Note: Since the backend might generate a new ID/SKU,
+                    // your mutation's onQueryStarted handles the ID swap.
+                    // Here we just mark the current record as synced if it wasn't swapped.
+                    await localDb.menuItems.update(item.id, {
+                        syncStatus: localSyncStatusEnum.SYNCED
+                    });
+
                 } catch (error) {
-                    console.error("Sync failed for item:", item.name, error);
+                    // Check if it's a permanent validation error (400-409)
+                    // or a temporary network/server error (500 or 0)
+                    const status = error?.status;
+
+                    if (status >= 400 && status < 500) {
+                        console.error(`Validation error for ${item.name}:`, error);
+                        // Stop trying to sync this item until the user modifies it
+                        await localDb.menuItems.update(item.id, {
+                            syncStatus: localSyncStatusEnum.ERROR
+                        });
+                    } else {
+                        // It's a network error or server 500.
+                        // Do nothing. Leave as PENDING to retry next time.
+                        console.warn(`Temporary sync failure for ${item.name}. Will retry later.`);
+                        break; // Stop the loop to prevent spamming a down server
+                    }
                 }
             }
         };
 
-        // Trigger sync when coming back online
         window.addEventListener('online', handleSync);
-
-        // Also trigger on mount in case we started online
         handleSync();
-
         return () => window.removeEventListener('online', handleSync);
     }, [createMenuItem]);
 

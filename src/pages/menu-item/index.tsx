@@ -167,14 +167,24 @@ const MenuItems = () => {
                         >
                             {params.value}
 
-                            {params.row.syncStatus === localSyncStatusEnum.PENDING && (
-                                <Tooltip title="Syncing with server...">
+                            {/* Error Chip */}
+                            {params.row.syncStatus === localSyncStatusEnum.ERROR && (
+                                <Tooltip title="Failed to sync. Click Edit to fix issues (e.g. duplicate name).">
                                     <Chip
-                                        label="Offline"
+                                        label="Sync Error"
+                                        color="error"
                                         size="small"
-                                        variant="outlined"
-                                        sx={{height: 20, fontSize: '0.65rem'}}
+                                        variant="filled"
+                                        sx={{height: 20, fontSize: '0.6rem'}}
                                     />
+                                </Tooltip>
+                            )}
+
+                            {/* Pending Chip */}
+                            {params.row.syncStatus === localSyncStatusEnum.PENDING && (
+                                <Tooltip title="Waiting for internet...">
+                                    <Chip label="Offline" size="small" variant="outlined"
+                                          sx={{height: 20, fontSize: '0.65rem'}}/>
                                 </Tooltip>
                             )}
                         </Typography>
