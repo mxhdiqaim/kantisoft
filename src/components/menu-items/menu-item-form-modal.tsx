@@ -1,7 +1,7 @@
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import {getApiError} from "@/helpers/get-api-error.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
-import {useCreateMenuItemMutation, useGetAllCategoriesQuery, useUpdateMenuItemMutation} from "@/store/slice";
+import {useCreateMenuItemMutation, useUpdateMenuItemMutation} from "@/store/slice";
 import {
     createMenuItemSchema,
     type CreateMenuItemType,
@@ -15,6 +15,7 @@ import {Controller, useForm} from "react-hook-form";
 import CustomButton from "@/components/ui/button.tsx";
 import {StyledTextField} from "@/components/ui";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+import {useOfflineCategories} from "@/hooks/use-offline-categories.ts";
 
 import Icon from "@/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
@@ -33,9 +34,7 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
 
     const isEditMode = !!menuItemToEdit;
 
-    const {data: categoriesData, isLoading: fetchingCategory} = useGetAllCategoriesQuery(undefined, {
-        skip: !open,
-    });
+    const {data: categoriesData, isLoading: fetchingCategory} = useOfflineCategories();
 
     const memoizedCategories = useMemoizedArray(categoriesData);
 
