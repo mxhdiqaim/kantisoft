@@ -1,13 +1,13 @@
 import {type MouseEvent, useCallback, useMemo, useState} from "react";
 import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
 import {useDeleteMenuItemMutation} from "@/store/slice";
-import useNotifier from "@/hooks/useNotifier";
+import useNotifier from "@/hooks/useNotifier.ts";
 import MenuItemFormModal from "@/components/menu-items/menu-item-form-modal.tsx";
-import type {MenuItemType} from "@/types/menu-item-type";
+import type {MenuItemType} from "@/types/menu-item-type.ts";
 import {useTranslation} from "react-i18next";
-import {getApiError} from "@/helpers/get-api-error";
-import ApiErrorDisplay from "@/components/feedback/api-error-display";
-import {selectCurrentUser} from "@/store/slice/auth-slice";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+import {selectCurrentUser} from "@/store/slice/auth-slice.ts";
 import {useAppSelector} from "@/store";
 import DataGridTable from "@/components/ui/data-grid-table";
 import type {GridColDef} from "@mui/x-data-grid";
@@ -33,7 +33,6 @@ const MenuItems = () => {
 
     const currentUser = useAppSelector(selectCurrentUser);
 
-    // const {data: menuItems, isLoading, isFetching, isError, error} = useGetMenuItemsQuery({});
     const {items: menuItems, isLoading, isError, error} = useOfflineMenuItems({});
 
     const [deleteMenuItem, {isLoading: isDeleting}] = useDeleteMenuItemMutation();
@@ -155,16 +154,7 @@ const MenuItems = () => {
                 minWidth: 220,
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography
-                            variant="body2"
-                            sx={{
-                                fontWeight: 400,
-                                color: theme.palette.text.primary,
-                                backgroundColor: theme.palette.background.paper,
-                                padding: "4px 8px",
-                                borderRadius: "4px",
-                            }}
-                        >
+                        <Typography variant="body2">
                             {params.value}
 
                             {/* Error Chip */}
@@ -258,7 +248,7 @@ const MenuItems = () => {
             {
                 flex: 1,
                 field: "itemCode",
-                headerName: "SKU",
+                headerName: "Item Code",
                 minWidth: 150,
                 renderCell: (params) => (
                     <TableStyledBox>
@@ -359,14 +349,6 @@ const MenuItems = () => {
         ],
         [theme, anchorEl, selectedRow, currentUser, handleOpenFormModal],
     );
-
-    // // Keep the useEffect for the "Warning" toasts (when we HAVE data, but sync fails)
-    // useEffect(() => {
-    //     // If there's a background error, but we already have items to show
-    //     if (isError && menuItems && menuItems.length > 0) {
-    //         notify(`Syncing ${t("menuItem")} failed, viewing offline`, "warning");
-    //     }
-    // }, [isError, menuItems?.length, notify, t]);
 
     if (isError && (!menuItems || menuItems.length === 0)) {
         const apiError = getApiError(error, `Failed to load ${t("menuItem")}.`);

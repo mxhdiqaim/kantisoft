@@ -1,4 +1,4 @@
-import {extendBaseSchema} from "@/types";
+import {extendBaseSchema, type LocalSyncStatus} from "@/types";
 import * as yup from "yup";
 
 export const InventoryStatusEnum = {
@@ -120,4 +120,8 @@ export type InventoryValuationHealthType = {
     outOfStockItemsCount: number;
     stockedItemsPercentage: string;
     storeQueryType: string;
+};
+
+export type LocalInventoryTypee = InventoryType & {
+    syncStatus: LocalSyncStatus;
 };

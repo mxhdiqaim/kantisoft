@@ -577,6 +577,29 @@ export const apiSlice = createApi({
         // -------------------------
         getAllInventory: builder.query<InventoryType[], void>({
             query: () => "/inventory",
+
+            // THE SEEDING LOGIC
+            async onCacheEntryAdded(_arg, {cacheDataLoaded}) {
+                try {
+                    const {data} = await cacheDataLoaded;
+
+                    if (data && data.length > 0) {
+                        // Prepare data for Dexie
+                        // Note: We ensure storeId is included for your useOfflineGoods hook filter
+                        const localData = data.map(item => ({
+                            ...item,
+                            syncStatus: localSyncStatusEnum.SYNCED
+                        }));
+
+                        // bulkPut updates existing records by their primary key (menuItemId)
+                        await localDb.inventory.bulkPut(localData);
+                        console.log("Dexie Hydrated: Inventory (Goods) stored locally.");
+                    }
+                } catch (error) {
+                    console.error("Failed to seed Dexie Inventory:", error);
+                }
+            },
+
             providesTags: (result) =>
                 result
                     ? [...result.map(({menuItemId}) => ({type: "Inventory" as const, menuItemId})), {

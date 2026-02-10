@@ -7,8 +7,8 @@ import {
     DashboardScreen,
     EditUserScreen,
     ForgetPasswordScreen,
+    GoodsScreen,
     HomeScreen,
-    InventoryManagementScreen,
     InventoryTransactionsScreen,
     LoginScreen,
     MenuItemScreen,
@@ -116,15 +116,9 @@ export const appRoutes: AppRouteType[] = [
         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST],
         children: [
             {
-                to: "menu-items",
-                title: "menuItems",
-                element: MenuItemScreen,
-                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
-            },
-            {
                 to: "goods",
                 title: "Goods",
-                element: InventoryManagementScreen,
+                element: GoodsScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
                 children: [
                     {
@@ -135,6 +129,12 @@ export const appRoutes: AppRouteType[] = [
                         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
                     },
                 ]
+            },
+            {
+                to: "menu-items",
+                title: "menuItems",
+                element: MenuItemScreen,
+                roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
             },
             {
                 to: "transactions",

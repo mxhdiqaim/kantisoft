@@ -7,7 +7,7 @@ export {default as PointOfSaleScreen} from "./point-of-sale";
 export {default as SalesHistoryScreen} from "./point-of-sale/sales";
 export {default as ViewSalesHistoryScreen} from "@/pages/point-of-sale/sales/view-sales-history";
 
-export {default as MenuItemScreen} from "./menu-item";
+export {default as MenuItemScreen} from "./inventory/menu-item.tsx";
 
 export {default as ActivityLogScreen} from "./activity-log";
 
@@ -15,7 +15,7 @@ export {default as ProfileScreen} from "./profile";
 export {default as ChangePasswordScreen} from "./profile/change-password";
 
 // Inventory screens
-export {default as InventoryManagementScreen} from "./inventory";
+export {default as GoodsScreen} from "./inventory/goods.tsx";
 export {default as SingleInventoryTransactionScreen} from "./inventory/single-inventory-transaction.tsx";
 export {default as InventoryTransactionsScreen} from "./inventory/inventory-transactions.tsx";
 
