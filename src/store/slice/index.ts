@@ -62,7 +62,7 @@ import type {
     ProductionType,
     ProductionWastageSummaryType
 } from "@/types/production-types.ts";
-import type {CategoryType, CreateCategoryType} from "@/types/categories-types.ts";
+import type {CategoryType, CreateCategoryType, LocalCategoryType} from "@/types/categories-types.ts";
 import {localDb} from "@/db/local-db.ts";
 
 const baseUrl = getEnvVariable("VITE_APP_API_URL");
@@ -577,6 +577,29 @@ export const apiSlice = createApi({
         // -------------------------
         getAllInventory: builder.query<InventoryType[], void>({
             query: () => "/inventory",
+
+            // THE SEEDING LOGIC
+            async onCacheEntryAdded(_arg, {cacheDataLoaded}) {
+                try {
+                    const {data} = await cacheDataLoaded;
+
+                    if (data && data.length > 0) {
+                        // Prepare data for Dexie
+                        // Note: We ensure storeId is included for your useOfflineGoods hook filter
+                        const localData = data.map(item => ({
+                            ...item,
+                            syncStatus: localSyncStatusEnum.SYNCED
+                        }));
+
+                        // bulkPut updates existing records by their primary key (menuItemId)
+                        await localDb.inventory.bulkPut(localData);
+                        console.log("Dexie Hydrated: Inventory (Goods) stored locally.");
+                    }
+                } catch (error) {
+                    console.error("Failed to seed Dexie Inventory:", error);
+                }
+            },
+
             providesTags: (result) =>
                 result
                     ? [...result.map(({menuItemId}) => ({type: "Inventory" as const, menuItemId})), {
@@ -900,6 +923,28 @@ export const apiSlice = createApi({
         // -------------------------
         getAllCategories: builder.query<CategoryType[], void>({
             query: () => "/categories",
+
+            // THE SEEDING LOGIC
+            async onCacheEntryAdded(_arg, {cacheDataLoaded}) {
+                try {
+                    // Wait for the first response to arrive from the backend
+                    const {data} = await cacheDataLoaded;
+
+                    if (data && data.length > 0) {
+                        // Bulk save to Dexie.
+                        // .bulkPut is better than .add because it updates existing records
+                        const localData: LocalCategoryType[] = data.map(item => ({
+                            ...item,
+                            syncStatus: localSyncStatusEnum.SYNCED // Mark as already on server
+                        }));
+
+                        await localDb.categories.bulkPut(localData);
+                        console.log("Dexie Hydrated: Categories stored locally.");
+                    }
+                } catch (error) {
+                    console.error("Failed to seed Dexie:", error);
+                }
+            },
 
             providesTags: (result) =>
                 result
