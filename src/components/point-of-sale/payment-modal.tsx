@@ -23,7 +23,7 @@ const PaymentModal = ({open, onClose, onCompleteSale, cartItems, isLoading}: Pro
     const seller = useSelector(selectCurrentUser);
     const activeStore = useSelector(selectActiveStore);
 
-    const total = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const total = cartItems.reduce((acc, item) => acc + Number(item.price) * item.quantity, 0);
 
     const {
         control,

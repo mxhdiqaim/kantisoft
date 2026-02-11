@@ -78,7 +78,7 @@ const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
             resetForm({
                 name: rawMaterial.name,
                 description: rawMaterial.description,
-                unitOfMeasurementId: rawMaterial.unitOfMeasurementId,
+                unitOfMeasurementId: rawMaterial?.unitOfMeasurement?.id,
                 latestUnitPricePresentation: rawMaterial.latestUnitPricePresentation,
             });
         } else if (!open) {

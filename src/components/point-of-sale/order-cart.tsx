@@ -13,7 +13,7 @@ interface Props {
 
 const OrderCart = ({cartItems, onUpdateQuantity, onRemoveItem, onOpenPaymentDialog}: Props) => {
     const theme = useTheme();
-    const total = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const total = cartItems.reduce((acc, item) => acc + Number(item.price) * item.quantity, 0);
 
     return (
         <Box
@@ -49,7 +49,7 @@ const OrderCart = ({cartItems, onUpdateQuantity, onRemoveItem, onOpenPaymentDial
                                 >
                                     <ListItemText
                                         primary={item.name}
-                                        secondary={`Subtotal: ${formatCurrency(item.price * item.quantity)}`}
+                                        secondary={`Subtotal: ${formatCurrency(Number(item.price) * item.quantity)}`}
                                         slotProps={{
                                             primary: {
                                                 sx: {

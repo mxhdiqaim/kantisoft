@@ -37,7 +37,7 @@ const RawMaterials = () => {
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
         initialData: memoizedRawMaterialData,
-        searchKeys: ["name", "symbol", "unitOfMeasurementFamily", "isBaseUnit", "conversionFactorToBase"],
+        searchKeys: ["name", "description"],
     });
 
     const [deleteRawMaterial, {isLoading: isDeleting}] = useDeleteRawMaterialMutation();
@@ -263,7 +263,7 @@ const RawMaterials = () => {
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}
-                placeholder={"Search Raw Materials..."}
+                placeholder={"Search by name or description"}
             />
 
             <Grid container spacing={2}>
