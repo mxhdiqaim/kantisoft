@@ -48,7 +48,7 @@ const EachMenuItem = ({item, cartItems, onAddToCart}: Props) => {
             <Box>
                 <Typography variant="h6" noWrap>{item.name}</Typography>
                 <Typography variant="body2" color="primary" fontWeight="bold">
-                    {formatCurrency(item.price)}
+                    {formatCurrency(item.price as number)}
                 </Typography>
 
                 <Typography variant="caption" sx={{color: getStockColor(), display: 'block', mb: 1}}>
