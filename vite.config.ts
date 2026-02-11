@@ -16,6 +16,21 @@ export default defineConfig({
             output: {
                 manualChunks: (id) => {
                     if (id.includes('node_modules')) {
+                        // Split heavy libraries into their own chunks
+                        if (id.includes('xlsx')) {
+                            return 'xlsx';
+                        }
+                        if (id.includes('@mui')) {
+                            return 'mui';
+                        }
+                        if (id.includes('recharts')) {
+                            return 'recharts';
+                        }
+                        if (id.includes('@sentry')) {
+                            return 'sentry';
+                        }
+
+                        // Validated small packages can stay in a common vendor file
                         return 'vendor';
                     }
                 }
