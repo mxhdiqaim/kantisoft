@@ -138,8 +138,8 @@ const PointOfSale = () => {
                 <Grid size={{xs: 12, md: 4}}>
                     <OrderCart
                         cartItems={cartItems}
-                        onUpdateQuantity={handleUpdateQuantity}
                         onRemoveItem={handleRemoveItem}
+                        onUpdateQuantity={handleUpdateQuantity}
                         onOpenPaymentDialog={handleOpenPaymentDialog}
                     />
                 </Grid>

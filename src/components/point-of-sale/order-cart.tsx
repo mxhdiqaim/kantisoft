@@ -33,7 +33,7 @@ const OrderCart = ({cartItems, onUpdateQuantity, onRemoveItem, onOpenPaymentDial
                 <>
                     <List>
                         {cartItems.map((item) => (
-                            <>
+                            <Box component={"span"} key={item.id}>
                                 <Divider/>
                                 <ListItem
                                     key={item.id}
@@ -78,7 +78,7 @@ const OrderCart = ({cartItems, onUpdateQuantity, onRemoveItem, onOpenPaymentDial
                                         <Add/>
                                     </IconButton>
                                 </ListItem>
-                            </>
+                            </Box>
                         ))}
                     </List>
                     <Divider/>
