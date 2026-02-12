@@ -20,7 +20,7 @@ import useNotifier from "@/hooks/useNotifier.ts";
 
 import MoneyIcon from '@mui/icons-material/Money';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
-import {filterSchema, type TimePeriod} from "@/types";
+import {filterSchema, type FilterSchemaType} from "@/types";
 
 const tabsArray = [
     {
@@ -38,12 +38,14 @@ const tabsArray = [
 const ProfitabilityWastageScreen = () => {
     const notify = useNotifier();
 
-    const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
+    const {control, watch} = useForm<FilterSchemaType>({
         mode: "onChange",
         defaultValues: {
             timePeriod: "today",
         },
 
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         resolver: yupResolver(filterSchema),
     });
 

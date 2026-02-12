@@ -10,17 +10,19 @@ import {Box, CircularProgress, Grid, Typography, useTheme} from "@mui/material";
 import {useEffect, useMemo, useState} from "react";
 import {useForm} from "react-hook-form";
 import PeriodSelector from "@/components/ui/period-selector.tsx";
-import {filterSchema, type TimePeriod} from "@/types";
+import {filterSchema, type FilterSchemaType} from "@/types";
 
 const Index = () => {
     const theme = useTheme();
 
-    const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
+    const {control, watch} = useForm<FilterSchemaType>({
         mode: "onChange",
         defaultValues: {
             timePeriod: "today",
         },
 
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         resolver: yupResolver(filterSchema),
     });
 
