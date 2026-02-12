@@ -23,9 +23,7 @@ export const searchSchema = yup.object({
 
 export type SearchTermType = yup.InferType<typeof searchSchema>;
 
-
 export const ORDER_PERIODS = ["today", "week", "month", "all-time"] as const;
-export type TimePeriod = (typeof ORDER_PERIODS)[number];
 
 export const filterSchema = yup.object({
     timePeriod: yup

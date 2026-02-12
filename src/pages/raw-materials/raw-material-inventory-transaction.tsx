@@ -8,12 +8,14 @@ import {getTransactionTypeChipColor, StyledTextField} from "@/components/ui";
 import {formatDateTimeCustom} from "@/utils/get-relative-time.ts";
 import DataGridTable from "@/components/ui/data-grid-table";
 import {Controller, useForm} from "react-hook-form";
-import {type TimePeriod} from "@/types";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import {useSearch} from "@/use-search.ts";
 import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
-import {fetchRawMaterialAndFilterByPeriod} from "@/types/raw-material-types.ts";
+import {
+    fetchRawMaterialAndFilterByPeriod,
+    type FetchRawMaterialAndFilterByPeriodType
+} from "@/types/raw-material-types.ts";
 import PeriodSelector from "@/components/ui/period-selector.tsx";
 import {getApiError} from "@/helpers/get-api-error.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
@@ -21,11 +23,6 @@ import useNotifier from "@/hooks/useNotifier.ts";
 
 import Icon from "@/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
-
-type FormValues = {
-    timePeriod: TimePeriod;
-    rawMaterialId: string;
-};
 
 const RawMaterialInventoryTransaction = () => {
     const theme = useTheme();
@@ -35,13 +32,15 @@ const RawMaterialInventoryTransaction = () => {
         control,
         watch,
         formState: {errors},
-    } = useForm<FormValues>({
+    } = useForm<FetchRawMaterialAndFilterByPeriodType>({
         mode: "onChange",
         defaultValues: {
             timePeriod: "today",
             rawMaterialId: "",
         },
 
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         resolver: yupResolver(fetchRawMaterialAndFilterByPeriod),
     });
 
