@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as yup from "yup";
 
-export const ORDER_PERIODS = ["today", "week", "month", "all-time"] as const;
-
 // Type inference from the base schema
 export type BaseSchema = {
     id: string;
@@ -25,18 +23,19 @@ export const searchSchema = yup.object({
 
 export type SearchTermType = yup.InferType<typeof searchSchema>;
 
-export const timePeriodSchema = yup
-    .string()
-    .oneOf(ORDER_PERIODS, "Invalid period. Must be 'day', 'week', or 'month'.")
-    .default("today")
-    .required("Period is required.");
 
+export const ORDER_PERIODS = ["today", "week", "month", "all-time"] as const;
+export type TimePeriod = (typeof ORDER_PERIODS)[number];
 
 export const filterSchema = yup.object({
-    timePeriod: timePeriodSchema,
+    timePeriod: yup
+        .string()
+        .oneOf(ORDER_PERIODS, "Invalid period. Must be 'day', 'week', or 'month'.")
+        .default("today")
+        .required("Period is required."),
 });
 
-export type TimePeriod = (typeof ORDER_PERIODS)[number];
+export type FilterSchemaType = yup.InferType<typeof filterSchema>;
 
 export interface ActivityLogEntry {
     id: string;

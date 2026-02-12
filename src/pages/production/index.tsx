@@ -1,7 +1,7 @@
 import {Box, Grid, Typography, useTheme} from '@mui/material';
 import {useGetProductionLogsQuery, useGetProductionSummaryQuery} from '@/store/slice';
 import {useForm} from "react-hook-form";
-import {filterSchema, type TimePeriod} from "@/types";
+import {filterSchema, type FilterSchemaType} from "@/types";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {useEffect, useMemo, useState} from "react";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
@@ -25,12 +25,14 @@ const ProductionScreen = () => {
     const [productionModalOpen, setProductionModalOpen] = useState(false);
     const [wastageModalOpen, setWastageModalOpen] = useState(false);
 
-    const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
+    const {control, watch} = useForm<FilterSchemaType>({
         mode: "onChange",
         defaultValues: {
             timePeriod: "today",
         },
-        
+
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         resolver: yupResolver(filterSchema),
     });
 

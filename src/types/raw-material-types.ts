@@ -1,5 +1,5 @@
 import * as yup from "yup";
-import {type BaseSchema, extendBaseSchema, timePeriodSchema} from "@/types";
+import {type BaseSchema, extendBaseSchema, ORDER_PERIODS} from "@/types";
 import {unitOfMeasurementSchema, type UnitOfMeasurementType} from "@/types/unit-of-measurement-types.ts";
 import type {InventoryTransactionResponseType} from "@/types/inventory-types.ts";
 
@@ -183,7 +183,11 @@ export type RawMaterialInventoryTransactionsResponse = Omit<InventoryTransaction
 }
 
 export const fetchRawMaterialAndFilterByPeriod = yup.object({
-    timePeriod: timePeriodSchema,
+    timePeriod: yup
+        .string()
+        .oneOf(ORDER_PERIODS, "Invalid period. Must be 'day', 'week', or 'month'.")
+        .default("today")
+        .required("Period is required."),
     rawMaterialId: yup.string().required("Raw Material is required").typeError("Raw Material must be selected"),
 });
 

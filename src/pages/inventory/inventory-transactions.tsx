@@ -7,7 +7,7 @@ import DataGridTable from "@/components/ui/data-grid-table";
 import {camelCaseToTitleCase} from "@/utils";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {filterSchema, type TimePeriod} from "@/types";
+import {filterSchema, type FilterSchemaType} from "@/types";
 import {getTransactionChipColor, getTransactionTypeChipColor} from "@/components/ui";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import {useSearch} from "@/use-search.ts";
@@ -19,13 +19,15 @@ import useNotifier from "@/hooks/useNotifier.ts";
 
 const InventoryTransactions = () => {
     const notify = useNotifier();
-    
-    const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
+
+    const {control, watch} = useForm<FilterSchemaType>({
         mode: "onChange",
         defaultValues: {
             timePeriod: "today",
         },
 
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         resolver: yupResolver(filterSchema),
     });
 

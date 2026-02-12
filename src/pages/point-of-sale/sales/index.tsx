@@ -1,7 +1,7 @@
 import SalesHistoryOverviewCard from "@/components/point-of-sale/sales-history-overview-card.tsx";
 import SalesHistoryTable from "@/components/point-of-sale/sales-history-table.tsx";
 import {useGetOrdersByPeriodQuery} from "@/store/slice";
-import {filterSchema, type TimePeriod} from "@/types";
+import {filterSchema, type FilterSchemaType} from "@/types";
 import {formatCurrency} from "@/utils";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {DinnerDiningOutlined, DomainVerificationOutlined, MonetizationOn, Person2Outlined} from "@mui/icons-material";
@@ -20,12 +20,14 @@ const SalesHistory = () => {
     const notify = useNotifier();
     const currentUser = useSelector(selectCurrentUser);
 
-    const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
+    const {control, watch} = useForm<FilterSchemaType>({
         mode: "onChange",
         defaultValues: {
             timePeriod: "today",
         },
 
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         resolver: yupResolver(filterSchema),
     });
 
