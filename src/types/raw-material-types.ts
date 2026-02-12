@@ -191,7 +191,7 @@ export const fetchRawMaterialAndFilterByPeriod = yup.object({
     rawMaterialId: yup.string().required("Raw Material is required").typeError("Raw Material must be selected"),
 });
 
-// export type FetchRawMaterialAndFilterByPeriodType = yup.InferType<typeof fetchRawMaterialAndFilterByPeriod>;
+export type FetchRawMaterialAndFilterByPeriodType = yup.InferType<typeof fetchRawMaterialAndFilterByPeriod>;
 
 export type StockInRawMaterialInventoryType = {
     id: string;
