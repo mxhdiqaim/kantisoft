@@ -20,7 +20,7 @@ interface Props {
 }
 
 const PaymentModal = ({open, onClose, onCompleteSale, cartItems, isLoading}: Props) => {
-    const seller = useSelector(selectCurrentUser);
+    const currentUser = useSelector(selectCurrentUser);
     const activeStore = useSelector(selectActiveStore);
 
     const total = cartItems.reduce((acc, item) => acc + Number(item.price) * item.quantity, 0);
@@ -33,12 +33,12 @@ const PaymentModal = ({open, onClose, onCompleteSale, cartItems, isLoading}: Pro
     } = useForm<CreateOrderType>({
         mode: "onChange",
         defaultValues: {
-            sellerId: seller?.id || "",
-            storeId: activeStore?.id || "",
-            paymentMethod: OrderPaymentMethod.CASH,
-            orderStatus: OrderStatus.PENDING,
-            items: [],
-            amountReceived: 0,
+            // sellerId: currentUser?.id || "",
+            // storeId: activeStore?.id || "",
+            // paymentMethod: OrderPaymentMethod.CASH,
+            // orderStatus: OrderStatus.PENDING,
+            // items: [],
+            // amountReceived: 0,
         },
 
         resolver: yupResolver(createOrderSchema),
@@ -58,43 +58,15 @@ const PaymentModal = ({open, onClose, onCompleteSale, cartItems, isLoading}: Pro
             }));
 
             reset({
-                sellerId: seller?.id || "",
+                sellerId: currentUser?.id || "",
                 storeId: activeStore?.id || "",
-                paymentMethod: "cash",
-                orderStatus: "completed",
+                paymentMethod: OrderPaymentMethod.CASH,
+                orderStatus: OrderStatus.PENDING,
                 items: items,
                 amountReceived: 0,
             });
         }
-    }, [open, cartItems, seller?.id, activeStore?.id, reset]);
-
-    // useEffect(() => {
-    //     if (paymentMethod === "cash") {
-    //         if (amountReceived < total) {
-    //             // If cash is not enough, manually set an error
-    //             setError("amountReceived", {
-    //                 type: "manual",
-    //                 message: "Amount received must be at least the total.",
-    //             });
-    //         } else {
-    //             // If cash is enough, clear the error
-    //             clearErrors("amountReceived");
-    //         }
-    //     } else {
-    //         // For other payment methods, ensure the error is cleared
-    //         clearErrors("amountReceived");
-    //     }
-    // }, [amountReceived, paymentMethod, total, setError, clearErrors]);
-    //
-    // useEffect(() => {
-    //     if (paymentMethod !== "cash") {
-    //         // If payment is not cash, set the amountReceived to the total
-    //         setValue("amountReceived", total, {shouldValidate: true});
-    //     } else {
-    //         // If switching back to cash, reset the amountReceived
-    //         setValue("amountReceived", 0, {shouldValidate: true});
-    //     }
-    // }, [paymentMethod, total, setValue]);
+    }, [open, cartItems, currentUser?.id, activeStore?.id, reset]);
 
     return (
         <CustomModal
@@ -117,28 +89,6 @@ const PaymentModal = ({open, onClose, onCompleteSale, cartItems, isLoading}: Pro
                         )}
                     />
                     {errors.paymentMethod && <FormHelperText>{errors.paymentMethod.message}</FormHelperText>}
-                    {/*{paymentMethod === "cash" && (*/}
-                    {/*    <>*/}
-                    {/*        <Controller*/}
-                    {/*            name="amountReceived"*/}
-                    {/*            control={control}*/}
-                    {/*            render={({ field }) => (*/}
-                    {/*                <TextField*/}
-                    {/*                    {...field}*/}
-                    {/*                    label="Amount Received"*/}
-                    {/*                    type="number"*/}
-                    {/*                    fullWidth*/}
-                    {/*                    margin="normal"*/}
-                    {/*                    error={!!errors.amountReceived}*/}
-                    {/*                    helperText={errors.amountReceived?.message}*/}
-                    {/*                />*/}
-                    {/*            )}*/}
-                    {/*        />*/}
-                    {/*        <Typography sx={{ mt: 1 }}>*/}
-                    {/*            Change: {formatCurrency(change)}*/}
-                    {/*        </Typography>*/}
-                    {/*    </>*/}
-                    {/*)}*/}
                 </FormControl>
                 <DialogActions sx={{mt: 2, px: 0}}>
                     <CustomButton title={"Cancel"} onClick={onClose}/>
@@ -147,7 +97,7 @@ const PaymentModal = ({open, onClose, onCompleteSale, cartItems, isLoading}: Pro
                         type="submit"
                         variant="contained"
                         color="primary"
-                        disabled={!isValid || /* isCashPaymentInsufficient || */ isLoading}
+                        disabled={!isValid || isLoading}
                     />
                 </DialogActions>
             </form>
