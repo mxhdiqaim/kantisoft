@@ -30,7 +30,7 @@ const PaymentModal = ({open, onClose, onCompleteSale, cartItems, isLoading}: Pro
         handleSubmit,
         reset,
         formState: {errors, isValid},
-    } = useForm<CreateOrderType>({
+    } = useForm({
         mode: "onChange",
         defaultValues: {
             // sellerId: currentUser?.id || "",

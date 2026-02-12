@@ -8,16 +8,15 @@ export const OrderStatus = {
     PENDING: "pending",
     COMPLETED: "completed",
 } as const;
+const ORDER_STATUSES = Object.values(OrderStatus);
 
 export const OrderPaymentMethod = {
     CARD: "card",
     CASH: "cash",
     TRANSFER: "transfer",
 } as const;
-
-// Define allowed values for better type safety and validation
 const PAYMENT_METHODS = Object.values(OrderPaymentMethod);
-const ORDER_STATUSES = Object.values(OrderStatus);
+
 
 // Core schema for creating and validating an order
 const coreOrderSchema = yup.object({
@@ -83,8 +82,12 @@ export const orderItemSchema = extendBaseSchema(coreOrderItemSchema);
 export const createOrderSchema = yup.object({
     sellerId: yup.string().required(),
     storeId: yup.string().required(),
-    paymentMethod: yup.mixed<"card" | "cash" | "transfer">().required(),
-    orderStatus: yup.mixed<"canceled" | "pending" | "completed">().required(),
+    paymentMethod: yup.string().oneOf(PAYMENT_METHODS, "Invalid payment method").default(OrderPaymentMethod.CASH).required("Payment method is required"),
+    orderStatus: yup
+        .string()
+        .oneOf(ORDER_STATUSES, "Invalid order status")
+        .default(OrderStatus.PENDING)
+        .required("Order status is required"),
     items: yup
         .array()
         .of(
@@ -104,22 +107,22 @@ export const createOrderSchema = yup.object({
 
 // TypeScript types inferred from schemas
 export type OrderType = yup.InferType<typeof orderSchema>;
-// export type CreateOrderType = yup.InferType<typeof createOrderSchema>;
+export type CreateOrderType = yup.InferType<typeof createOrderSchema>;
 
-export type CreateOrderType = {
-    sellerId: string;
-    storeId: string;
-    paymentMethod: "cash" | "card" | "transfer";
-    orderStatus: "completed" | "pending" | "canceled";
-    items: { menuItemId?: string; quantity?: number; name?: string }[];
-    amountReceived: number;
-};
+// export type CreateOrderType = {
+//     sellerId: string;
+//     storeId: string;
+//     paymentMethod: "cash" | "card" | "transfer";
+//     orderStatus: "completed" | "pending" | "canceled";
+//     items: { menuItemId?: string; quantity?: number; name?: string }[];
+//     amountReceived: number;
+// };
 
 // export type SingleOrderType = yup.InferType<typeof singleOrderSchema>;
 export type SingleOrderType = any;
 
 export type OrderItemType = yup.InferType<typeof orderItemSchema>;
-export type CreateOrderItemType = Pick<OrderItemType, "menuItemId" | "quantity" | "name">;
+// export type CreateOrderItemType = Pick<OrderItemType, "menuItemId" | "quantity" | "name">;
 
 // Explicitly define the types for the constants
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];

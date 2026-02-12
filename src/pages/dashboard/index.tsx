@@ -4,25 +4,28 @@ import SalesTrendChart from "@/components/dashboard/sales-trend-chart";
 import SummaryCard from "@/components/dashboard/summary-card";
 import TopSells from "@/components/dashboard/top-sells";
 import {useGetSalesSummaryQuery} from "@/store/slice";
-import {filterSchema} from "@/types/dashboard-types";
-import type {Period} from "@/types/order-types.ts";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {AttachMoney, PointOfSale, ShoppingCart} from "@mui/icons-material";
 import {Box, CircularProgress, Grid, Typography, useTheme} from "@mui/material";
 import {useEffect, useMemo, useState} from "react";
 import {useForm} from "react-hook-form";
 import PeriodSelector from "@/components/ui/period-selector.tsx";
+import {filterSchema, type TimePeriod} from "@/types";
 
 const Index = () => {
     const theme = useTheme();
-    const {control, watch} = useForm<{ period: Period }>({
+
+    const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
         mode: "onChange",
-        resolver: yupResolver(filterSchema),
         defaultValues: {
-            period: "today",
+            timePeriod: "today",
         },
+
+        resolver: yupResolver(filterSchema),
     });
-    const period = watch("period");
+
+    const period = watch("timePeriod");
+
     const {data: salesSummary, isLoading, isFetching, isError, fulfilledTimeStamp} = useGetSalesSummaryQuery(period);
 
     const summaryCards = useMemo(() => {
@@ -79,7 +82,7 @@ const Index = () => {
                 </Box>
                 <PeriodSelector
                     control={control}
-                    name={"period"}
+                    name={"timePeriod"}
                     lastFetched={lastFetched}
                 />
             </Box>

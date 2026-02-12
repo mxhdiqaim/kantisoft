@@ -19,12 +19,14 @@ import useNotifier from "@/hooks/useNotifier.ts";
 
 const InventoryTransactions = () => {
     const notify = useNotifier();
+    
     const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
         mode: "onChange",
-        resolver: yupResolver(filterSchema),
         defaultValues: {
             timePeriod: "today",
         },
+
+        resolver: yupResolver(filterSchema),
     });
 
     const period = watch("timePeriod");

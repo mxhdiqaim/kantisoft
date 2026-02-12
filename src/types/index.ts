@@ -28,6 +28,7 @@ export type SearchTermType = yup.InferType<typeof searchSchema>;
 export const timePeriodSchema = yup
     .string()
     .oneOf(ORDER_PERIODS, "Invalid period. Must be 'day', 'week', or 'month'.")
+    .default("today")
     .required("Period is required.");
 
 

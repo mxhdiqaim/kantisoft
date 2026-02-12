@@ -19,12 +19,14 @@ import PeriodSelector from "@/components/ui/period-selector.tsx";
 const SalesHistory = () => {
     const notify = useNotifier();
     const currentUser = useSelector(selectCurrentUser);
+
     const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
         mode: "onChange",
-        resolver: yupResolver(filterSchema),
         defaultValues: {
             timePeriod: "today",
         },
+
+        resolver: yupResolver(filterSchema),
     });
 
     const period = watch("timePeriod");

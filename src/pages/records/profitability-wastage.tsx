@@ -12,9 +12,7 @@ import WastageAnalysisTab from "@/components/records/wastage-analysis-tab.tsx";
 import ProfitOverviewTab from "@/components/records/profit-overview-tab.tsx";
 import InventoryHealthHeader from "@/components/records/inventory-health-header.tsx";
 import {useForm} from "react-hook-form";
-import type {Period} from "@/types/order-types.ts";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {filterSchema} from "@/types/dashboard-types.ts";
 import PeriodSelector from "@/components/ui/period-selector.tsx";
 import {getApiError} from "@/helpers/get-api-error.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
@@ -22,6 +20,7 @@ import useNotifier from "@/hooks/useNotifier.ts";
 
 import MoneyIcon from '@mui/icons-material/Money';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
+import {filterSchema, type TimePeriod} from "@/types";
 
 const tabsArray = [
     {
@@ -38,14 +37,17 @@ const tabsArray = [
 
 const ProfitabilityWastageScreen = () => {
     const notify = useNotifier();
-    const {control, watch} = useForm<{ period: Period }>({
+
+    const {control, watch} = useForm<{ timePeriod: TimePeriod }>({
         mode: "onChange",
-        resolver: yupResolver(filterSchema),
         defaultValues: {
-            period: "today",
+            timePeriod: "today",
         },
+
+        resolver: yupResolver(filterSchema),
     });
-    const period = watch("period");
+
+    const period = watch("timePeriod");
 
     const {
         data: wastageSummaryData,
@@ -89,7 +91,7 @@ const ProfitabilityWastageScreen = () => {
 
                 <PeriodSelector
                     control={control}
-                    name={"period"}
+                    name={"timePeriod"}
                     lastFetched={lastFetched}
                 />
             </Box>
