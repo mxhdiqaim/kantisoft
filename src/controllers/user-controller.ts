@@ -471,20 +471,9 @@ export const deleteUser = async (req: CustomRequest, res: Response) => {
 
 export const createUser = async (req: CustomRequest, res: Response) => {
     try {
-        const payload = req.body;
         const currentUser = req.user?.data;
+        const storeId = currentUser?.storeId;
 
-        // Check if the user is authenticated
-        if (!currentUser) {
-            return handleError2(
-                res,
-                "User not authenticated",
-                StatusCodes.FORBIDDEN,
-            );
-        }
-
-        // Get the storeId from the current user
-        const storeId = currentUser.storeId;
         if (!storeId) {
             return handleError2(
                 res,
@@ -492,6 +481,8 @@ export const createUser = async (req: CustomRequest, res: Response) => {
                 StatusCodes.FORBIDDEN,
             );
         }
+
+        const payload = req.body;
 
         const lowercasedEmail = payload.email.toLowerCase();
 
@@ -566,7 +557,7 @@ export const createUser = async (req: CustomRequest, res: Response) => {
             storeId: storeId, // Assign the store ID from the current user
         };
 
-        // CRITICAL FIX: Add the storeId to the values object
+        // CRITICAL FIX: Add the storeId to the value object
         const [newUser] = await db
             .insert(users)
             .values(newUserToInsert)
@@ -590,7 +581,7 @@ export const createUser = async (req: CustomRequest, res: Response) => {
         // console.error(error);
         // *** CRITICAL CHANGE 4: More specific error handling for unique constraints ***
         if (error.cause && error.cause.code === "23505") {
-            // PostgreSQL unique violation error code
+            // PostgresSQL unique violation error code
             if (error.cause.constraint === "users_email_unique") {
                 return handleError2(
                     res,

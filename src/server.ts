@@ -9,13 +9,8 @@ import path from "path";
 import configureSession from "./config/session-config";
 import routes from "./routes";
 import { getEnvVariable } from "./utils";
-// import { initializeSentry } from "./config/sentry-config";
 
 export const app = express();
-
-// Initialise Sentry
-// const SENTRY_DSN = getEnvVariable("SENTRY_DSN");
-// initializeSentry(SENTRY_DSN);
 
 app.set("trust proxy", 1);
 
