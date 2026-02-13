@@ -1,11 +1,9 @@
 import {type ComponentType, type ReactNode} from "react";
 import {
     ActivityLogScreen,
-    AddUserScreen,
     CategoriesScreen,
     ChangePasswordScreen,
     DashboardScreen,
-    EditUserScreen,
     ForgetPasswordScreen,
     GoodsScreen,
     HomeScreen,
@@ -238,20 +236,20 @@ export const appRoutes: AppRouteType[] = [
                         hidden: true,
                         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
                     },
-                    {
-                        to: "new",
-                        title: "createUser",
-                        element: AddUserScreen,
-                        hidden: true,
-                        roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-                    },
-                    {
-                        to: ":id/edit",
-                        title: "editUser",
-                        element: EditUserScreen,
-                        hidden: true,
-                        roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST],
-                    },
+                    // {
+                    //     to: "new",
+                    //     title: "createUser",
+                    //     element: AddUserScreen,
+                    //     hidden: true,
+                    //     roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
+                    // },
+                    // {
+                    //     to: ":id/edit",
+                    //     title: "editUser",
+                    //     element: EditUserScreen,
+                    //     hidden: true,
+                    //     roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST],
+                    // },
                     {
                         to: "profile",
                         title: "Profile",

@@ -62,7 +62,7 @@ export const baseUserSchema = yup.object().shape({
         otherwise: (schema) => schema.notRequired(),
     }),
     role: yup.string().oneOf(USER_ROLES).default("guest"),
-    status: yup.string().oneOf(USER_STATUSES).default("active"),
+    // status: yup.string().oneOf(USER_STATUSES).default("active"),
     storeId: yup.string().uuid().required("Store ID is required"),
     store: yup.object({
         id: yup.string().uuid().required("Store ID is required"),
@@ -73,7 +73,7 @@ export const baseUserSchema = yup.object().shape({
 
 export const createUserSchema = baseUserSchema;
 
-export const createUserSchemaWithoutStatusStoreIDRole = createUserSchema.omit(["status", "storeId", "role", "store"]);
+export const createUserSchemaWithoutStatusStoreIDRole = createUserSchema.omit(["storeId", "role", "store"]);
 
 export const registerUserSchema = createUserSchemaWithoutStatusStoreIDRole.concat(
     yup.object().shape({
@@ -86,7 +86,7 @@ export const registerUserSchema = createUserSchemaWithoutStatusStoreIDRole.conca
     }),
 );
 
-export const createUserSchemaWithoutStatus = baseUserSchema.omit(["status"]);
+export const createUserSchemaWithoutStatus = baseUserSchema;
 
 export const updateUserSchema = createUserSchemaWithoutStatus.concat(
     yup.object().shape({

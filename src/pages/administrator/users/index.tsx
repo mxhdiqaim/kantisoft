@@ -1,35 +1,35 @@
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-
 import {getApiError} from "@/helpers/get-api-error.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
 import {useAppSelector} from "@/store";
 import {useChangeUserStoreMutation, useGetAllStoresQuery, useGetAllUsersQuery} from "@/store/slice";
 import {selectCurrentUser} from "@/store/slice/auth-slice.ts";
 import {roleHierarchy, UserRoleEnum, UserStatusEnum, type UserType} from "@/types/user-types.ts";
-
 import {AddOutlined, EditOutlined, MoreVert, StorefrontOutlined, VisibilityOutlined} from "@mui/icons-material";
 import {Avatar, Box, Chip, Grid, Tooltip, Typography, useTheme,} from "@mui/material";
 import type {GridColDef, GridRenderCellParams} from "@mui/x-data-grid";
 import {type MouseEvent, useMemo, useState} from "react";
 import {useNavigate} from "react-router-dom";
-
 import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
 import DataGridTable from "@/components/ui/data-grid-table";
-import ChangeStoreDialog from "@/components/users/change-store-modal.tsx";
+import ChangeStoreModal from "@/components/users/change-store-modal.tsx";
 import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
 import {useSearch} from "@/use-search.ts";
-import {exportToCsv, exportToXlsx, getExportFormattedData} from "@/utils/export-data-utils.ts";
 import CustomButton from "@/components/ui/button.tsx";
 import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
 import {getUserStatusChipColor} from "@/components/ui";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import {useTranslation} from "react-i18next";
+import UserFormModal from "@/components/users/user-form-modal.tsx";
 
 const UsersPage = () => {
     const notify = useNotifier();
     const navigate = useNavigate();
     const theme = useTheme();
     const {t} = useTranslation();
+
+    const [openUserModal, setOpenUserModal] = useState(false);
+
     const currentUser = useAppSelector(selectCurrentUser);
     const {data: usersData, isLoading, isError, error} = useGetAllUsersQuery();
 
@@ -50,8 +50,7 @@ const UsersPage = () => {
 
     const memoizedUsers: UserType[] = useMemoizedArray(flattenedUsers)
 
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+    const [selectedRow, setSelectedRow] = useState<UserType | null>(null);
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
         initialData: memoizedUsers,
@@ -59,18 +58,23 @@ const UsersPage = () => {
     });
 
     const [isChangeStoreDialogOpen, setChangeStoreDialogOpen] = useState(false);
-    const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
 
+    const handleOpenFormModal = () => {
+        setOpenUserModal(true);
+    };
 
-    const handleOpenChangeStoreDialog = (user: UserType) => {
-        setSelectedUser(user);
+    const handleCloseFormModal = () => {
+        setOpenUserModal(false);
+        setSelectedRow(null);
+    };
+
+    const handleOpenChangeStoreDialog = () => {
         setChangeStoreDialogOpen(true);
-        handleMenuClose();
     };
 
     const handleCloseChangeStoreDialog = () => {
-        setSelectedUser(null);
         setChangeStoreDialogOpen(false);
+        setSelectedRow(null);
     };
 
     const handleChangeStore = async (userId: string, newStoreId: string) => {
@@ -84,61 +88,8 @@ const UsersPage = () => {
         }
     };
 
-    // Define custom formatters for UsersTable
-    const usersFieldFormatters = useMemo(
-        () => ({
-            name: (row: UserType) => `${row.firstName} ${row.lastName}`,
-            email: (row: UserType) => row.email,
-            phone: (row: UserType) => row.phone || "", // Ensure the phone is not null/undefined for export
-            role: (row: UserType) => row.role,
-            status: (row: UserType) => row.status,
-            createdAt: (row: UserType) => new Date(row.createdAt).toLocaleString(),
-
-        }),
-        [],
-    );
-
-    const prepareExportData = () => {
-        return getExportFormattedData(
-            filteredData, // Your data source
-            columns,      // Your column definitions
-            usersFieldFormatters // Your specific formatters
-        );
-    };
-
-    const handleExportCsv = () => {
-        const dataToExport = prepareExportData();
-
-        if (dataToExport.length === 0) {
-            notify("No data to export.", "error");
-            return;
-        }
-
-        const filename = `user_data.csv`;
-        exportToCsv(dataToExport, filename); // Uses generic utility
-    };
-
-    // Export to XLSX function
-    const handleExportXlsx = () => {
-        const dataToExport = prepareExportData();
-
-        if (dataToExport.length === 0) {
-            notify("No data to export.", "error");
-            return;
-        }
-
-        const filename = `user_data.xlsx`;
-        exportToXlsx(dataToExport, filename, "Sales History", columns); // Uses generic utility
-    };
-
-    const handleMenuClick = (event: MouseEvent<HTMLElement>, rowId: string) => {
-        setAnchorEl(event.currentTarget);
-        setSelectedRowId(rowId);
-    };
-
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-        setSelectedRowId(null);
+    const handleMenuClick = (_event: MouseEvent<HTMLElement>, row: UserType) => {
+        setSelectedRow(row);
     };
 
     const columns: GridColDef[] = useMemo(
@@ -265,14 +216,7 @@ const UsersPage = () => {
                 align: "center",
                 headerAlign: "center",
                 renderCell: (params) => {
-                    const handleView = () => {
-                        navigate(`/admin/users/${params.row.id}/view`);
-                        handleMenuClose();
-                    };
-                    const handleEdit = () => {
-                        navigate(`/admin/users/${params.row.id}/edit`);
-                        handleMenuClose();
-                    };
+                    const handleView = () => navigate(`/admin/users/${params.row.id}/view`);
 
                     const canEdit = () => {
                         if (!currentUser) return false; // Cannot edit if not logged in
@@ -311,7 +255,7 @@ const UsersPage = () => {
                                 borderRadius: "10px",
                                 color: theme.palette.text.primary,
                             }}
-                            onClick={(e) => handleMenuClick(e, params.row.id)}
+                            onClick={(e) => handleMenuClick(e, params.row)}
                             startIcon={
                                 <Tooltip title="More Actions" placement={"top"}>
                                     <MoreVert/>
@@ -322,13 +266,13 @@ const UsersPage = () => {
                                 <VisibilityOutlined sx={{mr: 1}}/>
                                 View
                             </TableStyledMenuItem>
-                            <TableStyledMenuItem onClick={handleEdit} disabled={isEditDisabled}>
+                            <TableStyledMenuItem onClick={handleOpenFormModal} disabled={isEditDisabled}>
                                 <EditOutlined sx={{mr: 1}}/>
                                 Edit
                             </TableStyledMenuItem>
                             {currentUser?.role === UserRoleEnum.MANAGER && (
                                 <TableStyledMenuItem
-                                    onClick={() => handleOpenChangeStoreDialog(params.row)}
+                                    onClick={handleOpenChangeStoreDialog}
                                     disabled={!canChangeStore}
                                 >
                                     <StorefrontOutlined sx={{mr: 1}}/>
@@ -340,7 +284,7 @@ const UsersPage = () => {
                 },
             },
         ],
-        [anchorEl, selectedRowId, navigate, currentUser],
+        [selectedRow, navigate, currentUser, handleOpenFormModal],
     );
 
     if (isError) {
@@ -358,7 +302,7 @@ const UsersPage = () => {
                         title={"New User"}
                         variant="contained"
                         startIcon={<AddOutlined/>}
-                        onClick={() => navigate("/admin/users/new")}
+                        onClick={handleOpenFormModal}
                     />
                 )}
             </Box>
@@ -366,8 +310,8 @@ const UsersPage = () => {
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}
-                onExportCsv={handleExportCsv}
-                onExportXlsx={handleExportXlsx}
+                // onExportCsv={handleExportCsv}
+                // onExportXlsx={handleExportXlsx}
                 placeholder={"Search users by name, email, or store..."}
             />
             <Grid container spacing={2}>
@@ -375,14 +319,16 @@ const UsersPage = () => {
                     <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
                 </Grid>
             </Grid>
-            <ChangeStoreDialog
+            <ChangeStoreModal
                 open={isChangeStoreDialogOpen}
                 onClose={handleCloseChangeStoreDialog}
-                user={selectedUser}
+                user={selectedRow}
                 stores={memoizedStoresData}
                 onConfirm={handleChangeStore}
                 isLoading={isChangingStore}
             />
+
+            <UserFormModal open={openUserModal} onClose={handleCloseFormModal} data={selectedRow}/>
         </Box>
     );
 };
