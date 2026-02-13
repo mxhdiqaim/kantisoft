@@ -6,10 +6,10 @@ if [ -z "$DB_CONNECTION_STRING" ]; then
   exit 1
 fi
 
-if [ -z "$REDIS_HOST" ] || [ -z "$REDIS_PORT" ]; then
-  echo "Error: REDIS_HOST or REDIS_PORT environment variables are not set."
-  exit 1
-fi
+#if [ -z "$REDIS_HOST" ] || [ -z "$REDIS_PORT" ]; then
+#  echo "Error: REDIS_HOST or REDIS_PORT environment variables are not set."
+#  exit 1
+#fi
 
 
 echo "Waiting for the database..."

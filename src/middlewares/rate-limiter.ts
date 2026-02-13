@@ -1,8 +1,11 @@
 import { rateLimit } from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
-import { redisClient } from "../config/redis-config";
-import { NODE_ENV } from "../db";
 import { NextFunction, Request, Response } from "express";
+import { createClient } from "redis";
+import { getEnvVariable } from "../utils";
+
+export let redisClient: ReturnType<typeof createClient>;
+const NODE_ENV = getEnvVariable("NODE_ENV");
 
 export const createRateLimiter = () => {
     if (NODE_ENV === "production" && redisClient) {

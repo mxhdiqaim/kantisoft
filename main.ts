@@ -2,7 +2,7 @@ import "dotenv/config";
 import * as db from "./src/db";
 import server, { app } from "./src/server";
 import { getEnvVariable } from "./src/utils";
-import { connectRedis } from "./src/config/redis-config";
+// import { connectRedis } from "./src/config/redis-config";
 import { createRateLimiter } from "./src/middlewares/rate-limiter";
 
 const PORT = parseInt(getEnvVariable("PORT"));
@@ -17,7 +17,7 @@ const PORT = parseInt(getEnvVariable("PORT"));
         );
 
     // Redis Connection
-    await connectRedis();
+    // await connectRedis();
 
     // Apply rate limiter after Redis is connected
     app.use(createRateLimiter());

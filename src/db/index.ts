@@ -7,10 +7,10 @@ import { getEnvVariable } from "../utils";
 export let pool: Pool;
 
 // Conditional Pool configuration based on NODE_ENV
-export const NODE_ENV = getEnvVariable("NODE_ENV");
+const NODE_ENV = getEnvVariable("NODE_ENV");
 
 if (NODE_ENV === "production") {
-    // Construct the connection URL
+    // Get the connection URL
     const connectionString = getEnvVariable("DB_CONNECTION_STRING");
     const sslRequired = getEnvVariable("DB_SSL_REQUIRED") == "true";
 
