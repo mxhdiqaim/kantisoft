@@ -13,7 +13,7 @@ interface Props {
     isLoading: boolean;
 }
 
-const ChangeStoreDialog: FC<Props> = ({open, onClose, user, stores, onConfirm, isLoading}) => {
+const ChangeStoreModal: FC<Props> = ({open, onClose, user, stores, onConfirm, isLoading}) => {
     const [newStoreId, setNewStoreId] = useState("");
 
     if (!user) return null;
@@ -51,4 +51,4 @@ const ChangeStoreDialog: FC<Props> = ({open, onClose, user, stores, onConfirm, i
     );
 };
 
-export default ChangeStoreDialog;
+export default ChangeStoreModal;
