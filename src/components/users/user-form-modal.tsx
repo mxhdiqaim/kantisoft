@@ -1,6 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
-
 import {getApiError} from "@/helpers/get-api-error";
 import useNotifier from "@/hooks/useNotifier";
 import {useCreateUserMutation, useGetAllStoresQuery, useUpdateUserMutation} from "@/store/slice";
@@ -13,6 +10,7 @@ import {
     type UpdateUserType,
     USER_ROLES,
     UserRoleEnum,
+    type UserRoleType,
     type UserType,
 } from "@/types/user-types";
 import {yupResolver} from "@hookform/resolvers/yup";
@@ -21,7 +19,6 @@ import {Box, FormControl, Grid, IconButton, InputAdornment, MenuItem, TextField}
 import {useEffect, useState} from "react";
 import {Controller, useForm} from "react-hook-form";
 import {useSelector} from "react-redux";
-import {useNavigate} from "react-router-dom";
 import CustomButton from "@/components/ui/button.tsx";
 import {StyledTextField} from "@/components/ui";
 import CustomModal from "@/components/customs/custom-modal.tsx";
@@ -32,17 +29,17 @@ import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 interface Props {
     open: boolean;
     onClose: () => void;
-    data?: UserType;
+    currentData?: UserType;
 }
 
-const UserFormModal = ({open, onClose, data}: Props) => {
-    console.log("data", data);
-    const navigate = useNavigate();
+const UserFormModal = ({open, onClose, currentData}: Props) => {
+    console.log({currentData});
+
     const notify = useNotifier();
     const currentUser = useSelector(selectCurrentUser);
     const [showPassword, setShowPassword] = useState(false);
 
-    const isEditMode = Boolean(data);
+    const isEditMode = Boolean(currentData);
 
     const {data: stores} = useGetAllStoresQuery();
 
@@ -63,53 +60,56 @@ const UserFormModal = ({open, onClose, data}: Props) => {
     });
 
     useEffect(() => {
-        if (data) {
-            reset({
-                firstName: data?.firstName,
-                lastName: data?.lastName,
-                email: data?.email,
-                phone: data?.phone,
-                role: data?.role,
-                storeId: data?.storeId,
-                password: "",
-                confirmPassword: "",
-            });
-        } else {
+        if (!open) {
             reset({
                 firstName: "",
                 lastName: "",
                 email: "",
                 phone: "",
-                role: "",
+                role: UserRoleEnum.USER,
                 storeId: "",
                 password: "",
                 confirmPassword: "",
             });
         }
-    }, [data, reset]);
+    }, [open, reset]);
+
+    useEffect(() => {
+        if (open && currentData) {
+            reset({
+                firstName: currentData?.firstName,
+                lastName: currentData?.lastName,
+                email: currentData?.email,
+                phone: currentData?.phone,
+                role: currentData?.role,
+                storeId: currentData?.storeId,
+                password: "",
+                confirmPassword: "",
+            });
+        }
+    }, [currentData, open, reset]);
 
     useEffect(() => {
         if (isCreated || isUpdated) {
-            reset();
             onClose();
+            reset();
         }
     }, [isUpdated, isCreated, onClose, reset]);
 
     const onSubmit = async (data: CreateUserType | UpdateUserType) => {
         try {
-            if (isEditMode && data) {
-                // If the password is not being changed, don't send it in the payload
+            if (isEditMode && currentData) {
                 const payload = {...data};
-                if (!payload.password) {
-                    delete payload.password;
-                }
-                await updateUser({id: data.id, ...payload}).unwrap();
+                if (!payload.password) delete payload.password;
+
+                await updateUser({id: currentData.id, ...payload}).unwrap();
                 notify("User updated successfully!", "success");
             } else {
                 await createUser(data as CreateUserType).unwrap();
                 notify("User created successfully!", "success");
             }
-            navigate("/users");
+
+            onClose();
         } catch (error) {
             const defaultMessage = `Failed to ${isEditMode ? "update" : "create"} user.`;
             const apiError = getApiError(error, defaultMessage);
@@ -117,7 +117,7 @@ const UserFormModal = ({open, onClose, data}: Props) => {
         }
     };
 
-    let availableRoles: UserRoleEnum[] = [];
+    let availableRoles: UserRoleType[] = [];
     let canEditRole;
 
     if (currentUser?.role === UserRoleEnum.MANAGER) {
@@ -126,7 +126,7 @@ const UserFormModal = ({open, onClose, data}: Props) => {
     } else if (currentUser?.role === UserRoleEnum.ADMIN) {
         availableRoles = USER_ROLES.filter((role) => role === UserRoleEnum.USER || role === UserRoleEnum.GUEST);
         // Admin cannot edit their own role
-        canEditRole = !isEditMode || (data && data.id !== currentUser.id);
+        canEditRole = !isEditMode || (currentData && currentData.id !== currentUser.id);
     } else {
         // User and Guest cannot edit or select a role
         availableRoles = [];
@@ -316,7 +316,7 @@ const UserFormModal = ({open, onClose, data}: Props) => {
                                 <FormControl fullWidth>
                                     <TextField
                                         label="Role"
-                                        value={data?.role || currentUser?.role}
+                                        value={currentData?.role || currentUser?.role}
                                         fullWidth
                                         slotProps={{
                                             input: {

@@ -310,8 +310,6 @@ const UsersPage = () => {
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}
-                // onExportCsv={handleExportCsv}
-                // onExportXlsx={handleExportXlsx}
                 placeholder={"Search users by name, email, or store..."}
             />
             <Grid container spacing={2}>
@@ -328,7 +326,7 @@ const UsersPage = () => {
                 isLoading={isChangingStore}
             />
 
-            <UserFormModal open={openUserModal} onClose={handleCloseFormModal} data={selectedRow}/>
+            <UserFormModal open={openUserModal} onClose={handleCloseFormModal} currentData={selectedRow}/>
         </Box>
     );
 };
