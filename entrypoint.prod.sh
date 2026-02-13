@@ -23,17 +23,17 @@ done
 echo "Postgres is ready."
 
 
-# REDIS WAIT
-echo "Waiting for Redis at $REDIS_HOST:$REDIS_PORT..."
-# Netcat (nc) check if a TCP connection is possible
-# Note: This checks port access, not authentication. The API client must handle auth.
-until nc -z "$REDIS_HOST" "$REDIS_PORT"; do
-  echo "Redis is unavailable - sleeping"
-  sleep 1
-done
-echo "Redis is ready."
+## REDIS WAIT
+#echo "Waiting for Redis at $REDIS_HOST:$REDIS_PORT..."
+## Netcat (nc) check if a TCP connection is possible
+## Note: This checks port access, not authentication. The API client must handle auth.
+#until nc -z "$REDIS_HOST" "$REDIS_PORT"; do
+#  echo "Redis is unavailable - sleeping"
+#  sleep 1
+#done
+#echo "Redis is ready."
 
-echo "All services are ready. Running migrations..."
+echo "Running migrations..."
 
 # Run database migrations using the compiled JavaScript file
 pnpm run migrate:prod
