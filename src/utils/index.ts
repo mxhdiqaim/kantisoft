@@ -191,18 +191,21 @@ interface RolePermissions {
     canEditRole: boolean;
 }
 
-export const getRolePermissions = (currentUserRole?: UserRoleType): RolePermissions => {
+export const getRolePermissions = (currentUserRole?: UserRoleType, isTargetSelf: boolean = false): RolePermissions => {
     let availableRoles: UserRoleType[] = [];
-    const canEditRole = currentUserRole === UserRoleEnum.MANAGER || currentUserRole === UserRoleEnum.ADMIN;
+
+    // You can edit roles if you are Manager/Admin AND you are not editing yourself
+    const canEditRole = (currentUserRole === UserRoleEnum.MANAGER || currentUserRole === UserRoleEnum.ADMIN) && !isTargetSelf;
 
     if (currentUserRole === UserRoleEnum.MANAGER) {
-        // Manager can create ADMIN, USER & GUEST
+        // Manager can assign ADMIN, USER & GUEST
         availableRoles = [UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST];
     } else if (currentUserRole === UserRoleEnum.ADMIN) {
-        // Admin can only create USER & GUEST
+        // Admin can only assign USER & GUEST
         availableRoles = [UserRoleEnum.USER, UserRoleEnum.GUEST];
     }
 
     return {availableRoles, canEditRole};
 };
+
 

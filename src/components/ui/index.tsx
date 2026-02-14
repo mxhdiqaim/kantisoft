@@ -96,6 +96,8 @@ export const StyledTextField = styled(TextField, {
         height: 40,
         "& fieldset": {height: 45},
         background: disabled ? "#CFD1D3" : "transparent",
+        color: disabled && "#7f8080",
+        pointerEvents: disabled ? "none" : "auto",
     },
     "& .MuiInputLabel-root": {
         // Adjusts the label to be vertically centered

@@ -5,7 +5,7 @@ import {selectCurrentUser} from "@/store/slice/auth-slice";
 import type {StoreType} from "@/types/store-types";
 import {updateUserSchema, type UpdateUserType, UserRoleEnum, type UserType,} from "@/types/user-types";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {Box, FormControl, Grid, InputAdornment, MenuItem, TextField} from "@mui/material";
+import {Box, FormControl, Grid, InputAdornment, MenuItem} from "@mui/material";
 import {useEffect} from "react";
 import {Controller, useForm} from "react-hook-form";
 import {useSelector} from "react-redux";
@@ -13,6 +13,7 @@ import CustomButton from "@/components/ui/button.tsx";
 import {StyledTextField} from "@/components/ui";
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import {getRolePermissions} from "@/utils";
+import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 
 import Icon from "@/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
@@ -27,7 +28,8 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
     const notify = useNotifier();
     const currentUser = useSelector(selectCurrentUser);
 
-    const {data: stores} = useGetAllStoresQuery();
+    const {data: stores, isLoading: fetchingStores} = useGetAllStoresQuery();
+    const memoizedStores = useMemoizedArray(stores);
 
     const [updateUser, {isLoading: isUpdating, isSuccess: isUpdated}] = useUpdateUserMutation();
     const isLoading = isUpdating;
@@ -53,8 +55,6 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
                 phone: "",
                 role: UserRoleEnum.GUEST,
                 storeId: "",
-                // password: "",
-                // confirmPassword: "",
             });
         }
     }, [open, reset]);
@@ -67,7 +67,7 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
                 email: currentData?.email,
                 phone: currentData?.phone,
                 role: currentData?.role,
-                storeId: currentData?.storeId,
+                storeId: currentData?.storeId || "",
             });
         }
     }, [currentData, open, reset]);
@@ -82,10 +82,6 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
     const onSubmit = async (data: Partial<UpdateUserType>) => {
         try {
             const payload = {...data};
-            // if (!payload.password) {
-            //     delete payload.password
-            //     delete payload.confirmPassword
-            // }
 
             await updateUser({id: currentData.id, ...payload}).unwrap();
             notify("User updated successfully!", "success");
@@ -99,7 +95,8 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
     };
 
     // Getting permissions
-    const {availableRoles, canEditRole} = getRolePermissions(currentUser?.role);
+    const isTargetSelf = currentUser?.id === currentData?.id;
+    const {availableRoles, canEditRole} = getRolePermissions(currentUser?.role, isTargetSelf);
 
     return (
         <CustomModal
@@ -181,80 +178,18 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
                             )}
                         />
                     </Grid>
-                    {canEditRole && (
-                        <Grid size={{xs: 12, sm: 6}}>
-                            {canEditRole ? (
-                                <FormControl fullWidth error={!!errors.role}>
-                                    <Controller
-                                        name="role"
-                                        control={control}
-                                        render={({field}) => (
-                                            <FormControl fullWidth>
-                                                <StyledTextField
-                                                    {...field}
-                                                    select
-                                                    label="Role"
-                                                    SelectProps={{
-                                                        IconComponent: () => null,
-                                                        endAdornment: (
-                                                            <InputAdornment position="end">
-                                                                <Icon
-                                                                    src={ArrowDownIconSvg}
-                                                                    alt={"Dropdown Arrow"}
-                                                                    sx={{width: 15, height: 15}}
-                                                                />
-                                                            </InputAdornment>
-                                                        ),
-                                                    }}
-                                                    error={Boolean(errors.role)}
-                                                    helperText={errors.role?.message}
-                                                >
-                                                    <MenuItem value={""} disabled>
-                                                        Select Role
-                                                    </MenuItem>
-                                                    {availableRoles.map((role) => (
-                                                        <MenuItem
-                                                            key={role}
-                                                            value={role}
-                                                            sx={{textTransform: "capitalize"}}
-                                                        >
-                                                            {role}
-                                                        </MenuItem>
-                                                    ))}
-                                                </StyledTextField>
-                                            </FormControl>
-                                        )}
-                                    />
-                                </FormControl>
-                            ) : (
-                                <FormControl fullWidth>
-                                    <TextField
-                                        label="Role"
-                                        value={currentData?.role || currentUser?.role}
-                                        fullWidth
-                                        slotProps={{
-                                            input: {
-                                                readOnly: true
-                                            }
-                                        }}
-                                        disabled
-                                    />
-                                </FormControl>
-                            )}
-                        </Grid>
-                    )}
-                    {currentUser?.role === UserRoleEnum.MANAGER && (
-                        <Grid size={{xs: 12, sm: 6}}>
-                            <FormControl fullWidth error={!!errors.storeId}>
+                    <Grid size={{xs: 12, sm: 6}}>
+                        {canEditRole ? (
+                            <FormControl fullWidth error={!!errors.role}>
                                 <Controller
-                                    name="storeId"
+                                    name="role"
                                     control={control}
                                     render={({field}) => (
                                         <FormControl fullWidth>
                                             <StyledTextField
                                                 {...field}
                                                 select
-                                                label="Assign Store"
+                                                label="Role"
                                                 SelectProps={{
                                                     IconComponent: () => null,
                                                     endAdornment: (
@@ -267,15 +202,19 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
                                                         </InputAdornment>
                                                     ),
                                                 }}
-                                                error={Boolean(errors.storeId)}
-                                                helperText={errors.storeId?.message}
+                                                error={Boolean(errors.role)}
+                                                helperText={errors.role?.message}
                                             >
                                                 <MenuItem value={""} disabled>
-                                                    Select Store
+                                                    Select Role
                                                 </MenuItem>
-                                                {stores?.map((store: StoreType) => (
-                                                    <MenuItem key={store.id} value={store.id}>
-                                                        {store.name}
+                                                {availableRoles.map((role) => (
+                                                    <MenuItem
+                                                        key={role}
+                                                        value={role}
+                                                        sx={{textTransform: "capitalize"}}
+                                                    >
+                                                        {role}
                                                     </MenuItem>
                                                 ))}
                                             </StyledTextField>
@@ -283,6 +222,80 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
                                     )}
                                 />
                             </FormControl>
+                        ) : (
+                            <FormControl fullWidth>
+                                <StyledTextField
+                                    label="Role"
+                                    value={currentData?.role || ''}
+                                    fullWidth
+                                    slotProps={{
+                                        input: {
+                                            readOnly: true
+                                        }
+                                    }}
+                                    disabled
+                                />
+                            </FormControl>
+                        )}
+                    </Grid>
+
+                    {currentUser?.role === UserRoleEnum.MANAGER && (
+                        <Grid size={{xs: 12, sm: 6}}>
+                            {canEditRole ? (
+                                <FormControl fullWidth error={!!errors.storeId}>
+                                    <Controller
+                                        name="storeId"
+                                        control={control}
+                                        render={({field}) => (
+                                            <FormControl fullWidth>
+                                                <StyledTextField
+                                                    {...field}
+                                                    select
+                                                    label="Assign Store"
+                                                    disabled={fetchingStores}
+                                                    SelectProps={{
+                                                        IconComponent: () => null,
+                                                        endAdornment: (
+                                                            <InputAdornment position="end">
+                                                                <Icon
+                                                                    src={ArrowDownIconSvg}
+                                                                    alt={"Dropdown Arrow"}
+                                                                    sx={{width: 15, height: 15}}
+                                                                />
+                                                            </InputAdornment>
+                                                        ),
+                                                    }}
+                                                    error={Boolean(errors.storeId)}
+                                                    helperText={errors.storeId?.message}
+                                                >
+                                                    <MenuItem value={""} disabled>
+                                                        Select Store
+                                                    </MenuItem>
+                                                    {memoizedStores?.map((store: StoreType) => (
+                                                        <MenuItem key={store.id} value={store.id}>
+                                                            {store.name}
+                                                        </MenuItem>
+                                                    ))}
+                                                </StyledTextField>
+                                            </FormControl>
+                                        )}
+                                    />
+                                </FormControl>
+                            ) : (
+                                <FormControl fullWidth>
+                                    <StyledTextField
+                                        label="Store"
+                                        value={currentData?.store.name || ''}
+                                        fullWidth
+                                        slotProps={{
+                                            input: {
+                                                readOnly: true
+                                            }
+                                        }}
+                                        disabled
+                                    />
+                                </FormControl>
+                            )}
                         </Grid>
                     )}
                 </Grid>
