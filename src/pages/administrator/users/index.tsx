@@ -361,6 +361,7 @@ const UsersPage = () => {
                     onOpen={() => setDrawerOpen(true)}
                     onClose={handleDrawerClose}
                     userId={selectedRow?.id as string}
+                    handleEdit={handleOpenUpdateUserModal}
                 />
             )}
         </Box>

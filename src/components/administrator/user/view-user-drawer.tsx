@@ -6,7 +6,7 @@ import {useAppSelector} from "@/store";
 import {useDeleteUserMutation, useGetUserByIdQuery, useUpdateUserMutation} from "@/store/slice";
 import {selectCurrentUser} from "@/store/slice/auth-slice.ts";
 import {roleHierarchy, type UserRoleType, UserStatusEnum, type UserType} from "@/types/user-types.ts";
-import {Avatar, Box, Button, Chip, Divider, Grid, Typography} from "@mui/material";
+import {Avatar, Box, Chip, Divider, Grid, Typography} from "@mui/material";
 import {format} from "date-fns";
 import {type FC, useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
@@ -15,6 +15,7 @@ import {drawerPaperProps} from "@/components/styles";
 import DataDrawer from "@/components/ui/data-drawer.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
 import {getInitials} from "@/utils";
+import CustomButton from "@/components/ui/button.tsx";
 
 import {BlockOutlined, DeleteOutline, EditOutlined} from "@mui/icons-material";
 
@@ -23,11 +24,12 @@ interface Props {
     onOpen: () => void;
     onClose: () => void;
     userId: string;
+    handleEdit: () => void;
 }
 
-const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose}) => {
-    const notify = useNotifier();
+const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose, handleEdit}) => {
     const navigate = useNavigate();
+    const notify = useNotifier();
     const currentUser = useAppSelector(selectCurrentUser);
 
     const [deleteTimer, setDeleteTimer] = useState<NodeJS.Timeout | null>(null);
@@ -137,13 +139,12 @@ const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose}) => {
                             <Divider/>
                             <Box sx={{p: 2, display: "flex", flexDirection: "column", gap: 1}}>
                                 {isSelf && (
-                                    <Button
+                                    <CustomButton
+                                        title={"Edit Profile"}
                                         variant="contained"
                                         startIcon={<EditOutlined/>}
-                                        onClick={() => navigate(`/admin/users/${user.id}/edit`)}
-                                    >
-                                        Edit Profile
-                                    </Button>
+                                        onClick={handleEdit}
+                                    />
                                 )}
                                 {currentUser && user &&
                                     roleHierarchy[currentUser.role] <
@@ -151,49 +152,49 @@ const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose}) => {
                                         <>
                                             {deleteTimer ? (
                                                     // If the delete timer is active, show the "Undo" button
-                                                    <Button variant="outlined" color="secondary"
-                                                            onClick={handleUndoDelete}>
-                                                        Undo Delete
-                                                    </Button>
+                                                    <CustomButton
+                                                        title={"Undo Delete"}
+                                                        variant="outlined"
+                                                        color="secondary"
+                                                        onClick={handleUndoDelete}
+                                                    />
                                                 ) :
                                                 user?.status === "deleted" ? (
                                                     <>
                                                         <Typography color="error" align="center">
                                                             User has been deleted.
                                                         </Typography>
-                                                        <Button
+                                                        <CustomButton
+                                                            title={"Recover Account"}
                                                             variant="outlined"
                                                             onClick={handleStatusChange}
                                                             disabled={isUpdatingStatus}
                                                             color="success"
-                                                        >
-                                                            Recover Account
-                                                        </Button>
+                                                        />
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Button
+                                                        <CustomButton
+                                                            title={isUpdatingStatus
+                                                                ? "Updating..."
+                                                                : user?.status === "active"
+                                                                    ? "Deactivate"
+                                                                    : "Activate"}
                                                             variant="outlined"
                                                             color={user?.status === "active" ? "warning" : "success"}
                                                             startIcon={<BlockOutlined/>}
                                                             onClick={handleStatusChange}
                                                             disabled={isUpdatingStatus}
-                                                        >
-                                                            {isUpdatingStatus
-                                                                ? "Updating..."
-                                                                : user?.status === "active"
-                                                                    ? "Deactivate"
-                                                                    : "Activate"}
-                                                        </Button>
-                                                        <Button
+                                                        />
+
+                                                        <CustomButton
+                                                            title={isDeleting ? "Deleting..." : "Delete"}
                                                             variant="outlined"
                                                             color="error"
                                                             startIcon={<DeleteOutline/>}
                                                             onClick={handleDelete}
                                                             disabled={isDeleting}
-                                                        >
-                                                            {isDeleting ? "Deleting..." : "Delete"}
-                                                        </Button>
+                                                        />
                                                     </>
                                                 )}
                                         </>
