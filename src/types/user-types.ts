@@ -32,7 +32,7 @@ export const USER_STATUSES = Object.values(UserStatusEnum);
 export type UserStatus = (typeof USER_STATUSES)[number];
 
 // Schema for creating a new user without ID, createdAt & updatedAt fields
-export const baseUserSchema = yup.object().shape({
+export const baseUserSchema = yup.object({
     firstName: yup.string().required("First Name is required"),
     lastName: yup.string().required("Last Name is required"),
     email: yup
@@ -62,7 +62,7 @@ export const baseUserSchema = yup.object().shape({
         otherwise: (schema) => schema.notRequired(),
     }),
     role: yup.string().oneOf(USER_ROLES).default("guest"),
-    // status: yup.string().oneOf(USER_STATUSES).default("active"),
+
     storeId: yup.string().uuid().required("Store ID is required"),
     store: yup.object({
         id: yup.string().uuid().required("Store ID is required"),
@@ -71,7 +71,7 @@ export const baseUserSchema = yup.object().shape({
     }),
 });
 
-export const createUserSchema = yup.object().shape({
+export const createUserSchema = yup.object({
     firstName: yup.string().required("First Name is required"),
     lastName: yup.string().required("Last Name is required"),
     email: yup
@@ -118,35 +118,25 @@ export const registerUserSchema = createUserSchemaWithoutStatusStoreIDRole.conca
     }),
 );
 
-export const updateUserSchema = baseUserSchema.concat(
-    yup.object().shape({
-        password: yup.string().when({
-            // The 'is' condition checks if the password field is not empty.
-            is: (val: string) => val && val.length > 0,
-            // If it's not empty, then apply all the required validation rules.
-            then: (schema) =>
-                schema
-                    .min(PASSWORD_RULES.min, `Password must be at least ${PASSWORD_RULES.min} characters`)
-                    .max(PASSWORD_RULES.max, `Password cannot exceed ${PASSWORD_RULES.max} characters`)
-                    .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
-                    .matches(/[a-z]/, "Password must contain at least one lowercase letter")
-                    .matches(/[0-9]/, "Password must contain at least one number")
-                    .matches(/[^A-Za-z0-9]/, "Password must contain at least one special character")
-                    .required("Password is required if you want to change it."), // Make it required in this context
-            // Otherwise, the field is optional and not required.
-            otherwise: (schema) => schema.notRequired(),
-        }),
-        confirmPassword: yup.string().when("password", {
-            is: (val: string) => val && val.length > 0,
-            then: (schema) =>
-                schema
-                    .oneOf([yup.ref("password")], "Passwords must match")
-                    .required("Please confirm your new password"),
-            otherwise: (schema) => schema.notRequired(),
-        }),
-        storeId: yup.string().uuid().required("Store must be selected"),
+export const updateUserSchema = yup.object({
+    firstName: yup.string().required("First Name is required"),
+    lastName: yup.string().required("Last Name is required"),
+    email: yup
+        .string()
+        .email("Please enter a valid email address")
+        .required("Email address is required")
+        .matches(/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, "Invalid email format"),
+    phone: yup.string().when({
+        // The 'is' condition checks if the phone field is not empty.
+        is: (val: string) => val && val.length > 0,
+        // If it's not empty, then it must be exactly 11 digits.
+        then: (schema) => schema.matches(/^[0-9]{11}$/, "If provided, the phone number must be exactly 11 digits"),
+        // Otherwise, the field is optional and not required.
+        otherwise: (schema) => schema.notRequired(),
     }),
-);
+    role: yup.string().oneOf(USER_ROLES).default("guest"),
+    storeId: yup.string().uuid().required("Store ID is required"),
+});
 
 // Creates the login schema that maintains the validation rules
 export const loginUserType = yup.object().shape({
@@ -166,8 +156,8 @@ export type CreateUserType = yup.InferType<typeof createUserSchema>;
 export type UpdateUserType = yup.InferType<typeof updateUserSchema>;
 export type RegisterUserType = yup.InferType<typeof registerUserSchema>;
 export type LoginUserType = yup.InferType<typeof loginUserType>;
-export type userType = yup.InferType<typeof userSchema>;
-export type UserType = Omit<userType, "password" | "confirmPassword">;
+export type UserWithoutPasswords = yup.InferType<typeof userSchema>;
+export type UserType = Omit<UserWithoutPasswords, "password" | "confirmPassword">;
 
 export const roleHierarchy: Record<UserRoleType, number> = {
     manager: 0,

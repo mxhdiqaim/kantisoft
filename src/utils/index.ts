@@ -1,5 +1,5 @@
 import type {Period} from "@/types/order-types.ts";
-import type {UserRoleType, UserType} from "@/types/user-types";
+import {UserRoleEnum, type UserRoleType, type UserType} from "@/types/user-types";
 import type {ChipProps} from "@mui/material";
 import {useEffect} from "react";
 import {useLocation} from "react-router-dom";
@@ -184,4 +184,32 @@ export const a11yProps = (index: number) => {
 export const formatNumber = (value: number): string => {
     return new Intl.NumberFormat().format(value);
 };
+
+
+interface RolePermissions {
+    availableRoles: UserRoleType[];
+    canEditRole: boolean;
+}
+
+export const getRolePermissions = (currentUserRole?: UserRoleType, isTargetSelf: boolean = false): RolePermissions => {
+    let availableRoles: UserRoleType[] = [];
+
+    // You can edit roles if you are Manager/Admin AND you are not editing yourself
+    const canEditRole = (currentUserRole === UserRoleEnum.MANAGER || currentUserRole === UserRoleEnum.ADMIN) && !isTargetSelf;
+
+    if (currentUserRole === UserRoleEnum.MANAGER) {
+        // Manager can assign ADMIN, USER & GUEST
+        availableRoles = [UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST];
+    } else if (currentUserRole === UserRoleEnum.ADMIN) {
+        // Admin can only assign USER & GUEST
+        availableRoles = [UserRoleEnum.USER, UserRoleEnum.GUEST];
+    }
+
+    return {availableRoles, canEditRole};
+};
+
+export const getInitials = (firstName: string = "", lastName: string = "") => {
+    return `${(firstName || "")[0] || ""}${(lastName || "")[0] || ""}`.toUpperCase();
+};
+
 

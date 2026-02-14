@@ -48,7 +48,7 @@ const RawMaterials = () => {
 
     const handleCloseFormModal = () => {
         setFormModalOpen(false);
-        // Always reset selectedRow when modal closes to ensure clean state for next action
+        // Always reset the selectedRow when the modal closes to ensure a clean state for the next action
         setSelectedRow(null);
     };
 

@@ -5,10 +5,9 @@ import {useAppSelector} from "@/store";
 import {useChangeUserStoreMutation, useGetAllStoresQuery, useGetAllUsersQuery} from "@/store/slice";
 import {selectCurrentUser} from "@/store/slice/auth-slice.ts";
 import {roleHierarchy, UserRoleEnum, UserStatusEnum, type UserType} from "@/types/user-types.ts";
-import {AddOutlined, EditOutlined, MoreVert, StorefrontOutlined, VisibilityOutlined} from "@mui/icons-material";
 import {Avatar, Box, Chip, Grid, Tooltip, Typography, useTheme,} from "@mui/material";
 import type {GridColDef, GridRenderCellParams} from "@mui/x-data-grid";
-import {type MouseEvent, useMemo, useState} from "react";
+import {type MouseEvent, useCallback, useMemo, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
 import DataGridTable from "@/components/ui/data-grid-table";
@@ -20,7 +19,11 @@ import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-men
 import {getUserStatusChipColor} from "@/components/ui";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import {useTranslation} from "react-i18next";
-import UserFormModal from "@/components/users/user-form-modal.tsx";
+import UserCreateForm from "@/components/users/user-create-form.tsx";
+import UserUpdateForm from "@/components/users/user-update-form.tsx";
+import ViewUserDrawer from "@/components/administrator/user/view-user-drawer.tsx";
+
+import {AddOutlined, EditOutlined, MoreVert, StorefrontOutlined, VisibilityOutlined} from "@mui/icons-material";
 
 const UsersPage = () => {
     const notify = useNotifier();
@@ -28,7 +31,9 @@ const UsersPage = () => {
     const theme = useTheme();
     const {t} = useTranslation();
 
-    const [openUserModal, setOpenUserModal] = useState(false);
+    const [openCreateUserModal, setOpenCreateUserModal] = useState(false);
+    const [openUpdateUserModal, setOpenUpdateUserModal] = useState(false);
+    const [isChangeStoreDialogOpen, setChangeStoreDialogOpen] = useState(false);
 
     const currentUser = useAppSelector(selectCurrentUser);
     const {data: usersData, isLoading, isError, error} = useGetAllUsersQuery();
@@ -51,20 +56,28 @@ const UsersPage = () => {
     const memoizedUsers: UserType[] = useMemoizedArray(flattenedUsers)
 
     const [selectedRow, setSelectedRow] = useState<UserType | null>(null);
+    const [drawerOpen, setDrawerOpen] = useState(false);
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
         initialData: memoizedUsers,
         searchKeys: ["firstName", "lastName", "email", "storeName"],
     });
 
-    const [isChangeStoreDialogOpen, setChangeStoreDialogOpen] = useState(false);
-
-    const handleOpenFormModal = () => {
-        setOpenUserModal(true);
+    const handleOpenCreateUserModal = () => {
+        setOpenCreateUserModal(true);
     };
 
-    const handleCloseFormModal = () => {
-        setOpenUserModal(false);
+    const handleCloseCreateUserModal = () => {
+        setOpenCreateUserModal(false);
+        setSelectedRow(null);
+    };
+
+    const handleOpenUpdateUserModal = () => {
+        setOpenUpdateUserModal(true);
+    };
+
+    const handleCloseUpdateUserModal = () => {
+        setOpenUpdateUserModal(false);
         setSelectedRow(null);
     };
 
@@ -76,6 +89,15 @@ const UsersPage = () => {
         setChangeStoreDialogOpen(false);
         setSelectedRow(null);
     };
+
+    const handleDrawerOpen = useCallback(() => {
+        setDrawerOpen(true);
+    }, []);
+
+    const handleDrawerClose = useCallback(() => {
+        setDrawerOpen(false);
+        setSelectedRow(null);
+    }, []);
 
     const handleChangeStore = async (userId: string, newStoreId: string) => {
         try {
@@ -216,8 +238,6 @@ const UsersPage = () => {
                 align: "center",
                 headerAlign: "center",
                 renderCell: (params) => {
-                    const handleView = () => navigate(`/admin/users/${params.row.id}/view`);
-
                     const canEdit = () => {
                         if (!currentUser) return false; // Cannot edit if not logged in
 
@@ -262,11 +282,11 @@ const UsersPage = () => {
                                 </Tooltip>
                             }
                         >
-                            <TableStyledMenuItem onClick={handleView} disabled={isViewDisabled}>
+                            <TableStyledMenuItem onClick={handleDrawerOpen} disabled={isViewDisabled}>
                                 <VisibilityOutlined sx={{mr: 1}}/>
                                 View
                             </TableStyledMenuItem>
-                            <TableStyledMenuItem onClick={handleOpenFormModal} disabled={isEditDisabled}>
+                            <TableStyledMenuItem onClick={handleOpenUpdateUserModal} disabled={isEditDisabled}>
                                 <EditOutlined sx={{mr: 1}}/>
                                 Edit
                             </TableStyledMenuItem>
@@ -284,7 +304,7 @@ const UsersPage = () => {
                 },
             },
         ],
-        [selectedRow, navigate, currentUser, handleOpenFormModal],
+        [selectedRow, navigate, currentUser, handleOpenCreateUserModal],
     );
 
     if (isError) {
@@ -302,7 +322,7 @@ const UsersPage = () => {
                         title={"New User"}
                         variant="contained"
                         startIcon={<AddOutlined/>}
-                        onClick={handleOpenFormModal}
+                        onClick={handleOpenCreateUserModal}
                     />
                 )}
             </Box>
@@ -326,7 +346,24 @@ const UsersPage = () => {
                 isLoading={isChangingStore}
             />
 
-            <UserFormModal open={openUserModal} onClose={handleCloseFormModal} currentData={selectedRow}/>
+            <UserCreateForm open={openCreateUserModal} onClose={handleCloseCreateUserModal}/>
+            {selectedRow && (
+                <UserUpdateForm
+                    open={openUpdateUserModal}
+                    onClose={handleCloseUpdateUserModal}
+                    currentData={selectedRow}
+                />
+            )}
+
+            {selectedRow?.id && (
+                <ViewUserDrawer
+                    open={drawerOpen}
+                    onOpen={() => setDrawerOpen(true)}
+                    onClose={handleDrawerClose}
+                    userId={selectedRow?.id as string}
+                    handleEdit={handleOpenUpdateUserModal}
+                />
+            )}
         </Box>
     );
 };

@@ -1,18 +1,9 @@
 import {getApiError} from "@/helpers/get-api-error";
 import useNotifier from "@/hooks/useNotifier";
-import {useCreateUserMutation, useGetAllStoresQuery, useUpdateUserMutation} from "@/store/slice";
+import {useCreateUserMutation, useGetAllStoresQuery} from "@/store/slice";
 import {selectCurrentUser} from "@/store/slice/auth-slice";
 import type {StoreType} from "@/types/store-types";
-import {
-    createUserSchema,
-    type CreateUserType,
-    updateUserSchema,
-    type UpdateUserType,
-    USER_ROLES,
-    UserRoleEnum,
-    type UserRoleType,
-    type UserType,
-} from "@/types/user-types";
+import {createUserSchema, type CreateUserType, UserRoleEnum} from "@/types/user-types";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {Visibility, VisibilityOff} from "@mui/icons-material";
 import {Box, FormControl, Grid, IconButton, InputAdornment, MenuItem, TextField} from "@mui/material";
@@ -22,6 +13,7 @@ import {useSelector} from "react-redux";
 import CustomButton from "@/components/ui/button.tsx";
 import {StyledTextField} from "@/components/ui";
 import CustomModal from "@/components/customs/custom-modal.tsx";
+import {getRolePermissions} from "@/utils";
 
 import Icon from "@/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
@@ -29,23 +21,17 @@ import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 interface Props {
     open: boolean;
     onClose: () => void;
-    currentData?: UserType;
 }
 
-const UserFormModal = ({open, onClose, currentData}: Props) => {
-    console.log({currentData});
-
+const UserCreateForm = ({open, onClose}: Props) => {
     const notify = useNotifier();
     const currentUser = useSelector(selectCurrentUser);
     const [showPassword, setShowPassword] = useState(false);
 
-    const isEditMode = Boolean(currentData);
-
     const {data: stores} = useGetAllStoresQuery();
 
     const [createUser, {isLoading: isCreating, isSuccess: isCreated}] = useCreateUserMutation();
-    const [updateUser, {isLoading: isUpdating, isSuccess: isUpdated}] = useUpdateUserMutation();
-    const isLoading = isCreating || isUpdating;
+    const isLoading = isCreating;
 
     const {
         control,
@@ -56,7 +42,7 @@ const UserFormModal = ({open, onClose, currentData}: Props) => {
         mode: "onChange",
         defaultValues: {},
 
-        resolver: yupResolver(isEditMode ? updateUserSchema : createUserSchema),
+        resolver: yupResolver(createUserSchema),
     });
 
     useEffect(() => {
@@ -75,69 +61,33 @@ const UserFormModal = ({open, onClose, currentData}: Props) => {
     }, [open, reset]);
 
     useEffect(() => {
-        if (open && currentData) {
-            reset({
-                firstName: currentData?.firstName,
-                lastName: currentData?.lastName,
-                email: currentData?.email,
-                phone: currentData?.phone,
-                role: currentData?.role,
-                storeId: currentData?.storeId,
-                password: "",
-                confirmPassword: "",
-            });
-        }
-    }, [currentData, open, reset]);
-
-    useEffect(() => {
-        if (isCreated || isUpdated) {
+        if (isCreated) {
             onClose();
             reset();
         }
-    }, [isUpdated, isCreated, onClose, reset]);
+    }, [isCreated, onClose, reset]);
 
-    const onSubmit = async (data: CreateUserType | UpdateUserType) => {
+    const onSubmit = async (data: CreateUserType) => {
         try {
-            if (isEditMode && currentData) {
-                const payload = {...data};
-                if (!payload.password) delete payload.password;
-
-                await updateUser({id: currentData.id, ...payload}).unwrap();
-                notify("User updated successfully!", "success");
-            } else {
-                await createUser(data as CreateUserType).unwrap();
-                notify("User created successfully!", "success");
-            }
+            await createUser(data as CreateUserType).unwrap();
+            notify("User created successfully!", "success");
 
             onClose();
         } catch (error) {
-            const defaultMessage = `Failed to ${isEditMode ? "update" : "create"} user.`;
+            const defaultMessage = `Failed to create user.`;
             const apiError = getApiError(error, defaultMessage);
             notify(apiError.message, "error");
         }
     };
 
-    let availableRoles: UserRoleType[] = [];
-    let canEditRole;
-
-    if (currentUser?.role === UserRoleEnum.MANAGER) {
-        availableRoles = [UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST];
-        canEditRole = true;
-    } else if (currentUser?.role === UserRoleEnum.ADMIN) {
-        availableRoles = USER_ROLES.filter((role) => role === UserRoleEnum.USER || role === UserRoleEnum.GUEST);
-        // Admin cannot edit their own role
-        canEditRole = !isEditMode || (currentData && currentData.id !== currentUser.id);
-    } else {
-        // User and Guest cannot edit or select a role
-        availableRoles = [];
-        canEditRole = false;
-    }
+    // Getting permissions
+    const {availableRoles, canEditRole} = getRolePermissions(currentUser?.role);
 
     return (
         <CustomModal
             open={open}
             onClose={onClose}
-            title={isEditMode ? "Edit User" : "Create New User"}
+            title={"Create New User"}
             modalStyles={{
                 width: {xs: "90vw", sm: "60vw"},
             }}
@@ -213,60 +163,56 @@ const UserFormModal = ({open, onClose, currentData}: Props) => {
                             )}
                         />
                     </Grid>
-                    {!isEditMode && (
-                        <>
-                            <Grid size={{xs: 12, sm: 6}}>
-                                <Controller
-                                    name="password"
-                                    control={control}
-                                    render={({field}) => (
-                                        <FormControl fullWidth>
-                                            <StyledTextField
-                                                {...field}
-                                                fullWidth
-                                                label={isEditMode ? "New Password (Optional)" : "Password"}
-                                                type={showPassword ? "text" : "password"}
-                                                error={!!errors.password}
-                                                helperText={errors.password?.message}
-                                                slotProps={{
-                                                    input: {
-                                                        endAdornment: (
-                                                            <InputAdornment position="end">
-                                                                <IconButton
-                                                                    onClick={() => setShowPassword(!showPassword)}
-                                                                    edge="end"
-                                                                >
-                                                                    {showPassword ? <VisibilityOff/> : <Visibility/>}
-                                                                </IconButton>
-                                                            </InputAdornment>
-                                                        )
-                                                    }
-                                                }}
-                                            />
-                                        </FormControl>
-                                    )}
-                                />
-                            </Grid>
-                            <Grid size={{xs: 12, sm: 6}}>
-                                <Controller
-                                    name="confirmPassword"
-                                    control={control}
-                                    render={({field}) => (
-                                        <FormControl fullWidth>
-                                            <StyledTextField
-                                                {...field}
-                                                fullWidth
-                                                label="Confirm Password"
-                                                type={showPassword ? "text" : "password"}
-                                                error={!!errors.confirmPassword}
-                                                helperText={errors.confirmPassword?.message}
-                                            />
-                                        </FormControl>
-                                    )}
-                                />
-                            </Grid>
-                        </>
-                    )}
+                    <Grid size={{xs: 12, sm: 6}}>
+                        <Controller
+                            name="password"
+                            control={control}
+                            render={({field}) => (
+                                <FormControl fullWidth>
+                                    <StyledTextField
+                                        {...field}
+                                        fullWidth
+                                        label={"Password"}
+                                        type={showPassword ? "text" : "password"}
+                                        error={!!errors.password}
+                                        helperText={errors.password?.message}
+                                        slotProps={{
+                                            input: {
+                                                endAdornment: (
+                                                    <InputAdornment position="end">
+                                                        <IconButton
+                                                            onClick={() => setShowPassword(!showPassword)}
+                                                            edge="end"
+                                                        >
+                                                            {showPassword ? <VisibilityOff/> : <Visibility/>}
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                )
+                                            }
+                                        }}
+                                    />
+                                </FormControl>
+                            )}
+                        />
+                    </Grid>
+                    <Grid size={{xs: 12, sm: 6}}>
+                        <Controller
+                            name="confirmPassword"
+                            control={control}
+                            render={({field}) => (
+                                <FormControl fullWidth>
+                                    <StyledTextField
+                                        {...field}
+                                        fullWidth
+                                        label="Confirm Password"
+                                        type={showPassword ? "text" : "password"}
+                                        error={!!errors.confirmPassword}
+                                        helperText={errors.confirmPassword?.message}
+                                    />
+                                </FormControl>
+                            )}
+                        />
+                    </Grid>
                     {canEditRole && (
                         <Grid size={{xs: 12, sm: 6}}>
                             {canEditRole ? (
@@ -316,7 +262,7 @@ const UserFormModal = ({open, onClose, currentData}: Props) => {
                                 <FormControl fullWidth>
                                     <TextField
                                         label="Role"
-                                        value={currentData?.role || currentUser?.role}
+                                        value={currentUser?.role}
                                         fullWidth
                                         slotProps={{
                                             input: {
@@ -375,7 +321,7 @@ const UserFormModal = ({open, onClose, currentData}: Props) => {
                 <Box sx={{display: "flex", justifyContent: "flex-end", gap: 2, mt: 2}}>
                     <CustomButton title={"Cancel"} onClick={onClose} variant="outlined"/>
                     <CustomButton
-                        title={isLoading ? "Saving..." : isEditMode ? "Save Changes" : "Create User"}
+                        title={isLoading ? "Creating..." : "Create User"}
                         variant="contained"
                         type="submit"
                         disabled={isLoading}
@@ -386,4 +332,4 @@ const UserFormModal = ({open, onClose, currentData}: Props) => {
     );
 };
 
-export default UserFormModal;
+export default UserCreateForm;
