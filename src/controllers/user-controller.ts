@@ -13,6 +13,7 @@ import { stores } from "../schema/stores-schema";
 import { CustomRequest } from "../types/express";
 import { logActivity } from "../service/activity-logger";
 import { StatusCodes } from "http-status-codes";
+import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 
 /**
  * @desc    Register a new Manager and their first Store
@@ -188,34 +189,10 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
  */
 export const getAllUsers = async (req: CustomRequest, res: Response) => {
     try {
-        const currentUser = req.user?.data;
-        const storeId = currentUser?.storeId;
+        const validated = await validateStoreAndExtractDates(req, res);
+        if (!validated) return;
 
-        if (!storeId) {
-            return handleError2(
-                res,
-                "Authenticated user is not associated with any store.",
-                StatusCodes.FORBIDDEN,
-            );
-        }
-
-        // Find the main store and its branches
-        const mainStore = await db.query.stores.findFirst({
-            where: eq(stores.id, storeId),
-            with: {
-                branches: true,
-            },
-        });
-
-        if (!mainStore) {
-            return handleError2(res, "Store not found.", StatusCodes.NOT_FOUND);
-        }
-
-        // Collect the ID of the main store and all its branch IDs
-        const storeIds = [
-            mainStore.id,
-            ...(mainStore.branches?.map((branch) => branch.id) || []),
-        ];
+        const { storeIds } = validated;
 
         // Fetch all users from the collected store IDs
         const allUsers = await db
@@ -611,47 +588,56 @@ export const createUser = async (req: CustomRequest, res: Response) => {
  * @desc    Update a user's profile information
  * @route   PATCH /users/:id
  * @access  Private
+ * @body    { firstName?, lastName?, email?, phone?, role? }
  */
 export const updateUser = async (req: CustomRequest, res: Response) => {
     try {
-        const { id: targetUserId } = req.params;
         const currentUser = req.user?.data;
-        const storeId = currentUser?.storeId;
-        const updateData = req.body;
+        // const storeId = currentUser?.storeId;
 
         // Authenticated check
-        if (!storeId) {
+        if (!currentUser) {
             return handleError2(
                 res,
-                "Must belong to a store to perform this action.",
+                // "Must belong to a store to perform this action.",
+                "Current user information is missing. Please ensure you are authenticated.",
                 StatusCodes.UNAUTHORIZED,
             );
         }
 
-        // Get all stores managed by the current user (main store + branches)
-        const mainStore = await db.query.stores.findFirst({
-            where: eq(stores.id, storeId),
-            with: { branches: true },
-        });
+        const validated = await validateStoreAndExtractDates(req, res);
+        if (!validated) return;
 
-        if (!mainStore) {
-            return handleError2(
-                res,
-                "Your associated store could not be found.",
-                StatusCodes.NOT_FOUND,
-            );
-        }
+        const { storeIds } = validated;
 
-        const accessibleStoreIds = [
-            mainStore.id,
-            ...(mainStore.branches?.map((branch) => branch.id) || []),
-        ];
+        const { id: targetUserId } = req.params;
+        const updateData = req.body;
+
+        // // Get all stores managed by the current user (main store and branches)
+        // const mainStore = await db.query.stores.findFirst({
+        //     where: eq(stores.id, storeId),
+        //     with: { branches: true },
+        // });
+
+        // if (!mainStore) {
+        //     return handleError2(
+        //         res,
+        //         "Your associated store could not be found.",
+        //         StatusCodes.NOT_FOUND,
+        //     );
+        // }
+
+        // const accessibleStoreIds = [
+        //     mainStore.id,
+        //     ...(mainStore.branches?.map((branch) => branch.id) || []),
+        // ];
 
         // Fetch the user to be updated from within the accessible store network
         const targetUser = await db.query.users.findFirst({
             where: and(
                 eq(users.id, targetUserId),
-                inArray(users.storeId, accessibleStoreIds),
+                // inArray(users.storeId, accessibleStoreIds),
+                inArray(users.storeId, storeIds),
             ),
         });
 
@@ -667,7 +653,7 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
         delete updateData.password;
         delete updateData.id; // Prevent changing the ID
 
-        // Authz Logic
+        // Authorisation Logic
         const isSelfUpdate = currentUser.id === targetUserId;
         const isManager = currentUser.role === UserRoleEnum.MANAGER;
         const isAdmin = currentUser.role === UserRoleEnum.ADMIN;
@@ -727,13 +713,21 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
         const phoneToUpdate = phone === "" ? null : phone;
 
         // Perform the update, ensuring the target is still in an accessible store
+        // I need to find a way to map each field that wanted to be update manually for security reason,
+        // otherwise it will update any field that is in the req.body which can cause security issues like updating the storeId or role which can cause privilege escalation
         const [updatedUser] = await db
             .update(users)
-            .set({ phone: phoneToUpdate, email: lowercasedEmail, ...updateData, lastModified: new Date() })
+            .set({
+                email: lowercasedEmail,
+                phone: phoneToUpdate,
+                lastModified: new Date(),
+                ...updateData,
+            })
             .where(
                 and(
                     eq(users.id, targetUserId),
-                    inArray(users.storeId, accessibleStoreIds),
+                    // inArray(users.storeId, accessibleStoreIds),
+                    inArray(users.storeId, storeIds),
                 ),
             )
             .returning();
