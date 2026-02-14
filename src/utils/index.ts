@@ -208,4 +208,8 @@ export const getRolePermissions = (currentUserRole?: UserRoleType, isTargetSelf:
     return {availableRoles, canEditRole};
 };
 
+export const getInitials = (firstName: string = "", lastName: string = "") => {
+    return `${(firstName || "")[0] || ""}${(lastName || "")[0] || ""}`.toUpperCase();
+};
+
 

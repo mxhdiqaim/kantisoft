@@ -42,7 +42,6 @@ export {default as ProductionScreen} from "./production"
 // Administrator
 export {default as TrashBinScreen} from "./administrator/trash-bin";
 export {default as UsersScreen} from "./administrator/users";
-export {default as ViewUserScreen} from "./administrator/users/view-user";
 export {default as StoreScreen} from "./administrator/stores";
 export {default as StoreFormScreen} from "./administrator/stores/store-form";
 export {default as ViewStoreScreen} from "./administrator/stores/view-store";

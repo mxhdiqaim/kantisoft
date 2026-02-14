@@ -27,7 +27,6 @@ import {
     UsersScreen,
     ViewSalesHistoryScreen,
     ViewStoreScreen,
-    ViewUserScreen,
 } from "@/pages";
 import {type UserRole, UserRoleEnum} from "@/types/user-types";
 import {DashboardOutlined, KitchenOutlined} from "@mui/icons-material";
@@ -229,27 +228,6 @@ export const appRoutes: AppRouteType[] = [
                 element: UsersScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
                 children: [
-                    {
-                        to: ":id/view",
-                        title: "viewUser",
-                        element: ViewUserScreen,
-                        hidden: true,
-                        roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-                    },
-                    // {
-                    //     to: "new",
-                    //     title: "createUser",
-                    //     element: AddUserScreen,
-                    //     hidden: true,
-                    //     roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-                    // },
-                    // {
-                    //     to: ":id/edit",
-                    //     title: "editUser",
-                    //     element: EditUserScreen,
-                    //     hidden: true,
-                    //     roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST],
-                    // },
                     {
                         to: "profile",
                         title: "Profile",
