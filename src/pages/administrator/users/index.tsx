@@ -20,7 +20,7 @@ import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-men
 import {getUserStatusChipColor} from "@/components/ui";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import {useTranslation} from "react-i18next";
-import UserFormModal from "@/components/users/user-form-modal.tsx";
+import UserCreateForm from "@/components/users/user-create-form.tsx";
 
 const UsersPage = () => {
     const notify = useNotifier();
@@ -326,7 +326,7 @@ const UsersPage = () => {
                 isLoading={isChangingStore}
             />
 
-            <UserFormModal open={openUserModal} onClose={handleCloseFormModal} currentData={selectedRow}/>
+            <UserCreateForm open={openUserModal} onClose={handleCloseFormModal} currentData={selectedRow}/>
         </Box>
     );
 };

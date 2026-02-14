@@ -1,5 +1,5 @@
 import type {Period} from "@/types/order-types.ts";
-import type {UserRoleType, UserType} from "@/types/user-types";
+import {UserRoleEnum, type UserRoleType, type UserType} from "@/types/user-types";
 import type {ChipProps} from "@mui/material";
 import {useEffect} from "react";
 import {useLocation} from "react-router-dom";
@@ -183,5 +183,26 @@ export const a11yProps = (index: number) => {
 
 export const formatNumber = (value: number): string => {
     return new Intl.NumberFormat().format(value);
+};
+
+
+interface RolePermissions {
+    availableRoles: UserRoleType[];
+    canEditRole: boolean;
+}
+
+export const getRolePermissions = (currentUserRole?: UserRoleType): RolePermissions => {
+    let availableRoles: UserRoleType[] = [];
+    const canEditRole = currentUserRole === UserRoleEnum.MANAGER || currentUserRole === UserRoleEnum.ADMIN;
+
+    if (currentUserRole === UserRoleEnum.MANAGER) {
+        // Manager can create ADMIN, USER & GUEST
+        availableRoles = [UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST];
+    } else if (currentUserRole === UserRoleEnum.ADMIN) {
+        // Admin can only create USER & GUEST
+        availableRoles = [UserRoleEnum.USER, UserRoleEnum.GUEST];
+    }
+
+    return {availableRoles, canEditRole};
 };
 
