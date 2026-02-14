@@ -21,6 +21,7 @@ import {getUserStatusChipColor} from "@/components/ui";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import {useTranslation} from "react-i18next";
 import UserCreateForm from "@/components/users/user-create-form.tsx";
+import UserUpdateForm from "@/components/users/user-update-form.tsx";
 
 const UsersPage = () => {
     const notify = useNotifier();
@@ -28,7 +29,9 @@ const UsersPage = () => {
     const theme = useTheme();
     const {t} = useTranslation();
 
-    const [openUserModal, setOpenUserModal] = useState(false);
+    const [openCreateUserModal, setOpenCreateUserModal] = useState(false);
+    const [openUpdateUserModal, setOpenUpdateUserModal] = useState(false);
+    const [isChangeStoreDialogOpen, setChangeStoreDialogOpen] = useState(false);
 
     const currentUser = useAppSelector(selectCurrentUser);
     const {data: usersData, isLoading, isError, error} = useGetAllUsersQuery();
@@ -57,14 +60,21 @@ const UsersPage = () => {
         searchKeys: ["firstName", "lastName", "email", "storeName"],
     });
 
-    const [isChangeStoreDialogOpen, setChangeStoreDialogOpen] = useState(false);
-
-    const handleOpenFormModal = () => {
-        setOpenUserModal(true);
+    const handleOpenCreateUserModal = () => {
+        setOpenCreateUserModal(true);
     };
 
-    const handleCloseFormModal = () => {
-        setOpenUserModal(false);
+    const handleCloseCreateUserModal = () => {
+        setOpenCreateUserModal(false);
+        setSelectedRow(null);
+    };
+
+    const handleOpenUpdateUserModal = () => {
+        setOpenUpdateUserModal(true);
+    };
+
+    const handleCloseUpdateUserModal = () => {
+        setOpenUpdateUserModal(false);
         setSelectedRow(null);
     };
 
@@ -266,7 +276,7 @@ const UsersPage = () => {
                                 <VisibilityOutlined sx={{mr: 1}}/>
                                 View
                             </TableStyledMenuItem>
-                            <TableStyledMenuItem onClick={handleOpenFormModal} disabled={isEditDisabled}>
+                            <TableStyledMenuItem onClick={handleOpenUpdateUserModal} disabled={isEditDisabled}>
                                 <EditOutlined sx={{mr: 1}}/>
                                 Edit
                             </TableStyledMenuItem>
@@ -284,7 +294,7 @@ const UsersPage = () => {
                 },
             },
         ],
-        [selectedRow, navigate, currentUser, handleOpenFormModal],
+        [selectedRow, navigate, currentUser, handleOpenCreateUserModal],
     );
 
     if (isError) {
@@ -302,7 +312,7 @@ const UsersPage = () => {
                         title={"New User"}
                         variant="contained"
                         startIcon={<AddOutlined/>}
-                        onClick={handleOpenFormModal}
+                        onClick={handleOpenCreateUserModal}
                     />
                 )}
             </Box>
@@ -326,7 +336,14 @@ const UsersPage = () => {
                 isLoading={isChangingStore}
             />
 
-            <UserCreateForm open={openUserModal} onClose={handleCloseFormModal} currentData={selectedRow}/>
+            <UserCreateForm open={openCreateUserModal} onClose={handleCloseCreateUserModal}/>
+            {selectedRow && (
+                <UserUpdateForm
+                    open={openUpdateUserModal}
+                    onClose={handleCloseUpdateUserModal}
+                    currentData={selectedRow}
+                />
+            )}
         </Box>
     );
 };

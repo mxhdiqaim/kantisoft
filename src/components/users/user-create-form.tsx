@@ -80,7 +80,7 @@ const UserCreateForm = ({open, onClose}: Props) => {
         }
     };
 
-    // Use the utility function to get permissions
+    // Getting permissions
     const {availableRoles, canEditRole} = getRolePermissions(currentUser?.role);
 
     return (

@@ -118,36 +118,6 @@ export const registerUserSchema = createUserSchemaWithoutStatusStoreIDRole.conca
     }),
 );
 
-export const _updateUserSchema = baseUserSchema.concat(
-    yup.object({
-        password: yup.string().when({
-            // The 'is' condition checks if the password field is not empty.
-            is: (val: string) => val && val.length > 0,
-            // If it's not empty, then apply all the required validation rules.
-            then: (schema) =>
-                schema
-                    .min(PASSWORD_RULES.min, `Password must be at least ${PASSWORD_RULES.min} characters`)
-                    .max(PASSWORD_RULES.max, `Password cannot exceed ${PASSWORD_RULES.max} characters`)
-                    .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
-                    .matches(/[a-z]/, "Password must contain at least one lowercase letter")
-                    .matches(/[0-9]/, "Password must contain at least one number")
-                    .matches(/[^A-Za-z0-9]/, "Password must contain at least one special character")
-                    .required("Password is required if you want to change it."), // Make it required in this context
-            // Otherwise, the field is optional and not required.
-            otherwise: (schema) => schema.notRequired(),
-        }),
-        confirmPassword: yup.string().when("password", {
-            is: (val: string) => val && val.length > 0,
-            then: (schema) =>
-                schema
-                    .oneOf([yup.ref("password")], "Passwords must match")
-                    .required("Please confirm your new password"),
-            otherwise: (schema) => schema.notRequired(),
-        }),
-        storeId: yup.string().uuid().required("Store must be selected"),
-    }),
-);
-
 export const updateUserSchema = yup.object({
     firstName: yup.string().required("First Name is required"),
     lastName: yup.string().required("Last Name is required"),
@@ -156,19 +126,6 @@ export const updateUserSchema = yup.object({
         .email("Please enter a valid email address")
         .required("Email address is required")
         .matches(/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, "Invalid email format"),
-    password: yup
-        .string()
-        .required("Password is required")
-        .min(PASSWORD_RULES.min, `Password must be at least ${PASSWORD_RULES.min} characters`)
-        .max(PASSWORD_RULES.max, `Password cannot exceed ${PASSWORD_RULES.max} characters`)
-        .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
-        .matches(/[a-z]/, "Password must contain at least one lowercase letter")
-        .matches(/[0-9]/, "Password must contain at least one number")
-        .matches(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
-    confirmPassword: yup
-        .string()
-        .required("Please confirm your password")
-        .oneOf([yup.ref("password")], "Passwords must match"),
     phone: yup.string().when({
         // The 'is' condition checks if the phone field is not empty.
         is: (val: string) => val && val.length > 0,
@@ -199,8 +156,8 @@ export type CreateUserType = yup.InferType<typeof createUserSchema>;
 export type UpdateUserType = yup.InferType<typeof updateUserSchema>;
 export type RegisterUserType = yup.InferType<typeof registerUserSchema>;
 export type LoginUserType = yup.InferType<typeof loginUserType>;
-export type userType = yup.InferType<typeof userSchema>;
-export type UserType = Omit<userType, "password" | "confirmPassword">;
+export type UserWithoutPasswords = yup.InferType<typeof userSchema>;
+export type UserType = Omit<UserWithoutPasswords, "password" | "confirmPassword">;
 
 export const roleHierarchy: Record<UserRoleType, number> = {
     manager: 0,
