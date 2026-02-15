@@ -1,6 +1,6 @@
 # Kantisoft API
 
-A modern Point of Sale (POS) backend for stores and restaurants, built with Nodejs, Express, PostgresSQL & Drizzle-ORM
+A modern Point of Sale (POS) backend for stores and restaurants, built with Nodejs, Express, PostgresSQL & Drizzle-ORM.
 
 ## About
 
