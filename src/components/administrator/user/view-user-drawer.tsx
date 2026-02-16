@@ -91,7 +91,7 @@ const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose, handleEdit}) 
     }, [deleteTimer]);
 
     if (error) {
-        const apiError = getApiError(error, "Failed to load user data for editing.");
+        const apiError = getApiError(error, "Failed to load user data.");
         notify(apiError.message, "error");
         return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
     }
