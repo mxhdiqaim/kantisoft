@@ -1,13 +1,6 @@
 import {useAppSelector} from "@/store";
 import {selectCurrentUser} from "@/store/slice/auth-slice";
-import {Avatar, Box, Button, Card, CardContent, Chip, Divider, Grid, Typography} from "@mui/material";
-import {
-    ArrowBackIosNewOutlined,
-    EditOutlined,
-    EmailOutlined,
-    PhoneOutlined,
-    StorefrontOutlined,
-} from "@mui/icons-material";
+import {Avatar, Box, Chip, Divider, Grid, Stack, Typography} from "@mui/material";
 import {useNavigate} from "react-router-dom";
 import {getRoleChipColor} from "@/utils";
 import {useGetUserByIdQuery} from "@/store/slice";
@@ -17,12 +10,25 @@ import {getApiError} from "@/helpers/get-api-error";
 import {selectActiveStore} from "@/store/slice/store-slice";
 import {useSelector} from "react-redux";
 import CustomButton from "@/components/ui/button.tsx";
+import CustomCard from "@/components/customs/custom-card.tsx";
+import UserUpdateForm from "@/components/users/user-update-form.tsx";
+import {useState} from "react";
+
+import {
+    ArrowBackIosNewOutlined,
+    EditOutlined,
+    EmailOutlined,
+    PhoneOutlined,
+    StorefrontOutlined,
+} from "@mui/icons-material";
 
 const ProfilePage = () => {
     const navigate = useNavigate();
-    const loggedInUser = useAppSelector(selectCurrentUser);
 
+    const currentUser = useAppSelector(selectCurrentUser);
     const activeStore = useSelector(selectActiveStore);
+
+    const [openUpdateUserModal, setOpenUpdateUserModal] = useState(false);
 
     // Fetch the latest user data to ensure it's up to date
     const {
@@ -30,9 +36,19 @@ const ProfilePage = () => {
         isLoading,
         isError,
         error,
-    } = useGetUserByIdQuery(loggedInUser?.id as string, {
-        skip: !loggedInUser, // Skip query if user is not logged in
+    } = useGetUserByIdQuery(currentUser?.id as string, {
+        skip: !currentUser, // Skip the query if the user is not logged in
     });
+
+    console.log({user})
+
+    const handleOpenUpdateUserModal = () => {
+        setOpenUpdateUserModal(true);
+    };
+
+    const handleCloseUpdateUserModal = () => {
+        setOpenUpdateUserModal(false);
+    };
 
     if (isLoading) {
         return <ViewUserSkeleton/>;
@@ -54,18 +70,17 @@ const ProfilePage = () => {
                 My Profile
             </Typography>
             <Grid container spacing={3}>
-                {/* Left Column: Profile Card */}
                 <Grid size={{xs: 12, md: 4}}>
-                    <Card>
-                        <CardContent sx={{textAlign: "center", p: 3}}>
+                    <CustomCard>
+                        <Box sx={{textAlign: "center", p: 1}}>
                             <Avatar
                                 sx={{
-                                    width: 120,
-                                    height: 120,
+                                    width: 60,
+                                    height: 60,
                                     margin: "auto",
                                     mb: 2,
                                     backgroundColor: "primary.main",
-                                    fontSize: "3rem",
+                                    fontSize: "1.5rem",
                                 }}
                             >
                                 {user.firstName.charAt(0).toUpperCase()}
@@ -79,35 +94,32 @@ const ProfilePage = () => {
                                 size="medium"
                                 sx={{textTransform: "capitalize", fontWeight: "bold"}}
                             />
-                        </CardContent>
+                        </Box>
                         <Divider/>
-                        <Box sx={{p: 2}}>
-                            <Button
-                                fullWidth
+                        <Stack
+                            direction={"column"}
+                            spacing={2}
+                            sx={{mt: 1}}
+                        >
+                            <CustomButton
+                                title={"Edit Profile"}
                                 variant="contained"
                                 startIcon={<EditOutlined/>}
-                                onClick={() => navigate(`/admin/users/${user.id}/edit`)}
-                            >
-                                Edit Profile
-                            </Button>
-                        </Box>
-                        <Box sx={{px: 2, pb: 2}}>
-                            <Button
-                                fullWidth
+                                onClick={handleOpenUpdateUserModal}
+                            />
+                            <CustomButton
+                                title={"Change Password"}
                                 variant="outlined"
                                 startIcon={<EditOutlined/>}
                                 onClick={() => navigate(`/admin/users/change-password`)}
-                            >
-                                Change Password
-                            </Button>
-                        </Box>
-                    </Card>
+                            />
+                        </Stack>
+                    </CustomCard>
                 </Grid>
 
-                {/* Right Column: Details Card */}
                 <Grid size={{xs: 12, md: 8}}>
-                    <Card>
-                        <CardContent sx={{p: 3}}>
+                    <CustomCard>
+                        <Box>
                             <Typography variant="h6" gutterBottom>
                                 Profile Details
                             </Typography>
@@ -147,10 +159,18 @@ const ProfilePage = () => {
                                     </Box>
                                 </Grid>
                             </Grid>
-                        </CardContent>
-                    </Card>
+                        </Box>
+                    </CustomCard>
                 </Grid>
             </Grid>
+
+            {user && (
+                <UserUpdateForm
+                    open={openUpdateUserModal}
+                    onClose={handleCloseUpdateUserModal}
+                    currentData={user}
+                />
+            )}
         </Box>
     );
 };

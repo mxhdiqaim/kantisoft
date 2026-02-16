@@ -165,3 +165,23 @@ export const roleHierarchy: Record<UserRoleType, number> = {
     user: 2,
     guest: 3,
 } as const;
+
+
+export const updatePasswordSchema = yup.object({
+    oldPassword: yup.string().required("Password is required"),
+    newPassword: yup
+        .string()
+        .required("Password is required")
+        .min(PASSWORD_RULES.min, `Password must be at least ${PASSWORD_RULES.min} characters`)
+        .max(PASSWORD_RULES.max, `Password cannot exceed ${PASSWORD_RULES.max} characters`)
+        .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
+        .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+        .matches(/[0-9]/, "Password must contain at least one number")
+        .matches(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
+    confirmNewPassword: yup
+        .string()
+        .required("Please confirm your password")
+        .oneOf([yup.ref("newPassword")], "Passwords must match"),
+})
+
+export type UpdatePasswordType = yup.InferType<typeof updatePasswordSchema>;

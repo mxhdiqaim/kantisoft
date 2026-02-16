@@ -14,7 +14,13 @@ import type {
     SingleOrderType
 } from "@/types/order-types.ts";
 import type {CreateStoreType, PaginatedStoreResponse, StoreType} from "@/types/store-types";
-import {type CreateUserType, type RegisterUserType, UserRoleEnum, type UserType} from "@/types/user-types";
+import {
+    type CreateUserType,
+    type RegisterUserType,
+    type UpdatePasswordType,
+    UserRoleEnum,
+    type UserType
+} from "@/types/user-types";
 import {
     type BaseQueryFn,
     createApi,
@@ -511,13 +517,15 @@ export const apiSlice = createApi({
                 {type: "User", id: "LIST"},
             ],
         }),
-        updatePassword: builder.mutation<{ message: string }, { oldPassword: string; newPassword: string }>({
+        
+        updatePassword: builder.mutation<{ message: string }, Omit<UpdatePasswordType, "confirmNewPassword">>({
             query: (body) => ({
                 url: "/users/update-password",
                 method: "PATCH",
                 body,
             }),
         }),
+
         changeUserStore: builder.mutation<UserType, { id: string; newStoreId: string }>({
             query: ({id, newStoreId}) => ({
                 url: `/users/${id}/change-store`,
