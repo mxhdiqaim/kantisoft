@@ -241,7 +241,6 @@ export const getAllUsers = async (req: CustomRequest, res: Response) => {
  */
 export const getUserById = async (req: CustomRequest, res: Response) => {
     try {
-        const { id: targetUserId } = req.params;
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
 
@@ -253,50 +252,40 @@ export const getUserById = async (req: CustomRequest, res: Response) => {
             )
         }
 
-        // // Check if a user is authenticated
-        // if (!currentUser || !userStoreId) {
-        //     return handleError2(
-        //         res,
-        //         "Authentication required.",
-        //         StatusCodes.UNAUTHORIZED,
-        //     );
-        // }
+        const validated = await validateStoreAndExtractDates(req, res);
+        if (!validated) return;
 
+        const { storeIds } = validated;
+        const { id: targetUserId } = req.params;
 
-        // Find the current user's store and its hierarchy (parent and branches)
-        const userStore = await db.query.stores.findFirst({
-            where: eq(stores.id, storeId),
-            with: {
-                parent: true,
-                branches: true,
-            },
-        });
-
-        if (!userStore) {
-            return handleError2(
-                res,
-                "Associated store not found.",
-                StatusCodes.NOT_FOUND,
+        // Fetch user with Store Join
+        const [targetUser] = await db
+            .select({
+                id: users.id,
+                firstName: users.firstName,
+                lastName: users.lastName,
+                email: users.email,
+                phone: users.phone,
+                role: users.role,
+                status: users.status,
+                storeId: users.storeId,
+                createdAt: users.createdAt,
+                lastModified: users.lastModified,
+                store: {
+                    id: stores.id,
+                    name: stores.name,
+                    location: stores.location,
+                },
+            })
+            .from(users)
+            .leftJoin(stores, eq(users.storeId, stores.id))
+            .where(
+                and(
+                    eq(users.id, targetUserId),
+                    inArray(users.storeId, storeIds),
+                    ne(users.status, UserStatusEnum.DELETED)
+                )
             );
-        }
-
-        // Collect all relevant store IDs
-        const accessibleStoreIds = new Set<string>([storeId]);
-
-        if (userStore.parent) {
-            accessibleStoreIds.add(userStore.parent.id);
-        }
-
-        userStore.branches?.forEach((branch) => accessibleStoreIds.add(branch.id));
-
-
-        // Fetch the target user if they are in the accessible store network
-        const targetUser = await db.query.users.findFirst({
-            where: and(
-                eq(users.id, targetUserId),
-                inArray(users.storeId, Array.from(accessibleStoreIds)),
-            ),
-        });
 
         if (!targetUser) {
             return handleError2(
@@ -322,20 +311,7 @@ export const getUserById = async (req: CustomRequest, res: Response) => {
             );
         }
 
-        // // Log activity for viewing a user
-        // await logActivity({
-        //     userId: currentUser.id,
-        //     storeId: userStoreId,
-        //     action: "USER_VIEWED",
-        //     entityId: targetUser.id,
-        //     entityType: "user",
-        //     details: `User ${targetUser.firstName} ${targetUser.lastName} viewed by ${currentUser.firstName} ${currentUser.lastName}.`,
-        // });
-
-        // Return user data without the password
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password, ...userWithoutPassword } = targetUser;
-        res.status(StatusCodes.OK).json(userWithoutPassword);
+        res.status(StatusCodes.OK).json(targetUser);
     } catch (error) {
         handleError2(
             res,
@@ -1000,11 +976,11 @@ export const loginUser = async (
     }
     passport.authenticate(
         "user",
-        async function (
+        async (
             error: Error,
             user: Express.User,
             info: { message: string },
-        ) {
+        ) => {
             if (error) {
                 return handleError2(
                     res,
@@ -1022,31 +998,53 @@ export const loginUser = async (
                 );
             }
 
-            // prevent login of pseudo-deleted users
-            const data = await db.query.users.findFirst({
-                where: and(
-                    eq(users.id, user.data.id),
-                    ne(users.status, UserStatusEnum.DELETED),
-                    ne(users.status, UserStatusEnum.BANNED),
-                    ne(users.status, UserStatusEnum.INACTIVE),
-                ),
-            });
+            // Fetch the user WITH the joined store data
+            // Note: select().from().where() returns an array, so we take the first element [0]
+            const [foundUser] = await db
+                .select({
+                    id: users.id,
+                    firstName: users.firstName,
+                    lastName: users.lastName,
+                    email: users.email,
+                    phone: users.phone,
+                    role: users.role,
+                    status: users.status,
+                    storeId: users.storeId, // Keep this for token generation if needed
+                    createdAt: users.createdAt,
+                    lastModified: users.lastModified,
+                    store: {
+                        id: stores.id,
+                        name: stores.name,
+                        location: stores.location,
+                    },
+                })
+                .from(users)
+                .leftJoin(stores, eq(users.storeId, stores.id))
+                .where(
+                    and(
+                        eq(users.id, user.data.id),
+                        ne(users.status, UserStatusEnum.DELETED),
+                        ne(users.status, UserStatusEnum.BANNED),
+                        ne(users.status, UserStatusEnum.INACTIVE)
+                    )
+                );
 
-            if (!data) {
+            if (!foundUser) {
                 return handleError2(
                     res,
-                    "Incorrect email or password.",
+                    "Access denied. Account may be inactive or deleted.",
                     StatusCodes.UNAUTHORIZED,
                 );
             }
 
             req.login(user, (loginError) => {
                 if (loginError) {
-                    console.error("Login error:", loginError);
+                    // console.error("Login failed", loginError);
                     return handleError2(
                         res,
-                        "Login failed, please try again.",
+                        "Login failed",
                         StatusCodes.INTERNAL_SERVER_ERROR,
+                        loginError
                     );
                 }
 
@@ -1061,11 +1059,9 @@ export const loginUser = async (
                     );
                 }
 
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { password, ...userWithoutPassword } = user.data;
                 return res
                     .status(StatusCodes.OK)
-                    .json({ token, user: userWithoutPassword });
+                    .json({ token, user: foundUser });
             });
         },
     )(req, res, next);
