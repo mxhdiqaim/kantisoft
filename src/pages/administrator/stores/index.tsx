@@ -17,6 +17,7 @@ import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import DeleteConfirmationModal from "@/components/ui/delete-confimation-modal.tsx";
 
 import {AddOutlined, DeleteOutline, EditOutlined, MoreVert, VisibilityOutlined} from "@mui/icons-material";
+import StoreForm from "@/pages/administrator/stores/store-form.tsx";
 
 const StoresScreen = () => {
     const theme = useTheme();
@@ -37,6 +38,7 @@ const StoresScreen = () => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedRow, setSelectedRow] = useState<StoreType | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [openStoreForm, setOpenStoreForm] = useState(false);
 
     const handleMenuClick = (_event: MouseEvent<HTMLElement>, row: StoreType) => {
         setSelectedRow(row);
@@ -226,10 +228,10 @@ const StoresScreen = () => {
             <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
                 <Typography variant="h4">{t("store")}</Typography>
                 <CustomButton
-                    title={`New ${t("store")}`}
+                    title={`New Branch`}
                     variant="contained"
                     startIcon={<AddOutlined/>}
-                    onClick={() => navigate("/admin/stores/new")}
+                    onClick={() => setOpenStoreForm(true)}
                 />
             </Box>
             <TableSearchActions
@@ -251,6 +253,11 @@ const StoresScreen = () => {
                 isLoading={isDeleting}
                 title="Delete Store?"
                 message="You won't be able to revert this action."
+            />
+
+            <StoreForm
+                open={openStoreForm}
+                onClose={() => setOpenStoreForm(false)}
             />
         </Box>
     );

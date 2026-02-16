@@ -254,13 +254,13 @@ export const appRoutes: AppRouteType[] = [
                 element: StoreScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
                 children: [
-                    {
-                        to: "new",
-                        title: "createStore",
-                        element: StoreFormScreen,
-                        hidden: true,
-                        roles: [UserRoleEnum.MANAGER],
-                    },
+                    // {
+                    //     to: "new",
+                    //     title: "createStore",
+                    //     element: StoreFormScreen,
+                    //     hidden: true,
+                    //     roles: [UserRoleEnum.MANAGER],
+                    // },
                     {
                         to: ":id/view",
                         title: "viewStore",

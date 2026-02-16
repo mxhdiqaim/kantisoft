@@ -3,31 +3,26 @@ import useNotifier from "@/hooks/useNotifier.ts";
 import {useCreateStoreMutation, useGetStoreByIdQuery, useUpdateStoreMutation} from "@/store/slice";
 import {createStoreSchema, type CreateStoreType, STORE_TYPES} from "@/types/store-types.ts";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {ArrowBackIosNewOutlined} from "@mui/icons-material";
-import {
-    Box,
-    Button,
-    FormControl,
-    FormHelperText,
-    Grid,
-    InputLabel,
-    MenuItem,
-    Paper,
-    Select,
-    TextField,
-    Typography,
-    useTheme,
-} from "@mui/material";
+import {FormControl, Grid, InputAdornment, MenuItem} from "@mui/material";
 import {useEffect} from "react";
 import {Controller, useForm} from "react-hook-form";
-import {useNavigate, useParams} from "react-router-dom";
+import {useParams} from "react-router-dom";
 import StoreFormLoading from "@/components/stores/loading/store-form-loading.tsx";
+import CustomModal from "@/components/customs/custom-modal.tsx";
+import {StyledTextField} from "@/components/ui";
+import CustomButton from "@/components/ui/button.tsx";
 
-const StoreForm = () => {
+import Icon from "@/components/ui/icon.tsx";
+import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
+
+interface Props {
+    open: boolean;
+    onClose: () => void;
+}
+
+const StoreForm = ({open, onClose}: Props) => {
     const {id} = useParams<{ id: string }>();
     const isEditMode = !!id;
-    const theme = useTheme();
-    const navigate = useNavigate();
     const notify = useNotifier();
 
     const {data: storeData, isLoading: isFetching} = useGetStoreByIdQuery(id!, {skip: !isEditMode});
@@ -39,11 +34,9 @@ const StoreForm = () => {
         handleSubmit,
         formState: {errors},
         reset,
-    } = useForm<CreateStoreType>({
+    } = useForm({
         defaultValues: {name: "", location: "", storeType: "restaurant"},
 
-        // eslint-disable-next-line
-        // @ts-ignore
         resolver: yupResolver(createStoreSchema),
     });
 
@@ -66,50 +59,38 @@ const StoreForm = () => {
                 await createStore(formData).unwrap();
                 notify("Store created successfully!", "success");
             }
-            navigate("/stores");
+
+            onClose();
         } catch (error) {
             const defaultMessage = isEditMode ? "Failed to update store" : "Failed to create store";
             const apiError = getApiError(error, defaultMessage);
             notify(apiError.message, "error");
-            console.error(`Error: ${apiError.message}`);
         }
     };
-
-    if (isFetching) {
-        return <StoreFormLoading/>
-    }
-
     const isLoading = isCreating || isUpdating;
 
     return (
-        <Box>
-            <Button variant="text" onClick={() => navigate(-1)} sx={{mb: 2}}>
-                <ArrowBackIosNewOutlined fontSize="small" sx={{mr: 0.5}}/>
-                Go back
-            </Button>
-            <Typography variant="h4" sx={{mb: 3}}>
-                {isEditMode ? "Edit Store" : "Create New Store"}
-            </Typography>
-
-            <Paper
-                component="form"
-                onSubmit={handleSubmit(onSubmit)}
-                elevation={0}
-                sx={{p: 4, border: `1px solid ${theme.palette.divider}`, borderRadius: theme.borderRadius.small}}
-            >
-                <Grid container spacing={3}>
+        <CustomModal
+            open={open}
+            onClose={onClose}
+            title={isEditMode ? "Edit Store" : "Create New Store"}
+        >
+            {isFetching ? <StoreFormLoading/> : (
+                <Grid container spacing={2} component="form" onSubmit={handleSubmit(onSubmit)}>
                     <Grid size={12}>
                         <Controller
                             name="name"
                             control={control}
                             render={({field}) => (
-                                <TextField
-                                    {...field}
-                                    fullWidth
-                                    label="Store Name"
-                                    error={!!errors.name}
-                                    helperText={errors.name?.message}
-                                />
+                                <FormControl fullWidth>
+                                    <StyledTextField
+                                        {...field}
+                                        fullWidth
+                                        label="Store Name"
+                                        error={!!errors.name}
+                                        helperText={errors.name?.message}
+                                    />
+                                </FormControl>
                             )}
                         />
                     </Grid>
@@ -118,49 +99,77 @@ const StoreForm = () => {
                             name="location"
                             control={control}
                             render={({field}) => (
-                                <TextField
-                                    {...field}
-                                    fullWidth
-                                    label="Location (Optional)"
-                                    error={!!errors.location}
-                                    helperText={errors.location?.message}
-                                />
+                                <FormControl fullWidth>
+                                    <StyledTextField
+                                        {...field}
+                                        fullWidth
+                                        label="Location (Optional)"
+                                        error={!!errors.location}
+                                        helperText={errors.location?.message}
+                                    />
+                                </FormControl>
                             )}
                         />
                     </Grid>
-                    <Grid size={{xs: 12, sm: 6}}>
-                        <FormControl fullWidth error={!!errors.storeType}>
-                            <InputLabel id="store-type-label">Store Type</InputLabel>
-                            <Controller
-                                name="storeType"
-                                control={control}
-                                render={({field}) => (
-                                    <Select {...field} labelId="store-type-label" label="Store Type">
+                    <Grid size={12}>
+                        <Controller
+                            name="storeType"
+                            control={control}
+                            render={({field}) => (
+                                <FormControl fullWidth>
+                                    <StyledTextField
+                                        {...field}
+                                        select
+                                        label="Branch Type"
+                                        SelectProps={{
+                                            IconComponent: () => null,
+                                            endAdornment: (
+                                                <InputAdornment position="end">
+                                                    <Icon
+                                                        src={ArrowDownIconSvg}
+                                                        alt={"Dropdown Arrow"}
+                                                        sx={{width: 15, height: 15}}
+                                                    />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        error={Boolean(errors.storeType)}
+                                        helperText={errors.storeType?.message}
+                                    >
+                                        <MenuItem value={""} disabled>
+                                            Select Branch Type
+                                        </MenuItem>
                                         {STORE_TYPES.map((type) => (
-                                            <MenuItem key={type} value={type} sx={{textTransform: "capitalize"}}>
+                                            <MenuItem
+                                                key={type}
+                                                value={type}
+                                                sx={{textTransform: "capitalize"}}
+                                            >
                                                 {type}
                                             </MenuItem>
                                         ))}
-                                    </Select>
-                                )}
-                            />
-                            {errors.storeType && <FormHelperText>{errors.storeType.message}</FormHelperText>}
-                        </FormControl>
+                                    </StyledTextField>
+                                </FormControl>
+                            )}
+                        />
                     </Grid>
                     <Grid size={12}>
-                        <Button variant="contained" type="submit" disabled={isLoading}>
-                            {isLoading
+                        <CustomButton
+                            title={isLoading
                                 ? isEditMode
                                     ? "Updating..."
                                     : "Creating..."
                                 : isEditMode
                                     ? "Update Store"
                                     : "Create Store"}
-                        </Button>
+                            variant="contained"
+                            type="submit"
+                            disabled={isLoading}
+                        />
                     </Grid>
                 </Grid>
-            </Paper>
-        </Box>
+            )}
+        </CustomModal>
     );
 };
 
