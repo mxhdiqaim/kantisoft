@@ -25,6 +25,7 @@ interface Props {
 }
 
 const UserUpdateForm = ({open, onClose, currentData}: Props) => {
+    console.log({currentData});
     const notify = useNotifier();
     const currentUser = useSelector(selectCurrentUser);
 

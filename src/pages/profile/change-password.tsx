@@ -1,92 +1,100 @@
 import {useState} from "react";
-import {Button, IconButton, InputAdornment, Paper, TextField, Typography} from "@mui/material";
-import {ArrowBackIosNewOutlined, Visibility, VisibilityOff} from "@mui/icons-material";
+import {Box, IconButton, InputAdornment, Typography} from "@mui/material";
 import {Controller, useForm} from "react-hook-form";
 import useNotifier from "@/hooks/useNotifier";
 import {useNavigate} from "react-router-dom";
 import {useUpdatePasswordMutation} from "@/store/slice";
 import {getApiError} from "@/helpers/get-api-error";
+import CustomButton from "@/components/ui/button.tsx";
+import CustomCard from "@/components/customs/custom-card.tsx";
+import {StyledTextField} from "@/components/ui";
+import {yupResolver} from "@hookform/resolvers/yup";
+import {updatePasswordSchema, type UpdatePasswordType} from "@/types/user-types.ts";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 
-interface ChangePasswordForm {
-    currentPassword: string;
-    newPassword: string;
-    confirmPassword: string;
-}
+import {ArrowBackIosNewOutlined, Visibility, VisibilityOff} from "@mui/icons-material";
 
-const ChangePassword = () => {
+const ChangePasswordScreen = () => {
     const notify = useNotifier();
     const navigate = useNavigate();
-    const [showCurrent, setShowCurrent] = useState(false);
-    const [showNew, setShowNew] = useState(false);
-    const [showConfirm, setShowConfirm] = useState(false);
 
-    const [updatePassword, {isLoading, error}] = useUpdatePasswordMutation();
+    const [showOldPassword, setShowOldPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+
+    const [updatePassword, {isLoading, error, isError}] = useUpdatePasswordMutation();
 
     const {
         handleSubmit,
         control,
         reset,
         formState: {errors, isSubmitting},
-        watch,
-        setError,
-    } = useForm<ChangePasswordForm>({
+    } = useForm({
+        mode: "onChange",
         defaultValues: {
-            currentPassword: "",
+            oldPassword: "",
             newPassword: "",
-            confirmPassword: "",
+            confirmNewPassword: "",
         },
+
+        resolver: yupResolver(updatePasswordSchema),
     });
 
-    const onSubmit = async (values: ChangePasswordForm) => {
-        if (values.newPassword !== values.confirmPassword) {
-            getApiError(error, "New passwords do not match.");
-            notify("New passwords do not match.", "error");
-            return;
-        }
+    const onSubmit = async (data: UpdatePasswordType) => {
         try {
-            await updatePassword({oldPassword: values.currentPassword, newPassword: values.newPassword}).unwrap();
+            const payload = {
+                oldPassword: data.oldPassword as string,
+                newPassword: data.newPassword as string,
+            };
+
+            await updatePassword({...payload}).unwrap();
             notify("Password changed successfully!", "success");
             reset();
         } catch (error) {
-            console.log(`Failed to change password:`, error);
             const defaultMessage = `Failed to change password: ${error.message}`;
             const apiError = getApiError(error, defaultMessage);
 
             notify(apiError.message, "error");
-            setError("newPassword", {type: "manual"});
-            setError("confirmPassword", {type: "manual"});
         }
     };
 
+    if (isError) {
+        const apiError = getApiError(error, "Failed to change Password. Please try again later.");
+        notify(apiError.message, "error");
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
+    }
+
+
     return (
-        <>
-            <Button variant="text" onClick={() => navigate(-1)} sx={{mb: 2}}>
-                <ArrowBackIosNewOutlined fontSize="small" sx={{mr: 0.5}}/>
-                Go back
-            </Button>
-            <Paper sx={{p: 4}} elevation={0}>
-                <Typography variant="h5" mb={3}>
+        <Box component={"form"} onSubmit={handleSubmit(onSubmit)} noValidate>
+            <CustomButton
+                title={"Go Back"}
+                startIcon={<ArrowBackIosNewOutlined fontSize="small" sx={{mr: 0.5}}/>}
+                onClick={() => navigate(-1)}
+                sx={{mb: 2}}
+            />
+            <CustomCard sx={{p: 1}}>
+                <Typography variant="h5">
                     Change Password
                 </Typography>
-                <form onSubmit={handleSubmit(onSubmit)} noValidate>
+                <Box>
                     <Controller
-                        name="currentPassword"
+                        name="oldPassword"
                         control={control}
                         rules={{required: "Current password is required"}}
                         render={({field}) => (
-                            <TextField
+                            <StyledTextField
                                 {...field}
                                 label="Current Password"
-                                type={showCurrent ? "text" : "password"}
+                                type={showOldPassword ? "text" : "password"}
                                 fullWidth
                                 margin="normal"
-                                error={!!errors.currentPassword}
-                                helperText={errors.currentPassword?.message}
+                                error={!!errors.oldPassword}
+                                helperText={errors.oldPassword?.message}
                                 InputProps={{
                                     endAdornment: (
                                         <InputAdornment position="end">
-                                            <IconButton onClick={() => setShowCurrent((show) => !show)} edge="end">
-                                                {showCurrent ? <VisibilityOff/> : <Visibility/>}
+                                            <IconButton onClick={() => setShowOldPassword((show) => !show)} edge="end">
+                                                {showOldPassword ? <VisibilityOff/> : <Visibility/>}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
@@ -97,15 +105,11 @@ const ChangePassword = () => {
                     <Controller
                         name="newPassword"
                         control={control}
-                        rules={{
-                            required: "New password is required",
-                            minLength: {value: 6, message: "Password must be at least 6 characters"},
-                        }}
                         render={({field}) => (
-                            <TextField
+                            <StyledTextField
                                 {...field}
                                 label="New Password"
-                                type={showNew ? "text" : "password"}
+                                type={showNewPassword ? "text" : "password"}
                                 fullWidth
                                 margin="normal"
                                 error={!!errors.newPassword}
@@ -113,8 +117,8 @@ const ChangePassword = () => {
                                 InputProps={{
                                     endAdornment: (
                                         <InputAdornment position="end">
-                                            <IconButton onClick={() => setShowNew((show) => !show)} edge="end">
-                                                {showNew ? <VisibilityOff/> : <Visibility/>}
+                                            <IconButton onClick={() => setShowNewPassword((show) => !show)} edge="end">
+                                                {showNewPassword ? <VisibilityOff/> : <Visibility/>}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
@@ -123,26 +127,22 @@ const ChangePassword = () => {
                         )}
                     />
                     <Controller
-                        name="confirmPassword"
+                        name="confirmNewPassword"
                         control={control}
-                        rules={{
-                            required: "Please confirm your new password",
-                            validate: (value) => value === watch("newPassword") || "Passwords do not match",
-                        }}
                         render={({field}) => (
-                            <TextField
+                            <StyledTextField
                                 {...field}
                                 label="Confirm New Password"
-                                type={showConfirm ? "text" : "password"}
+                                type={showNewPassword ? "text" : "password"}
                                 fullWidth
                                 margin="normal"
-                                error={!!errors.confirmPassword}
-                                helperText={errors.confirmPassword?.message}
+                                error={!!errors.confirmNewPassword}
+                                helperText={errors.confirmNewPassword?.message}
                                 InputProps={{
                                     endAdornment: (
                                         <InputAdornment position="end">
-                                            <IconButton onClick={() => setShowConfirm((show) => !show)} edge="end">
-                                                {showConfirm ? <VisibilityOff/> : <Visibility/>}
+                                            <IconButton onClick={() => setShowNewPassword((show) => !show)} edge="end">
+                                                {showNewPassword ? <VisibilityOff/> : <Visibility/>}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
@@ -150,20 +150,17 @@ const ChangePassword = () => {
                             />
                         )}
                     />
-                    <Button
+                    <CustomButton
+                        title={"Change Password"}
                         type="submit"
                         variant="contained"
                         color="primary"
-                        fullWidth
-                        sx={{mt: 2}}
                         disabled={isLoading || isSubmitting}
-                    >
-                        Change Password
-                    </Button>
-                </form>
-            </Paper>
-        </>
+                    />
+                </Box>
+            </CustomCard>
+        </Box>
     );
 };
 
-export default ChangePassword;
+export default ChangePasswordScreen;
