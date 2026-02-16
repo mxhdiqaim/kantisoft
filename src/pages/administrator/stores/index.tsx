@@ -18,6 +18,7 @@ import DeleteConfirmationModal from "@/components/ui/delete-confimation-modal.ts
 
 import {AddOutlined, DeleteOutline, EditOutlined, MoreVert, VisibilityOutlined} from "@mui/icons-material";
 import StoreForm from "@/pages/administrator/stores/store-form.tsx";
+import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 
 const StoresScreen = () => {
     const theme = useTheme();
@@ -26,9 +27,9 @@ const StoresScreen = () => {
     const notify = useNotifier();
 
     const {data: storesData, isLoading, isError, error} = useGetAllStoresQuery();
-    const [deleteStore, {isLoading: isDeleting}] = useDeleteStoreMutation();
+    const memoizedStores = useMemoizedArray(storesData);
 
-    const memoizedStores = useMemo(() => storesData || [], [storesData]);
+    const [deleteStore, {isLoading: isDeleting}] = useDeleteStoreMutation();
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
         initialData: memoizedStores,
@@ -63,11 +64,15 @@ const StoresScreen = () => {
             const defaultMessage = "Failed to delete store";
             const apiError = getApiError(error, defaultMessage);
             notify(apiError.message, "error");
-            console.log(error);
         } finally {
             handleCloseDeleteModal();
         }
     };
+
+    const handleCloseStoreForm = () => {
+        setOpenStoreForm(false)
+        setSelectedRow(null);
+    }
 
     const columns: GridColDef<StoreType>[] = useMemo(
         () => [
@@ -168,15 +173,11 @@ const StoresScreen = () => {
                 headerAlign: "center",
                 renderCell: (params) => {
                     const isMainStore = params.row.branchType === "main";
-                    const hasBranches = storesData?.length > 1;
+                    const hasBranches = memoizedStores?.length > 1;
                     const isDeleteDisabled = isMainStore && hasBranches;
 
                     const handleView = () => {
                         navigate(`/admin/stores/${params.row.id}/view`);
-                        handleMenuClose();
-                    };
-                    const handleEdit = () => {
-                        navigate(`/admin/stores/${params.row.id}/edit`);
                         handleMenuClose();
                     };
 
@@ -198,7 +199,7 @@ const StoresScreen = () => {
                                 <VisibilityOutlined sx={{mr: 1}}/>
                                 View
                             </TableStyledMenuItem>
-                            <TableStyledMenuItem onClick={handleEdit}>
+                            <TableStyledMenuItem onClick={() => setOpenStoreForm(true)}>
                                 <EditOutlined sx={{mr: 1}}/>
                                 Edit
                             </TableStyledMenuItem>
@@ -214,7 +215,7 @@ const StoresScreen = () => {
                 },
             },
         ],
-        [anchorEl, navigate, theme.borderRadius.small, storesData, t],
+        [anchorEl, navigate, theme.borderRadius.small, memoizedStores, t],
     );
 
     if (isError) {
@@ -254,10 +255,10 @@ const StoresScreen = () => {
                 title="Delete Store?"
                 message="You won't be able to revert this action."
             />
-
             <StoreForm
                 open={openStoreForm}
-                onClose={() => setOpenStoreForm(false)}
+                onClose={handleCloseStoreForm}
+                currentData={selectedRow}
             />
         </Box>
     );
