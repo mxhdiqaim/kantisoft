@@ -1,8 +1,7 @@
 import {getApiError} from "@/helpers/get-api-error";
 import useNotifier from "@/hooks/useNotifier";
-import {useGetAllStoresQuery, useUpdateUserMutation} from "@/store/slice";
+import {useUpdateUserMutation} from "@/store/slice";
 import {selectCurrentUser} from "@/store/slice/auth-slice";
-import type {StoreType} from "@/types/store-types";
 import {updateUserSchema, type UpdateUserType, UserRoleEnum, type UserType,} from "@/types/user-types";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {Box, FormControl, Grid, InputAdornment, MenuItem} from "@mui/material";
@@ -13,7 +12,6 @@ import CustomButton from "@/components/ui/button.tsx";
 import {StyledTextField} from "@/components/ui";
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import {getRolePermissions} from "@/utils";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 
 import Icon from "@/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
@@ -25,12 +23,8 @@ interface Props {
 }
 
 const UserUpdateForm = ({open, onClose, currentData}: Props) => {
-    console.log({currentData});
     const notify = useNotifier();
     const currentUser = useSelector(selectCurrentUser);
-
-    const {data: stores, isLoading: fetchingStores} = useGetAllStoresQuery();
-    const memoizedStores = useMemoizedArray(stores);
 
     const [updateUser, {isLoading: isUpdating, isSuccess: isUpdated}] = useUpdateUserMutation();
     const isLoading = isUpdating;
@@ -43,7 +37,6 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
     } = useForm({
         mode: "onChange",
         defaultValues: {},
-
         resolver: yupResolver(updateUserSchema),
     });
 
@@ -68,7 +61,7 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
                 email: currentData?.email,
                 phone: currentData?.phone,
                 role: currentData?.role,
-                storeId: currentData?.storeId || "",
+                storeId: currentData?.store?.id || "",
             });
         }
     }, [currentData, open, reset]);
@@ -240,65 +233,21 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
                         )}
                     </Grid>
 
-                    {currentUser?.role === UserRoleEnum.MANAGER && (
-                        <Grid size={{xs: 12, sm: 6}}>
-                            {canEditRole ? (
-                                <FormControl fullWidth error={!!errors.storeId}>
-                                    <Controller
-                                        name="storeId"
-                                        control={control}
-                                        render={({field}) => (
-                                            <FormControl fullWidth>
-                                                <StyledTextField
-                                                    {...field}
-                                                    select
-                                                    label="Assign Store"
-                                                    disabled={fetchingStores}
-                                                    SelectProps={{
-                                                        IconComponent: () => null,
-                                                        endAdornment: (
-                                                            <InputAdornment position="end">
-                                                                <Icon
-                                                                    src={ArrowDownIconSvg}
-                                                                    alt={"Dropdown Arrow"}
-                                                                    sx={{width: 15, height: 15}}
-                                                                />
-                                                            </InputAdornment>
-                                                        ),
-                                                    }}
-                                                    error={Boolean(errors.storeId)}
-                                                    helperText={errors.storeId?.message}
-                                                >
-                                                    <MenuItem value={""} disabled>
-                                                        Select Store
-                                                    </MenuItem>
-                                                    {memoizedStores?.map((store: StoreType) => (
-                                                        <MenuItem key={store.id} value={store.id}>
-                                                            {store.name}
-                                                        </MenuItem>
-                                                    ))}
-                                                </StyledTextField>
-                                            </FormControl>
-                                        )}
-                                    />
-                                </FormControl>
-                            ) : (
-                                <FormControl fullWidth>
-                                    <StyledTextField
-                                        label="Store"
-                                        value={currentData?.store.name || ''}
-                                        fullWidth
-                                        slotProps={{
-                                            input: {
-                                                readOnly: true
-                                            }
-                                        }}
-                                        disabled
-                                    />
-                                </FormControl>
-                            )}
-                        </Grid>
-                    )}
+                    <Grid size={{xs: 12, sm: 6}}>
+                        <FormControl fullWidth>
+                            <StyledTextField
+                                label="Store"
+                                value={currentData?.store?.name || ''}
+                                fullWidth
+                                slotProps={{
+                                    input: {
+                                        readOnly: true
+                                    }
+                                }}
+                                disabled
+                            />
+                        </FormControl>
+                    </Grid>
                 </Grid>
                 <Box sx={{display: "flex", justifyContent: "flex-end", gap: 2, mt: 2}}>
                     <CustomButton title={"Cancel"} onClick={onClose} variant="outlined"/>

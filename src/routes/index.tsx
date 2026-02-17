@@ -20,13 +20,11 @@ import {
     RegisterScreen,
     SalesHistoryScreen,
     SingleInventoryTransactionScreen,
-    StoreFormScreen,
     StoreScreen,
     TrashBinScreen,
     UnitOfMeasurementsScreen,
     UsersScreen,
     ViewSalesHistoryScreen,
-    ViewStoreScreen,
 } from "@/pages";
 import {type UserRole, UserRoleEnum} from "@/types/user-types";
 import {DashboardOutlined, KitchenOutlined} from "@mui/icons-material";
@@ -253,29 +251,6 @@ export const appRoutes: AppRouteType[] = [
                 title: "Stores",
                 element: StoreScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-                children: [
-                    {
-                        to: "new",
-                        title: "createStore",
-                        element: StoreFormScreen,
-                        hidden: true,
-                        roles: [UserRoleEnum.MANAGER],
-                    },
-                    {
-                        to: ":id/view",
-                        title: "viewStore",
-                        element: ViewStoreScreen,
-                        hidden: true,
-                        roles: [UserRoleEnum.MANAGER],
-                    },
-                    {
-                        to: ":id/edit",
-                        title: "editStore",
-                        element: StoreFormScreen,
-                        hidden: true,
-                        roles: [UserRoleEnum.MANAGER],
-                    },
-                ]
             },
             {
                 to: "activities",

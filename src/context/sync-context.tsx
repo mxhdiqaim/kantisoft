@@ -19,7 +19,6 @@ export const SyncProvider = ({children}: { children: React.ReactNode }) => {
                 .toArray();
 
             for (const item of pendingItems) {
-                console.log({item})
                 try {
                     // Mark as SYNCING locally first
                     // This stops the next loop iteration from picking it up

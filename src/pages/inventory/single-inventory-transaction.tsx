@@ -9,7 +9,6 @@ import {relativeTime} from "@/utils/get-relative-time.ts";
 import CustomButton from "@/components/ui/button.tsx";
 import {ArrowBackIosNewOutlined} from "@mui/icons-material";
 import {getTransactionChipColor} from "@/components/ui";
-// import {AppBreadcrumbs} from "@/helpers";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 
 const SingleInventoryTransaction = () => {
@@ -27,13 +26,9 @@ const SingleInventoryTransaction = () => {
 
     const {data: inventoryData, isLoading: isLoadingInventory} = useGetAllInventoryQuery();
 
-    console.log("Inventory Data:", inventoryData);
-
     const inventoryItem = useMemo(() => {
         return inventoryData?.find(item => item.menuItemId === menuItemId);
     }, [inventoryData, menuItemId]);
-
-    console.log("Inventory Item:", inventoryItem);
 
     const columns: GridColDef[] = useMemo(() => [
         {

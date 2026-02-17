@@ -101,8 +101,8 @@ const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQuery
 
     let modifiedArgs = args;
 
-    // If the user is a manager and has an active store, add targetStoreId to params
-    if (currentUser?.role === UserRoleEnum.MANAGER && activeStore?.id) {
+    // If there is an active store and the user is NOT a manager, enforce targetStoreId
+    if (currentUser?.role !== UserRoleEnum.MANAGER && activeStore?.id) {
         if (typeof args === "string") {
             modifiedArgs = {
                 url: args,
@@ -118,6 +118,7 @@ const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQuery
             };
         }
     }
+
 
     const result = await baseQuery(modifiedArgs, api, extraOptions);
 
@@ -517,7 +518,7 @@ export const apiSlice = createApi({
                 {type: "User", id: "LIST"},
             ],
         }),
-        
+
         updatePassword: builder.mutation<{ message: string }, Omit<UpdatePasswordType, "confirmNewPassword">>({
             query: (body) => ({
                 url: "/users/update-password",

@@ -40,8 +40,6 @@ const ProfilePage = () => {
         skip: !currentUser, // Skip the query if the user is not logged in
     });
 
-    console.log({user})
-
     const handleOpenUpdateUserModal = () => {
         setOpenUpdateUserModal(true);
     };

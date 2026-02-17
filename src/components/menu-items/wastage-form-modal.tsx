@@ -46,7 +46,6 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
 
     const onSubmit = async (data: CreateWastageType) => {
         try {
-            console.log({data});
             await recordWastage(data).unwrap();
             notify(`Successfully recorded wastage`, "success");
 

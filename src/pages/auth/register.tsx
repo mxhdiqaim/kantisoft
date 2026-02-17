@@ -42,7 +42,6 @@ const Register = () => {
     });
 
     const onSubmit = async (data: RegisterUserType) => {
-        console.log("data", data);
         try {
             // eslint-disable-next-line
             const {confirmPassword, ...rest} = data;
@@ -50,7 +49,6 @@ const Register = () => {
             notify("Registration successful!", "success");
             navigate("/login");
         } catch (err) {
-            console.log("error", err);
             const apiMessage = getApiError(err, "Registration failed. Please try again.");
             notify(apiMessage.message, "error");
         }
