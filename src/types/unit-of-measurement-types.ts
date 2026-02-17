@@ -24,6 +24,8 @@ export const UnitSymbolEnum = {
 
 export const UNIT_SYMBOL_VALUES = Object.values(UnitSymbolEnum);
 
+export type UnitSymbolValueType = typeof UNIT_SYMBOL_VALUES[number];
+
 export const UnitNameEnum = {
     MILLIGRAM: "milligram",
     GRAM: "gram",
