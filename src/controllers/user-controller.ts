@@ -14,6 +14,7 @@ import { CustomRequest } from "../types/express";
 import { logActivity } from "../service/activity-logger";
 import { StatusCodes } from "http-status-codes";
 import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
+import { getUserStoreScope } from "../utils/get-store-scope";
 
 /**
  * @desc    Register a new Manager and their first Store
@@ -204,6 +205,7 @@ export const getAllUsers = async (req: CustomRequest, res: Response) => {
                 phone: users.phone,
                 role: users.role,
                 status: users.status,
+                storeId: stores.id,
                 createdAt: users.createdAt,
                 lastModified: users.lastModified,
                 store: {
@@ -219,7 +221,7 @@ export const getAllUsers = async (req: CustomRequest, res: Response) => {
                     inArray(users.storeId, storeIds),
                     ne(users.status, UserStatusEnum.DELETED)
                 )
-            );
+            ).orderBy(stores.name, users.firstName);
 
         res.status(StatusCodes.OK).json(allUsers);
 
@@ -589,25 +591,6 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
         const { id: targetUserId } = req.params;
         const updateData = req.body;
 
-        // // Get all stores managed by the current user (main store and branches)
-        // const mainStore = await db.query.stores.findFirst({
-        //     where: eq(stores.id, storeId),
-        //     with: { branches: true },
-        // });
-
-        // if (!mainStore) {
-        //     return handleError2(
-        //         res,
-        //         "Your associated store could not be found.",
-        //         StatusCodes.NOT_FOUND,
-        //     );
-        // }
-
-        // const accessibleStoreIds = [
-        //     mainStore.id,
-        //     ...(mainStore.branches?.map((branch) => branch.id) || []),
-        // ];
-
         // Fetch the user to be updated from within the accessible store network
         const targetUser = await db.query.users.findFirst({
             where: and(
@@ -628,6 +611,7 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
         // Sanitise payload - password cannot be updated here
         delete updateData.password;
         delete updateData.id; // Prevent changing the ID
+        delete updateData.storeId;
 
         // Authorisation Logic
         const isSelfUpdate = currentUser.id === targetUserId;
@@ -702,7 +686,6 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
             .where(
                 and(
                     eq(users.id, targetUserId),
-                    // inArray(users.storeId, accessibleStoreIds),
                     inArray(users.storeId, storeIds),
                 ),
             )
@@ -742,12 +725,12 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
  */
 export const changeUserStore = async (req: CustomRequest, res: Response) => {
     try {
-        const { id: targetUserId } = req.params;
+        const { targetUserId } = req.params;
         const { newStoreId } = req.body;
         const currentUser = req.user?.data;
-        const currentStoreId = currentUser?.storeId;
+        const storeId = currentUser?.storeId;
 
-        if(!currentStoreId) {
+        if(!storeId) {
             return handleError2(
                 res,
                 "Authenticated user is not associated with any store.",
@@ -771,10 +754,10 @@ export const changeUserStore = async (req: CustomRequest, res: Response) => {
             )
         }
 
-        if (currentStoreId === targetUserId) {
+        if (storeId === targetUserId) {
             return handleError2(
                 res,
-                "Managers cannot change their own store.",
+                "Users cannot change their own store.",
                 StatusCodes.FORBIDDEN,
             );
         }
@@ -793,32 +776,28 @@ export const changeUserStore = async (req: CustomRequest, res: Response) => {
             );
         }
 
-        const managedStoreIds = [
-            mainStore.id,
-            ...(mainStore.branches?.map((branch) => branch.id) || []),
-        ];
+        // Standardised fetch for managed stores
+        const managedStoreIds = await getUserStoreScope(UserRoleEnum.MANAGER, storeId);
 
-        // Validate the new store exists and is managed by the manager
-        if (!managedStoreIds.includes(newStoreId)) {
-            return handleError2(
-                res,
-                "New store not found or not managed by you.",
-                StatusCodes.FORBIDDEN,
-            );
+        if (!managedStoreIds || !managedStoreIds.includes(newStoreId)) {
+            return handleError2(res, "New store is outside your scope.", StatusCodes.FORBIDDEN);
         }
 
-        // Fetch the target user and validate their role and current store
-        const targetUser = await db.query.users.findFirst({
-            where: and(
-                eq(users.id, targetUserId),
-                inArray(users.storeId, managedStoreIds),
-            ),
-        });
+        // Fetch using the same logic as your successful getAllUsers
+        const [targetUser] = await db
+            .select()
+            .from(users)
+            .where(
+                and(
+                    eq(users.id, targetUserId),
+                    inArray(users.storeId, managedStoreIds)
+                )
+            );
 
         if (!targetUser) {
             return handleError2(
                 res,
-                "User not found or not within your managed stores.",
+                "User not found in your branches.",
                 StatusCodes.NOT_FOUND,
             );
         }
@@ -828,6 +807,7 @@ export const changeUserStore = async (req: CustomRequest, res: Response) => {
             UserRoleEnum.USER,
             UserRoleEnum.GUEST,
         ];
+
         if (!allowedRolesToChange.includes(targetUser.role as UserRoleEnum)) {
             return handleError2(
                 res,

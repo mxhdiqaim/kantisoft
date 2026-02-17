@@ -21,7 +21,7 @@ export const validateStoreAndExtractDates = async (
     // Handle Manager Override for Single Store View
     // Managers can pass 'targetStoreId' to view one store from their scope.
     const targetStoreId = req.query.targetStoreId as string | undefined;
-    const storeScope = req.query.storeScope as string | undefined;
+    // const storeScope = req.query.storeScope as string | undefined;
 
     if (!storeId || !userRole) {
         handleError2(
@@ -29,7 +29,7 @@ export const validateStoreAndExtractDates = async (
             "User must belong to a store and have a defined role to access this feature.",
             StatusCodes.FORBIDDEN,
         );
-        
+
         return null;
     }
 
@@ -54,32 +54,28 @@ export const validateStoreAndExtractDates = async (
     }
 
     let finalStoreIds: string[] = [];
-
     let storeQueryType: StoreQueryType;
 
     if (userRole === UserRoleEnum.MANAGER) {
-        if (finalStoreId) {
-            // Manager requests a single store (Branch A, Branch B, or even the Main store)
-            if (authorizedStoreIds.includes(finalStoreId)) {
-                finalStoreIds = [finalStoreId];
+        // If a specific store is requested via query param
+        if (targetStoreId && targetStoreId.trim() !== "") {
+            if (authorizedStoreIds.includes(targetStoreId)) {
+                finalStoreIds = [targetStoreId];
                 storeQueryType = "Targeted Store";
             } else {
-                // Invalid targetStoreId - fallback to the main store
-                finalStoreIds = [finalStoreId];
+                // Fallback if they try to access a store outside their hierarchy
+                finalStoreIds = [storeId];
                 storeQueryType = "Main Store";
             }
-        } else if (storeScope === "all") {
-            // Manager explicitly requests ALL stores combined (Main + Branches)
+        } else {
+            // DEFAULT BEHAVIOR for Manager:
+            // Return ALL stores (Main and Branches) in their scope
             finalStoreIds = authorizedStoreIds;
             storeQueryType = "All Stores (Aggregated)";
-        } else {
-            // DEFAULT BEHAVIOR (No params passed) -> Show ONLY the Main Store
-            finalStoreIds = [finalStoreId];
-            storeQueryType = "Main Store";
         }
     } else {
-        // Admin/User/Guest logic remains the same: always their single assigned store
-        finalStoreIds = [finalStoreId];
+        // Admin/User/Guest logic: strictly their assigned store
+        finalStoreIds = [storeId];
         storeQueryType = "Main Store";
     }
 

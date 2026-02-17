@@ -22,7 +22,11 @@ router.post(
 
 router.patch("/:id", controller.updateUser);
 router.patch("/update-password", controller.updatePassword);
-router.patch("/:id/change-store", isManager, controller.changeUserStore);
+router.patch(
+    "/:targetUserId/change-store",
+    isManager,
+    controller.changeUserStore,
+);
 
 router.delete(
     "/:id",
