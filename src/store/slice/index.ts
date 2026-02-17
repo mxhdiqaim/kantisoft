@@ -106,7 +106,7 @@ const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQuery
         if (typeof args === "string") {
             modifiedArgs = {
                 url: args,
-                params: {targetStoreId: activeStore.id},
+                // params: {targetStoreId: activeStore.id},
             };
         } else {
             modifiedArgs = {
@@ -517,7 +517,7 @@ export const apiSlice = createApi({
                 {type: "User", id: "LIST"},
             ],
         }),
-        
+
         updatePassword: builder.mutation<{ message: string }, Omit<UpdatePasswordType, "confirmNewPassword">>({
             query: (body) => ({
                 url: "/users/update-password",
