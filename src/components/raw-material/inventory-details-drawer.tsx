@@ -31,8 +31,6 @@ const InventoryDetailsDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterialId
         skip: !rawMaterialId,
     });
 
-    console.log({data})
-
     const handleCloseFormModal = () => {
         setFormModalOpen(false);
     };

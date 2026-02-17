@@ -40,8 +40,6 @@ const StoresScreen = () => {
     const [openStoreForm, setOpenStoreForm] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
 
-    console.log({selectedRow});
-
     const handleMenuClick = (_event: MouseEvent<HTMLElement>, row: StoreType) => {
         setSelectedRow(row);
     };
@@ -59,11 +57,6 @@ const StoresScreen = () => {
         setDrawerOpen(false);
         setSelectedRow(null);
     }, []);
-
-    // const handleMenuClose = () => {
-    //     setAnchorEl(null);
-    //     setSelectedRow(null);
-    // };
 
     const handleConfirmDelete = async () => {
         if (!selectedRow) return;

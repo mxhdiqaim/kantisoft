@@ -47,8 +47,6 @@ const RawMaterialTrashBinTab = ({data, loading}: Props) => {
     const handleRecover = async () => {
         if (!selectedRow) return;
 
-        console.log("Recovering raw material:", selectedRow);
-
         try {
             await recoverRawMaterial(selectedRow.id).unwrap();
             notify("Raw material recovered successfully", "success");
