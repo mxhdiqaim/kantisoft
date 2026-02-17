@@ -1,6 +1,6 @@
 import {type MouseEvent, useCallback, useMemo, useState} from "react";
 import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
-import {useDeleteMenuItemMutation} from "@/store/slice";
+import {useDeleteMenuItemMutation, useGetMenuItemsQuery} from "@/store/slice";
 import useNotifier from "@/hooks/useNotifier.ts";
 import MenuItemFormModal from "@/components/menu-items/menu-item-form-modal.tsx";
 import type {MenuItemType} from "@/types/menu-item-type.ts";
@@ -21,8 +21,7 @@ import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-men
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import {getMenuItemsInventoryStatusChip} from "@/components/ui";
 import BillOfMaterialsDrawer from "@/components/menu-items/bom-drawer.tsx";
-import {useOfflineMenuItems} from "@/hooks/use-offline-menuitems.ts";
-
+// import {useOfflineMenuItems} from "@/hooks/use-offline-menuitems.ts";
 import {DeleteOutline, EditOutlined, MoreVert, RestaurantMenuOutlined} from "@mui/icons-material";
 import {localSyncStatusEnum} from "@/types";
 
@@ -33,7 +32,8 @@ const MenuItems = () => {
 
     const currentUser = useAppSelector(selectCurrentUser);
 
-    const {items: menuItems, isLoading, isError, error} = useOfflineMenuItems({});
+    // const {items: menuItems, isLoading, isError, error} = useOfflineMenuItems({});
+    const {data: menuItems, isLoading, isError, error} = useGetMenuItemsQuery({});
 
     const [deleteMenuItem, {isLoading: isDeleting}] = useDeleteMenuItemMutation();
 

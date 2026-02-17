@@ -1,4 +1,4 @@
-import {type ActivityLogEntry, type ActivityLogResponse, localSyncStatusEnum, type QueryParamType} from "@/types";
+import {type ActivityLogEntry, type ActivityLogResponse, type QueryParamType} from "@/types";
 import type {
     InventoryAlertType,
     SalesTrendType,
@@ -6,7 +6,7 @@ import type {
     TopSellsItemType,
     TopSellsParamType,
 } from "@/types/dashboard-types.ts";
-import type {CreateMenuItemType, LocalMenuItemType, MenuItemType} from "@/types/menu-item-type.ts";
+import type {CreateMenuItemType, MenuItemType} from "@/types/menu-item-type.ts";
 import type {
     CreateOrderType,
     OrdersByPeriodResponse,
@@ -68,8 +68,8 @@ import type {
     ProductionType,
     ProductionWastageSummaryType
 } from "@/types/production-types.ts";
-import type {CategoryType, CreateCategoryType, LocalCategoryType} from "@/types/categories-types.ts";
-import {localDb} from "@/db/local-db.ts";
+import type {CategoryType, CreateCategoryType} from "@/types/categories-types.ts";
+// import {localDb} from "@/db/local-db.ts";
 
 const baseUrl = getEnvVariable("VITE_APP_API_URL");
 
@@ -166,7 +166,7 @@ export const apiSlice = createApi({
         "SalesTrend",
         "Store",
         "ActivityLog",
-        "Inventory",
+        "Inventories",
         "InventoryReport",
         "SingleInventoryTransaction",
         "InventoryTransactions",
@@ -338,7 +338,7 @@ export const apiSlice = createApi({
                 body: newOrder,
             }),
             invalidatesTags: [{type: "Order", id: "LIST"}, {type: "MenuItem", id: "LIST"}, {
-                type: "Inventory",
+                type: "Inventories",
                 id: "LIST"
             }],
         }),
@@ -353,31 +353,34 @@ export const apiSlice = createApi({
             }),
             transformResponse: (response: { data: MenuItemType[] }) => response.data,
 
-            // THE SEEDING LOGIC
-            async onCacheEntryAdded(_arg, {cacheDataLoaded}) {
-                try {
-                    // Wait for the first response to arrive from the backend
-                    const {data} = await cacheDataLoaded;
-
-                    if (data && data.length > 0) {
-                        // Bulk save to Dexie.
-                        // .bulkPut is better than .add because it updates existing records
-                        const localData: LocalMenuItemType[] = data.map(item => ({
-                            ...item,
-                            syncStatus: localSyncStatusEnum.SYNCED // Mark as already on server
-                        }));
-
-                        await localDb.menuItems.bulkPut(localData);
-                        console.log("Dexie Hydrated: Menu Items stored locally.");
-                    }
-                } catch (error) {
-                    console.error("Failed to seed Dexie:", error);
-                }
-            },
+            // // THE SEEDING LOGIC
+            // async onCacheEntryAdded(_arg, {cacheDataLoaded}) {
+            //     try {
+            //         // Wait for the first response to arrive from the backend
+            //         const {data} = await cacheDataLoaded;
+            //
+            //         if (data && data.length > 0) {
+            //             // Bulk save to Dexie.
+            //             // .bulkPut is better than .add because it updates existing records
+            //             const localData: LocalMenuItemType[] = data.map(item => ({
+            //                 ...item,
+            //                 syncStatus: localSyncStatusEnum.SYNCED // Mark as already on server
+            //             }));
+            //
+            //             await localDb.menuItems.bulkPut(localData);
+            //             console.log("Dexie Hydrated: Menu Items stored locally.");
+            //         }
+            //     } catch (error) {
+            //         console.error("Failed to seed Dexie:", error);
+            //     }
+            // },
 
             providesTags: (result) =>
                 result
-                    ? [...result.map(({id}) => ({type: "MenuItem" as const, id})), {type: "MenuItem", id: "LIST"}]
+                    ? [
+                        ...result.map(({id}) => ({type: "MenuItem" as const, id})),
+                        {type: "MenuItem", id: "LIST"}
+                    ]
                     : [{type: "MenuItem", id: "LIST"}],
         }),
 
@@ -388,45 +391,46 @@ export const apiSlice = createApi({
                 body: newMenuItem,
             }),
 
-            async onQueryStarted(newMenuItem, {queryFulfilled, getState}) {
-                const tempId = crypto.randomUUID();
-                const actualTempId = `temp-${tempId}`;
+            // async onQueryStarted(newMenuItem, {queryFulfilled, getState}) {
+            //     const tempId = crypto.randomUUID();
+            //     const actualTempId = `temp-${tempId}`;
+            //
+            //     const state = getState() as RootState;
+            //     const activeStore = state.store?.activeStore; // Get your current store name for the UI
+            //
+            //     // Map CreateMenuItemType -> LocalMenuItemType (Optimistic)
+            //     const optimisticItem = {
+            //         ...newMenuItem,
+            //         id: actualTempId,
+            //         storeId: activeStore?.id || "",
+            //         syncStatus: localSyncStatusEnum.PENDING,
+            //         // Mocking the nested objects so the UI table renders nicely
+            //         store: {name: activeStore?.name || "Syncing..."},
+            //         inventory: {
+            //             quantity: 0,
+            //             status: "", // Default for new items
+            //             lastCountDate: new Date().toISOString()
+            //         },
+            //     };
+            //
+            //     await localDb.menuItems.add(optimisticItem as LocalMenuItemType);
+            //
+            //     try {
+            //         const {data: createdItem} = await queryFulfilled;
+            //
+            //         // Replace temp with real data (now includes backend-generated SKU, itemCode, etc.)
+            //         await localDb.menuItems.delete(actualTempId);
+            //
+            //         await localDb.menuItems.add({
+            //             ...createdItem,
+            //             syncStatus: localSyncStatusEnum.SYNCED
+            //         });
+            //     } catch {
+            //         // Keep the optimistic item with tempId so user can still see/edit it
+            //         console.log("Offline: Item saved to Dexie with PENDING status.");
+            //     }
+            // },
 
-                const state = getState() as RootState;
-                const activeStore = state.store?.activeStore; // Get your current store name for the UI
-
-                // Map CreateMenuItemType -> LocalMenuItemType (Optimistic)
-                const optimisticItem = {
-                    ...newMenuItem,
-                    id: actualTempId,
-                    storeId: activeStore?.id || "",
-                    syncStatus: localSyncStatusEnum.PENDING,
-                    // Mocking the nested objects so the UI table renders nicely
-                    store: {name: activeStore?.name || "Syncing..."},
-                    inventory: {
-                        quantity: 0,
-                        status: "", // Default for new items
-                        lastCountDate: new Date().toISOString()
-                    },
-                };
-
-                await localDb.menuItems.add(optimisticItem as LocalMenuItemType);
-
-                try {
-                    const {data: createdItem} = await queryFulfilled;
-
-                    // Replace temp with real data (now includes backend-generated SKU, itemCode, etc.)
-                    await localDb.menuItems.delete(actualTempId);
-
-                    await localDb.menuItems.add({
-                        ...createdItem,
-                        syncStatus: localSyncStatusEnum.SYNCED
-                    });
-                } catch {
-                    // Keep the optimistic item with tempId so user can still see/edit it
-                    console.log("Offline: Item saved to Dexie with PENDING status.");
-                }
-            },
             invalidatesTags: [{type: "MenuItem", id: "LIST"}],
         }),
 
@@ -435,7 +439,10 @@ export const apiSlice = createApi({
                 url: `/menu-items/${id}`,
                 method: "DELETE",
             }),
-            invalidatesTags: (_result, _error, id) => [{type: "MenuItem", id}, {type: "MenuItem", id: "LIST"}],
+            invalidatesTags: (_result, _error, id) => [
+                {type: "MenuItem", id},
+                {type: "MenuItem", id: "LIST"}
+            ],
         }),
 
         updateMenuItem: builder.mutation<MenuItemType, Partial<MenuItemType> & Pick<MenuItemType, "id">>({
@@ -445,33 +452,34 @@ export const apiSlice = createApi({
                 body: patch,
             }),
 
-            async onQueryStarted({id, ...patch}, {queryFulfilled}) {
-                // Get the current item from Dexie to preserve existing data (like inventory)
-                const existingItem = await localDb.menuItems.get(id);
+            // async onQueryStarted({id, ...patch}, {queryFulfilled}) {
+            //     // Get the current item from Dexie to preserve existing data (like inventory)
+            //     const existingItem = await localDb.menuItems.get(id);
+            //
+            //     if (existingItem) {
+            //         // Apply the patch to Dexie immediately
+            //         await localDb.menuItems.update(id, {
+            //             ...patch,
+            //             // If online, use a temporary status so SyncProvider ignores it
+            //             syncStatus: navigator.onLine ? localSyncStatusEnum.SYNCING : localSyncStatusEnum.PENDING
+            //         });
+            //     }
+            //
+            //     try {
+            //         const {data: updatedItem} = await queryFulfilled;
+            //
+            //         // Sync successful: Update with fresh data from server (e.g., new SKU)
+            //         await localDb.menuItems.update(id, {
+            //             ...updatedItem,
+            //             syncStatus: localSyncStatusEnum.SYNCED
+            //         });
+            //     } catch {
+            //         // Offline/Error: Leave it as PENDING.
+            //         // The SyncProvider needs to be updated to handle PATCH as well.
+            //         console.log("Update saved locally. Will sync later.");
+            //     }
+            // },
 
-                if (existingItem) {
-                    // Apply the patch to Dexie immediately
-                    await localDb.menuItems.update(id, {
-                        ...patch,
-                        // If online, use a temporary status so SyncProvider ignores it
-                        syncStatus: navigator.onLine ? localSyncStatusEnum.SYNCING : localSyncStatusEnum.PENDING
-                    });
-                }
-
-                try {
-                    const {data: updatedItem} = await queryFulfilled;
-
-                    // Sync successful: Update with fresh data from server (e.g., new SKU)
-                    await localDb.menuItems.update(id, {
-                        ...updatedItem,
-                        syncStatus: localSyncStatusEnum.SYNCED
-                    });
-                } catch {
-                    // Offline/Error: Leave it as PENDING.
-                    // The SyncProvider needs to be updated to handle PATCH as well.
-                    console.log("Update saved locally. Will sync later.");
-                }
-            },
             invalidatesTags: (_result, _error, {id}) => [
                 {type: "MenuItem", id},
                 {type: "MenuItem", id: "LIST"},
@@ -588,34 +596,35 @@ export const apiSlice = createApi({
             query: () => "/inventory",
 
             // THE SEEDING LOGIC
-            async onCacheEntryAdded(_arg, {cacheDataLoaded}) {
-                try {
-                    const {data} = await cacheDataLoaded;
-
-                    if (data && data.length > 0) {
-                        // Prepare data for Dexie
-                        // Note: We ensure storeId is included for your useOfflineGoods hook filter
-                        const localData = data.map(item => ({
-                            ...item,
-                            syncStatus: localSyncStatusEnum.SYNCED
-                        }));
-
-                        // bulkPut updates existing records by their primary key (menuItemId)
-                        await localDb.inventory.bulkPut(localData);
-                        console.log("Dexie Hydrated: Inventory (Goods) stored locally.");
-                    }
-                } catch (error) {
-                    console.error("Failed to seed Dexie Inventory:", error);
-                }
-            },
+            // async onCacheEntryAdded(_arg, {cacheDataLoaded}) {
+            //     try {
+            //         const {data} = await cacheDataLoaded;
+            //
+            //         if (data && data.length > 0) {
+            //             // Prepare data for Dexie
+            //             // Note: We ensure storeId is included for your useOfflineGoods hook filter
+            //             const localData = data.map(item => ({
+            //                 ...item,
+            //                 syncStatus: localSyncStatusEnum.SYNCED
+            //             }));
+            //
+            //             // bulkPut updates existing records by their primary key (menuItemId)
+            //             await localDb.inventory.bulkPut(localData);
+            //             console.log("Dexie Hydrated: Inventory (Goods) stored locally.");
+            //         }
+            //     } catch (error) {
+            //         console.error("Failed to seed Dexie Inventory:", error);
+            //     }
+            // },
 
             providesTags: (result) =>
                 result
-                    ? [...result.map(({menuItemId}) => ({type: "Inventory" as const, menuItemId})), {
-                        type: "Inventory",
-                        menuItemId: "LIST"
-                    }]
-                    : [{type: "Inventory", menuItemId: "LIST"}],
+                    ? [
+                        ...result.map(({menuItemId}) => ({type: "Inventories" as const, id: menuItemId})),
+                        {type: "Inventories", id: "LIST"},
+                        "Inventories"
+                    ]
+                    : [{type: "Inventories", id: "LIST"}, "Inventories"],
         }),
 
         getTransactionsByMenuItem: builder.query<InventoryTransactionType[], {
@@ -650,7 +659,7 @@ export const apiSlice = createApi({
 
         getInventoryByMenuItem: builder.query<InventoryType, string>({
             query: (menuItemId) => `/inventory/${menuItemId}`,
-            providesTags: (_result, _error, menuItemId) => [{type: "Inventory", id: menuItemId}],
+            providesTags: (_result, _error, menuItemId) => [{type: "Inventories", id: menuItemId}],
         }),
 
         createInventoryRecord: builder.mutation<InventoryType, CreateInventoryType>({
@@ -659,7 +668,11 @@ export const apiSlice = createApi({
                 method: "POST",
                 body,
             }),
-            invalidatesTags: [{type: "Inventory", id: "LIST"}],
+            invalidatesTags: [
+                {type: "Inventories", id: "LIST"},
+                {type: "MenuItem", id: "LIST"},
+                "Inventories"
+            ],
         }),
 
         adjustStock: builder.mutation<AdjustStockResponseType, AdjustStockType>({
@@ -669,8 +682,10 @@ export const apiSlice = createApi({
                 body,
             }),
             invalidatesTags: (_result, _error, {menuItemId}) => [
-                {type: "Inventory", id: menuItemId},
-                {type: "Inventory", id: "LIST"},
+                {type: "Inventories", id: menuItemId},
+                {type: "Inventories", id: "LIST"},
+                {type: "MenuItem", id: "LIST"},
+                "Inventories"
             ],
         }),
 
@@ -680,8 +695,10 @@ export const apiSlice = createApi({
                 method: "PATCH",
             }),
             invalidatesTags: (_result, _error, menuItemId) => [
-                {type: "Inventory", id: menuItemId},
-                {type: "Inventory", id: "LIST"},
+                {type: "Inventories", id: menuItemId},
+                {type: "Inventories", id: "LIST"},
+                {type: "MenuItem", id: "LIST"},
+                "Inventories"
             ],
         }),
 
@@ -691,8 +708,10 @@ export const apiSlice = createApi({
                 method: "PATCH",
             }),
             invalidatesTags: (_result, _error, menuItemId) => [
-                {type: "Inventory", id: menuItemId},
-                {type: "Inventory", id: "LIST"},
+                {type: "Inventories", id: menuItemId},
+                {type: "Inventories", id: "LIST"},
+                {type: "MenuItem", id: "LIST"},
+                "Inventories"
             ],
         }),
 
@@ -701,8 +720,13 @@ export const apiSlice = createApi({
                 url: `/inventory/${menuItemId}`,
                 method: "DELETE",
             }),
-            invalidatesTags: [{type: "Inventory", id: "LIST"}],
+            invalidatesTags: (_result, _error, menuItemId) => [
+                {type: "Inventories", id: menuItemId},
+                {type: "Inventories", id: "LIST"},
+                "Inventories"
+            ],
         }),
+
 
         getInventoryAlerts: builder.query<InventoryAlertType, void>({
             query: () => "/inventory/alerts",
@@ -907,7 +931,7 @@ export const apiSlice = createApi({
                 method: 'POST',
                 body,
             }),
-            invalidatesTags: ['Inventory', 'RawMaterialInventories', "MenuItem", "ProductionLogs"],
+            invalidatesTags: ['Inventories', 'RawMaterialInventories', "MenuItem", "ProductionLogs"],
         }),
 
         recordWastage: builder.mutation<void, CreateWastageType>({
@@ -933,32 +957,36 @@ export const apiSlice = createApi({
         getAllCategories: builder.query<CategoryType[], void>({
             query: () => "/categories",
 
-            // THE SEEDING LOGIC
-            async onCacheEntryAdded(_arg, {cacheDataLoaded}) {
-                try {
-                    // Wait for the first response to arrive from the backend
-                    const {data} = await cacheDataLoaded;
-
-                    if (data && data.length > 0) {
-                        // Bulk save to Dexie.
-                        // .bulkPut is better than .add because it updates existing records
-                        const localData: LocalCategoryType[] = data.map(item => ({
-                            ...item,
-                            syncStatus: localSyncStatusEnum.SYNCED // Mark as already on server
-                        }));
-
-                        await localDb.categories.bulkPut(localData);
-                        console.log("Dexie Hydrated: Categories stored locally.");
-                    }
-                } catch (error) {
-                    console.error("Failed to seed Dexie:", error);
-                }
-            },
+            // // THE SEEDING LOGIC
+            // async onCacheEntryAdded(_arg, {cacheDataLoaded}) {
+            //     try {
+            //         // Wait for the first response to arrive from the backend
+            //         const {data} = await cacheDataLoaded;
+            //
+            //         if (data && data.length > 0) {
+            //             // Bulk save to Dexie.
+            //             // .bulkPut is better than .add because it updates existing records
+            //             const localData: LocalCategoryType[] = data.map(item => ({
+            //                 ...item,
+            //                 syncStatus: localSyncStatusEnum.SYNCED // Mark as already on server
+            //             }));
+            //
+            //             await localDb.categories.bulkPut(localData);
+            //             console.log("Dexie Hydrated: Categories stored locally.");
+            //         }
+            //     } catch (error) {
+            //         console.error("Failed to seed Dexie:", error);
+            //     }
+            // },
 
             providesTags: (result) =>
                 result
-                    ? [...result.map(({id}) => ({type: 'Category' as const, id})), {type: 'Category', id: 'LIST'}]
-                    : [{type: 'Category', id: 'LIST'}],
+                    ? [
+                        ...result.map(({id}) => ({type: 'Category' as const, id})),
+                        {type: 'Category', id: 'LIST'},
+                        "Categories"
+                    ]
+                    : [{type: 'Category', id: 'LIST'}, "Categories"],
         }),
 
         createCategory: builder.mutation<void, CreateCategoryType>({
@@ -967,7 +995,7 @@ export const apiSlice = createApi({
                 method: "POST",
                 body,
             }),
-            invalidatesTags: [{type: 'Category', id: 'LIST'}],
+            invalidatesTags: [{type: 'Category', id: 'LIST'}, "Categories"],
         }),
 
         updateCategory: builder.mutation<void, Partial<CategoryType> & Pick<CategoryType, "id">>({
@@ -976,7 +1004,11 @@ export const apiSlice = createApi({
                 method: "PATCH",
                 body: patch,
             }),
-            invalidatesTags: (_result, _error, {id}) => [{type: "Category", id}, {type: 'Category', id: 'LIST'}],
+            invalidatesTags: (_result, _error, {id}) => [
+                {type: "Category", id},
+                {type: 'Category', id: 'LIST'},
+                "Categories"
+            ],
         }),
 
         deleteCategory: builder.mutation<{ message: string }, string>({
@@ -984,7 +1016,11 @@ export const apiSlice = createApi({
                 url: `/categories/${id}`,
                 method: "DELETE",
             }),
-            invalidatesTags: (_result, _error, id) => [{type: "Category", id}, {type: 'Category', id: 'LIST'}],
+            invalidatesTags: (_result, _error, id) => [
+                {type: "Category", id},
+                {type: 'Category', id: 'LIST'},
+                "Categories"
+            ],
         })
 
     }),

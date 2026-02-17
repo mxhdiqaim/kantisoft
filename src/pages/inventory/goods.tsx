@@ -2,6 +2,7 @@ import {
     useContinueInventoryMutation,
     useDeleteInventoryRecordMutation,
     useDiscontinueInventoryMutation,
+    useGetAllInventoryQuery,
 } from "@/store/slice";
 import type {InventoryType} from "@/types/inventory-types.ts";
 import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
@@ -27,11 +28,11 @@ import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-men
 import {camelCaseToTitleCase} from "@/utils"
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import {useOfflineGoods} from "@/hooks/use-offline-goods.ts";
+// import {useOfflineGoods} from "@/hooks/use-offline-goods.ts";
+import DeleteConfirmationModal from "@/components/ui/delete-confimation-modal.tsx";
 
 import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import DeleteConfirmationModal from "@/components/ui/delete-confimation-modal.tsx";
 
 const Goods = () => {
     const {t} = useTranslation();
@@ -40,8 +41,8 @@ const Goods = () => {
     const notify = useNotifier();
     const navigate = useNavigate();
 
-    // const {data: inventoryData, isLoading, isError, error} = useGetAllInventoryQuery();
-    const {data: inventoryData, isLoading, isError, error} = useOfflineGoods();
+    const {data: inventoryData, isLoading, isError, error} = useGetAllInventoryQuery();
+    // const {data: inventoryData, isLoading, isError, error} = useOfflineGoods();
     const memoizedInventories = useMemoizedArray(inventoryData);
 
     const [discontinueInventory, {isLoading: isDiscontinuing}] = useDiscontinueInventoryMutation();
