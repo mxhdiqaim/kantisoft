@@ -1,5 +1,5 @@
 import {Box, Grid, Tooltip, Typography, useTheme} from "@mui/material";
-import {useDeleteCategoryMutation} from "@/store/slice";
+import {useDeleteCategoryMutation, useGetAllCategoriesQuery} from "@/store/slice";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import DataGridTable from "@/components/ui/data-grid-table";
 import type {GridColDef} from "@mui/x-data-grid";
@@ -14,7 +14,7 @@ import CustomButton from "@/components/ui/button.tsx";
 import CategoryFormModal from "@/components/menu-items/category-form-modal.tsx";
 import type {CategoryType} from "@/types/categories-types.ts";
 import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
-import {useOfflineCategories} from "@/hooks/use-offline-categories.ts";
+// import {useOfflineCategories} from "@/hooks/use-offline-categories.ts";
 import DeleteConfirmationModal from "@/components/ui/delete-confimation-modal.tsx";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -30,7 +30,8 @@ const CategoriesScreen = () => {
 
     const [deleteCategory, {isLoading: isDeleting}] = useDeleteCategoryMutation();
 
-    const {data, isLoading, isFetching, isError, error} = useOfflineCategories();
+    // const {data, isLoading, isFetching, isError, error} = useOfflineCategories();
+    const {data, isLoading, isError, error, isFetching} = useGetAllCategoriesQuery();
     const memoizedData = useMemoizedArray(data);
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
