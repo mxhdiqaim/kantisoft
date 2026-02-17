@@ -1,6 +1,5 @@
 import {Box, Button, CardContent, Typography, useTheme} from "@mui/material";
 import {ArrowBack, ErrorOutline} from "@mui/icons-material";
-import {useNavigate} from "react-router-dom";
 import CustomCard from "../customs/custom-card";
 
 interface ApiErrorDisplayProps {
@@ -10,7 +9,6 @@ interface ApiErrorDisplayProps {
 
 const ApiErrorDisplay = ({statusCode = "Error", message = "An unexpected error occurred."}: ApiErrorDisplayProps) => {
     const theme = useTheme();
-    const navigate = useNavigate();
 
     return (
         <Box
@@ -57,10 +55,11 @@ const ApiErrorDisplay = ({statusCode = "Error", message = "An unexpected error o
                         {message}
                     </Typography>
                     <Typography color="text.secondary">
-                        Please try again, or click the button below to go back to the previous page.
+                        Please try again!.
                     </Typography>
-                    <Button variant="contained" onClick={() => navigate(-1)} startIcon={<ArrowBack/>} sx={{mt: 4}}>
-                        Go Back
+                    <Button variant="contained" onClick={() => window.location.reload()} startIcon={<ArrowBack/>}
+                            sx={{mt: 4}}>
+                        Refresh
                     </Button>
                 </CardContent>
             </CustomCard>

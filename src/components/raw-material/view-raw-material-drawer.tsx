@@ -1,7 +1,7 @@
 import {useGetSingleRawMaterialQuery} from "@/store/slice";
-import useNotifier from "@/hooks/useNotifier.ts";
+// import useNotifier from "@/hooks/useNotifier.ts";
 import {getApiError} from "@/helpers/get-api-error.ts";
-import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+// import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import {Box, Divider, Grid, Stack, Typography} from "@mui/material";
 import {EditOutlined} from "@mui/icons-material";
 import ViewRawMaterialSkeleton from "@/components/spinners/view-raw-material-skeleton.tsx";
@@ -22,7 +22,7 @@ interface Props {
 }
 
 const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}) => {
-    const notify = useNotifier();
+    // const notify = useNotifier();
 
     const [formModalOpen, setFormModalOpen] = useState(false);
 
@@ -42,11 +42,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}
         setFormModalOpen(true);
     };
 
-    if (error) {
-        const apiError = getApiError(error, "Failed to load raw material data.");
-        notify(apiError.message, "error");
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
-    }
+    const apiError = getApiError(error, "Failed to load raw material data.");
 
     return (
         <DataDrawer
@@ -56,6 +52,8 @@ const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}
             onOpen={onOpen}
             onClose={onClose}
             PaperProps={drawerPaperProps}
+            error={error}
+            apiError={apiError}
         >
             {isLoading ? <ViewRawMaterialSkeleton/> : (
                 <Grid container spacing={3}>
@@ -78,7 +76,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}
                                         Description
                                     </Typography>
                                     <Typography variant="body1" fontWeight={500}>
-                                        {rawMaterial.description || "No description provided."}
+                                        {rawMaterial.description || ""}
                                     </Typography>
                                 </Grid>
                                 <Grid size={{xs: 12, sm: 6}}>
