@@ -9,8 +9,6 @@ export {default as ViewSalesHistoryScreen} from "@/pages/point-of-sale/sales/vie
 
 export {default as MenuItemScreen} from "./inventory/menu-item.tsx";
 
-export {default as ActivityLogScreen} from "./activity-log";
-
 export {default as ProfileScreen} from "./profile";
 export {default as ChangePasswordScreen} from "./profile/change-password";
 
@@ -40,9 +38,10 @@ export {default as ProductionScreen} from "./production"
 // export {default as ProfitabilityWastageScreen} from "./records/profitability-wastage.tsx"
 
 // Administrator
-export {default as TrashBinScreen} from "./administrator/trash-bin";
 export {default as UsersScreen} from "./administrator/users";
 export {default as StoreScreen} from "./administrator/stores";
+export {default as ActivityLogScreen} from "./administrator/activity-log";
+export {default as TrashBinScreen} from "./administrator/trash-bin";
 
 // Categories
 export {default as CategoriesScreen} from "./categories";

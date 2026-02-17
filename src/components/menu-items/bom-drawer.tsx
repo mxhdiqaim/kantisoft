@@ -8,6 +8,7 @@ import {
     IconButton,
     InputAdornment,
     MenuItem,
+    Stack,
     Table,
     TableBody,
     TableCell,
@@ -123,27 +124,11 @@ const BillOfMaterialsDrawer: FC<Props> = ({open, onOpen, onClose, menuItemId}) =
                 </Box>
             ) : (
                 <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-                    <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
-                        <Typography variant="h4" component="h1">
-                            Recipe
-                        </Typography>
-                        <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1}}>
-                            <CustomButton
-                                title={"Cancel"}
-                                onClick={onClose}
-                                sx={{color: theme.palette.text.secondary, mr: 1}}
-                            />
-
-                            <CustomButton
-                                type="submit"
-                                title={"Save Recipe"}
-                                variant="contained"
-                                startIcon={isSaving ? <CircularProgress size={20} color="inherit"/> : <SaveIcon/>}
-                                disabled={isSaving}
-                            />
-                        </Box>
-                    </Box>
-                    <Card sx={{overflow: 'hidden', border: `1px solid ${theme.palette.customColors.border}`}}>
+                    <Card sx={{
+                        border: `1px solid ${theme.palette.customColors.border}`,
+                        overflowY: 'scroll',
+                        maxHeight: `calc(100vh - 150px)`,
+                    }}>
                         <TableContainer>
                             <Table>
                                 <TableHead sx={{backgroundColor: theme.palette.customColors.tableHeader}}>
@@ -304,6 +289,31 @@ const BillOfMaterialsDrawer: FC<Props> = ({open, onOpen, onClose, menuItemId}) =
                             {errors.bomItems.message}
                         </Typography>
                     )}
+
+                    <Stack
+                        direction={{xs: "column", sm: "row"}}
+                        spacing={2}
+                        position={"absolute"}
+                        bottom={0}
+                        left={0}
+                        right={0}
+                        p={2}
+                    >
+                        <CustomButton
+                            title={"Cancel"}
+                            onClick={onClose}
+                            sx={{color: theme.palette.text.secondary, mr: 1, width: "100%"}}
+                        />
+
+                        <CustomButton
+                            type="submit"
+                            title={"Save Recipe"}
+                            variant="contained"
+                            startIcon={isSaving ? <CircularProgress size={20} color="inherit"/> : <SaveIcon/>}
+                            disabled={isSaving}
+                            sx={{width: "100%"}}
+                        />
+                    </Stack>
                 </Box>
             )}
         </DataDrawer>

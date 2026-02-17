@@ -1,14 +1,14 @@
 import {useGetActivitiesQuery} from "@/store/slice";
 import {Box, Chip, Grid, Typography} from "@mui/material";
 import {useAppSelector} from "@/store";
-import {selectCurrentUser} from "@/store/slice/auth-slice";
-import {UserRoleEnum} from "@/types/user-types";
+import {selectCurrentUser} from "@/store/slice/auth-slice.ts";
+import {UserRoleEnum} from "@/types/user-types.ts";
 import {useMemo, useState} from "react";
 import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
 import {type GridColDef} from "@mui/x-data-grid";
-import ApiErrorDisplay from "@/components/feedback/api-error-display";
-import {getApiError} from "@/helpers/get-api-error";
-import useNotifier from "@/hooks/useNotifier";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import useNotifier from "@/hooks/useNotifier.ts";
 import DataGridTable from "@/components/ui/data-grid-table";
 import {getActionColor} from "@/utils";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
@@ -158,7 +158,7 @@ const ActivityLogPage = () => {
     return (
         <Box>
             <Typography variant="h4" gutterBottom>
-                List
+                System Activities
             </Typography>
             <TableSearchActions
                 searchControl={searchControl}
