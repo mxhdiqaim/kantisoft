@@ -32,26 +32,41 @@ import { InventoryAlertService } from "../service/inventory-alert-service";
  */
 export const getAllInventory = async (req: CustomRequest, res: Response) => {
     try {
-        const currentUser = req.user?.data;
-        const storeId = currentUser?.storeId;
-        const userRole = currentUser?.role;
+        const validated = await validateStoreAndExtractDates(req, res);
+        if (!validated) return;
 
-        if (!storeId) {
-            return handleError2(
-                res,
-                "You must be associated with a store to view inventory.",
-                StatusCodes.FORBIDDEN,
-            );
-        }
+        const { storeIds } = validated;
+        const { page = '1', limit = '10' } = req.query;
 
-        const { targetStoreId } = req.query;
+        const pageNumber = parseInt(page as string, 10);
+        const limitNumber = parseInt(limit as string, 10);
+        const offset = (pageNumber - 1) * limitNumber;
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;  // Error already handled
+        // const currentUser = req.user?.data;
+        // const storeId = currentUser?.storeId;
+        // const userRole = currentUser?.role;
+
+        const whereClause = inArray(inventory.storeId, storeIds);
+
+        // if (!storeId) {
+        //     return handleError2(
+        //         res,
+        //         "You must be associated with a store to view inventory.",
+        //         StatusCodes.FORBIDDEN,
+        //     );
+        // }
+
+
+        // const { targetStoreId } = req.query;
+
+        // const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        // if (!finalStoreId) return; // Error already handled
 
         const allInventory = await db.query.inventory.findMany({
-            where: eq(inventory.storeId, finalStoreId),
+            where: whereClause,
             orderBy: [desc(inventory.lastModified)],
+            limit: limitNumber,
+            offset: offset,
             with: {
                 menuItem: { columns: { name: true, itemCode: true, sku: true } },
                 store: { columns: { name: true } },
