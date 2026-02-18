@@ -1,22 +1,141 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import db from "../db";
-import {rawMaterialInventory} from "../schema/raw-materials-schema/raw-material-inventory-schema";
+import { rawMaterialInventory } from "../schema/raw-materials-schema/raw-material-inventory-schema";
 import {
     InsertRawMaterialTransactionSchemaT,
     rawMaterialTransactions,
 } from "../schema/raw-materials-schema/raw-material-stock-transaction-schema";
-import {UnitConversionService} from "./unit-conversion-service";
-import {and, eq, sql} from "drizzle-orm";
-import {calculateInventoryStatus} from "../helpers";
-import {inventory} from "../schema/inventory-schema";
-import {InventoryTransactionSummaryTypeEnum, InventoryTransactionTypeEnum, TRANSACTION_TYPES,} from "../types/enums";
-import {inventoryTransactions} from "../schema/inventory-schema/inventory-transaction-schema";
-import {rawMaterials} from "../schema/raw-materials-schema";
+import { UnitConversionService } from "./unit-conversion-service";
+import { and, eq, sql } from "drizzle-orm";
+import { calculateInventoryStatus } from "../helpers";
+import { inventory } from "../schema/inventory-schema";
+import {
+    InventoryTransactionSummaryTypeEnum,
+    InventoryTransactionTypeEnum,
+    RawMaterialInventoryTransactionTypeEnum,
+    RawMaterialTransactionSourceEnum,
+    TRANSACTION_TYPES,
+} from "../types/enums";
+import { inventoryTransactions } from "../schema/inventory-schema/inventory-transaction-schema";
+import { rawMaterials } from "../schema/raw-materials-schema";
 
 /**
  * Service to handle all atomic inventory adjustments (IN or OUT).
  */
 export const RawMaterialInventoryService = {
+    // Initial Inventory Setup (Admin/Manager action)
+    async setupInitialInventory(data: {
+        rawMaterialId: string;
+        storeId: string;
+        minStockLevel: number;
+        quantity: number;
+        userId: string;
+    }) {
+        // Note: Explicitly using tx within the transaction block
+        return await db.transaction(async (tx) => {
+            // 1. Upsert the Master Record
+            const [inventoryRecord] = await tx
+                .insert(rawMaterialInventory)
+                .values({
+                    rawMaterialId: data.rawMaterialId,
+                    storeId: data.storeId,
+                    minStockLevel: data.minStockLevel,
+                    quantity: data.quantity,
+                    status: calculateInventoryStatus(
+                        data.quantity,
+                        data.minStockLevel,
+                    ),
+                })
+                .onConflictDoUpdate({
+                    target: [
+                        rawMaterialInventory.rawMaterialId,
+                        rawMaterialInventory.storeId,
+                    ],
+                    set: {
+                        minStockLevel: data.minStockLevel,
+                        quantity: data.quantity,
+                        lastModified: new Date(),
+                    },
+                })
+                .returning();
+
+            // 2. Create the Transaction Ledger Entry
+            // We use string literals here that match your schema exactly
+            await tx.insert(rawMaterialTransactions).values({
+                rawMaterialId: data.rawMaterialId,
+                storeId: data.storeId,
+                userId: data.userId,
+
+                type: RawMaterialInventoryTransactionTypeEnum.COMING_IN, // Valid for 'type': "comingIn" | "goingOut" | "adjustment"
+
+                // Valid for 'source': "inventoryAdjustment" | "purchaseReceipt" | etc.
+                source: RawMaterialTransactionSourceEnum.INVENTORY_ADJUSTMENT,
+
+                quantityBase: data.quantity,
+                notes: "Initial inventory setup.",
+                documentRefId: `SETUP-${Date.now()}`,
+            });
+
+            return inventoryRecord;
+        });
+    },
+
+    // Update Minimum Stock Level (Admin/Manager action)
+    async updateMinStockLevel(data: {
+        inventoryRecordId: string;
+        storeId: string;
+        newMinStockLevel: number;
+        userId: string;
+    }) {
+        return await db.transaction(async (tx) => {
+            // Fetch current state
+            const [current] = await tx
+                .select()
+                .from(rawMaterialInventory)
+                .where(
+                    and(
+                        eq(rawMaterialInventory.id, data.inventoryRecordId),
+                        eq(rawMaterialInventory.storeId, data.storeId),
+                    ),
+                )
+                .limit(1);
+
+            if (!current) throw new Error("NOT_FOUND");
+
+            // Calculate new status based on current quantity vs new threshold
+            const newStatus = calculateInventoryStatus(
+                current.quantity,
+                data.newMinStockLevel,
+            );
+
+            // Update Primary Record
+            const [updated] = await tx
+                .update(rawMaterialInventory)
+                .set({
+                    minStockLevel: data.newMinStockLevel,
+                    status: newStatus,
+                    lastModified: new Date(),
+                })
+                .where(eq(rawMaterialInventory.id, data.inventoryRecordId))
+                .returning();
+
+            // Log to Stock Transactions (The Warehouse Ledger)
+            // We use 'adjustment' type with 0 quantity because it's a metadata change
+            await tx.insert(rawMaterialTransactions).values({
+                rawMaterialId: updated.rawMaterialId,
+                storeId: data.storeId,
+                userId: data.userId,
+                type: RawMaterialInventoryTransactionTypeEnum.ADJUSTMENT,
+                source: RawMaterialTransactionSourceEnum.INVENTORY_ADJUSTMENT,
+                quantityBase: updated.quantity, // Log the current quantity for reference
+                documentRefId: `MIN_STOCK_UPDATE-${Date.now()}`,
+                notes: `Min Stock Level updated: ${current.minStockLevel} -> ${data.newMinStockLevel}.`,
+            });
+
+            return { updated, previous: current };
+        });
+    },
+
     /**
      * Executes an atomic inventory update, logging the transaction and updating the inventory Master record.
      * @param transaction The raw transaction data from the controller.

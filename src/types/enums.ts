@@ -70,6 +70,12 @@ export const TransactionTypeEnum = {
     GOING_OUT: "goingOut",
 } as const;
 
+export const RawMaterialInventoryTransactionTypeEnum = {
+    COMING_IN: "comingIn",
+    GOING_OUT: "goingOut",
+    ADJUSTMENT: "adjustment",
+} as const;
+
 export const TRANSACTION_TYPES = Object.values(TransactionTypeEnum);
 
 // export const RawMaterialInventoryStatusEnum = {
