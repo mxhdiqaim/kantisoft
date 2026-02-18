@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { and, desc, eq, gte, inArray, ne, sql, SQL } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, ne, SQL } from "drizzle-orm";
 import { Response } from "express";
 import db from "../db";
 import { inventory } from "../schema/inventory-schema";
@@ -18,12 +18,14 @@ import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 import { InsufficientStockError } from "../errors";
 import {
     INVENTORY_TRANSACTION_SUMMARY_TYPES,
-    InventoryTransactionSummaryTypeEnum,
     InventoryTransactionTypeEnum,
     UserRoleEnum,
 } from "../types/enums";
 import { determineFinalStoreId } from "../utils/store-permission-utils";
 import { InventoryAlertService } from "../service/inventory-alert-service";
+import { users } from "../schema/users-schema";
+import { stores } from "../schema/stores-schema";
+import { getInventoryTransactionTypeLabel } from "../utils";
 
 /**
  * @desc    Get all inventory records for the user's store
@@ -42,25 +44,7 @@ export const getAllInventory = async (req: CustomRequest, res: Response) => {
         const limitNumber = parseInt(limit as string, 10);
         const offset = (pageNumber - 1) * limitNumber;
 
-        // const currentUser = req.user?.data;
-        // const storeId = currentUser?.storeId;
-        // const userRole = currentUser?.role;
-
         const whereClause = inArray(inventory.storeId, storeIds);
-
-        // if (!storeId) {
-        //     return handleError2(
-        //         res,
-        //         "You must be associated with a store to view inventory.",
-        //         StatusCodes.FORBIDDEN,
-        //     );
-        // }
-
-
-        // const { targetStoreId } = req.query;
-
-        // const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        // if (!finalStoreId) return; // Error already handled
 
         const allInventory = await db.query.inventory.findMany({
             where: whereClause,
@@ -165,20 +149,18 @@ export const getTransactionsByMenuItem = async (
  * @access  Private (Store-associated users only)
  * @query   ?timePeriod=week OR ?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
  */
-export const getInventoryTransactions = async (
-    req: CustomRequest,
-    res: Response,
-) => {
+export const getInventoryTransactions = async (req: CustomRequest, res: Response) => {
     try {
         const validated = await validateStoreAndExtractDates(req, res);
-        if (!validated) return; // Error already handled
+        if (!validated) return;
 
         const { storeIds, finalStartDate, finalEndDate, periodUsed, storeQueryType } = validated;
+        const { menuItemId } = req.query; // Optional filter for specific product
 
-        // Base condition: Filter by the current user's store ID
+        // Construct the Base WHERE clause
         let whereClause: SQL | undefined = inArray(inventoryTransactions.storeId, storeIds);
 
-        // 1. Construct the WHERE clause with a date filter
+        // Date Filtering
         if (finalStartDate && finalEndDate) {
             whereClause = and(
                 whereClause,
@@ -187,57 +169,79 @@ export const getInventoryTransactions = async (
             );
         }
 
-        // Use SQL aggregation to sum the quantityChange grouped by transactionType
-        const transaction = await db
-            .select({
-                id: inventoryTransactions.id,
-                storeId: inventoryTransactions.storeId,
-                transactionType: inventoryTransactions.transactionType,
-                performedBy: inventoryTransactions.performedBy,
-                // Sum the quantityChange and ensure it's returned as a numeric type (or string to be parsed later)
-                totalQuantityMoved: sql<string>`SUM(${inventoryTransactions.quantityChange})`.as('totalQuantityMoved'),
-            })
+        // Specific Item Filter
+        if (menuItemId && menuItemId !== "all") {
+            whereClause = and(whereClause, eq(inventoryTransactions.menuItemId, menuItemId as string));
+        }
+
+        // The Detailed Select Query (Joining for "Elaboration")
+        const transactionLogs = await db.select({
+            id: inventoryTransactions.id,
+            type: inventoryTransactions.transactionType,
+            quantityChange: inventoryTransactions.quantityChange,
+            notes: inventoryTransactions.notes,
+            transactionDate: inventoryTransactions.transactionDate,
+            createdAt: inventoryTransactions.createdAt,
+
+            // Item details
+            item: {
+                name: menuItems.name,
+                price: menuItems.price,
+            },
+
+            // User details (Actor)
+            actor: {
+                firstName: users.firstName,
+                lastName: users.lastName,
+            },
+
+            // Store details (Context)
+            storeName: stores.name,
+        })
             .from(inventoryTransactions)
+            .innerJoin(menuItems, eq(inventoryTransactions.menuItemId, menuItems.id))
+            .leftJoin(users, eq(inventoryTransactions.performedBy, users.id)) // Use leftJoin if performedBy can be null
+            .innerJoin(stores, eq(inventoryTransactions.storeId, stores.id))
             .where(whereClause)
-            .groupBy(
-                inventoryTransactions.id,
-                inventoryTransactions.storeId,
-                inventoryTransactions.transactionType,
-                inventoryTransactions.performedBy
-            );
+            .orderBy(desc(inventoryTransactions.transactionDate), desc(inventoryTransactions.createdAt));
 
+        // Post-Processing (Labels and formatting)
+        const transactionHistory = transactionLogs.map(item => {
+            return {
+                id: item.id,
+                itemName: item.item.name,
 
-        // Format the results for a cleaner response object
-        const formattedTransaction = transaction.map(item => ({
-            id: item.id,
-            storeId: item.storeId,
-            type: item.transactionType,
-            performedBy: item.performedBy,
-            // Parse the sum string to a float/number
-            totalChange: parseFloat(item.totalQuantityMoved || '0'),
+                // Transaction Data
+                type: item.type,
+                quantity: item.quantityChange, // Positive for IN, Negative for OUT
+                notes: item.notes,
+                transactionDate: item.transactionDate,
 
-            // Helpful label based on the transaction type
-            label: item.transactionType === InventoryTransactionSummaryTypeEnum.SALE ? 'Total Units Sold (Decrease)' :
-                item.transactionType === InventoryTransactionSummaryTypeEnum.ADJUSTMENT_OUT ? 'Total Loss/Waste (Decrease)' :
-                    item.transactionType === InventoryTransactionSummaryTypeEnum.PURCHASE_RECEIVE ? 'Total Units Received (Increase)' :
-                        item.transactionType === InventoryTransactionSummaryTypeEnum.ADJUSTMENT_IN ? 'Total Units Adjusted In (Increase)' :
-                            item.transactionType,
-        }));
+                // Metadata Label (The Elaboration)
+                label: getInventoryTransactionTypeLabel(item.type),
 
+                // Audit Info
+                performedBy: item.actor
+                    ? `${item.actor.firstName} ${item.actor.lastName}`
+                    : "System/Automatic",
+                storeName: item.storeName,
+                createdAt: item.createdAt,
+            };
+        });
 
-        res.status(StatusCodes.OK).json({
+        return res.status(StatusCodes.OK).json({
             startDate: finalStartDate ? finalStartDate.toISOString() : 'All Time',
             endDate: finalEndDate ? finalEndDate.toISOString() : 'All Time',
-            transactions: formattedTransaction,
             timePeriod: periodUsed,
-            storeQueryType
+            storeQueryType,
+            count: transactionHistory.length,
+            transactions: transactionHistory,
         });
 
     } catch (error) {
-        // console.error(error);
-        handleError2(
+        return handleError2(
             res,
-            "Problem generating stock report, please try again.",
+            "Problem generating inventory history.",
             StatusCodes.INTERNAL_SERVER_ERROR,
             error instanceof Error ? error : undefined,
         );
