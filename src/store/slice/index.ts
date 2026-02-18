@@ -847,7 +847,7 @@ export const apiSlice = createApi({
                 body,
             }),
             invalidatesTags: (_result, _error, {rawMaterialId}) => [
-                {type: "RawMaterialInventory", id: rawMaterialId},
+                {type: "RawMaterialInventoryStock", id: rawMaterialId},
                 {type: "RawMaterialInventories", id: "LIST"},
             ],
         }),
@@ -859,7 +859,7 @@ export const apiSlice = createApi({
                 body: patch,
             }),
             invalidatesTags: (_result, _error, {id}) => [
-                {type: "RawMaterialInventory", id},
+                {type: "RawMaterialInventoryStock", id: id},
                 {type: "RawMaterialInventories", id: "LIST"},
             ],
         }),
@@ -871,9 +871,10 @@ export const apiSlice = createApi({
                 body,
             }),
             invalidatesTags: (_result, _error, {id}) => [
-                {type: "RawMaterialInventory", id},
+                {type: "RawMaterialInventoryStock", id: id},
                 {type: "RawMaterialInventories", id: "LIST"},
                 {type: "RawMaterialTransactions", id: "LIST"},
+                "RawMaterialTransactions"
             ],
         }),
 
@@ -887,8 +888,9 @@ export const apiSlice = createApi({
                 url: "/raw-materials/transactions",
                 params,
             }),
-            providesTags: ["RawMaterialTransactions"],
+            providesTags: [{type: "RawMaterialTransactions", id: "LIST"}, "RawMaterialTransactions"],
         }),
+
 
         // -------------------------
         // BOM Endpoints

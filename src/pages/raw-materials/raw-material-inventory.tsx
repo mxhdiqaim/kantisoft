@@ -1,7 +1,6 @@
 import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
 import {useGetAllRawMaterialInventoryQuery} from "@/store/slice";
 import CustomButton from "@/components/ui/button.tsx";
-import AddIcon from "@mui/icons-material/Add";
 import RawMaterialInventoryForm from "@/components/raw-material/raw-material-inventory-form.tsx";
 import {type MouseEvent, useCallback, useMemo, useState} from "react";
 import DataGridTable from "@/components/ui/data-grid-table";
@@ -18,11 +17,15 @@ import {getInventoryStatusChipColor} from "@/components/ui";
 import type {GetRawMaterialInventoryStockType,} from "@/types/raw-material-types.ts";
 import InventoryDetailsDrawer from "@/components/raw-material/inventory-details-drawer.tsx";
 import RawMaterialStockInDrawer from "@/components/raw-material/raw-material-stock-in-drawer.tsx";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+
+import AddIcon from "@mui/icons-material/Add";
 
 const RawMaterialInventory = () => {
     const theme = useTheme();
 
-    const {data, isLoading} = useGetAllRawMaterialInventoryQuery();
+    const {data, isLoading, isFetching, isError, error} = useGetAllRawMaterialInventoryQuery();
     const memoizedInventoryData = useMemoizedArray(data);
 
     const [formModalOpen, setFormModalOpen] = useState(false);
@@ -41,7 +44,7 @@ const RawMaterialInventory = () => {
 
     const handleCloseFormModal = () => {
         setFormModalOpen(false);
-        setSelectedRow(null)
+        setSelectedRow(null);
     };
 
     const handleOpenFormModal = () => {
@@ -76,31 +79,36 @@ const RawMaterialInventory = () => {
                 minWidth: 100,
                 align: "left",
                 headerAlign: "left",
-                renderCell: (params) => (
-                    <TableStyledBox>
-                        <Typography variant="body2">{formatNumber(params.value)}</Typography>
-                    </TableStyledBox>
-                ),
-            },
-            {
-                flex: 1,
-                field: "unitOfMeasurement",
-                headerName: "Measurement Unit",
-                minWidth: 180,
-                cellClassName: "capitalize-cell",
-                align: "left",
-                headerAlign: "left",
                 renderCell: (params) => {
-                    const name = params.value.name;
-                    const symbol = params.value.symbol;
+                    const symbol = params.row.unitOfMeasurement.symbol;
+
                     return (
                         <TableStyledBox>
-                            <Typography variant="body2" textTransform={"capitalize"}>{name}</Typography>
+                            <Typography variant="body2">{formatNumber(params.value)}</Typography>
                             <Typography variant="body2">({symbol})</Typography>
                         </TableStyledBox>
                     )
                 },
             },
+            // {
+            //     flex: 1,
+            //     field: "unitOfMeasurement",
+            //     headerName: "Measurement Unit",
+            //     minWidth: 180,
+            //     cellClassName: "capitalize-cell",
+            //     align: "left",
+            //     headerAlign: "left",
+            //     renderCell: (params) => {
+            //         const name = params.value.name;
+            //         const symbol = params.value.symbol;
+            //         return (
+            //             <TableStyledBox>
+            //                 <Typography variant="body2" textTransform={"capitalize"}>{name}</Typography>
+            //                 <Typography variant="body2">({symbol})</Typography>
+            //             </TableStyledBox>
+            //         )
+            //     },
+            // },
             {
                 flex: 1,
                 field: "minStockLevel",
@@ -109,11 +117,16 @@ const RawMaterialInventory = () => {
                 cellClassName: "capitalize-cell",
                 align: "left",
                 headerAlign: "left",
-                renderCell: (params) => (
-                    <TableStyledBox>
-                        <Typography variant="body2">{formatNumber(params.value)}</Typography>
-                    </TableStyledBox>
-                ),
+                renderCell: (params) => {
+                    const symbol = params.row.unitOfMeasurement.symbol;
+
+                    return (
+                        <TableStyledBox>
+                            <Typography variant="body2">{formatNumber(params.value)}</Typography>
+                            <Typography variant="body2">({symbol})</Typography>
+                        </TableStyledBox>
+                    )
+                },
             },
             {
                 flex: 1,
@@ -223,6 +236,11 @@ const RawMaterialInventory = () => {
         [],
     );
 
+    if (isError) {
+        const apiError = getApiError(error, `Failed to Inventory.`);
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
+    }
+
     return (
         <Box>
             <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
@@ -246,7 +264,7 @@ const RawMaterialInventory = () => {
 
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching}/>
                 </Grid>
             </Grid>
 

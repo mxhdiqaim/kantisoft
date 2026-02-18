@@ -41,7 +41,7 @@ const Goods = () => {
     const notify = useNotifier();
     const navigate = useNavigate();
 
-    const {data: inventoryData, isLoading, isError, error} = useGetAllInventoryQuery();
+    const {data: inventoryData, isLoading, isFetching, isError, error} = useGetAllInventoryQuery();
     // const {data: inventoryData, isLoading, isError, error} = useOfflineGoods();
     const memoizedInventories = useMemoizedArray(inventoryData);
 
@@ -295,7 +295,7 @@ const Goods = () => {
         },
     ], [selectedRow, isDiscontinuing, handleOpenAdjustStockModal, isContinuing])
 
-    if (isError && (!inventoryData || inventoryData.length === 0)) {
+    if (isError) {
         const apiError = getApiError(error, `Failed to load Goods.`);
         return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
     }
@@ -327,7 +327,7 @@ const Goods = () => {
                     <DataGridTable
                         data={filteredData}
                         columns={columns}
-                        loading={isLoading || isDiscontinuing || isContinuing}
+                        loading={isLoading || isDiscontinuing || isContinuing || isFetching}
                     />
                 </Grid>
             </Grid>

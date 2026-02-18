@@ -16,6 +16,7 @@ import PeriodSelector from "@/components/ui/period-selector.tsx";
 import {getApiError} from "@/helpers/get-api-error.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import useNotifier from "@/hooks/useNotifier.ts";
+import {formatDateCustom} from "@/utils/get-relative-time.ts";
 
 const InventoryTransactions = () => {
     const notify = useNotifier();
@@ -42,6 +43,8 @@ const InventoryTransactions = () => {
         error
     } = useGetInventoryTransactionsQuery({timePeriod: period});
 
+    console.log("Fetched transactions data:", data);
+
     const memoizedData = useMemoizedArray(data?.transactions);
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
@@ -52,6 +55,63 @@ const InventoryTransactions = () => {
     const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
     const columns: GridColDef[] = useMemo(() => [
+        {
+            flex: 1,
+            field: "itemName",
+            headerName: "Item Name",
+            minWidth: 180,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{params.value}</Typography>
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: "quantity",
+            headerName: "Quantity",
+            minWidth: 100,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Chip
+                        label={params.value}
+                        color={getTransactionChipColor(params.value)}
+                        size="small"
+                        sx={{textTransform: "capitalize"}}
+                    />
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: "performedBy",
+            headerName: "Performed By",
+            minWidth: 150,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{params.value}</Typography>
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: "storeName",
+            headerName: "Store Name",
+            minWidth: 150,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{params.value}</Typography>
+                </TableStyledBox>
+            ),
+        },
         {
             flex: 1,
             field: "type",
@@ -72,19 +132,14 @@ const InventoryTransactions = () => {
         },
         {
             flex: 1,
-            field: "totalChange",
-            headerName: "Value Change",
-            minWidth: 150,
+            field: "transactionDate",
+            headerName: "Transaction Date",
+            minWidth: 180,
             align: "left",
             headerAlign: "left",
             renderCell: (params) => (
                 <TableStyledBox>
-                    <Chip
-                        label={params.value}
-                        color={getTransactionChipColor(params.value)}
-                        size="small"
-                        sx={{textTransform: "capitalize"}}
-                    />
+                    <Typography variant="body2">{formatDateCustom(params.value)}</Typography>
                 </TableStyledBox>
             ),
         },
@@ -92,8 +147,7 @@ const InventoryTransactions = () => {
             flex: 1,
             field: "label",
             headerName: "Label",
-            type: "number",
-            minWidth: 120,
+            minWidth: 220,
             align: "left",
             headerAlign: "left",
             renderCell: (params) => (
@@ -101,7 +155,20 @@ const InventoryTransactions = () => {
                     <Typography variant="body2">{params.value}</Typography>
                 </TableStyledBox>
             ),
-        }
+        },
+        {
+            flex: 1,
+            field: "notes",
+            headerName: "Notes",
+            minWidth: 250,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{params.value}</Typography>
+                </TableStyledBox>
+            ),
+        },
     ], []);
 
     useEffect(() => {

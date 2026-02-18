@@ -86,29 +86,31 @@ export const inventoryTransactionSchema = extendBaseSchema({
         .optional(),
 });
 
-export const inventoryTransactionsSchema = yup.object({
-    id: yup.string().uuid().required(),
-    storeId: yup.string().uuid().required(),
-    performedBy: yup.string().uuid().required(),
-    type: yup.string().oneOf(TRANSACTION_TYPE).default("sale").required(),
-    totalChange: yup.number().required(),
-    label: yup.string().required(),
-})
+export type InventoryTransactionsType = {
+    id: string;
+    itemName: string;
+    label: string;
+    notes?: string;
+    performedBy: string;
+    quantity: number;
+    storeName: string;
+    transactionDate: string;
+    type: (typeof TRANSACTION_TYPE)[number];
+    createdAt: string;
+}
 
-export const inventoryTransactionResponseSchema = yup.object({
-    startDate: yup.string().required(),
-    endDate: yup.string().required(),
-    timePeriod: yup.string().required(),
-    storeQueryType: yup.string().required(),
-    transactions: yup.array().of(inventoryTransactionsSchema).required(),
-})
+export type InventoryTransactionResponseType = {
+    startDate: string;
+    endDate: string;
+    timePeriod: string;
+    storeQueryType: string;
+    transactions: InventoryTransactionsType[];
+};
 
 export type CreateInventoryType = yup.InferType<typeof createInventorySchema>;
 export type AdjustStockType = yup.InferType<typeof adjustStockSchema>;
 export type AdjustStockResponseType = Omit<InventoryType, "menuItem" | "store">;
 export type InventoryTransactionType = yup.InferType<typeof inventoryTransactionSchema>;
-export type InventoryTransactionResponseType = yup.InferType<typeof inventoryTransactionResponseSchema>;
-// export type EditInventoryType = Partial<InventoryType>;
 
 export type InventoryValuationHealthType = {
     timePeriod: string;

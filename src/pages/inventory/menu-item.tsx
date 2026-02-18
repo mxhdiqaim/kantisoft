@@ -33,7 +33,7 @@ const MenuItems = () => {
     const currentUser = useAppSelector(selectCurrentUser);
 
     // const {items: menuItems, isLoading, isError, error} = useOfflineMenuItems({});
-    const {data: menuItems, isLoading, isError, error} = useGetMenuItemsQuery({});
+    const {data: menuItems, isLoading, isFetching, isError, error} = useGetMenuItemsQuery({});
 
     const [deleteMenuItem, {isLoading: isDeleting}] = useDeleteMenuItemMutation();
 
@@ -277,7 +277,7 @@ const MenuItems = () => {
                 flex: 1,
                 field: "store",
                 headerName: `${t("store")}`,
-                minWidth: 150,
+                minWidth: 200,
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
@@ -388,7 +388,7 @@ const MenuItems = () => {
 
             <Grid container spacing={2} sx={{mt: 2}}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching}/>
                 </Grid>
             </Grid>
 

@@ -1,6 +1,6 @@
 import type {FC} from "react";
 import {useEffect} from "react";
-import {Box, FormControl, Grid, InputAdornment, MenuItem,} from "@mui/material";
+import {Box, FormControl, Grid, InputAdornment, MenuItem} from "@mui/material";
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import {Controller, useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
@@ -15,6 +15,7 @@ import CustomButton from "@/components/ui/button.tsx";
 import {createRawMaterialSchema, type CreateRawMaterialType, type RawMaterialType} from "@/types/raw-material-types.ts";
 import {StyledTextField} from "@/components/ui";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+import {useMeasurementSymbol} from "@/hooks/use-measurement-symbol.ts";
 
 import Icon from "@/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
@@ -40,6 +41,7 @@ const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
         isSuccess: isCreateSuccess,
         reset: resetCreateMutation
     }] = useCreateRawMaterialMutation();
+
     const [updateRawMaterial, {
         isLoading: isUpdating,
         isSuccess: isUpdateSuccess,
@@ -60,6 +62,9 @@ const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
         },
         resolver: yupResolver(createRawMaterialSchema),
     });
+
+    // Use the custom hook to get the symbol
+    const measurementSymbol = useMeasurementSymbol(control, memoizedMeasurement);
 
     const handleClose = () => {
         onClose();
@@ -165,8 +170,17 @@ const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
                                         </MenuItem>
                                         {memoizedMeasurement.map((measurement) => (
                                             <MenuItem key={measurement.id} value={measurement.id}
-                                                      sx={{textTransform: "capitalize"}}>
-                                                {measurement.name}
+                                                      sx={{display: "flex"}}>
+                                                <Box
+                                                    component={"span"}
+                                                    sx={{
+                                                        textTransform: "capitalize",
+                                                        display: "inline"
+                                                    }}
+                                                >
+                                                    {measurement.name}
+                                                </Box>
+                                                {(measurement.symbol) ? `(${measurement.symbol})` : ''}
                                             </MenuItem>
                                         ))}
                                     </StyledTextField>
@@ -182,10 +196,17 @@ const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
-                                        label="Unit Price"
+                                        label={`Price per ${measurementSymbol || 'unit'}`}
                                         type="number"
                                         error={Boolean(errors.latestUnitPricePresentation)}
                                         helperText={errors.latestUnitPricePresentation?.message}
+                                        InputProps={{
+                                            endAdornment: measurementSymbol ? (
+                                                <InputAdornment position="end">
+                                                    /{measurementSymbol}
+                                                </InputAdornment>
+                                            ) : null,
+                                        }}
                                     />
                                 </FormControl>
                             )}

@@ -4,8 +4,6 @@ import DataDrawer from "@/components/ui/data-drawer.tsx";
 import {drawerPaperProps} from "@/components/styles";
 import {useGetRawMaterialInventoryStockQuery} from "@/store/slice";
 import {getApiError} from "@/helpers/get-api-error.ts";
-import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
 import ViewRawMaterialSkeleton from "@/components/spinners/view-raw-material-skeleton.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
 import {camelCaseToTitleCase, formatCurrency, formatNumber} from "@/utils";
@@ -23,7 +21,6 @@ interface Props {
 }
 
 const InventoryDetailsDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterialId}) => {
-    const notify = useNotifier();
 
     const [formModalOpen, setFormModalOpen] = useState(false);
 
@@ -39,11 +36,7 @@ const InventoryDetailsDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterialId
         setFormModalOpen(true);
     };
 
-    if (error) {
-        const apiError = getApiError(error, "Failed to load raw material data.");
-        notify(apiError.message, "error");
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
-    }
+    const apiError = getApiError(error, "Failed to load raw material data.");
 
     return (
         <DataDrawer
@@ -53,6 +46,8 @@ const InventoryDetailsDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterialId
             onOpen={onOpen}
             onClose={onClose}
             PaperProps={drawerPaperProps}
+            error={error}
+            apiError={apiError}
         >
             {isLoading ? <ViewRawMaterialSkeleton/> :
                 (
@@ -158,7 +153,7 @@ const InventoryDetailsDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterialId
                                 p={2}
                             >
                                 <CustomButton
-                                    title={"Edit Inventory"}
+                                    title={"Edit Minimum Stock"}
                                     variant="contained"
                                     startIcon={<EditOutlined/>}
                                     onClick={handleOpenFormModal}

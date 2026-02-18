@@ -32,7 +32,13 @@ const RawMaterials = () => {
     const [selectedRow, setSelectedRow] = useState<RawMaterialType | null>(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
 
-    const {data: rawMaterialData, isLoading: isFetchingRawMaterial, isError, error} = useGetAllRawMaterialsQuery();
+    const {
+        data: rawMaterialData,
+        isLoading: isLoadingRawMaterial,
+        isFetching,
+        isError,
+        error
+    } = useGetAllRawMaterialsQuery();
     const memoizedRawMaterialData = useMemoizedArray(rawMaterialData);
 
     const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
@@ -268,7 +274,7 @@ const RawMaterials = () => {
 
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isFetchingRawMaterial}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoadingRawMaterial || isFetching}/>
                 </Grid>
             </Grid>
 

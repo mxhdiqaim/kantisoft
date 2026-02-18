@@ -101,9 +101,16 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
     }, [requiredFamily, memoizedUnitOfMeasurements]);
 
     const handleClose = () => {
-        onClose();
+        // Explicitly clear the form errors and values
+        resetForm({
+            rawMaterialId: "",
+            quantity: 0,
+            minStockLevel: 0,
+            unitOfMeasurementId: ""
+        });
         resetCreateMutation();
         resetUpdateMutation();
+        onClose();
     };
 
     // Optional UX: Auto-select the first compatible unit when material changes
@@ -129,14 +136,9 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                 quantity: rawMaterialInventory.quantity,
                 unitOfMeasurementId: rawMaterialInventory.unitOfMeasurement.id,
             });
-        } else if (!open) {
-            resetForm({
-                rawMaterialId: "",
-                quantity: 0,
-                minStockLevel: 0,
-                unitOfMeasurementId: ""
-            });
         }
+        // Removed the generic (!open) reset here since we handle it in handleClose now,
+        // preventing double resets or race conditions.
     }, [rawMaterialInventory, open, resetForm]);
 
     const onSubmit = async (data: CreateRawMaterialInventoryType | UpdateRawMaterialInventoryType) => {
@@ -164,8 +166,8 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
     return (
         <CustomModal
             open={open}
-            onClose={onClose}
-            title={isEditMode ? "Edit Inventory" : "Create Inventory"}
+            onClose={handleClose} // Use handleClose instead of onClose directly
+            title={isEditMode ? "Edit Minimum Stock" : "Create Inventory"}
         >
             <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{mt: 3}}>
                 <Grid container spacing={2}>
@@ -254,7 +256,6 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                                         label="Quantity"
                                         type="number"
                                         fullWidth
-                                        // ADDED ADORNMENT
                                         InputProps={{
                                             endAdornment: selectedUnitSymbol && (
                                                 <InputAdornment position="end">{selectedUnitSymbol}</InputAdornment>
@@ -277,7 +278,6 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                                     fullWidth
                                     label="Low Stock Alert Level"
                                     type="number"
-                                    // ADDED ADORNMENT
                                     InputProps={{
                                         endAdornment: selectedUnitSymbol && (
                                             <InputAdornment position="end">{selectedUnitSymbol}</InputAdornment>
@@ -291,7 +291,7 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                     </Grid>
                 </Grid>
                 <Box sx={{display: "flex", justifyContent: "flex-end", gap: 2, mt: 2}}>
-                    <CustomButton title={"Close"} onClick={onClose} variant="outlined"/>
+                    <CustomButton title={"Close"} onClick={handleClose} variant="outlined"/>
                     <CustomButton
                         title={isLoading ? (isEditMode ? "Saving..." : "Creating...") : (isEditMode ? "Save" : "Create")}
                         type="submit"
