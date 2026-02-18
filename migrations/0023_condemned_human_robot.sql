@@ -1,1 +1,0 @@
-ALTER TABLE "menuItems" DROP COLUMN "isAvailable";

@@ -1,3 +1,5 @@
+import { InventoryTransactionSummaryTypeEnum } from "../types/enums";
+
 export const generateOrderReference = (length = 8) => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let result = "ORD-";
@@ -41,4 +43,24 @@ export const generateSKU = (categoryName: string, itemName: string): string => {
     const randomSuffix = Math.floor(100 + Math.random() * 900);
 
     return `${catPrefix}-${itemPrefix}-${randomSuffix}`;
+};
+
+/**
+ * Helper to generate human-readable labels for transaction types
+ */
+export const getInventoryTransactionTypeLabel = (type: string) => {
+    switch (type) {
+        case InventoryTransactionSummaryTypeEnum.SALE:
+            return "Sale (Stock Decrease)";
+        case InventoryTransactionSummaryTypeEnum.PRODUCTION_IN:
+            return "Production (Stock Increase)";
+        case InventoryTransactionSummaryTypeEnum.ADJUSTMENT_IN:
+            return "Manual Adjustment (Increase)";
+        case InventoryTransactionSummaryTypeEnum.ADJUSTMENT_OUT:
+            return "Loss/Wastage (Decrease)";
+        case InventoryTransactionSummaryTypeEnum.PURCHASE_RECEIVE:
+            return "Purchase Received (Increase)";
+        default:
+            return type;
+    }
 };

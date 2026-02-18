@@ -1,2 +1,0 @@
-ALTER TABLE "rawMaterials" ADD COLUMN "storeId" uuid;--> statement-breakpoint
-ALTER TABLE "rawMaterials" ADD CONSTRAINT "rawMaterials_storeId_stores_id_fk" FOREIGN KEY ("storeId") REFERENCES "public"."stores"("id") ON DELETE restrict ON UPDATE no action;

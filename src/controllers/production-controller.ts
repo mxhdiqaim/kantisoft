@@ -11,7 +11,7 @@ import { menuItems } from "../schema/menu-items-schema";
 import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 import { nanoid } from "nanoid";
 import { UnitConversionService } from "../service/unit-conversion-service";
-import { RawMaterialInventoryAdjustmentService } from "../service/raw-material-inventory-adjustment-service";
+import { RawMaterialInventoryService } from "../service/raw-material-inventory-service";
 import { users } from "../schema/users-schema";
 import { productions } from "../schema/production-schema";
 import { inventory } from "../schema/inventory-schema";
@@ -279,7 +279,7 @@ export const recordWastage = async (req: CustomRequest, res: Response) => {
 
             // Use our existing service to deduct stock
             // We use 'wastage' as the source so it shows up correctly in reports
-            await RawMaterialInventoryAdjustmentService.processRawMaterialStockOut(tx, {
+            await RawMaterialInventoryService.processRawMaterialStockOut(tx, {
                 rawMaterialId: resolvedRawMaterialId,
                 storeId: finalStoreId,
                 userId,

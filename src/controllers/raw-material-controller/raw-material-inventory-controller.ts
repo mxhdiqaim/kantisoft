@@ -4,17 +4,20 @@ import { CustomRequest } from "../../types/express";
 import { handleError2 } from "../../service/error-handling";
 import { StatusCodes } from "http-status-codes";
 import db from "../../db";
-import { and, desc, eq, notInArray, sql } from "drizzle-orm";
+import { and, desc, eq, notInArray } from "drizzle-orm";
 import {rawMaterialInventory} from "../../schema/raw-materials-schema/raw-material-inventory-schema";
 import {rawMaterials} from "../../schema/raw-materials-schema";
 import {unitOfMeasurement} from "../../schema/unit-of-measurement-schema";
 import {UnitConversionService} from "../../service/unit-conversion-service";
-import { RawMaterialTransactionSource, rawMaterialTransactionSourceEnum } from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
-import { RawMaterialTransactionSourceEnum, TransactionTypeEnum, UserRoleEnum } from "../../types/enums";
-import {RawMaterialInventoryAdjustmentService} from "../../service/raw-material-inventory-adjustment-service";
+import { RawMaterialTransactionSource } from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
+import {
+    RawMaterialInventoryTransactionTypeEnum,
+    RawMaterialTransactionSourceEnum,
+    UserRoleEnum } from "../../types/enums";
+import {RawMaterialInventoryService} from "../../service/raw-material-inventory-service";
 import { determineFinalStoreId } from "../../utils/store-permission-utils";
 import { generateStockReference } from "../../utils/generate-stock-reference";
-import { calculateInventoryStatus } from "../../helpers";
+import { ActivityLogService } from "../../service/activity-service-log";
 
 /**
  * @description Retrieves all inventory records for a specific Store.
@@ -320,37 +323,29 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
         const quantityBase = UnitConversionService.convertToBaseUnit(quantity || 0, unitRecord);
         const minStockLevelBase = UnitConversionService.convertToBaseUnit(minStockLevel, unitRecord);
 
-        // Status Calculation (Helper to set initial status based on converted values)
-        const initialStatus = calculateInventoryStatus(quantityBase, minStockLevelBase);
-
-        // Data to insert or update
-        const inventoryData = {
+        const inventoryRecord = await RawMaterialInventoryService.setupInitialInventory({
             rawMaterialId,
             storeId: finalStoreId,
             minStockLevel: minStockLevelBase,
-            quantity: quantityBase, // if not provided, it defaults to 0
-            status: initialStatus,
-        };
+            quantity: quantityBase,
+            userId: currentUser.id,
+        });
 
-        const [inventoryRecord] = await db.insert(rawMaterialInventory)
-            .values(inventoryData)
-            .onConflictDoUpdate({
-                // Target the unique index combining rawMaterialId and storeId
-                target: [rawMaterialInventory.rawMaterialId, rawMaterialInventory.storeId],
-
-                // If conflicted, only update the minStockLevel
-                set: {
-                    minStockLevel: sql`excluded."minStockLevel"`,
-                    lastModified: new Date(),
-                },
-
-                setWhere: eq(rawMaterialInventory.storeId, finalStoreId),
-            })
-            .returning();
-
-        // Determine Action and Return Success
-        // (We can't easily tell if it was an insert or update from Drizzle's result array,
-        // so we use a generic success message focusing on the outcome)
+        // Log the activity for the audit trail
+        await ActivityLogService.logSystemEvent({
+            userId: currentUser.id,
+            storeId: finalStoreId,
+            entityId: inventoryRecord.id,
+            entityType: "rawMaterialInventory",
+            action: "RAW_MATERIAL_INVENTORY_CREATED",
+            actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+            targetName: materialRecord.name, // materialRecord was fetched earlier in parallel
+            meta: {
+                quantity: quantityBase,
+                minStockLevel: minStockLevelBase,
+                unit: unitRecord.name
+            }
+        });
 
         return res.status(StatusCodes.CREATED).json(inventoryRecord);
 
@@ -381,51 +376,59 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
  * @body { minStockLevel: number }
  */
 export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: Response) => {
-    const currentUser = req.user?.data;
-    const storeId = currentUser?.storeId;
-
-    if (!storeId) {
-        return handleError2(res, 'User does not have an associated store.', StatusCodes.BAD_REQUEST);
-    }
-
-    const userRole = currentUser?.role;
-    const { targetStoreId } = req.query;
-
-    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-    if (!finalStoreId) return;
-
-    const { id: inventoryRecordId } = req.params;
-    const { minStockLevel } = req.body;
-
-    if (!inventoryRecordId) {
-        return handleError2(res, 'Raw Material is required', StatusCodes.BAD_REQUEST);
-    }
-
-    if (minStockLevel === undefined || typeof minStockLevel !== 'number' || minStockLevel < 0) {
-        return handleError2(res, 'Minimum Stock Level is required and must be equal to or greater 0', StatusCodes.BAD_REQUEST);
-    }
-
     try {
-        const [updatedRecord] = await db.update(rawMaterialInventory)
-            .set({
-                minStockLevel,
-                lastModified: new Date(),
-            })
-            .where(
-                and(
-                    eq(rawMaterialInventory.id, inventoryRecordId),
-                    eq(rawMaterialInventory.storeId, finalStoreId)
-                )
-            )
-            .returning();
+        const currentUser = req.user?.data;
+        const storeId = currentUser?.storeId;
 
-        if (!updatedRecord) {
-            return handleError2(res, 'Inventory record not found for this raw material in the specified store.', StatusCodes.NOT_FOUND);
+        if (!storeId) {
+            return handleError2(res, 'User does not have an associated store.', StatusCodes.BAD_REQUEST);
         }
 
-        return res.status(StatusCodes.OK).json(updatedRecord);
+        const userRole = currentUser?.role;
+        const { targetStoreId } = req.query;
 
+        const { id: inventoryRecordId } = req.params;
+        const { minStockLevel } = req.body;
+
+        if (!inventoryRecordId) {
+            return handleError2(res, 'Raw Material is required', StatusCodes.BAD_REQUEST);
+        }
+
+        if (minStockLevel === undefined || typeof minStockLevel !== 'number' || minStockLevel < 0) {
+            return handleError2(res, 'Minimum Stock Level is required and must be equal to or greater 0', StatusCodes.BAD_REQUEST);
+        }
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;
+
+        const result = await RawMaterialInventoryService.updateMinStockLevel({
+            inventoryRecordId,
+            storeId: finalStoreId,
+            newMinStockLevel: minStockLevel,
+            userId: currentUser.id,
+        });
+
+        // System Ops Log (Audit Trail)
+        // We do this outside the DB transaction so it doesn't slow down the lock
+        await ActivityLogService.logSystemEvent({
+            userId: currentUser.id,
+            storeId: finalStoreId,
+            entityId: inventoryRecordId,
+            entityType: "rawMaterialInventory",
+            action: "RAW_MATERIAL_INVENTORY_MINIMUM_STOCK_LEVEL_UPDATED",
+            actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+            targetName: result.updated.rawMaterialId, // Or fetch the material name
+            meta: {
+                oldLimit: result.previous.minStockLevel,
+                newLimit: minStockLevel
+            }
+        });
+
+        return res.status(StatusCodes.OK).json(result.updated);
     } catch (error: any) {
+        if (error.message === "NOT_FOUND") {
+            return handleError2(res, 'Inventory record not found.', StatusCodes.NOT_FOUND);
+        }
         return handleError2(
             res,
             'A server error occurred while updating the inventory record.',
@@ -442,112 +445,69 @@ export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: 
  * @body { unitOfMeasurementId: string, source: RawMaterialTransactionSource, quantity: number, documentRefId: string, notes?: string }
  */
 export const stockInRawMaterialInventory = async (req: CustomRequest, res: Response) => {
-    const currentUser = req.user?.data;
-    const storeId = currentUser?.storeId;
-
-    if (!storeId) {
-        return handleError2(
-            res,
-            'User does not belong to a store or user ID is missing. Please contact support if you believe this is an error.',
-            StatusCodes.BAD_REQUEST
-        );
-    }
-    const userRole = currentUser?.role;
-    const { targetStoreId } = req.query;
-
-    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-    if (!finalStoreId) return;  // Error already handled
-
-    const { id: rawMaterialId } = req.params;
-
-    if (!rawMaterialId) {
-        return handleError2(res, 'Missing Raw Material', StatusCodes.BAD_REQUEST);
-    }
-
-    const {
-        unitOfMeasurementId, // The ID of the unit the quantity is measured in (e.g. Kilogram's ID)
-        source, // Reason for the addition (e.g. 'purchaseReceipt')
-        quantity, // Quantity in the user's unit (Presentation Unit, e.g., 10)
-        documentRefId,
-        notes
-    } = req.body;
-
-    // Validate required transaction fields
-    if (unitOfMeasurementId === undefined || typeof unitOfMeasurementId !== "string" || !unitOfMeasurementId) {
-        return handleError2(res, 'Measurement unit is required', StatusCodes.BAD_REQUEST);
-    }
-
-    if (source === undefined || typeof source !== "string" || !source) {
-        return handleError2(res, 'Source is required', StatusCodes.BAD_REQUEST);
-    }
-
-    if (quantity === undefined || quantity <= 0) {
-        return handleError2(res, 'Quantity must be greater than 0', StatusCodes.BAD_REQUEST);
-    }
-
-    // if (documentRefId === undefined || typeof documentRefId !== "string" || !documentRefId) {
-    //     return handleError2(res, 'Reference is required', StatusCodes.BAD_REQUEST);
-    // }
-
-    // Validate source against the enum
-    if (!Object.values(rawMaterialTransactionSourceEnum.enumValues).includes(source as RawMaterialTransactionSource)) {
-        return handleError2(res, `Invalid transaction source.`, StatusCodes.BAD_REQUEST);
-    }
-
-    // Conditional Validation for documentRefId
-    let finalReference = documentRefId;
-
-    // If a source is 'purchaseReceipt', we MUST have a manual reference
-    if (source === RawMaterialTransactionSourceEnum.PURCHASE_RECEIPT && !finalReference) {
-        return handleError2(
-            res,
-            'A Document Reference is mandatory for purchase receipts (e.g., Invoice #).',
-            StatusCodes.BAD_REQUEST
-        );
-    }
-
-    // Auto-Generation Logic
-    // If it's a manual adjustment or other source and no ref is provided, generate one
-    if (!finalReference) {
-        finalReference = generateStockReference(); // e.g., DEC-SUN-23-A9B2
-    }
-
     try {
-        // Verify that the raw material exists before proceeding
-        const materialExists = await db.query.rawMaterials.findFirst({
-            where: and(
-                eq(rawMaterials.storeId, finalStoreId),
-                eq(rawMaterials.id, rawMaterialId)
-            ),
-        });
+        const currentUser = req.user?.data;
+        const storeId = currentUser?.storeId;
 
-        if (!materialExists) {
-            return handleError2(res, `Raw material not found.`, StatusCodes.NOT_FOUND);
+        if (!storeId) {
+            return handleError2(res, 'Authentication required.', StatusCodes.UNAUTHORIZED);
         }
 
-        // Prepare Transaction Data
-        const transactionData = {
-            rawMaterialId: materialExists.id,
-            storeId: finalStoreId,
-            userId: currentUser?.id as string,
-            type: TransactionTypeEnum.COMING_IN,
-            source: source as RawMaterialTransactionSource,
-            documentRefId: finalReference,
-            notes: notes || `Stock added via ${source}.`
-        };
+        const { id: rawMaterialId } = req.params;
+        const { unitOfMeasurementId, source, quantity, documentRefId, notes } = req.body;
 
-        // Process Adjustment via Service
-        const updatedInventory = await RawMaterialInventoryAdjustmentService.processStockAdjustment(
-            transactionData,
-            quantity, // Presentation quantity
-            unitOfMeasurementId // Presentation unit ID
+        // Validation Logic
+        if (!rawMaterialId) return handleError2(res, 'Missing Raw Material', StatusCodes.BAD_REQUEST);
+        if (!unitOfMeasurementId) return handleError2(res, 'Unit is required', StatusCodes.BAD_REQUEST);
+        if (!source) return handleError2(res, 'Source is required', StatusCodes.BAD_REQUEST);
+        if (!quantity || quantity <= 0) return handleError2(res, 'Quantity must be > 0', StatusCodes.BAD_REQUEST);
+
+        const finalStoreId = await determineFinalStoreId(res, currentUser.role as UserRoleEnum, storeId, req.query.targetStoreId as string);
+        if (!finalStoreId) return;
+
+        // Reference Logic
+        let finalReference = documentRefId;
+        if (source === RawMaterialTransactionSourceEnum.PURCHASE_RECEIPT && !finalReference) {
+            return handleError2(res, 'Reference mandatory for purchase receipts.', StatusCodes.BAD_REQUEST);
+        }
+
+        if (!finalReference) finalReference = generateStockReference();
+
+        // Execute via Service
+        // We use processRawMaterialStockAdjustment because it handles unit conversion and master update
+        const updatedInventory = await RawMaterialInventoryService.processRawMaterialStockAdjustment(
+            {
+                rawMaterialId,
+                storeId: finalStoreId,
+                userId: currentUser.id,
+                type: RawMaterialInventoryTransactionTypeEnum.COMING_IN,
+                source: source as RawMaterialTransactionSource,
+                documentRefId: finalReference,
+                notes: notes || `Stock added via ${source}.`
+            },
+            quantity,
+            unitOfMeasurementId
         );
 
-        // Format and Return Response
-        // (Similar to GET, calculate presentation quantity for response clarity)
-        const unitRecord = await UnitConversionService.fetchUnitById(updatedInventory.rawMaterialId);
+        // Activity Log (Audit Trail)
+        await ActivityLogService.logSystemEvent({
+            userId: currentUser.id,
+            storeId: finalStoreId,
+            entityId: updatedInventory.id,
+            entityType: "rawMaterialInventory",
+            action: "RAW_MATERIAL_INVENTORY_UPDATED", // Or a specific STOCK_IN action if defined
+            actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+            targetName: rawMaterialId,
+            meta: {
+                type: "STOCK_IN",
+                added: quantity,
+                ref: finalReference,
+                source: source
+            }
+        });
 
-        // This is a quick fix, ideally, the service should return the unit, or the unit should be fetched once.
+        // Response formatting
+        const unitRecord = await UnitConversionService.fetchUnitById(unitOfMeasurementId);
         const conversionFactor = unitRecord?.conversionFactorToBase || 1;
 
         return res.status(StatusCodes.OK).json({

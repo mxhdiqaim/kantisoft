@@ -159,7 +159,6 @@ export const getActivities = async (req: Request, res: Response) => {
             offset: offset,
         });
     } catch (error) {
-        // console.error("Failed to fetch activities:", error);
         handleError2(
             res,
             "Failed to fetch activities due to an internal server error.",

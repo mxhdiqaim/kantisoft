@@ -231,7 +231,7 @@ export const getSingleRawMaterial = async (req: CustomRequest, res: Response) =>
 
 /**
  * @description Creates a new Raw Material record.
- * @route POST /api/v1/raw-materials
+ * @route POST /api/v1/raw-materials/create
  * @access Admin, Manager
  */
 export const createRawMaterial = async (req: CustomRequest, res: Response) => {
@@ -251,7 +251,6 @@ export const createRawMaterial = async (req: CustomRequest, res: Response) => {
 
     const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
     if (!finalStoreId) return;  // Error already handled
-
 
     const {
         name,

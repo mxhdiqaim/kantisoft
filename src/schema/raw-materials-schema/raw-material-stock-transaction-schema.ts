@@ -16,6 +16,7 @@ export const rawMaterialTransactionTypeEnum = pgEnum(
     [
         "comingIn", // Stock Addition (e.g. Receipt from PO, Adjustment IN)
         "goingOut", // Stock Deduction (e.g. Usage in Recipe, Wastage/Loss, Adjustment OUT)
+        "adjustment", // Manual correction (can be either IN or OUT, determined by quantity sign)
     ],
 );
 
