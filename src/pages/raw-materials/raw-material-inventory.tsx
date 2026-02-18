@@ -41,7 +41,7 @@ const RawMaterialInventory = () => {
 
     const handleCloseFormModal = () => {
         setFormModalOpen(false);
-        setSelectedRow(null)
+        setSelectedRow(null);
     };
 
     const handleOpenFormModal = () => {
@@ -76,31 +76,36 @@ const RawMaterialInventory = () => {
                 minWidth: 100,
                 align: "left",
                 headerAlign: "left",
-                renderCell: (params) => (
-                    <TableStyledBox>
-                        <Typography variant="body2">{formatNumber(params.value)}</Typography>
-                    </TableStyledBox>
-                ),
-            },
-            {
-                flex: 1,
-                field: "unitOfMeasurement",
-                headerName: "Measurement Unit",
-                minWidth: 180,
-                cellClassName: "capitalize-cell",
-                align: "left",
-                headerAlign: "left",
                 renderCell: (params) => {
-                    const name = params.value.name;
-                    const symbol = params.value.symbol;
+                    const symbol = params.row.unitOfMeasurement.symbol;
+
                     return (
                         <TableStyledBox>
-                            <Typography variant="body2" textTransform={"capitalize"}>{name}</Typography>
+                            <Typography variant="body2">{formatNumber(params.value)}</Typography>
                             <Typography variant="body2">({symbol})</Typography>
                         </TableStyledBox>
                     )
                 },
             },
+            // {
+            //     flex: 1,
+            //     field: "unitOfMeasurement",
+            //     headerName: "Measurement Unit",
+            //     minWidth: 180,
+            //     cellClassName: "capitalize-cell",
+            //     align: "left",
+            //     headerAlign: "left",
+            //     renderCell: (params) => {
+            //         const name = params.value.name;
+            //         const symbol = params.value.symbol;
+            //         return (
+            //             <TableStyledBox>
+            //                 <Typography variant="body2" textTransform={"capitalize"}>{name}</Typography>
+            //                 <Typography variant="body2">({symbol})</Typography>
+            //             </TableStyledBox>
+            //         )
+            //     },
+            // },
             {
                 flex: 1,
                 field: "minStockLevel",
@@ -109,11 +114,16 @@ const RawMaterialInventory = () => {
                 cellClassName: "capitalize-cell",
                 align: "left",
                 headerAlign: "left",
-                renderCell: (params) => (
-                    <TableStyledBox>
-                        <Typography variant="body2">{formatNumber(params.value)}</Typography>
-                    </TableStyledBox>
-                ),
+                renderCell: (params) => {
+                    const symbol = params.row.unitOfMeasurement.symbol;
+
+                    return (
+                        <TableStyledBox>
+                            <Typography variant="body2">{formatNumber(params.value)}</Typography>
+                            <Typography variant="body2">({symbol})</Typography>
+                        </TableStyledBox>
+                    )
+                },
             },
             {
                 flex: 1,
