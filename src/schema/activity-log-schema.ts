@@ -9,49 +9,57 @@ import {
 import { users } from "./users-schema";
 import { stores } from "./stores-schema";
 
-// Define the types of actions you want to track
-export const activityActionEnum = pgEnum("activityAction", [
-    "USER_LOGIN",
-    "USER_CREATED",
-    "STORES_VIEWED",
-    "STORE_CREATED",
-    "STORE_VIEWED",
-    "STORE_UPDATED",
-    "STORE_DELETED",
-    "MENU_ITEM_CREATED",
-    "MENU_ITEM_UPDATED",
-    "MENU_ITEM_DELETED",
-    "ORDER_CREATED",
-    "ORDER_STATUS_UPDATED",
-    "ORDER_DELETED",
-    "MANAGER_REGISTERED",
-    "USERS_VIEWED",
-    "USER_VIEWED",
-    "USER_DELETED",
-    "USER_UPDATED",
-    "PASSWORD_CHANGED",
-    "INVENTORY_RECORD_CREATED",
-    "STOCK_ADJUSTED_SALE",
-    "STOCK_ADJUSTED_PURCHASE_RECEIVE",
-    "STOCK_ADJUSTED_ADJUSTMENT_IN",
-    "STOCK_ADJUSTED_ADJUSTMENT_OUT",
-    "STOCK_ADJUSTED_TRANSFER_IN",
-    "STOCK_ADJUSTED_TRANSFER_OUT",
-    "ORDER_STOCK_DECREMENTED",
-    "INVENTORY_DISCONTINUED",
-    "INVENTORY_RECORD_DELETED",
-    "USER_STORE_CHANGED",
-    "INVENTORY_CONTINUED",
-]);
+// Define your base blocks
+const CRUD = ["CREATED", "UPDATED", "DELETED", "VIEWED", "READ"] as const;
+const AUTH = ["LOGIN", "LOGOUT", "PASSWORD_CHANGED"] as const;
+const MODIFICATION = [
+    "ADJUSTED",
+    "DECREMENTED",
+    "CONTINUED",
+    "DISCONTINUED",
+] as const;
+
+// Map specific actions to specific entities
+const SCOPED_ACTIONS = {
+    USER: [...CRUD, ...AUTH, "STORE_CHANGED"],
+    STORE: CRUD,
+    MENU_ITEM: CRUD,
+    ORDER: [...CRUD, "STATUS_UPDATED", "STOCK_DECREMENTED"],
+    MANAGER: [...CRUD, "REGISTERED"],
+    INVENTORY: [...CRUD, ...MODIFICATION],
+    RAW_MATERIAL_INVENTORY: [...CRUD, ...MODIFICATION],
+    ORDER_STATUS: [...CRUD],
+    ORDER_STOCK: [...CRUD, ...MODIFICATION],
+    PASSWORD: ["CHANGED"],
+    STOCK_ADJUSTED: [...CRUD, ...MODIFICATION],
+    USER_STORE: ["CHANGED"],
+} as const;
+
+// Flatten the map and force uniqueness
+const rawActions = Object.entries(SCOPED_ACTIONS).flatMap(([entity, actions]) =>
+    actions.map((action) => `${entity}_${action}`),
+);
+
+// This 'Set' is the shield that prevents the duplicate key error
+const generatedActions = Array.from(new Set(rawActions)) as [
+    string,
+    ...string[],
+];
+
+export const activityActionEnum = pgEnum("activityAction", generatedActions);
+
+// (Optional) Extract the TypeScript Type for use in your app
+export type ActivityActionType = (typeof generatedActions)[number];
 
 export const entityTypeEnum = pgEnum("entityType", [
-    "order",
-    "menuItem",
-    "user",
-    "store",
     "activity",
     "inventory",
+    "menuItem",
+    "order",
     "rawMaterial",
+    "rawMaterialInventory",
+    "store",
+    "user",
 ]);
 
 export const activityLog = pgTable("activityLog", {

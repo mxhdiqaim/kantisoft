@@ -16,7 +16,7 @@ import {rawMaterials} from "../schema/raw-materials-schema";
 /**
  * Service to handle all atomic inventory adjustments (IN or OUT).
  */
-export const RawMaterialInventoryAdjustmentService = {
+export const RawMaterialInventoryService = {
     /**
      * Executes an atomic inventory update, logging the transaction and updating the inventory Master record.
      * @param transaction The raw transaction data from the controller.
@@ -24,7 +24,7 @@ export const RawMaterialInventoryAdjustmentService = {
      * @param unitOfMeasurementId The ID of the unit used in the transaction.
      * @returns The updated raw material inventory record.
      */
-    async processStockAdjustment(
+    async processRawMaterialStockAdjustment(
         transaction: Omit<
             InsertRawMaterialTransactionSchemaT,
             "quantityBase" | "createdAt" | "id" | "lastModified"

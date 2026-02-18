@@ -29,7 +29,7 @@ export const InventoryTransactionTypeEnum = {
     IN_STOCK: "inStock",
     LOW_STOCK: "lowStock",
     OUT_OF_STOCK: "outOfStock",
-    // ADJUSTMENT: "adjustment",
+    ADJUSTMENT: "adjustment",
     DISCONTINUED: "discontinued",
 } as const;
 

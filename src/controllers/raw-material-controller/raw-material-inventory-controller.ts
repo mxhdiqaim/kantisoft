@@ -9,12 +9,22 @@ import {rawMaterialInventory} from "../../schema/raw-materials-schema/raw-materi
 import {rawMaterials} from "../../schema/raw-materials-schema";
 import {unitOfMeasurement} from "../../schema/unit-of-measurement-schema";
 import {UnitConversionService} from "../../service/unit-conversion-service";
-import { RawMaterialTransactionSource, rawMaterialTransactionSourceEnum } from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
-import { RawMaterialTransactionSourceEnum, TransactionTypeEnum, UserRoleEnum } from "../../types/enums";
-import {RawMaterialInventoryAdjustmentService} from "../../service/raw-material-inventory-adjustment-service";
+import {
+    rawMaterialTransactions,
+    RawMaterialTransactionSource,
+    rawMaterialTransactionSourceEnum
+} from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
+import {
+    InventoryTransactionTypeEnum,
+    RawMaterialTransactionSourceEnum,
+    TransactionTypeEnum,
+    UserRoleEnum
+} from "../../types/enums";
+import {RawMaterialInventoryService} from "../../service/raw-material-inventory-service";
 import { determineFinalStoreId } from "../../utils/store-permission-utils";
 import { generateStockReference } from "../../utils/generate-stock-reference";
 import { calculateInventoryStatus } from "../../helpers";
+import { ActivityLogService } from "../../service/activity-service-log";
 
 /**
  * @description Retrieves all inventory records for a specific Store.
@@ -381,51 +391,89 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
  * @body { minStockLevel: number }
  */
 export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: Response) => {
-    const currentUser = req.user?.data;
-    const storeId = currentUser?.storeId;
-
-    if (!storeId) {
-        return handleError2(res, 'User does not have an associated store.', StatusCodes.BAD_REQUEST);
-    }
-
-    const userRole = currentUser?.role;
-    const { targetStoreId } = req.query;
-
-    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-    if (!finalStoreId) return;
-
-    const { id: inventoryRecordId } = req.params;
-    const { minStockLevel } = req.body;
-
-    if (!inventoryRecordId) {
-        return handleError2(res, 'Raw Material is required', StatusCodes.BAD_REQUEST);
-    }
-
-    if (minStockLevel === undefined || typeof minStockLevel !== 'number' || minStockLevel < 0) {
-        return handleError2(res, 'Minimum Stock Level is required and must be equal to or greater 0', StatusCodes.BAD_REQUEST);
-    }
-
     try {
-        const [updatedRecord] = await db.update(rawMaterialInventory)
-            .set({
-                minStockLevel,
-                lastModified: new Date(),
-            })
-            .where(
-                and(
-                    eq(rawMaterialInventory.id, inventoryRecordId),
-                    eq(rawMaterialInventory.storeId, finalStoreId)
-                )
-            )
-            .returning();
+        const currentUser = req.user?.data;
+        const storeId = currentUser?.storeId;
 
-        if (!updatedRecord) {
-            return handleError2(res, 'Inventory record not found for this raw material in the specified store.', StatusCodes.NOT_FOUND);
+        if (!storeId) {
+            return handleError2(res, 'User does not have an associated store.', StatusCodes.BAD_REQUEST);
         }
 
-        return res.status(StatusCodes.OK).json(updatedRecord);
+        const userRole = currentUser?.role;
+        const { targetStoreId } = req.query;
 
+        const { id: inventoryRecordId } = req.params;
+        const { minStockLevel } = req.body;
+
+        if (!inventoryRecordId) {
+            return handleError2(res, 'Raw Material is required', StatusCodes.BAD_REQUEST);
+        }
+
+        if (minStockLevel === undefined || typeof minStockLevel !== 'number' || minStockLevel < 0) {
+            return handleError2(res, 'Minimum Stock Level is required and must be equal to or greater 0', StatusCodes.BAD_REQUEST);
+        }
+
+        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        if (!finalStoreId) return;
+
+        const result = await db.transaction(async (tx) => {
+            // Get the current state to check quantity
+            const [current] = await tx.select()
+                .from(rawMaterialInventory)
+                .where(and(eq(rawMaterialInventory.id, inventoryRecordId), eq(rawMaterialInventory.storeId, finalStoreId)));
+
+            if (!current) {
+                throw new Error("NOT_FOUND");
+            };
+
+            // Calculate new status based on existing quantity vs NEW min stock level
+            const newStatus = calculateInventoryStatus(current.quantity, minStockLevel);
+
+            // Update the Master Record
+            const [updated] = await tx.update(rawMaterialInventory)
+                .set({
+                    minStockLevel,
+                    status: newStatus,
+                    lastModified: new Date(),
+                })
+                .where(eq(rawMaterialInventory.id, inventoryRecordId))
+                .returning();
+
+            // Record the Adjustment in the Transaction Log
+            await tx.insert(rawMaterialTransactions).values({
+                rawMaterialId: updated.rawMaterialId as string,
+                storeId: finalStoreId,
+                userId: currentUser.id,
+                type: InventoryTransactionTypeEnum.ADJUSTMENT,
+                quantityBase: 0,
+                source: RawMaterialTransactionSourceEnum.INVENTORY_ADJUSTMENT,
+                notes: `Min Stock Level changed: ${current.minStockLevel} -> ${minStockLevel}. Status: ${newStatus}.`,
+            });
+
+            return { updated, previous: current };
+        });
+
+        // System Ops Log (Audit Trail)
+        // We do this outside the DB transaction so it doesn't slow down the lock
+        await ActivityLogService.logSystemEvent({
+            userId: currentUser.id,
+            storeId: finalStoreId,
+            entityId: inventoryRecordId,
+            entityType: "rawMaterialInventory",
+            action: "RAW_MATERIAL_INVENTORY_MINIMUM_STOCK_LEVEL_UPDATED",
+            actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+            targetName: result.updated.rawMaterialId, // Or fetch the material name
+            meta: {
+                oldLimit: result.previous.minStockLevel,
+                newLimit: minStockLevel
+            }
+        });
+
+        return res.status(StatusCodes.OK).json(result.updated);
     } catch (error: any) {
+        if (error.message === "NOT_FOUND") {
+            return handleError2(res, 'Inventory record not found.', StatusCodes.NOT_FOUND);
+        }
         return handleError2(
             res,
             'A server error occurred while updating the inventory record.',
@@ -537,7 +585,7 @@ export const stockInRawMaterialInventory = async (req: CustomRequest, res: Respo
         };
 
         // Process Adjustment via Service
-        const updatedInventory = await RawMaterialInventoryAdjustmentService.processStockAdjustment(
+        const updatedInventory = await RawMaterialInventoryService.processRawMaterialStockAdjustment(
             transactionData,
             quantity, // Presentation quantity
             unitOfMeasurementId // Presentation unit ID
