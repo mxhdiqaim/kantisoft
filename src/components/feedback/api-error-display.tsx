@@ -1,13 +1,14 @@
-import {Box, Button, CardContent, Typography, useTheme} from "@mui/material";
-import {ArrowBack, ErrorOutline} from "@mui/icons-material";
+import {Box, Typography, useTheme} from "@mui/material";
+import {ErrorOutline} from "@mui/icons-material";
 import CustomCard from "../customs/custom-card";
+import CustomButton from "@/components/ui/button.tsx";
 
-interface ApiErrorDisplayProps {
+interface Props {
     statusCode?: number | string;
     message?: string;
 }
 
-const ApiErrorDisplay = ({statusCode = "Error", message = "An unexpected error occurred."}: ApiErrorDisplayProps) => {
+const ApiErrorDisplay = ({statusCode = "Error", message = "An unexpected error occurred."}: Props) => {
     const theme = useTheme();
 
     return (
@@ -32,7 +33,7 @@ const ApiErrorDisplay = ({statusCode = "Error", message = "An unexpected error o
                     border: `1px solid ${theme.palette.error.light}`,
                 }}
             >
-                <CardContent>
+                <Box>
                     <ErrorOutline
                         sx={{
                             fontSize: 80,
@@ -57,11 +58,13 @@ const ApiErrorDisplay = ({statusCode = "Error", message = "An unexpected error o
                     <Typography color="text.secondary">
                         Please try again!.
                     </Typography>
-                    <Button variant="contained" onClick={() => window.location.reload()} startIcon={<ArrowBack/>}
-                            sx={{mt: 4}}>
-                        Refresh
-                    </Button>
-                </CardContent>
+                    <CustomButton
+                        title={"Refresh"}
+                        variant="contained"
+                        onClick={() => window.location.reload()}
+                        sx={{mt: 4}}
+                    />
+                </Box>
             </CustomCard>
         </Box>
     );
