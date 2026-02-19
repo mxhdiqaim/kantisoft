@@ -101,8 +101,8 @@ const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQuery
 
     let modifiedArgs = args;
 
-    // If there is an active store and the user is NOT a manager, enforce targetStoreId
-    if (currentUser?.role !== UserRoleEnum.MANAGER && activeStore?.id) {
+    // If the user is a manager and has an active store, add targetStoreId to params
+    if (currentUser?.role === UserRoleEnum.MANAGER && activeStore?.id) {
         if (typeof args === "string") {
             modifiedArgs = {
                 url: args,

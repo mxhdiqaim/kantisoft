@@ -2,7 +2,7 @@ import {Avatar, Box, Grow, Typography} from "@mui/material";
 import {useTheme} from "@mui/material/styles";
 import type {ReactElement} from "react";
 import CountUp from "react-countup";
-import {ngnFormatter} from "@/utils";
+import {formatCurrency} from "@/utils";
 import {CustomCardRef} from "../customs/custom-card";
 
 interface Props {
@@ -40,7 +40,7 @@ const ProductionSummaryCard = (props: Props) => {
         if (isNaN(numericValue)) {
             return <>{value}</>
         }
-        return <>{ngnFormatter.format(numericValue)}</>;
+        return <>{formatCurrency(numericValue)}</>;
     };
 
     return (
