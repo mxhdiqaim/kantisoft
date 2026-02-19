@@ -4,20 +4,23 @@ import { CustomRequest } from "../../types/express";
 import { handleError2 } from "../../service/error-handling";
 import { StatusCodes } from "http-status-codes";
 import db from "../../db";
-import { and, desc, eq, notInArray } from "drizzle-orm";
+import { and, desc, eq, inArray, notInArray } from "drizzle-orm";
 import {rawMaterialInventory} from "../../schema/raw-materials-schema/raw-material-inventory-schema";
 import {rawMaterials} from "../../schema/raw-materials-schema";
 import {unitOfMeasurement} from "../../schema/unit-of-measurement-schema";
 import {UnitConversionService} from "../../service/unit-conversion-service";
 import { RawMaterialTransactionSource } from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
 import {
+    ActivityEntityTypeEnum,
     RawMaterialInventoryTransactionTypeEnum,
     RawMaterialTransactionSourceEnum,
-    UserRoleEnum } from "../../types/enums";
+    UserRoleEnum,
+} from "../../types/enums";
 import {RawMaterialInventoryService} from "../../service/raw-material-inventory-service";
 import { determineFinalStoreId } from "../../utils/store-permission-utils";
 import { generateStockReference } from "../../utils/generate-stock-reference";
 import { ActivityLogService } from "../../service/activity-service-log";
+import { validateStoreAndExtractDates } from "../../utils/validate-store-dates";
 
 /**
  * @description Retrieves all inventory records for a specific Store.
@@ -26,83 +29,78 @@ import { ActivityLogService } from "../../service/activity-service-log";
  */
 export const getAllRawMaterialInventory = async (req: CustomRequest, res: Response) => {
     try {
-        const currentUser = req.user?.data;
-        const storeId = currentUser?.storeId;
-        const userRole = currentUser?.role;
+        const validated = await validateStoreAndExtractDates(req, res);
+        if (!validated) return;
 
-        if (!storeId) {
-            return handleError2(res, "Store association required.", StatusCodes.FORBIDDEN);
-        }
+        const { storeIds } = validated;
 
-        const { targetStoreId } = req.query;
-
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;
-
-        // Fetch using Relational API
-        const allRawMaterialInventory = await db.query.rawMaterialInventory.findMany({
-            where: eq(rawMaterialInventory.storeId, finalStoreId),
+        // Fetch using Relational API for clean nested data
+        const inventoryRecords = await db.query.rawMaterialInventory.findMany({
+            where: inArray(rawMaterialInventory.storeId, storeIds),
             orderBy: [desc(rawMaterialInventory.lastModified)],
-            columns: {
-                id: true,
-                quantity: true,
-                minStockLevel: true,
-                status: true,
-                createdAt: true,
-                lastModified: true
-            },
             with: {
                 rawMaterial: {
-                    columns: {
-                        id: true,
-                        name: true,
-                        latestUnitPrice: true
-                    },
                     with: {
-                        unitOfMeasurement: {
-                            columns: {
-                                id: true,
-                                name: true,
-                                symbol: true,
-                                unitOfMeasurementFamily: true,
-                                isBaseUnit: true,
-                                conversionFactorToBase: true
-                            }
-                        }
+                        unitOfMeasurement: true // Crucial for the conversion factor
                     }
                 },
-                store: {
-                    columns: {
-                        id: true,
-                        name: true
-                    }
-                },
+                store: true,
             },
         });
 
-        // Format data for table display
-        const formattedData = allRawMaterialInventory.map(item => ({
-            id: item.id,
-            quantity: item.quantity,
-            minStockLevel: item.minStockLevel,
-            status: item.status,
-            createdAt: item.createdAt,
-            lastModified: item.lastModified,
+        // Map and Format using UnitConversionService
+        const formattedData = inventoryRecords.map(item => {
+            const material = item.rawMaterial;
+            const unit = material.unitOfMeasurement;
 
-            rawMaterialId: item.rawMaterial.id,
-            rawMaterialName: item.rawMaterial.name,
-            latestUnitPrice: item.rawMaterial.latestUnitPrice,
+            // Conversion Logic: Base -> Presentation (e.g., 5000g -> 5kg)
+            // Quantity = Base / Factor
+            const displayQuantity = item.quantity / (unit.conversionFactorToBase || 1);
+            const displayMinLevel = item.minStockLevel / (unit.conversionFactorToBase || 1);
 
-            unitOfMeasurement: {
-                // id: item.rawMaterial.unitOfMeasurement.id,
-                // name: item.rawMaterial.unitOfMeasurement.name,
-                // symbol: item.rawMaterial.unitOfMeasurement.symbol,
-                ...item.rawMaterial.unitOfMeasurement,
-            },
+            // Price Logic: Base Price -> Presentation Price (e.g., $0.05/g -> $50/kg)
+            // We use your service's logic here
+            const displayPrice = UnitConversionService.displayPriceInPresentationUnit(
+                Number(material.latestUnitPrice || 0),
+                unit
+            );
 
-            storeId: item.store.id,
-            storeName: item.store.name,
-        }));
+            return {
+                id: item.id,
+
+                // Material Info
+                rawMaterialId: material.id,
+                rawMaterialName: material.name,
+
+                // Presentation Data (What the user understands)
+                quantity: displayQuantity,
+                minStockLevel: displayMinLevel,
+                latestUnitPrice: displayPrice,
+
+                unitOfMeasurement: {
+                    id: unit.id,
+                    name: unit.name,
+                    symbol: unit.symbol,
+                    unitOfMeasurementFamily: unit.unitOfMeasurementFamily,
+                },
+
+
+                // Status and Metadata
+                status: item.status,
+                lastModified: item.lastModified,
+                createdAt: item.createdAt,
+
+                // Store Context
+                storeId: item.store.id,
+                storeName: item.store.name,
+
+                // System/Debug data (Optional, useful for frontend math checks)
+                system: {
+                    baseQuantity: item.quantity,
+                    conversionFactor: unit.conversionFactorToBase
+                }
+            };
+        });
 
         res.status(StatusCodes.OK).json(formattedData);
 
@@ -123,29 +121,18 @@ export const getAllRawMaterialInventory = async (req: CustomRequest, res: Respon
  * @access Admin, Manager
  */
 export const getCurrentRawMaterialInventoryStock = async (req: CustomRequest, res: Response) => {
-    const currentUser = req.user?.data;
-    const storeId = currentUser?.storeId;
-
-    if (!storeId) {
-        return handleError2(
-            res,
-            'User does not have an associated store.',
-            StatusCodes.BAD_REQUEST
-        );
-    }
-    const userRole = currentUser?.role;
-    const { targetStoreId } = req.query;
-
-    const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-    if (!finalStoreId) return;  // Error already handled
-
-    const { id: rawMaterialId } = req.params;
-
-    if (!rawMaterialId) {
-        return handleError2(res, 'Missing Raw Material.', StatusCodes.BAD_REQUEST);
-    }
-
     try {
+        const validated = await validateStoreAndExtractDates(req, res);
+        if (!validated) return;
+
+        const { storeIds } = validated;
+
+        const { id: rawMaterialId } = req.params;
+
+        if (!rawMaterialId) {
+            return handleError2(res, 'Missing Raw Material.', StatusCodes.BAD_REQUEST);
+        }
+
         // Multi-Join Query
         // Join Inventory -> RawMaterial -> UnitOfMeasurement
         const [stockRecord] = await db.select({
@@ -181,7 +168,7 @@ export const getCurrentRawMaterialInventoryStock = async (req: CustomRequest, re
                 eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id)
             )
             .where(and(
-                eq(rawMaterialInventory.storeId, finalStoreId),
+                inArray(rawMaterialInventory.storeId, storeIds),
                 eq(rawMaterialInventory.rawMaterialId, rawMaterialId),
             ))
             .limit(1)
@@ -336,7 +323,7 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
             userId: currentUser.id,
             storeId: finalStoreId,
             entityId: inventoryRecord.id,
-            entityType: "rawMaterialInventory",
+            entityType: ActivityEntityTypeEnum.RAW_MATERIAL_INVENTORY,
             action: "RAW_MATERIAL_INVENTORY_CREATED",
             actorName: `${currentUser.firstName} ${currentUser.lastName}`,
             targetName: materialRecord.name, // materialRecord was fetched earlier in parallel
@@ -414,7 +401,7 @@ export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: 
             userId: currentUser.id,
             storeId: finalStoreId,
             entityId: inventoryRecordId,
-            entityType: "rawMaterialInventory",
+            entityType: ActivityEntityTypeEnum.RAW_MATERIAL_INVENTORY,
             action: "RAW_MATERIAL_INVENTORY_MINIMUM_STOCK_LEVEL_UPDATED",
             actorName: `${currentUser.firstName} ${currentUser.lastName}`,
             targetName: result.updated.rawMaterialId, // Or fetch the material name
@@ -494,7 +481,7 @@ export const stockInRawMaterialInventory = async (req: CustomRequest, res: Respo
             userId: currentUser.id,
             storeId: finalStoreId,
             entityId: updatedInventory.id,
-            entityType: "rawMaterialInventory",
+            entityType: ActivityEntityTypeEnum.RAW_MATERIAL_INVENTORY,
             action: "RAW_MATERIAL_INVENTORY_UPDATED", // Or a specific STOCK_IN action if defined
             actorName: `${currentUser.firstName} ${currentUser.lastName}`,
             targetName: rawMaterialId,
@@ -538,22 +525,15 @@ export const stockInRawMaterialInventory = async (req: CustomRequest, res: Respo
  */
 export const getUnstockedMaterials = async (req: CustomRequest, res: Response) => {
    try {
-       const currentUser = req.user?.data;
-       const storeId = currentUser?.storeId;
+       const validated = await validateStoreAndExtractDates(req, res);
+       if (!validated) return;
 
-       if (!storeId) {
-           return handleError2(
-               res,
-               'User does not belong to a store or user ID is missing. Please contact support if you believe this is an error.',
-               StatusCodes.BAD_REQUEST
-           );
-       }
-
+       const { storeIds } = validated;
 
        // Subquery: Get all IDs already in inventory for this store
        const stockedIds = db.select({ id: rawMaterialInventory.rawMaterialId })
            .from(rawMaterialInventory)
-           .where(eq(rawMaterialInventory.storeId, storeId));
+           .where(inArray(rawMaterialInventory.storeId, storeIds));
 
        // Main Query: Get materials NOT in that list
        const availableToStock = await db.select()

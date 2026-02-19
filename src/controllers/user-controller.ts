@@ -1,20 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { and, eq, inArray, ne, or, SQL } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte, ne, or, sql, SQL } from "drizzle-orm";
 import { NextFunction, Request, Response } from "express";
 import passport from "passport";
-
 import { generateToken } from "../config/jwt-config";
 import db from "../db";
 import { InsertUserSchemaT, users } from "../schema/users-schema";
 import { handleError2 } from "../service/error-handling";
 import { passwordHashService } from "../service/password-hash-service";
-import { UserRoleEnum, UserStatusEnum } from "../types/enums";
+import { ActivityEntityTypeEnum, UserRoleEnum, UserStatusEnum } from "../types/enums";
 import { stores } from "../schema/stores-schema";
 import { CustomRequest } from "../types/express";
-import { logActivity } from "../service/activity-logger";
 import { StatusCodes } from "http-status-codes";
 import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 import { getUserStoreScope } from "../utils/get-store-scope";
+import { ActivityLogService } from "../service/activity-service-log";
+import { activityLog } from "../schema/activity-log-schema";
 
 /**
  * @desc    Register a new Manager and their first Store
@@ -125,12 +125,14 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
         });
 
         // Log activity for manager registration
-        await logActivity({
+        await ActivityLogService.logSystemEvent({
             userId: user.id,
             storeId: String(user.storeId),
             action: "MANAGER_REGISTERED",
             entityId: user.id,
-            entityType: "user",
+            entityType: ActivityEntityTypeEnum.USER,
+            actorName: `${user.firstName} ${user.lastName}`,
+            targetName: `${user.firstName} ${user.lastName}`,
             details: `Manager ${user.firstName} ${user.lastName} registered and created store.`,
         });
 
@@ -400,13 +402,14 @@ export const deleteUser = async (req: CustomRequest, res: Response) => {
                 ),
             );
 
-        // Log activity for user deletion
-        await logActivity({
+        await ActivityLogService.logSystemEvent({
             userId: currentUser.id,
             storeId: String(currentUser.storeId),
             action: "USER_DELETED",
             entityId: targetUserId,
-            entityType: "user",
+            entityType: ActivityEntityTypeEnum.USER,
+            actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+            targetName: `${currentUser.firstName} ${currentUser.lastName}`,
             details: `User ${targetUser.firstName} ${targetUser.lastName} deleted by ${currentUser.firstName} ${currentUser.lastName}.`,
         });
 
@@ -518,13 +521,14 @@ export const createUser = async (req: CustomRequest, res: Response) => {
             .values(newUserToInsert)
             .returning();
 
-        // Log the activity
-        await logActivity({
+        await ActivityLogService.logSystemEvent({
             userId: currentUser.id,
             storeId: storeId,
             action: "USER_CREATED",
             entityId: newUser.id,
-            entityType: "user",
+            entityType: ActivityEntityTypeEnum.USER,
+            actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+            targetName: `${currentUser.firstName} ${currentUser.lastName}`,
             details: `User ${newUser.firstName} ${newUser.lastName} (${newUser.role}) created by ${currentUser.firstName} ${currentUser.lastName}.`,
         });
 
@@ -691,13 +695,14 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
             )
             .returning();
 
-        // Log activity for user update
-        await logActivity({
+        await ActivityLogService.logSystemEvent({
             userId: currentUser.id,
             storeId: String(currentUser.storeId),
             action: "USER_UPDATED",
             entityId: targetUserId,
-            entityType: "user",
+            entityType: ActivityEntityTypeEnum.USER,
+            actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+            targetName: `${currentUser.firstName} ${currentUser.lastName}`,
             details: `User ${targetUser.firstName} ${targetUser.lastName} updated by ${currentUser.firstName} ${currentUser.lastName}.`,
         });
 
@@ -823,13 +828,15 @@ export const changeUserStore = async (req: CustomRequest, res: Response) => {
             .where(eq(users.id, targetUserId))
             .returning();
 
-        // 6. Log and respond
-        await logActivity({
+        // Log and respond
+        await ActivityLogService.logSystemEvent({
             userId: currentUser.id,
             storeId: String(currentUser.storeId),
             action: "USER_STORE_CHANGED",
             entityId: targetUserId,
-            entityType: "user",
+            entityType: ActivityEntityTypeEnum.USER,
+            actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+            targetName: `${currentUser.firstName} ${currentUser.lastName}`,
             details: `Store for user ${targetUser.firstName} ${targetUser.lastName} changed to store ID ${newStoreId}.`,
         });
 
@@ -923,12 +930,14 @@ export const updatePassword = async (req: CustomRequest, res: Response) => {
             .where(eq(users.id, currentUser.id));
 
         // Log activity for password change
-        await logActivity({
+        await ActivityLogService.logSystemEvent({
             userId: currentUser.id,
             storeId: String(currentUser.storeId),
             action: "PASSWORD_CHANGED",
             entityId: currentUser.id,
-            entityType: "user",
+            entityType: ActivityEntityTypeEnum.USER,
+            actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+            targetName: `${currentUser.firstName} ${currentUser.lastName}`,
             details: `Password changed by ${currentUser.firstName} ${currentUser.lastName}.`,
         });
 
@@ -954,6 +963,7 @@ export const loginUser = async (
     if (req.body.email) {
         req.body.email = req.body.email.toLowerCase();
     }
+
     passport.authenticate(
         "user",
         async (
@@ -961,16 +971,31 @@ export const loginUser = async (
             user: Express.User,
             info: { message: string },
         ) => {
+            // Handle Critical Server Errors
             if (error) {
                 return handleError2(
                     res,
-                    "Server error",
+                    "Server error during authentication",
                     StatusCodes.INTERNAL_SERVER_ERROR,
                     error,
                 );
             }
 
+            // Handle Invalid Credentials (FAILED LOGIN)
             if (!user) {
+
+                // Log the failure asynchronously
+                ActivityLogService.logSystemEvent({
+                    userId: null as unknown as string,
+                    storeId: null as unknown as string,
+                    entityId: "AUTH_FAILURE",
+                    entityType: ActivityEntityTypeEnum.USER,
+                    action: "USER_LOGIN_FAILED",
+                    actorName: "Unknown",
+                    targetName: req.body.email || "Unknown Email",
+                    details: `Failed login attempt for ${req.body.email}. Reason: ${info.message || 'Invalid credentials'}. IP: ${req.ip}`,
+                }).catch(err => console.error("Logging failed", err));
+
                 return handleError2(
                     res,
                     info.message || "Authentication failed",
@@ -978,8 +1003,7 @@ export const loginUser = async (
                 );
             }
 
-            // Fetch the user WITH the joined store data
-            // Note: select().from().where() returns an array, so we take the first element [0]
+            // Fetch full User Data
             const [foundUser] = await db
                 .select({
                     id: users.id,
@@ -989,7 +1013,7 @@ export const loginUser = async (
                     phone: users.phone,
                     role: users.role,
                     status: users.status,
-                    storeId: users.storeId, // Keep this for token generation if needed
+                    storeId: users.storeId,
                     createdAt: users.createdAt,
                     lastModified: users.lastModified,
                     store: {
@@ -1009,7 +1033,19 @@ export const loginUser = async (
                     )
                 );
 
+            // Handle Account Status Restrictions (FAILED LOGIN - Account Issue)
             if (!foundUser) {
+                ActivityLogService.logSystemEvent({
+                    userId: user.data.id,
+                    storeId: user.data.storeId || null,
+                    entityId: user.data.id,
+                    entityType: ActivityEntityTypeEnum.USER,
+                    action: "USER_LOGIN_FAILED",
+                    actorName: "Restricted User",
+                    targetName: user.data.email,
+                    details: `Login blocked for ${user.data.email}. Account is Banned, Inactive, or Deleted.`,
+                }).catch(err => console.error("Logging failed", err));
+
                 return handleError2(
                     res,
                     "Access denied. Account may be inactive or deleted.",
@@ -1017,18 +1053,17 @@ export const loginUser = async (
                 );
             }
 
-            req.login(user, (loginError) => {
+            // Establish Session and Generate Token (SUCCESSFUL LOGIN)
+            req.login(user, async (loginError) => {
                 if (loginError) {
-                    // console.error("Login failed", loginError);
                     return handleError2(
                         res,
-                        "Login failed",
+                        "Login session failed",
                         StatusCodes.INTERNAL_SERVER_ERROR,
                         loginError
                     );
                 }
 
-                // Generate the token and send it in the response
                 const token = generateToken(user.data);
 
                 if (!token) {
@@ -1038,6 +1073,19 @@ export const loginUser = async (
                         StatusCodes.INTERNAL_SERVER_ERROR,
                     );
                 }
+
+                // Log the Success
+                await ActivityLogService.logSystemEvent({
+                    userId: foundUser.id,
+                    storeId: foundUser.storeId || "GLOBAL",
+                    entityId: foundUser.id,
+                    entityType: "user",
+                    action: "USER_LOGIN",
+                    actorName: `${foundUser.firstName} ${foundUser.lastName}`,
+                    targetName: foundUser.email,
+                    details: `User logged in successfully. IP: ${req.ip}`,
+                    isRead: false
+                }).catch(err => console.error("Logging success failed", err));
 
                 return res
                     .status(StatusCodes.OK)
@@ -1077,5 +1125,73 @@ export const getUserAccess = async (req: CustomRequest, res: Response) => {
             StatusCodes.INTERNAL_SERVER_ERROR,
             error instanceof Error ? error : undefined,
         );
+    }
+};
+
+/**
+ * @description Retrieves a history of user logins for auditing and active session monitoring.
+ * @route GET /api/v1/admin/login-history
+ * @access Admin, Manager
+ */
+export const getLoginHistory = async (req: CustomRequest, res: Response) => {
+    try {
+        const validated = await validateStoreAndExtractDates(req, res);
+        if (!validated) return;
+
+        const { storeIds, finalStartDate, finalEndDate } = validated;
+        const { page = '1', limit = '20' } = req.query;
+
+        const offset = (Number(page) - 1) * Number(limit);
+
+        // Build the Where Clause
+        // We strictly look for LOGIN actions within the user's authorized stores
+        let whereClause = and(
+            eq(activityLog.action, "USER_LOGIN"),
+            inArray(activityLog.storeId, storeIds)
+        );
+
+        if (finalStartDate && finalEndDate) {
+            whereClause = and(
+                whereClause,
+                gte(activityLog.createdAt, finalStartDate),
+                lte(activityLog.createdAt, finalEndDate)
+            );
+        }
+
+        // Fetch Logs with Joins
+        const logs = await db.select({
+            id: activityLog.id,
+            timestamp: activityLog.createdAt,
+            details: activityLog.details,
+            userName: activityLog.actorName,
+            userEmail: users.email,
+            userRole: users.role,
+            storeName: stores.name,
+        })
+            .from(activityLog)
+            .innerJoin(users, eq(activityLog.userId, users.id))
+            .leftJoin(stores, eq(activityLog.storeId, stores.id))
+            .where(whereClause)
+            .limit(Number(limit))
+            .offset(offset)
+            .orderBy(desc(activityLog.createdAt));
+
+        // 3. Get Total Count for Pagination
+        const [totalCount] = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(activityLog)
+            .where(whereClause);
+
+        return res.status(StatusCodes.OK).json({
+            logs,
+            pagination: {
+                total: Number(totalCount.count),
+                page: Number(page),
+                totalPages: Math.ceil(Number(totalCount.count) / Number(limit))
+            }
+        });
+
+    } catch (error) {
+        return handleError2(res, "Could not fetch login history", StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
     }
 };

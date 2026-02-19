@@ -11,7 +11,7 @@ import { stores } from "./stores-schema";
 
 // Define your base blocks
 const CRUD = ["CREATED", "UPDATED", "DELETED", "VIEWED", "READ"] as const;
-const AUTH = ["LOGIN", "LOGOUT", "PASSWORD_CHANGED"] as const;
+const AUTH = ["LOGIN", "LOGOUT", "PASSWORD_CHANGED", "LOGIN_FAILED"] as const;
 const MODIFICATION = [
     "ADJUSTED",
     "DECREMENTED",
@@ -65,6 +65,7 @@ export const entityTypeEnum = pgEnum("entityType", [
 export const activityLog = pgTable("activityLog", {
     id: uuid("id").defaultRandom().primaryKey(),
     userId: uuid("userId").references(() => users.id, { onDelete: "set null" }),
+    actorName: text("actorName"),
     storeId: uuid("storeId").references(() => stores.id, {
         onDelete: "cascade",
     }),
