@@ -1,4 +1,5 @@
 import { InventoryTransactionSummaryTypeEnum } from "../types/enums";
+import { LogParams } from "../service/activity-service-log";
 
 export const generateOrderReference = (length = 8) => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -63,4 +64,34 @@ export const getInventoryTransactionTypeLabel = (type: string) => {
         default:
             return type;
     }
+};
+
+type FormatDetailsParams = Pick<
+    LogParams,
+    "action" | "actorName" | "entityType" | "targetName" | "entityId" | "meta"
+>;
+
+export const formatActivityDetails = ({
+    action,
+    actorName,
+    entityType,
+    targetName,
+    entityId,
+    meta,
+}: FormatDetailsParams): string => {
+    if (action.endsWith("_CREATED")) {
+        return `${actorName} created a new ${entityType}: ${targetName || entityId}.`;
+    }
+    if (action.endsWith("_DELETED")) {
+        return `${actorName} deleted ${entityType}: ${targetName || entityId}.`;
+    }
+    if (action.includes("_UPDATED")) {
+        const changes = meta ? ` (Changes: ${JSON.stringify(meta)})` : "";
+        return `${actorName} updated ${entityType} ${targetName || entityId}${changes}.`;
+    }
+    if (action === "USER_LOGIN") {
+        return `${actorName} logged into the system.`;
+    }
+    // Fallback for custom actions
+    return `${actorName} performed ${action.replace(/_/g, " ").toLowerCase()} on ${entityType} ${targetName || entityId}.`;
 };

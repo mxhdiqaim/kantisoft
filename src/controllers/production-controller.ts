@@ -14,12 +14,11 @@ import { UnitConversionService } from "../service/unit-conversion-service";
 import { RawMaterialInventoryService } from "../service/raw-material-inventory-service";
 import { users } from "../schema/users-schema";
 import { productions } from "../schema/production-schema";
-import { inventory } from "../schema/inventory-schema";
 import { rawMaterialTransactions } from "../schema/raw-materials-schema/raw-material-stock-transaction-schema";
 import { rawMaterials } from "../schema/raw-materials-schema";
 import { determineFinalStoreId } from "../utils/store-permission-utils";
-import {rawMaterialInventory} from "../schema/raw-materials-schema/raw-material-inventory-schema"; // For generating a production batch ID
-
+import {rawMaterialInventory} from "../schema/raw-materials-schema/raw-material-inventory-schema";
+import { ActivityLogService } from "../service/activity-service-log"; // For generating a production batch ID
 
 /**
  * @description Get a detailed list of all production transactions
@@ -119,31 +118,31 @@ export const getProductionSummary = async (req: CustomRequest, res: Response) =>
  * @access Admin, Manager, Production Staff
  */
 export const runProduction = async (req: CustomRequest, res: Response) => {
-    const currentUser = req.user?.data;
-    const storeId = currentUser?.storeId;
-    const userId = currentUser?.id;
-
-    if (!storeId || !userId) {
-        return handleError2(
-            res,
-            'User does not have an associated store.',
-            StatusCodes.BAD_REQUEST
-        );
-    }
-
-    const { menuItemId, quantityToProduce } = req.body;
-
-    if (!menuItemId) {
-        return handleError2(res, 'Menu Item is required for production.', StatusCodes.BAD_REQUEST);
-    }
-
-    // Default to 1 if not provided, but validate positive number
-    const productionQty = quantityToProduce && quantityToProduce > 0 ? quantityToProduce : 1;
-
-    // Generate a unique, human-readable batch ID for auditing
-    const productionBatchId = `PROD-${nanoid(10)}`;
-
     try {
+        const currentUser = req.user?.data;
+        const storeId = currentUser?.storeId;
+        const userId = currentUser?.id;
+
+        if (!storeId || !userId) {
+            return handleError2(
+                res,
+                'User does not have an associated store.',
+                StatusCodes.BAD_REQUEST
+            );
+        }
+
+        const { menuItemId, quantityToProduce } = req.body;
+
+        if (!menuItemId) {
+            return handleError2(res, 'Menu Item is required for production.', StatusCodes.BAD_REQUEST);
+        }
+
+        // Default to 1 if not provided, but validate positive number
+        const productionQty = quantityToProduce && quantityToProduce > 0 ? quantityToProduce : 1;
+
+        // Generate a unique, human-readable batch ID for auditing
+        const productionBatchId = `PROD-${nanoid(10)}`;
+
         // Execute Production Service
         await RawMaterialProductionService.runProduction(
             menuItemId,
@@ -153,15 +152,28 @@ export const runProduction = async (req: CustomRequest, res: Response) => {
             productionQty
         );
 
-        // Fetch the updated inventory for the item to return to the UI
-        const updatedStock = await db.query.inventory.findFirst({
-            where: eq(inventory.menuItemId, menuItemId)
+        // Fetch material name for the log (Optional but better for UI)
+        const menuItem = await db.query.menuItems.findFirst({
+            where: eq(menuItems.id, menuItemId),
+        });
+
+        // Activity Logging
+        await ActivityLogService.logSystemEvent({
+            userId: userId,
+            storeId: storeId,
+            entityId: productionBatchId,
+            entityType: "inventory", // Or "inventory" depending on your preference
+            action: "ORDER_STOCK_CREATED", // Mapping to your existing Enums
+            actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+            targetName: menuItem?.name || "Menu Item",
+            details: `Produced ${productionQty} units of ${menuItem?.name}. Batch ID: ${productionBatchId}.`,
+            meta: { type: 'PRODUCTION', quantity: productionQty },
+            isRead: false
         });
 
         // Return Success Response
         return res.status(StatusCodes.OK).json({
             message: `Production completed`,
-            newQuantity: updatedStock?.quantity || 0,
             batchId: productionBatchId,
         });
 
@@ -211,16 +223,12 @@ export const recordWastage = async (req: CustomRequest, res: Response) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
+        const userRole = currentUser?.role;
+        const userId = currentUser?.id;
 
         if (!storeId) {
-            return handleError2(
-                res,
-                'User does not have an associated store.',
-                StatusCodes.BAD_REQUEST
-            );
+            return handleError2(res, 'Authentication or Store association missing.', StatusCodes.BAD_REQUEST);
         }
-
-        const userId = currentUser?.id;
 
         if (!userId) {
             return handleError2(
@@ -230,7 +238,6 @@ export const recordWastage = async (req: CustomRequest, res: Response) => {
             );
         }
 
-        const userRole = currentUser?.role;
         const { targetStoreId } = req.query;
 
         const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
@@ -242,8 +249,7 @@ export const recordWastage = async (req: CustomRequest, res: Response) => {
             return handleError2(res, 'Missing required wastage data.', StatusCodes.BAD_REQUEST);
         }
 
-        // We look for the inventory record using the ID provided.
-        // It might be the RawMaterial ID OR the Inventory Record ID.
+        // Resolve Inventory Record and Fetch Material Name for Logging
         const inventoryRecord = await db.query.rawMaterialInventory.findFirst({
             where: and(
                 eq(rawMaterialInventory.storeId, finalStoreId),
@@ -251,24 +257,23 @@ export const recordWastage = async (req: CustomRequest, res: Response) => {
                     eq(rawMaterialInventory.id, rawMaterialId),
                     eq(rawMaterialInventory.rawMaterialId, rawMaterialId)
                 )
-            )
+            ),
+            with: { rawMaterial: true }
         });
 
         if (!inventoryRecord) {
-            return handleError2(
-                res,
-                "Material not found in this store's inventory.",
-                StatusCodes.NOT_FOUND
-            );
+            return handleError2(res, "Material not found in this store's inventory.", StatusCodes.NOT_FOUND);
         }
 
         // Always use the actual RawMaterialId for the stock-out service
         const resolvedRawMaterialId = inventoryRecord.rawMaterialId;
 
+        const materialName = inventoryRecord.rawMaterial?.name || "Unknown Material";
         const wasteBatchId = `WASTE-${nanoid(8)}`;
 
+        // Executing Transaction
         await db.transaction(async (tx) => {
-            // Convert the wasted amount to Base Units (e.g. 2 kg -> 2000 g)
+            // Convert to Base Units
             const unitRecord = await UnitConversionService.fetchUnitById(unitOfMeasurementId);
             if (!unitRecord) throw new Error("Invalid unit of measurement.");
 
@@ -277,8 +282,7 @@ export const recordWastage = async (req: CustomRequest, res: Response) => {
                 unitRecord
             );
 
-            // Use our existing service to deduct stock
-            // We use 'wastage' as the source so it shows up correctly in reports
+            // Deduct using existing production-grade service
             await RawMaterialInventoryService.processRawMaterialStockOut(tx, {
                 rawMaterialId: resolvedRawMaterialId,
                 storeId: finalStoreId,
@@ -291,13 +295,37 @@ export const recordWastage = async (req: CustomRequest, res: Response) => {
             });
         });
 
-        return res.status(StatusCodes.OK).json({
-            message: "Wastage recorded successfully. Inventory updated.",
-            wasteRef: wasteBatchId
+        // Activity Logging (Audit Trail)
+        await ActivityLogService.logSystemEvent({
+            userId: userId,
+            storeId: finalStoreId,
+            entityId: inventoryRecord.id,
+            entityType: "rawMaterialInventory",
+            action: "RAW_MATERIAL_INVENTORY_UPDATED",
+            actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+            targetName: materialName,
+            details: `Wastage recorded: ${quantityPresentation} ${unitOfMeasurementId} of ${materialName}. Ref: ${wasteBatchId}. Reason: ${reason || 'Not specified'}`,
+            meta: { type: 'WASTAGE', quantity: quantityPresentation }
         });
 
-    } catch (error) {
-        return handleError2(res, "Failed to complete the action", StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
+        return res.status(StatusCodes.OK).json({
+            message: "Wastage recorded successfully. Inventory updated.",
+            wasteRef: wasteBatchId,
+            material: materialName
+        });
+
+    } catch (error: any) {
+        // Handle specific business logic errors from the service
+        if (error.message.includes('Insufficient Stock')) {
+            return handleError2(res, error.message, StatusCodes.BAD_REQUEST);
+        }
+
+        return handleError2(
+            res,
+            "Failed to complete the action",
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined
+        );
     }
 };
 

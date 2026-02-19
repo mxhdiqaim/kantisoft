@@ -1,7 +1,8 @@
 import { ActivityActionType } from "../schema/activity-log-schema";
 import { logActivity } from "./activity-logger";
+import { formatActivityDetails } from "../utils";
 
-interface LogParams {
+export interface LogParams {
     userId: string;
     storeId: string;
     entityId: string;
@@ -17,6 +18,8 @@ interface LogParams {
     actorName: string; // The person performing the action
     targetName?: string; // The name of the item being changed (e.g. "Flour")
     meta?: Record<string, unknown>; // For "Old vs New" data
+    details?: string;
+    isRead?: boolean;
 }
 
 export const ActivityLogService = {
@@ -29,23 +32,19 @@ export const ActivityLogService = {
         actorName,
         targetName,
         meta,
+        details,
+        isRead,
     }: LogParams) {
-        let details = "";
-
-        // Auto-format details based on action patterns
-        if (action.endsWith("_CREATED")) {
-            details = `${actorName} created a new ${entityType}: ${targetName || entityId}.`;
-        } else if (action.endsWith("_DELETED")) {
-            details = `${actorName} deleted ${entityType}: ${targetName || entityId}.`;
-        } else if (action.includes("_UPDATED")) {
-            const changes = meta ? ` (Changes: ${JSON.stringify(meta)})` : "";
-            details = `${actorName} updated ${entityType} ${targetName || entityId}${changes}.`;
-        } else if (action === "USER_LOGIN") {
-            details = `${actorName} logged into the system.`;
-        } else {
-            // Fallback for custom actions like MINIMUM_STOCK_LEVEL_UPDATED
-            details = `${actorName} performed ${action.replace(/_/g, " ").toLowerCase()} on ${entityType} ${targetName || entityId}.`;
-        }
+        const finalDetails =
+            details ??
+            formatActivityDetails({
+                action,
+                actorName,
+                entityType,
+                targetName,
+                entityId,
+                meta,
+            });
 
         return await logActivity({
             userId,
@@ -53,7 +52,8 @@ export const ActivityLogService = {
             action,
             entityId,
             entityType,
-            details,
+            details: finalDetails,
+            isRead: isRead ?? false,
         });
     },
 };
