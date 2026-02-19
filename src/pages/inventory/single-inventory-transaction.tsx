@@ -10,19 +10,31 @@ import CustomButton from "@/components/ui/button.tsx";
 import {ArrowBackIosNewOutlined} from "@mui/icons-material";
 import {getTransactionChipColor} from "@/components/ui";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import useNotifier from "@/hooks/useNotifier.ts";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
+import {useSearch} from "@/use-search.ts";
 
 const SingleInventoryTransaction = () => {
+    const notify = useNotifier();
     const {id: menuItemId} = useParams<{ id: string }>();
     const navigate = useNavigate();
 
     const {
         data: transactions,
-        isLoading: isLoadingTransactions,
-        isError: isErrorTransactions,
-        error: transactionsError,
+        isLoading,
+        isFetching,
+        isError,
+        error,
     } = useGetTransactionsByMenuItemQuery({menuItemId: menuItemId!}, {skip: !menuItemId});
 
     const memoizedTransactions = useMemoizedArray(transactions);
+
+    const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
+        initialData: memoizedTransactions,
+        searchKeys: ["transactionType", "notes", "transactionDate"],
+    });
 
     const {data: inventoryData, isLoading: isLoadingInventory} = useGetAllInventoryQuery();
 
@@ -33,21 +45,21 @@ const SingleInventoryTransaction = () => {
     const columns: GridColDef[] = useMemo(() => [
         {
             flex: 1,
-            field: "transactionDate",
-            headerName: "Date",
-            minWidth: 180,
+            field: "menuItem",
+            headerName: "Menu Items",
+            minWidth: 150,
             align: "left",
             headerAlign: "left",
             renderCell: (params) => (
                 <TableStyledBox>
-                    <Typography variant="body2">{relativeTime(new Date(params.value))}</Typography>
+                    <Typography variant="body2">{params.value.name}</Typography>
                 </TableStyledBox>
             ),
         },
         {
             flex: 1,
             field: "transactionType",
-            headerName: "Transaction Type",
+            headerName: "Type",
             minWidth: 150,
             align: "left",
             headerAlign: "left",
@@ -65,7 +77,7 @@ const SingleInventoryTransaction = () => {
         {
             flex: 1,
             field: "quantityChange",
-            headerName: "Quantity Change",
+            headerName: "QTY Change",
             type: "number",
             minWidth: 120,
             align: "left",
@@ -83,29 +95,42 @@ const SingleInventoryTransaction = () => {
         },
         {
             flex: 1,
-            field: "newQuantity",
-            headerName: "New Quantity",
+            field: "resultingQuantity",
+            headerName: "New QTY",
             type: "number",
             minWidth: 120,
             align: "left",
             headerAlign: "left",
             renderCell: (params) => (
                 <TableStyledBox>
-                    <Typography variant="body2">{params.value}</Typography>
+                    <Typography variant="body2"
+                                color={params.value > 0 ? 'success.main' : 'error.main'}>{params.value}</Typography>
                 </TableStyledBox>
             ),
         },
         {
             flex: 1,
-            field: "user",
-            headerName: "User",
+            field: "performedByUser",
+            headerName: "Performed By",
             minWidth: 150,
-            // valueGetter: (params) => params.row.user?.fullName || 'System',
             align: "left",
             headerAlign: "left",
             renderCell: (params) => (
                 <TableStyledBox>
-                    <Typography variant="body2">{params.value}</Typography>
+                    <Typography variant="body2">{`${params.value.firstName} ${params.value.lastName}`}</Typography>
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: "transactionDate",
+            headerName: "Transaction Date",
+            minWidth: 150,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{relativeTime(new Date(params.value))}</Typography>
                 </TableStyledBox>
             ),
         },
@@ -128,8 +153,10 @@ const SingleInventoryTransaction = () => {
         return <Typography color="error">Menu Item ID is missing.</Typography>;
     }
 
-    if (isErrorTransactions) {
-        return <Typography color="error">Error loading transactions: {JSON.stringify(transactionsError)}</Typography>;
+    if (isError) {
+        notify(`Failed to load transactions. Please try again later.`, "error");
+        const apiError = getApiError(error, `Failed to load transactions.`);
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
     }
 
     return (
@@ -157,12 +184,19 @@ const SingleInventoryTransaction = () => {
                 </Box>
             </Box>
 
+            <TableSearchActions
+                searchControl={searchControl}
+                searchSubmit={searchSubmit}
+                handleSearch={handleSearch}
+                placeholder={"Search by Transaction Type or notes"}
+            />
+
             <Grid container spacing={2}>
                 <Grid size={12}>
                     <DataGridTable
-                        data={memoizedTransactions}
+                        data={filteredData}
                         columns={columns}
-                        loading={isLoadingTransactions}
+                        loading={isLoading || isFetching}
                     />
                 </Grid>
             </Grid>

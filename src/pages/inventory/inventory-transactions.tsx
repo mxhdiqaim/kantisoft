@@ -16,7 +16,7 @@ import PeriodSelector from "@/components/ui/period-selector.tsx";
 import {getApiError} from "@/helpers/get-api-error.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import useNotifier from "@/hooks/useNotifier.ts";
-import {formatDateCustom} from "@/utils/get-relative-time.ts";
+import {formatRelativeDateTime} from "@/utils/get-relative-time.ts";
 
 const InventoryTransactions = () => {
     const notify = useNotifier();
@@ -42,8 +42,6 @@ const InventoryTransactions = () => {
         fulfilledTimeStamp,
         error
     } = useGetInventoryTransactionsQuery({timePeriod: period});
-
-    console.log("Fetched transactions data:", data);
 
     const memoizedData = useMemoizedArray(data?.transactions);
 
@@ -72,7 +70,7 @@ const InventoryTransactions = () => {
             flex: 1,
             field: "quantity",
             headerName: "Quantity",
-            minWidth: 100,
+            minWidth: 120,
             align: "left",
             headerAlign: "left",
             renderCell: (params) => (
@@ -83,6 +81,37 @@ const InventoryTransactions = () => {
                         size="small"
                         sx={{textTransform: "capitalize"}}
                     />
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: "type",
+            headerName: "Transaction Type",
+            minWidth: 180,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Chip
+                        label={camelCaseToTitleCase(params.value)}
+                        color={getTransactionTypeChipColor(params.value)}
+                        size="small"
+                        sx={{textTransform: "capitalize"}}
+                    />
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: "transactionDate",
+            headerName: "Transaction Date",
+            minWidth: 150,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{formatRelativeDateTime(params.value)}</Typography>
                 </TableStyledBox>
             ),
         },
@@ -109,37 +138,6 @@ const InventoryTransactions = () => {
             renderCell: (params) => (
                 <TableStyledBox>
                     <Typography variant="body2">{params.value}</Typography>
-                </TableStyledBox>
-            ),
-        },
-        {
-            flex: 1,
-            field: "type",
-            headerName: "Transaction Type",
-            minWidth: 180,
-            align: "left",
-            headerAlign: "left",
-            renderCell: (params) => (
-                <TableStyledBox>
-                    <Chip
-                        label={camelCaseToTitleCase(params.value)}
-                        color={getTransactionTypeChipColor(params.value)}
-                        size="small"
-                        sx={{textTransform: "capitalize"}}
-                    />
-                </TableStyledBox>
-            ),
-        },
-        {
-            flex: 1,
-            field: "transactionDate",
-            headerName: "Transaction Date",
-            minWidth: 180,
-            align: "left",
-            headerAlign: "left",
-            renderCell: (params) => (
-                <TableStyledBox>
-                    <Typography variant="body2">{formatDateCustom(params.value)}</Typography>
                 </TableStyledBox>
             ),
         },
@@ -178,7 +176,7 @@ const InventoryTransactions = () => {
     }, [fulfilledTimeStamp]);
 
     if (isError) {
-        notify(` Failed to load transactions. Please try again later.`, "error");
+        notify(`Failed to load transactions. Please try again later.`, "error");
         const apiError = getApiError(error, `Failed to load transactions.`);
         return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
     }
