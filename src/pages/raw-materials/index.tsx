@@ -117,19 +117,6 @@ const RawMaterials = () => {
             },
             {
                 flex: 1,
-                field: "description",
-                headerName: "Description",
-                minWidth: 200,
-                align: "left",
-                headerAlign: "left",
-                renderCell: (params) => (
-                    <TableStyledBox>
-                        <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
-                ),
-            },
-            {
-                flex: 1,
                 field: "unitOfMeasurement",
                 headerName: "Measurement Unit",
                 minWidth: 180,
@@ -188,6 +175,19 @@ const RawMaterials = () => {
                         <Typography variant="body2">
                             {formatRelativeDateTime(params.value)}
                         </Typography>
+                    </TableStyledBox>
+                ),
+            },
+            {
+                flex: 1,
+                field: "description",
+                headerName: "Description",
+                minWidth: 200,
+                align: "left",
+                headerAlign: "left",
+                renderCell: (params) => (
+                    <TableStyledBox>
+                        <Typography variant="body2">{params.value}</Typography>
                     </TableStyledBox>
                 ),
             },
