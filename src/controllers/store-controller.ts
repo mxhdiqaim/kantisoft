@@ -3,11 +3,11 @@ import db from "../db";
 import { stores } from "../schema/stores-schema";
 import { and, count, eq, inArray } from "drizzle-orm";
 import { handleError2 } from "../service/error-handling";
-import { UserRoleEnum } from "../types/enums";
-import { logActivity } from "../service/activity-logger";
+import { ActivityEntityTypeEnum, UserRoleEnum } from "../types/enums";
 import { StatusCodes } from "http-status-codes";
 import { CustomRequest } from "../types/express";
 import { getStoreAndBranchIds } from "../service/store-service";
+import { ActivityLogService } from "../service/activity-service-log";
 
 /**
  * @desc    Get all stores with role-based access and pagination.
@@ -175,14 +175,16 @@ export const createStore = async (req: CustomRequest, res: Response) => {
             .values({ name, location, storeType, storeParentId })
             .returning();
 
-        await logActivity({
+        await ActivityLogService.logSystemEvent({
             userId: currentUser.id,
             storeId: storeId,
-            action: "STORE_CREATED",
             entityId: newStore.id,
-            entityType: "store",
+            entityType: ActivityEntityTypeEnum.STORE,
+            action: "STORE_CREATED",
+            actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+            targetName: newStore.name,
             details: `Store (branch) "${newStore.name}" created by ${currentUser.firstName} ${currentUser.lastName}.`,
-        });
+        })
 
         res.status(StatusCodes.CREATED).json({
             ...newStore,
@@ -249,14 +251,16 @@ export const updateStore = async (req: CustomRequest, res: Response) => {
             return handleError2(res, "Failed to update store or store not found.", StatusCodes.NOT_FOUND);
         }
 
-        await logActivity({
-            userId: currentUser.id,
+        await ActivityLogService.logSystemEvent({
             storeId: storeId,
-            action: "STORE_UPDATED",
+            userId: currentUser.id,
             entityId: updatedStore.id,
-            entityType: "store",
+            entityType: ActivityEntityTypeEnum.STORE,
+            action: "STORE_UPDATED",
+            actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+            targetName: updatedStore.name,
             details: `Store "${updatedStore.name}" updated by ${currentUser.firstName} ${currentUser.lastName}.`,
-        });
+        })
 
         res.status(StatusCodes.OK).json({
             ...updatedStore,
@@ -316,14 +320,16 @@ export const deleteStore = async (req: CustomRequest, res: Response) => {
             return handleError2(res, "Failed to delete store. It might have been already deleted.", StatusCodes.NOT_FOUND);
         }
 
-        await logActivity({
+        await ActivityLogService.logSystemEvent({
             userId: currentUser.id,
             storeId: storeId,
-            action: "STORE_DELETED",
             entityId: deletedStore.id,
-            entityType: "store",
+            entityType: ActivityEntityTypeEnum.STORE,
+            action: "STORE_DELETED",
+            actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+            targetName: deletedStore.name,
             details: `Store "${deletedStore.name}" deleted by ${currentUser.firstName} ${currentUser.lastName}.`,
-        });
+        })
 
         res.status(StatusCodes.OK).json({ message: "Store deleted successfully." });
     } catch (error) {

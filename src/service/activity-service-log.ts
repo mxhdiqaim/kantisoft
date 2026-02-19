@@ -3,8 +3,8 @@ import { logActivity } from "./activity-logger";
 import { formatActivityDetails } from "../utils";
 
 export interface LogParams {
-    userId: string;
-    storeId: string;
+    userId: string | null; // Allow null
+    storeId: string | null; // Allow null
     entityId: string;
     entityType:
         | "order"

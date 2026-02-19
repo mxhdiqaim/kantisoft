@@ -100,3 +100,14 @@ export const RawMaterialTransactionSourceEnum = {
 //     POS_SALE: "posSale",
 //     MANUAL_ADJUSTMENT: "manualAdjustment",
 // } as const;
+
+export const ActivityEntityTypeEnum = {
+    ACTIVITY: "activity",
+    INVENTORY: "inventory",
+    MENU_ITEM: "menuItem",
+    ORDER: "order",
+    RAW_MATERIAL: "rawMaterial",
+    RAW_MATERIAL_INVENTORY: "rawMaterialInventory",
+    STORE: "store",
+    USER: "user",
+} as const;
