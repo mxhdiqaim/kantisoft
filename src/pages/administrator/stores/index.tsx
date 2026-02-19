@@ -25,7 +25,7 @@ const StoresScreen = () => {
     const {t} = useTranslation();
     const notify = useNotifier();
 
-    const {data: storesData, isLoading, isError, error} = useGetAllStoresQuery();
+    const {data: storesData, isLoading, isFetching, isError, error} = useGetAllStoresQuery();
     const memoizedStores = useMemoizedArray(storesData);
 
     const [deleteStore, {isLoading: isDeleting}] = useDeleteStoreMutation();
@@ -241,7 +241,7 @@ const StoresScreen = () => {
             />
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching}/>
                 </Grid>
             </Grid>
 
