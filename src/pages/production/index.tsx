@@ -76,13 +76,13 @@ const ProductionScreen = () => {
     const summaryCards = useMemo(() => [
         {
             title: "Cost of Ingredients",
-            value: summary?.totalCostOfIngredients || 0,
+            value: `${summary?.totalCostOfIngredients}` || "0",
             icon: <ReceiptLong/>,
             color: theme.palette.error.main, // Represents money spent
         },
         {
-            title: "Potential Revenue Created",
-            value: summary?.potentialRevenueCreated || 0,
+            title: "Potential Revenue",
+            value: `${summary?.potentialRevenueCreated}` || "0",
             icon: <TrendingUp/>,
             color: theme.palette.success.main, // Represents value added
         },
@@ -140,7 +140,7 @@ const ProductionScreen = () => {
         {
             flex: 1,
             field: 'totalCost',
-            headerName: 'Ingredient Cost',
+            headerName: 'Total Cost',
             minWidth: 150,
             align: "left",
             renderCell: (params) => (
@@ -152,7 +152,7 @@ const ProductionScreen = () => {
         {
             flex: 1,
             field: 'revenueValue',
-            headerName: 'Potential Value',
+            headerName: 'Revenue Value',
             minWidth: 150,
             align: "left",
             renderCell: (params) => (
@@ -164,8 +164,8 @@ const ProductionScreen = () => {
         {
             flex: 1,
             field: 'performedBy',
-            headerName: 'Chef',
-            minWidth: 150,
+            headerName: 'Performed By',
+            minWidth: 160,
             align: "left",
             renderCell: (params) => (
                 <TableStyledBox>

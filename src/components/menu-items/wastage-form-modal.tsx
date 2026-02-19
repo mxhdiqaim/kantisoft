@@ -1,5 +1,5 @@
-import {type FC} from 'react';
-import {Controller, useForm} from 'react-hook-form';
+import {type FC, useEffect, useMemo} from 'react';
+import {Controller, useForm, useWatch} from 'react-hook-form';
 import {Box, FormControl, Grid, InputAdornment, MenuItem} from '@mui/material';
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import {yupResolver} from "@hookform/resolvers/yup";
@@ -14,6 +14,7 @@ import {
 import {StyledTextField} from "@/components/ui";
 import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
 import CustomButton from "@/components/ui/button.tsx";
+import {useUnitFilter} from "@/hooks/use-unit-filter.ts";
 
 import Icon from "@/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
@@ -25,6 +26,8 @@ interface Props {
 
 const WastageFormModal: FC<Props> = ({open, onClose}) => {
     const notify = useNotifier();
+
+    // Fetch Data
     const {data: rawMaterialInventory, isLoading: fetchingRawMaterialInventory} = useGetAllRawMaterialInventoryQuery();
     const memoizedRawMaterialInventory = useMemoizedArray(rawMaterialInventory);
 
@@ -33,15 +36,32 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
 
     const [recordWastage, {isLoading: isSubmitting}] = useRecordWastageMutation();
 
-    const {control, handleSubmit, reset} = useForm({
+    // Initialise Form (must be before useUnitFilter)
+    const {control, handleSubmit, reset, setValue} = useForm({
         defaultValues: {
             rawMaterialId: '',
             quantityPresentation: 0,
             unitOfMeasurementId: '',
             reason: ''
         },
-
         resolver: yupResolver(createWastageScheme),
+    });
+
+    // Watch for the selected material ID
+    const selectedRawMaterialId = useWatch({control, name: "rawMaterialId"});
+
+    // Determine the family based on the selected material
+    const selectedMaterialFamily = useMemo(() => {
+        if (!memoizedRawMaterialInventory || !selectedRawMaterialId) return undefined;
+        const selectedMaterial = memoizedRawMaterialInventory.find(rm => rm.id === selectedRawMaterialId);
+        return selectedMaterial?.unitOfMeasurement?.unitOfMeasurementFamily;
+    }, [memoizedRawMaterialInventory, selectedRawMaterialId]);
+
+    // Initialise Unit Filter Hook
+    const {filteredUnits, selectedUnitSymbol} = useUnitFilter({
+        control,
+        allUnits: memoizedMeasurement,
+        selectedMaterialFamily: selectedMaterialFamily,
     });
 
     const onSubmit = async (data: CreateWastageType) => {
@@ -59,6 +79,15 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
             console.log(`Failed to record wastage:`, error);
         }
     };
+
+    // Auto-select a unit if only one exists or to provide a default (only when units change)
+    useEffect(() => {
+        if (filteredUnits.length > 0) {
+            // Check if current value is valid in new list, otherwise select first
+            // or just always select first when list changes
+            setValue("unitOfMeasurementId", filteredUnits[0].id);
+        }
+    }, [filteredUnits, setValue]);
 
     return (
         <CustomModal
@@ -126,6 +155,11 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
                                     fullWidth
                                     type="number"
                                     label="Quantity Wasted"
+                                    InputProps={{
+                                        endAdornment: selectedUnitSymbol && (
+                                            <InputAdornment position="end">{selectedUnitSymbol}</InputAdornment>
+                                        ),
+                                    }}
                                     error={!!fieldState.error}
                                     helperText={fieldState.error?.message}
                                 />
@@ -143,7 +177,7 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
                                     select
                                     fullWidth
                                     label="Unit Of Measurement"
-                                    disabled={isMeasurementLoading}
+                                    disabled={isMeasurementLoading || !selectedMaterialFamily}
                                     SelectProps={{
                                         IconComponent: () => null,
                                         endAdornment: (
@@ -162,7 +196,7 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
                                     <MenuItem value={""} disabled>
                                         Select Measurement Unit
                                     </MenuItem>
-                                    {memoizedMeasurement.map((measurement) => (
+                                    {filteredUnits.map((measurement) => (
                                         <MenuItem key={measurement.id} value={measurement.id}
                                                   sx={{textTransform: "capitalize"}}>
                                             {measurement.name}
