@@ -95,3 +95,14 @@ export const formatActivityDetails = ({
     // Fallback for custom actions
     return `${actorName} performed ${action.replace(/_/g, " ").toLowerCase()} on ${entityType} ${targetName || entityId}.`;
 };
+
+// Calculate monthly bill based on active user count, with a cap at 45,000
+export const calculateMonthlyBill = (activeUserCount: number): number => {
+    const PRICE_PER_USER = 9000;
+    const MAX_CAP = 45000;
+
+    const total = activeUserCount * PRICE_PER_USER;
+
+    // Return the total, but never more than 45,000
+    return Math.min(total, MAX_CAP);
+};
