@@ -21,23 +21,23 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js 20.x
-        uses: actions/setup-node@v4
+      # 🟢 Updated: Use official Bun action
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          bun-version: latest
 
+      # 🟢 Updated: Use bun to install
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
+      # 🟢 Updated: Use bun to build
       - name: Build Check (tsc)
-        run: pnpm run build
+        run: bun run build
 
+      # 🟢 Updated: Use bun to lint
       - name: Run Linting
-        run: pnpm run lint
+        run: bun run lint
 
 #  # ---------------------------------------------------
 #  #       DOCKER PUSH JOB (Build and Push Image)
