@@ -36,14 +36,14 @@ echo "Postgres is ready."
 echo "Running migrations..."
 
 # Run database migrations using the compiled JavaScript file
-pnpm run migrate:prod
+bun run migrate:prod
 
 echo "Migrations complete. Seeding data..."
 
 # Run database seeds
-pnpm run seed:prod
+bun run seed:prod
 
 echo "Seeding complete. Starting the API server..."
 
-# Use exec to ensure the 'pnpm start' process keeps the container alive
-exec pnpm start
+# Use exec to ensure the 'bun start' process keeps the container alive
+exec bun start
