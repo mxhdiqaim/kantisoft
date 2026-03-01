@@ -244,7 +244,7 @@ export const createStoreManager = async (req: CustomRequest, res: Response) => {
  */
 export const storeSetupPayment = async (req: CustomRequest, res: Response) => {
     try {
-        const { storeId, amount, reference, type } = req.body;
+        const { storeId, amount, reference } = req.body;
 
         await db.transaction(async (tx) => {
             // Create the billing record
@@ -257,7 +257,7 @@ export const storeSetupPayment = async (req: CustomRequest, res: Response) => {
             });
 
             // Update Subscription status
-            const isSetup = type === BillingTypeEnum.SETUP_FEE;
+            // const isSetup = type === BillingTypeEnum.SETUP_FEE;
 
             // Calculate the next billing date (30 days from now)
             const nextDate = new Date();
@@ -267,7 +267,7 @@ export const storeSetupPayment = async (req: CustomRequest, res: Response) => {
                 .update(storeSubscriptions)
                 .set({
                     status: SubscriptionStatusEnum.ACTIVE,
-                    setupFeePaid: isSetup ? true : undefined,
+                    setupFeePaid: true,
                     nextBillingDate: nextDate,
                     lastBillingDate: new Date(),
                 })
