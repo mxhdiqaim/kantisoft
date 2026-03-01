@@ -1,10 +1,10 @@
 import express from "express";
 import { UserRoleEnum } from "../types/enums";
 import {
-    confirmStorePayment,
     createStoreManager,
     getAllStoresForSuperAdmin,
     onboardNewStore,
+    storeSetupPayment,
 } from "../controllers/super-admin-controller";
 import { restrictTo } from "../middlewares/restricted-to";
 
@@ -20,7 +20,7 @@ router.post("/stores/onboard", onboardNewStore);
 router.post("/managers/create", createStoreManager);
 
 // Billing Management
-router.post("/billing/confirm-payment", confirmStorePayment);
+router.post("/billing/store-setup-payment", storeSetupPayment);
 // router.get("/billing/pending-invoices", getPendingInvoices);
 
 export default router;

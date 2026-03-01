@@ -120,3 +120,15 @@ export const SubscriptionStatusEnum = {
     SUSPENDED: "suspended",
     CANCELLED: "cancelled",
 } as const;
+
+export const StoreSubscriptionsBillingStatusEnum = {
+    FAILED: "failed",
+    PENDING: "pending",
+    SUCCESS: "success",
+} as const;
+
+export const BillingTypeEnum = {
+    SETUP_FEE: "setupFee",
+    MONTHLY_SUBSCRIPTION: "monthlySubscription",
+    ADDITIONAL_USER: "additionalUser",
+} as const;

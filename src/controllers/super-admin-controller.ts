@@ -10,6 +10,8 @@ import {
 import { passwordHashService } from "../service/password-hash-service";
 import { users } from "../schema/users-schema";
 import {
+    BillingTypeEnum,
+    StoreSubscriptionsBillingStatusEnum,
     SubscriptionStatusEnum,
     UserRoleEnum,
     UserStatusEnum,
@@ -240,10 +242,7 @@ export const createStoreManager = async (req: CustomRequest, res: Response) => {
 /**
  * @description Manually confirm a payment (Setup Fee or Monthly)
  */
-export const confirmStorePayment = async (
-    req: CustomRequest,
-    res: Response,
-) => {
+export const storeSetupPayment = async (req: CustomRequest, res: Response) => {
     try {
         const { storeId, amount, reference, type } = req.body;
 
@@ -253,12 +252,12 @@ export const confirmStorePayment = async (
                 storeId,
                 amount: amount.toString(),
                 reference: reference || `MANUAL-${Date.now()}`,
-                type: type, // 'setupFee' | 'monthlySubscription'
-                status: "success",
+                type: BillingTypeEnum.SETUP_FEE,
+                status: StoreSubscriptionsBillingStatusEnum.SUCCESS,
             });
 
             // Update Subscription status
-            const isSetup = type === "setupFee";
+            const isSetup = type === BillingTypeEnum.SETUP_FEE;
 
             // Calculate the next billing date (30 days from now)
             const nextDate = new Date();
@@ -267,7 +266,7 @@ export const confirmStorePayment = async (
             await tx
                 .update(storeSubscriptions)
                 .set({
-                    status: "active",
+                    status: SubscriptionStatusEnum.ACTIVE,
                     setupFeePaid: isSetup ? true : undefined,
                     nextBillingDate: nextDate,
                     lastBillingDate: new Date(),
