@@ -6,12 +6,10 @@ import {
     getAllStoresForSuperAdmin,
     onboardNewStore,
 } from "../controllers/super-admin-controller";
-import { authenticate, restrictTo } from "../middlewares/auth-middleware";
+import { restrictTo } from "../middlewares/restricted-to";
 
 const router = express.Router();
 
-// Apply security globally to all routes in this file
-router.use(authenticate);
 router.use(restrictTo(UserRoleEnum.SUPER_ADMIN));
 
 // Get all stores (for Super Admin)
