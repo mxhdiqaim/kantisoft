@@ -1,14 +1,20 @@
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import db, { pool } from "./index";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
+import db, { client } from "./index";
 
 const migrateDB = async () => {
-    console.log("Migration start");
-    const client = await pool.connect();
-    await migrate(db, { migrationsFolder: "./migrations" });
-    client.release(true);
-    console.log("Migration done");
+    console.log("🚀 Migration start");
+
+    try {
+        // Postgres.js migrator is very efficient
+        await migrate(db, { migrationsFolder: "./migrations" });
+        console.log("✅ Migration done");
+    } catch (error) {
+        console.error("❌ Migration failed:", error);
+        process.exit(1);
+    } finally {
+        // Close the connection gracefully
+        await client.end();
+    }
 };
 
-migrateDB()
-    .then((r) => console.log(r))
-    .catch((e) => console.error(e));
+migrateDB();

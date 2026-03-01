@@ -1,41 +1,38 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool, PoolConfig } from "pg";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import { Pool } from "pg"; // Keep this for sessions
 import schema from "./schema";
 import { getEnvVariable } from "../utils";
 
-// Get the connection URL
 const connectionString = getEnvVariable("DB_CONNECTION_STRING");
 const sslRequired = getEnvVariable("DB_SSL_REQUIRED") === "true";
 
-const poolConfig: PoolConfig = {
-    connectionString,
+// Faster driver for Drizzle (Business Logic)
+export const client = postgres(connectionString, {
     max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
-};
-
-if (sslRequired) {
-    poolConfig.ssl = { rejectUnauthorized: false };
-}
-
-export const pool = new Pool(poolConfig);
-
-// Listener to catch background errors
-pool.on("error", (err) => {
-    console.error("Unexpected error on idle client", err);
+    ssl: sslRequired ? { rejectUnauthorized: false } : false,
+    prepare: false,
 });
 
-const db = drizzle(pool, { schema });
+// Standard Pool for Connect-PG-Simple (Session Logic)
+// Note: We don't need a huge pool here as sessions are lightweight
+export const pool = new Pool({
+    connectionString,
+    max: 2,
+    ssl: sslRequired ? { rejectUnauthorized: false } : false,
+});
+
+const db = drizzle(client, { schema });
 export default db;
 
+// Updated health check
 export const connect = async () => {
     try {
-        // Try to acquire a client to verify connectivity
-        const client = await pool.connect();
-        console.log("✅ Database connection pool established successfully.");
-        client.release(); // Immediately release it back to the pool
+        await client`SELECT 1`; // Test the fast client
+        await pool.query("SELECT 1"); // Test the session pool
+        console.log("✅ All database connections established.");
     } catch (error) {
-        console.error("❌ Error connecting to the database:", error);
+        console.error("❌ DB Connection Error:", error);
         throw error;
     }
 };

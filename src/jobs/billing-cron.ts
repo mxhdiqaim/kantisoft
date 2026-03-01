@@ -2,7 +2,7 @@ import cron from "node-cron";
 import db from "../db";
 import { users } from "../schema/users-schema";
 import { and, eq, lt, sql } from "drizzle-orm";
-import { storeSubscriptions } from "../schema/store-subscriptions";
+import { storeSubscriptions } from "../schema/store-subscriptions-schema";
 
 const DAILY_CHECK_TIME = "0 0 * * *"; // Every midnight
 
