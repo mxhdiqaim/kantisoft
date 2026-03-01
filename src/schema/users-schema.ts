@@ -10,8 +10,9 @@ import { stores } from "./stores-schema";
 import { sql } from "drizzle-orm";
 
 export const userRoleEnum = pgEnum("role", [
-    "manager",
+    "superAdmin",
     "admin",
+    "manager",
     "user",
     "guest",
 ]);

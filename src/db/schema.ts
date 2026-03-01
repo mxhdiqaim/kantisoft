@@ -11,6 +11,10 @@ import * as billOfMaterials from "../schema/bill-of-materials-schema";
 import * as unitOfMeasurement from "../schema/unit-of-measurement-schema";
 import * as productions from "../schema/production-schema";
 import * as categories from "../schema/categories-schema";
+import {
+    billingTransactions,
+    storeSubscriptions,
+} from "../schema/store-subscriptions-schema";
 
 import * as menuItemsRelations from "../schema/relations/menu-items-relation";
 import * as ordersRelations from "../schema/relations/orders-relation";
@@ -50,6 +54,8 @@ const schema = {
     ...unitOfMeasurement,
     ...productions,
     ...categories,
+    storeSubscriptions,
+    billingTransactions,
 
     ...relations,
 };
