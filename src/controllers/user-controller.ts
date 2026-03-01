@@ -4,7 +4,7 @@ import { NextFunction, Request, Response } from "express";
 import passport from "passport";
 import { generateToken } from "../config/jwt-config";
 import db from "../db";
-import { InsertUserSchemaT, users } from "../schema/users-schema";
+import { InsertUserSchemaT, users, UserSchemaT } from "../schema/users-schema";
 import { handleError2 } from "../service/error-handling";
 import { passwordHashService } from "../service/password-hash-service";
 import { ActivityEntityTypeEnum, UserRoleEnum, UserStatusEnum } from "../types/enums";
@@ -983,7 +983,6 @@ export const loginUser = async (
 
             // Handle Invalid Credentials (FAILED LOGIN)
             if (!user) {
-
                 // Log the failure asynchronously
                 ActivityLogService.logSystemEvent({
                     userId: null as unknown as string,
@@ -1064,7 +1063,7 @@ export const loginUser = async (
                     );
                 }
 
-                const token = generateToken(user.data);
+                const token = generateToken(foundUser as unknown as UserSchemaT);
 
                 if (!token) {
                     return handleError2(
@@ -1077,7 +1076,7 @@ export const loginUser = async (
                 // Log the Success
                 await ActivityLogService.logSystemEvent({
                     userId: foundUser.id,
-                    storeId: foundUser.storeId || "GLOBAL",
+                    storeId: foundUser.storeId || null,
                     entityId: foundUser.id,
                     entityType: "user",
                     action: "USER_LOGIN",

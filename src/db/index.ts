@@ -1,56 +1,38 @@
-import "dotenv/config";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool, PoolConfig } from "pg";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import { Pool } from "pg"; // Keep this for sessions
 import schema from "./schema";
 import { getEnvVariable } from "../utils";
 
-export let pool: Pool;
+const connectionString = getEnvVariable("DB_CONNECTION_STRING");
+const sslRequired = getEnvVariable("DB_SSL_REQUIRED") === "true";
 
-// Conditional Pool configuration based on NODE_ENV
-const NODE_ENV = getEnvVariable("NODE_ENV");
+// Faster driver for Drizzle (Business Logic)
+export const client = postgres(connectionString, {
+    max: 10,
+    ssl: sslRequired ? { rejectUnauthorized: false } : false,
+    prepare: false,
+});
 
-if (NODE_ENV === "production") {
-    // Get the connection URL
-    const connectionString = getEnvVariable("DB_CONNECTION_STRING");
-    const sslRequired = getEnvVariable("DB_SSL_REQUIRED") == "true";
+// Standard Pool for Connect-PG-Simple (Session Logic)
+// Note: We don't need a huge pool here as sessions are lightweight
+export const pool = new Pool({
+    connectionString,
+    max: 2,
+    ssl: sslRequired ? { rejectUnauthorized: false } : false,
+});
 
-    const poolConfig: PoolConfig = {
-        connectionString,
-    };
-
-    if (sslRequired) {
-        poolConfig.ssl = {
-            rejectUnauthorized: false, // Accept self-signed certificates
-        };
-    }
-
-    pool = new Pool(poolConfig);
-} else {
-    const connectionString = getEnvVariable("DATABASE_URL");
-    const sslRequired = getEnvVariable("DB_SSL_REQUIRED") === "true";
-
-    const poolConfig: PoolConfig = {
-        connectionString,
-    };
-
-    if (sslRequired) {
-        poolConfig.ssl = {
-            rejectUnauthorized: false,
-        };
-    }
-
-    pool = new Pool(poolConfig);
-}
-const db = drizzle(pool, { schema });
-
+const db = drizzle(client, { schema });
 export default db;
 
+// Updated health check
 export const connect = async () => {
     try {
-        await pool.connect();
-        console.log("Database connection pool established successfully.");
+        await client`SELECT 1`; // Test the fast client
+        await pool.query("SELECT 1"); // Test the session pool
+        console.log("✅ All database connections established.");
     } catch (error) {
-        console.error("Error connecting to the database:", error);
-        throw error; // Re-throw the error to indicate connection failure
+        console.error("❌ DB Connection Error:", error);
+        throw error;
     }
 };

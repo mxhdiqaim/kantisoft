@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { and, desc, eq, gte, inArray, ne, SQL } from "drizzle-orm";
+import { and, desc, eq, ExtractTablesWithRelations, gte, inArray, ne, SQL } from "drizzle-orm";
 import { Response } from "express";
 import db from "../db";
 import { inventory } from "../schema/inventory-schema";
@@ -12,7 +12,6 @@ import { inventoryTransactions } from "../schema/inventory-schema/inventory-tran
 import { getStockAdjustedAction } from "../utils/inventory-utils";
 import { menuItems } from "../schema/menu-items-schema";
 import { OrderItemStockUpdate } from "../types";
-import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { lte } from "drizzle-orm/sql/expressions/conditions";
 import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 import { InsufficientStockError } from "../errors";
@@ -26,6 +25,16 @@ import { InventoryAlertService } from "../service/inventory-alert-service";
 import { users } from "../schema/users-schema";
 import { stores } from "../schema/stores-schema";
 import { getInventoryTransactionTypeLabel } from "../utils";
+import { PgTransaction } from "drizzle-orm/pg-core";
+import { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
+import schema from "../db/schema";
+
+// This type represents a transaction in your specific schema using postgres-js
+type Transaction = PgTransaction<
+    PostgresJsQueryResultHKT,
+    typeof schema,
+    ExtractTablesWithRelations<typeof schema>
+>;
 
 /**
  * @desc    Get all inventory records for the user's store
@@ -658,7 +667,7 @@ export const decrementStockForOrder = async (
     items: OrderItemStockUpdate[],
     performedBy: string,
     storeId: string,
-    tx: NodePgDatabase<any>
+    tx: Transaction
 ) => {
     try {
         if (!items || items.length === 0) {

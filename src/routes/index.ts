@@ -13,6 +13,7 @@ import rawMaterials from "./raw-material-routes";
 import billOfMaterial from "./bill-of-material-routes";
 import production from "./production-routes";
 import categories from "./categories-routes";
+import superAdminRoutes from "./super-admin-routes";
 
 import { protectedRoute } from "../config/jwt-config";
 import { validateStoreAccess } from "../middlewares/validate-store-access";
@@ -34,6 +35,9 @@ router.use("/auth", auth); // Handles /api/v1/auth/register, /api/v1/auth/login,
 
 // All subsequent routes are protected
 router.use(protectedRoute);
+
+// Super Admin routes (not store-scoped)
+router.use("/super-admin", superAdminRoutes);
 
 // Global middleware to handle store targeting for Managers
 router.use(handleTargetStore);

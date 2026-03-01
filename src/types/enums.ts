@@ -1,6 +1,7 @@
 export enum UserRoleEnum {
-    MANAGER = "manager",
+    SUPER_ADMIN = "superAdmin",
     ADMIN = "admin",
+    MANAGER = "manager",
     USER = "user",
     GUEST = "guest",
 }
@@ -110,4 +111,24 @@ export const ActivityEntityTypeEnum = {
     RAW_MATERIAL_INVENTORY: "rawMaterialInventory",
     STORE: "store",
     USER: "user",
+} as const;
+
+export const SubscriptionStatusEnum = {
+    PENDING_SETUP: "pendingSetup",
+    ACTIVE: "active",
+    GRACE_PERIOD: "gracePeriod",
+    SUSPENDED: "suspended",
+    CANCELLED: "cancelled",
+} as const;
+
+export const StoreSubscriptionsBillingStatusEnum = {
+    FAILED: "failed",
+    PENDING: "pending",
+    SUCCESS: "success",
+} as const;
+
+export const BillingTypeEnum = {
+    SETUP_FEE: "setupFee",
+    MONTHLY_SUBSCRIPTION: "monthlySubscription",
+    ADDITIONAL_USER: "additionalUser",
 } as const;
