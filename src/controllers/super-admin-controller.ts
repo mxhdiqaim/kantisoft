@@ -4,30 +4,43 @@ import db from "../db";
 import { stores } from "../schema/stores-schema";
 import {
     billingTransactions,
+    onboardStoreSchema,
     storeSubscriptions,
 } from "../schema/store-subscriptions-schema";
 import { passwordHashService } from "../service/password-hash-service";
 import { users } from "../schema/users-schema";
-import { UserRoleEnum, UserStatusEnum } from "../types/enums";
+import {
+    SubscriptionStatusEnum,
+    UserRoleEnum,
+    UserStatusEnum,
+} from "../types/enums";
 import { ActivityLogService } from "../service/activity-service-log";
 import { StatusCodes } from "http-status-codes";
 import { handleError2 } from "../service/error-handling";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
+import { EmailService } from "../service/email-service";
 
 export const getAllStoresForSuperAdmin = async (
-    req: CustomRequest,
+    _req: CustomRequest,
     res: Response,
 ) => {
     try {
         const allStores = await db
             .select()
             .from(stores)
+            .orderBy(desc(stores.createdAt))
             .leftJoin(
                 storeSubscriptions,
                 eq(stores.id, storeSubscriptions.storeId),
             );
 
-        return res.status(StatusCodes.OK).json(allStores);
+        // Flatten the Drizzle result
+        const formattedStores = allStores.map((row) => ({
+            ...row.stores,
+            storeSubscriptions: row.storeSubscriptions,
+        }));
+
+        return res.status(StatusCodes.OK).json(formattedStores);
     } catch (error) {
         return handleError2(
             res,
@@ -44,17 +57,34 @@ export const getAllStoresForSuperAdmin = async (
  */
 export const onboardNewStore = async (req: CustomRequest, res: Response) => {
     try {
-        const {
-            storeName,
-            location,
-            managerEmail,
-            managerFirstName,
-            managerLastName,
-        } = req.body;
+        const validation = onboardStoreSchema.safeParse(req.body);
 
-        // 1. Transaction: Ensure everything succeeds or everything fails
+        if (!validation.success) {
+            return handleError2(
+                res,
+                "Validation failed",
+                StatusCodes.BAD_REQUEST,
+                validation.error, // Passes the specific field errors back to the frontend
+            );
+        }
+
+        const { firstName, lastName, email, storeName, location } = req.body;
+        const tempPassword = "Welcome@Store123";
+
+        const existing = await db.query.users.findFirst({
+            where: eq(users.email, email.toLowerCase()),
+        });
+
+        if (existing)
+            return handleError2(
+                res,
+                "Email already in use",
+                StatusCodes.CONFLICT,
+            );
+
+        // Transaction: Ensure everything succeeds or everything fails
         const result = await db.transaction(async (tx) => {
-            // A. Create the Store
+            // Create the Store
             const [newStore] = await tx
                 .insert(stores)
                 .values({
@@ -63,24 +93,23 @@ export const onboardNewStore = async (req: CustomRequest, res: Response) => {
                 })
                 .returning();
 
-            // B. Create the Store Subscription (Initial State: pending_setup)
+            // Create the Store Subscription (Initial State: pending_setup)
             await tx.insert(storeSubscriptions).values({
                 storeId: newStore.id,
-                status: "pendingSetup",
+                status: SubscriptionStatusEnum.PENDING_SETUP,
                 setupFeePaid: false,
             });
 
-            // C. Create the Manager User
-            const tempPassword = "Welcome@Store123"; // In production, generate a random hash
-            const hashed = await passwordHashService.hash(tempPassword);
+            // Create the Manager User
+            const hashedPassword = passwordHashService.hash(tempPassword);
 
             const [manager] = await tx
                 .insert(users)
                 .values({
-                    firstName: managerFirstName,
-                    lastName: managerLastName,
-                    email: managerEmail.toLowerCase(),
-                    password: hashed,
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email.toLowerCase(),
+                    password: hashedPassword,
                     role: UserRoleEnum.MANAGER,
                     storeId: newStore.id,
                     status: UserStatusEnum.ACTIVE,
@@ -90,6 +119,13 @@ export const onboardNewStore = async (req: CustomRequest, res: Response) => {
             return { store: newStore, manager };
         });
 
+        EmailService.sendManagerWelcome(
+            email,
+            firstName,
+            tempPassword,
+            storeName,
+        ).catch((err) => console.error("Non-blocking email error:", err));
+
         // Log this event
         await ActivityLogService.logSystemEvent({
             userId: req.user?.data.id || null, // The Super Admin's ID
@@ -98,7 +134,7 @@ export const onboardNewStore = async (req: CustomRequest, res: Response) => {
             entityId: result.store.id,
             entityType: "store",
             actorName: "Super Admin",
-            details: `Onboarded store: ${storeName} with manager: ${managerEmail}`,
+            details: `Onboarded store: ${storeName} with manager: ${email}`,
         });
 
         return res.status(StatusCodes.CREATED).json({
@@ -106,6 +142,18 @@ export const onboardNewStore = async (req: CustomRequest, res: Response) => {
             data: result,
         });
     } catch (error) {
+        // Handle Drizzle Unique Constraint errors (e.g. email already exists)
+        if (
+            error instanceof Error &&
+            error.message.includes("unique constraint")
+        ) {
+            return handleError2(
+                res,
+                "Email already registered",
+                StatusCodes.CONFLICT,
+            );
+        }
+
         return handleError2(
             res,
             "Onboarding failed",

@@ -9,6 +9,7 @@ import {
     uuid,
 } from "drizzle-orm/pg-core";
 import { stores } from "./stores-schema";
+import { z } from "zod";
 
 export const subscriptionStatusEnum = pgEnum("subscriptionStatus", [
     "pendingSetup", // Paid 400k, but not live
@@ -70,3 +71,15 @@ export const billingTransactions = pgTable("billingTransactions", {
         .defaultNow()
         .$onUpdateFn(() => new Date()),
 });
+
+export const onboardStoreSchema = z.object({
+    firstName: z.string().min(2, "First name is too short"),
+    lastName: z.string().min(2, "Last name is too short"),
+    email: z.string().email("Invalid email address"),
+    storeName: z.string().min(3, "Store name must be at least 3 characters"),
+    location: z.string().min(3, "Location description is required"),
+    phone: z.string().optional(),
+});
+
+// Infer the TypeScript type from the schema
+export type OnboardStoreInput = z.infer<typeof onboardStoreSchema>;

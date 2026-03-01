@@ -112,3 +112,11 @@ export const ActivityEntityTypeEnum = {
     STORE: "store",
     USER: "user",
 } as const;
+
+export const SubscriptionStatusEnum = {
+    PENDING_SETUP: "pendingSetup",
+    ACTIVE: "active",
+    GRACE_PERIOD: "gracePeriod",
+    SUSPENDED: "suspended",
+    CANCELLED: "cancelled",
+} as const;

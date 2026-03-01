@@ -14,9 +14,6 @@ router.use(restrictTo(UserRoleEnum.SUPER_ADMIN));
 
 // Get all stores (for Super Admin)
 router.get("/stores", getAllStoresForSuperAdmin);
-
-// Store Management
-// router.get("/stores/all", getAllStoresForSuperAdmin); // See all stores in the system
 router.post("/stores/onboard", onboardNewStore);
 
 // User Management (Specific to Super Admin)
