@@ -2,7 +2,10 @@ import { CustomRequest } from "../types/express";
 import { Response } from "express";
 import db from "../db";
 import { stores } from "../schema/stores-schema";
-import { storeSubscriptions } from "../schema/store-subscriptions-schema";
+import {
+    billingTransactions,
+    storeSubscriptions,
+} from "../schema/store-subscriptions-schema";
 import { passwordHashService } from "../service/password-hash-service";
 import { users } from "../schema/users-schema";
 import { UserRoleEnum, UserStatusEnum } from "../types/enums";
@@ -10,6 +13,30 @@ import { ActivityLogService } from "../service/activity-service-log";
 import { StatusCodes } from "http-status-codes";
 import { handleError2 } from "../service/error-handling";
 import { eq } from "drizzle-orm";
+
+export const getAllStoresForSuperAdmin = async (
+    req: CustomRequest,
+    res: Response,
+) => {
+    try {
+        const allStores = await db
+            .select()
+            .from(stores)
+            .leftJoin(
+                storeSubscriptions,
+                eq(stores.id, storeSubscriptions.storeId),
+            );
+
+        return res.status(StatusCodes.OK).json(allStores);
+    } catch (error) {
+        return handleError2(
+            res,
+            "Failed to fetch stores",
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined,
+        );
+    }
+};
 
 /**
  * @description Super Admin: Create a new store and its first manager
@@ -63,7 +90,7 @@ export const onboardNewStore = async (req: CustomRequest, res: Response) => {
             return { store: newStore, manager };
         });
 
-        // 2. Log this event
+        // Log this event
         await ActivityLogService.logSystemEvent({
             userId: req.user?.data.id || null, // The Super Admin's ID
             storeId: null, // Global event
@@ -156,6 +183,57 @@ export const createStoreManager = async (req: CustomRequest, res: Response) => {
         return handleError2(
             res,
             "Failed to create manager",
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined,
+        );
+    }
+};
+
+/**
+ * @description Manually confirm a payment (Setup Fee or Monthly)
+ */
+export const confirmStorePayment = async (
+    req: CustomRequest,
+    res: Response,
+) => {
+    try {
+        const { storeId, amount, reference, type } = req.body;
+
+        await db.transaction(async (tx) => {
+            // Create the billing record
+            await tx.insert(billingTransactions).values({
+                storeId,
+                amount: amount.toString(),
+                reference: reference || `MANUAL-${Date.now()}`,
+                type: type, // 'setupFee' | 'monthlySubscription'
+                status: "success",
+            });
+
+            // Update Subscription status
+            const isSetup = type === "setupFee";
+
+            // Calculate the next billing date (30 days from now)
+            const nextDate = new Date();
+            nextDate.setDate(nextDate.getDate() + 30);
+
+            await tx
+                .update(storeSubscriptions)
+                .set({
+                    status: "active",
+                    setupFeePaid: isSetup ? true : undefined,
+                    nextBillingDate: nextDate,
+                    lastBillingDate: new Date(),
+                })
+                .where(eq(storeSubscriptions.storeId, storeId));
+        });
+
+        return res
+            .status(StatusCodes.OK)
+            .json({ message: "Payment confirmed successfully" });
+    } catch (error) {
+        return handleError2(
+            res,
+            "Payment confirmation failed",
             StatusCodes.INTERNAL_SERVER_ERROR,
             error instanceof Error ? error : undefined,
         );

@@ -14,11 +14,13 @@ export const validateStoreAccess = async (
     next: NextFunction,
 ) => {
     try {
-        const currentUser = req.user?.data; // req.user is typed from CustomRequest / global augmentation
-        const storeId = currentUser?.storeId;
-        const userRole = currentUser?.role;
+        const currentUser = req.user?.data;
+        const userRole = currentUser?.role as UserRoleEnum;
+        const userHomeStoreId = currentUser?.storeId;
 
-        if (!storeId) {
+        // If NOT a Super Admin and NO storeId, then block.
+        // Super Admins are allowed to have no storeId.
+        if (userRole !== UserRoleEnum.SUPER_ADMIN && !userHomeStoreId) {
             return handleError2(
                 res,
                 "Store association required.",
@@ -28,16 +30,32 @@ export const validateStoreAccess = async (
 
         const { targetStoreId } = req.query;
 
-        const finalStoreId = await determineFinalStoreId(
-            res,
-            userRole as UserRoleEnum,
-            storeId,
-            targetStoreId as string,
-        );
+        // Logic for determining the Final ID
+        let finalStoreId: string | null = null;
 
-        if (!finalStoreId) return; // determineFinalStoreId already sent the response
+        if (userRole === UserRoleEnum.SUPER_ADMIN) {
+            // Super Admin MUST provide a targetStoreId in the query to access store routes
+            // e.g., /api/v1/inventory?targetStoreId=uuid-here
+            if (!targetStoreId) {
+                return handleError2(
+                    res,
+                    "Super Admin must specify a targetStoreId query parameter to access store-level data.",
+                    StatusCodes.BAD_REQUEST,
+                );
+            }
+            finalStoreId = targetStoreId as string;
+        } else {
+            // Regular users use the utility to check permissions
+            finalStoreId = await determineFinalStoreId(
+                res,
+                userRole,
+                userHomeStoreId!,
+                targetStoreId as string,
+            );
+        }
 
-        // Attach to request for use in controllers
+        if (!finalStoreId) return;
+
         req.storeIds = [finalStoreId];
         next();
     } catch (error) {
