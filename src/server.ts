@@ -16,15 +16,16 @@ app.set("trust proxy", 1);
 const NODE_ENV = getEnvVariable("NODE_ENV");
 const LANDING_PAGE = getEnvVariable("LANDING_PAGE");
 const APP_URL = getEnvVariable("APP_URL");
+const ADMIN_APP = getEnvVariable("ADMIN_APP");
 
 const URL =
     NODE_ENV === "development"
         ? [
-              "http://localhost:3000",
-              "http://localhost:3001",
-              "http://localhost:3002",
-          ]
-        : [`https://${LANDING_PAGE}`, `https://${APP_URL}`];
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:3002",
+        ]
+        : [`https://${LANDING_PAGE}`, `https://${APP_URL}`, `https://${ADMIN_APP}`];
 
 /** Session */
 configureSession(app);
