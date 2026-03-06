@@ -5,4 +5,4 @@ const router = express.Router();
 
 router.get("/", controller.getAllUnitsOfMeasurement);
 
-export = router;
+export default router;

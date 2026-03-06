@@ -1,11 +1,12 @@
-import "dotenv/config";
 import * as db from "./src/db";
-import server, { app } from "./src/server";
-import { getEnvVariable } from "./src/utils";
-// import { connectRedis } from "./src/config/redis-config";
-import { createRateLimiter } from "./src/middlewares/rate-limiter";
+import {app} from "./src/server";
+import {getEnvVariable} from "./src/utils";
+import {createRateLimiter} from "./src/middlewares/rate-limiter";
 
 const PORT = parseInt(getEnvVariable("PORT"));
+
+// Creating a server instance
+// const server = http.createServer(app);
 
 (async () => {
     // DB Connection
@@ -22,29 +23,8 @@ const PORT = parseInt(getEnvVariable("PORT"));
     // Apply rate limiter after Redis is connected
     app.use(createRateLimiter());
 
-    server.on("error", (error: NodeJS.ErrnoException) => {
-        const bind = "Port " + PORT;
-
-        switch (error.code) {
-            case "EACCES":
-                console.error(bind + " requires elevated privileges");
-                return;
-
-            case "EADDRINUSE":
-                console.error(bind + " is already in use");
-                return;
-            default:
-                console.error(error);
-        }
+    // Replacing Bun.serve with app.listen as Express works natively in Bun
+    app.listen(PORT, "0.0.0.0", () => {
+        console.log(`Server has been started and listening on port ${PORT}`);
     });
-
-    server.on("listening", () => {
-        const addr = server.address();
-        const bind =
-            typeof addr === "string" ? "pipe " + addr : "port " + addr?.port;
-
-        console.log(`Server has been started and listening on ${bind}`);
-    });
-
-    server.listen(PORT);
 })();

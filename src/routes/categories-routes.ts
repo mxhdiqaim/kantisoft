@@ -25,4 +25,4 @@ router.delete(
     controller.deleteCategory,
 );
 
-export = router;
+export default router;

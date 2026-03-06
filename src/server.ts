@@ -2,7 +2,6 @@ import "./config/instrument";
 import * as Sentry from "@sentry/node";
 import cors from "cors";
 import express from "express";
-import http from "http";
 import morgan from "morgan";
 import "./config/auth-config";
 import path from "path";
@@ -17,15 +16,16 @@ app.set("trust proxy", 1);
 const NODE_ENV = getEnvVariable("NODE_ENV");
 const LANDING_PAGE = getEnvVariable("LANDING_PAGE");
 const APP_URL = getEnvVariable("APP_URL");
+const ADMIN_APP = getEnvVariable("ADMIN_APP");
 
 const URL =
     NODE_ENV === "development"
         ? [
-              "http://localhost:3000",
-              "http://localhost:3001",
-              "http://localhost:3002",
-          ]
-        : [`https://${LANDING_PAGE}`, `https://${APP_URL}`];
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:3002",
+        ]
+        : [`https://${LANDING_PAGE}`, `https://${APP_URL}`, `https://${ADMIN_APP}`];
 
 /** Session */
 configureSession(app);
@@ -73,5 +73,5 @@ app.use((req, res, next) => {
     next(error);
 });
 
-/** Server */
-export default http.createServer(app);
+// /** Server */
+// export default http.createServer(app);

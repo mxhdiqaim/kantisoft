@@ -14,4 +14,4 @@ router.post("/login", controller.loginUser);
 // Protected route for logging out
 router.post("/logout", protectedRoute, controller.logoutUser);
 
-export = router;
+export default router;
