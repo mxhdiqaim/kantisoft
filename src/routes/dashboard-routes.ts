@@ -34,4 +34,4 @@ router.get(
     getFinishedGoodsProfitMargin,
 );
 
-export = router;
+export default router;

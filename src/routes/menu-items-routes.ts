@@ -37,4 +37,4 @@ router.delete(
     controller.deleteMenuItem,
 );
 
-export = router;
+export default router;

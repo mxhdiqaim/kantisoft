@@ -34,4 +34,4 @@ router.delete(
     controller.deleteUser,
 );
 
-export = router;
+export default router;
