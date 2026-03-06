@@ -2,6 +2,7 @@ import "./config/instrument";
 import * as Sentry from "@sentry/node";
 import cors from "cors";
 import express from "express";
+import http from "http";
 import morgan from "morgan";
 import "./config/auth-config";
 import path from "path";
@@ -77,5 +78,5 @@ app.use((req, res, next) => {
     next(error);
 });
 
-// /** Server */
-// export default http.createServer(app);
+/** Server */
+export default http.createServer(app);
