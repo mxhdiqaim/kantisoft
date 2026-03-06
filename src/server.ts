@@ -21,11 +21,15 @@ const ADMIN_APP = getEnvVariable("ADMIN_APP");
 const URL =
     NODE_ENV === "development"
         ? [
-            "http://localhost:3000",
-            "http://localhost:3001",
-            "http://localhost:3002",
-        ]
-        : [`https://${LANDING_PAGE}`, `https://${APP_URL}`, `https://${ADMIN_APP}`];
+              "http://localhost:3000",
+              "http://localhost:3001",
+              "http://localhost:3002",
+          ]
+        : [
+              `https://${LANDING_PAGE}`,
+              `https://${APP_URL}`,
+              `https://${ADMIN_APP}`,
+          ];
 
 /** Session */
 configureSession(app);

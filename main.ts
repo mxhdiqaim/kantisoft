@@ -1,7 +1,7 @@
 import * as db from "./src/db";
-import {app} from "./src/server";
-import {getEnvVariable} from "./src/utils";
-import {createRateLimiter} from "./src/middlewares/rate-limiter";
+import { app } from "./src/server";
+import { getEnvVariable } from "./src/utils";
+import { createRateLimiter } from "./src/middlewares/rate-limiter";
 
 const PORT = parseInt(getEnvVariable("PORT"));
 
