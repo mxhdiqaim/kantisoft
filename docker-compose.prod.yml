@@ -1,0 +1,19 @@
+services:
+  fe:
+    image: ghcr.io/mxhdiqaim/kantisoft-fe:latest
+    pull_policy: always
+    container_name: kantisoft-fe-prod
+    ports:
+      - 3000:80
+
+    environment:
+      NODE_ENV: production
+      VITE_APP_API_URL: https://api.kantisoft.com/api/v1
+
+    # Healthcheck is good practice for production:
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

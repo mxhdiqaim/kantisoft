@@ -1,0 +1,30 @@
+name: CI/CD Pipeline - Build & Test
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  # ---------------------------------------
+  #     CI JOB (Build, Lint, and Test)
+  # ---------------------------------------
+  build-and-test:
+    name: Build, Lint, and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build Check (tsc)
+        run: bun run build
+
+  #      - name: Run Linting
+  #        run: bun run lint

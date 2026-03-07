@@ -1,0 +1,152 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {extendBaseSchema, ORDER_PERIODS} from "@/types";
+import * as yup from "yup";
+import {type MenuItemType} from "./menu-item-type";
+
+export const OrderStatus = {
+    CANCELED: "canceled",
+    PENDING: "pending",
+    COMPLETED: "completed",
+} as const;
+const ORDER_STATUSES = Object.values(OrderStatus);
+
+export const OrderPaymentMethod = {
+    CARD: "card",
+    CASH: "cash",
+    TRANSFER: "transfer",
+} as const;
+const PAYMENT_METHODS = Object.values(OrderPaymentMethod);
+
+
+// Core schema for creating and validating an order
+const coreOrderSchema = yup.object({
+    totalAmount: yup
+        .number()
+        .typeError("Total amount must be a number")
+        .positive("Total amount must be greater than 0")
+        .required("Total amount is required"),
+
+    paymentMethod: yup.string().oneOf(PAYMENT_METHODS, "Invalid payment method").required("Payment method is required"),
+
+    orderDate: yup
+        .date()
+        .typeError("Order date must be a valid date")
+        .default(() => new Date())
+        .required("Order date is required"),
+
+    orderStatus: yup
+        .string()
+        .oneOf(ORDER_STATUSES, "Invalid order status")
+        .default("pending")
+        .required("Order status is required"),
+
+    sellerId: yup.string().required("Seller ID is required"),
+    storeId: yup.string().required("Store ID is required"),
+    reference: yup.string().nullable().default(null),
+});
+
+// Schema for a full order object, including base fields like id and timestamps
+export const orderSchema = extendBaseSchema(coreOrderSchema);
+
+// Schema for a single item when creating an order
+const createOrderItemPayloadSchema = yup.object({
+    menuItemId: yup.string().uuid("Menu item ID must be a valid UUID").required("Menu item ID is required"),
+    name: yup.string().default(""),
+    quantity: yup
+        .number()
+        .typeError("Quantity must be a number")
+        .positive("Quantity must be a positive number")
+        .required("Quantity is required"),
+});
+
+// Core schema for a full order item, often retrieved from the DB
+const coreOrderItemSchema = createOrderItemPayloadSchema.shape({
+    orderId: yup.string().uuid("Order ID must be a valid UUID").required("Order ID is required"),
+    storeId: yup.string().uuid("Store ID must be a valid UUID").required("Store ID is required"),
+    priceAtOrder: yup
+        .number()
+        .typeError("Price at order must be a number")
+        .positive("Price at order must be a positive number")
+        .required("Price at order is required"),
+    subTotal: yup
+        .number()
+        .typeError("Subtotal must be a number")
+        .min(0, "Subtotal cannot be negative")
+        .required("Subtotal is required")
+        .default(0),
+});
+
+// Schema for a full order item object, including base fields like id and timestamps
+export const orderItemSchema = extendBaseSchema(coreOrderItemSchema);
+
+export const createOrderSchema = yup.object({
+    sellerId: yup.string().required(),
+    storeId: yup.string().required(),
+    paymentMethod: yup.string().oneOf(PAYMENT_METHODS, "Invalid payment method").default(OrderPaymentMethod.CASH).required("Payment method is required"),
+    orderStatus: yup
+        .string()
+        .oneOf(ORDER_STATUSES, "Invalid order status")
+        .default(OrderStatus.PENDING)
+        .required("Order status is required"),
+    items: yup
+        .array()
+        .of(
+            yup.object({
+                quantity: yup.number().optional(),
+                menuItemId: yup.string().optional(),
+                name: yup.string().optional(),
+            }),
+        )
+        .required(),
+    amountReceived: yup
+        .number()
+        .typeError("Amount received must be a number")
+        .min(0, "Amount must be greater than or equal to 0")
+        .required("Amount received is required"),
+});
+
+// TypeScript types inferred from schemas
+export type OrderType = yup.InferType<typeof orderSchema>;
+export type CreateOrderType = yup.InferType<typeof createOrderSchema>;
+
+// export type CreateOrderType = {
+//     sellerId: string;
+//     storeId: string;
+//     paymentMethod: "cash" | "card" | "transfer";
+//     orderStatus: "completed" | "pending" | "canceled";
+//     items: { menuItemId?: string; quantity?: number; name?: string }[];
+//     amountReceived: number;
+// };
+
+// export type SingleOrderType = yup.InferType<typeof singleOrderSchema>;
+export type SingleOrderType = any;
+
+export type OrderItemType = yup.InferType<typeof orderItemSchema>;
+// export type CreateOrderItemType = Pick<OrderItemType, "menuItemId" | "quantity" | "name">;
+
+// Explicitly define the types for the constants
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+export type OrderStatus = (typeof ORDER_STATUSES)[number];
+
+export type Period = (typeof ORDER_PERIODS)[number];
+
+export type _SingleOrderType = OrderType & {
+    orderItems: (OrderItemType & { menuItem: MenuItemType })[];
+    seller: { firstName: string; lastName: string };
+};
+
+// New type for the getOrdersByPeriod response
+export interface OrdersByPeriodResponse {
+    period: string;
+    totalRevenue: string;
+    totalOrders: number;
+    mostOrderedItem: {
+        name: string;
+        quantity: number;
+    } | null;
+    topSeller: {
+        name: string;
+        totalRevenue: string;
+    } | null;
+    orders: _SingleOrderType[]; // Use SingleOrderType as it includes nested details
+}

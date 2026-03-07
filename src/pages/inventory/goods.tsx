@@ -1,0 +1,352 @@
+import {
+    useContinueInventoryMutation,
+    useDeleteInventoryRecordMutation,
+    useDiscontinueInventoryMutation,
+    useGetAllInventoryQuery,
+} from "@/store/slice";
+import type {InventoryType} from "@/types/inventory-types.ts";
+import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
+import type {GridColDef, GridRenderCellParams} from "@mui/x-data-grid";
+import {type MouseEvent, useMemo, useState} from "react";
+import DataGridTable from "@/components/ui/data-grid-table";
+import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
+import CreateInventoryForm from "@/components/inventory/create-inventory-form.tsx";
+import {useTranslation} from "react-i18next";
+import CustomButton from "@/components/ui/button.tsx";
+import useNotifier from "@/hooks/useNotifier.ts";
+import {getApiError} from "@/helpers/get-api-error.ts";
+import InventoryAdjustmentForm from "@/components/inventory/inventory-adjustment-form.tsx";
+import {useNavigate} from "react-router-dom";
+import {useSearch} from "@/use-search.ts";
+import {useSelector} from "react-redux";
+import {selectCurrentUser} from "@/store/slice/auth-slice";
+import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
+import {UserRoleEnum, UserStatusEnum} from "@/types/user-types.ts";
+import {relativeTime} from "@/utils/get-relative-time.ts";
+import {getInventoryStatusChipColor} from "@/components/ui";
+import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
+import {camelCaseToTitleCase} from "@/utils"
+import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+// import {useOfflineGoods} from "@/hooks/use-offline-goods.ts";
+import DeleteConfirmationModal from "@/components/ui/delete-confimation-modal.tsx";
+
+import AddIcon from "@mui/icons-material/Add";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+
+const Goods = () => {
+    const {t} = useTranslation();
+    const theme = useTheme();
+    const currentUser = useSelector(selectCurrentUser);
+    const notify = useNotifier();
+    const navigate = useNavigate();
+
+    const {data: inventoryData, isLoading, isFetching, isError, error} = useGetAllInventoryQuery();
+    // const {data: inventoryData, isLoading, isError, error} = useOfflineGoods();
+    const memoizedInventories = useMemoizedArray(inventoryData);
+
+    const [discontinueInventory, {isLoading: isDiscontinuing}] = useDiscontinueInventoryMutation();
+    const [continueInventory, {isLoading: isContinuing}] = useContinueInventoryMutation();
+    const [deleteInventoryRecord, {isLoading: isDeleting}] = useDeleteInventoryRecordMutation();
+
+    const canInteract = currentUser?.status === UserStatusEnum.ACTIVE &&
+        (currentUser?.role === UserRoleEnum.ADMIN || currentUser?.role === UserRoleEnum.MANAGER);
+
+
+    const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
+        initialData: memoizedInventories,
+        searchKeys: ["status", "menuItem"],
+    });
+
+    const [formModalOpen, setFormModalOpen] = useState(false);
+    const [adjustStockModalOpen, setAdjustStockModalOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [selectedRow, setSelectedRow] = useState<InventoryType | null>(null);
+
+    const handleCloseDeleteModal = () => {
+        setDeleteModalOpen(false);
+        setSelectedRow(null);
+    };
+
+    const handleMenuClick = (_event: MouseEvent<HTMLElement>, row: InventoryType) => {
+        setSelectedRow(row);
+    };
+
+    const handleOpenFormModal = () => {
+        setFormModalOpen(true);
+        setSelectedRow(null);
+    };
+
+
+    const handleCloseFormModal = () => {
+        setFormModalOpen(false);
+        setSelectedRow(null);
+    };
+
+    const handleOpenAdjustStockModal = () => {
+        setAdjustStockModalOpen(true);
+    };
+
+    const handleCloseAdjustStockModal = () => {
+        setAdjustStockModalOpen(false);
+        setSelectedRow(null);
+    };
+
+    const handleContinue = async () => {
+        if (!selectedRow) return;
+
+        try {
+            await continueInventory(selectedRow.menuItemId).unwrap();
+            notify("Item has been restored.", "success");
+        } catch (err) {
+            const defaultMessage = "Failed to continue item.";
+            const apiError = getApiError(err, defaultMessage);
+            notify(apiError.message, "error");
+        }
+    };
+    const handleDiscontinue = async () => {
+        if (!selectedRow) return;
+
+        try {
+            await discontinueInventory(selectedRow.menuItemId).unwrap();
+            notify("Item has been discontinued.", "success");
+        } catch (err) {
+            const defaultMessage = "Failed to discontinue item.";
+            const apiError = getApiError(err, defaultMessage);
+            notify(apiError.message, "error");
+        }
+    };
+
+    const handleDelete = async () => {
+        if (selectedRow) {
+            try {
+                await deleteInventoryRecord(selectedRow.menuItemId).unwrap();
+                notify("Item has been deleted.", "success");
+                handleCloseDeleteModal();
+            } catch (err) {
+                const defaultMessage = "Failed to delete item.";
+                const apiError = getApiError(err, defaultMessage);
+                notify(apiError.message, "error");
+            }
+        }
+    };
+
+    const columns: GridColDef[] = useMemo(() => [
+        {
+            flex: 1,
+            field: "menuItem",
+            headerName: `${t('menuItem')}`,
+            minWidth: 150,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params) => (
+                <TableStyledBox
+                    sx={{cursor: 'pointer', ":hover": {textDecoration: "underline"}}}
+                    onClick={() => navigate(`/inventory/goods/${params.row.menuItemId}/transactions`)}
+                >
+                    <Typography variant="body2">{params.value.name}</Typography>
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: "itemCode",
+            headerName: "SKU",
+            width: 120,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{params.value}</Typography>
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: "quantity",
+            headerName: "Quantity",
+            type: "number",
+            width: 120,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{params.value}</Typography>
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: "minStockLevel",
+            headerName: "Min Level",
+            type: "number",
+            width: 120,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{params.value}</Typography>
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: "status",
+            headerName: "Status",
+            width: 150,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params: GridRenderCellParams<InventoryType, string>) => (
+                <TableStyledBox>
+                    <Chip
+                        label={camelCaseToTitleCase(params.value)}
+                        color={getInventoryStatusChipColor(params.value ?? "")}
+                        size="small"
+                        sx={{textTransform: "capitalize"}}
+                    />
+                </TableStyledBox>
+            ),
+        },
+        {
+            flex: 1,
+            field: "lastCountDate",
+            headerName: "Last Counted",
+            width: 180,
+            align: "left",
+            headerAlign: "left",
+            renderCell: (params) => (
+                <TableStyledBox>
+                    <Typography variant="body2">{relativeTime(new Date(params.value))}</Typography>
+                </TableStyledBox>
+            ),
+        },
+        {
+            field: "actions",
+            headerName: "Actions",
+            width: 100,
+            align: "center",
+            headerAlign: "center",
+            sortable: false,
+            renderCell: (params) => (
+                canInteract && (
+                    <CustomButton
+                        variant={"text"}
+                        sx={{
+                            borderRadius: "10px",
+                            color: theme.palette.text.primary,
+                        }}
+                        onClick={(e) => handleMenuClick(e, params.row)}
+                        startIcon={
+                            <Tooltip title="More Actions" placement={"top"}>
+                                <MoreVertIcon/>
+                            </Tooltip>
+                        }
+                    >
+                        <TableStyledMenuItem
+                            onClick={handleOpenAdjustStockModal}
+                            sx={{borderRadius: theme.borderRadius.small, mx: 1}}
+                        >
+                            Adjust Stock
+                        </TableStyledMenuItem>
+                        {/*<TableStyledMenuItem*/}
+                        {/*    disabled={true}*/}
+                        {/*    sx={{borderRadius: theme.borderRadius.small, mx: 1}}*/}
+                        {/*>*/}
+                        {/*    Edit*/}
+                        {/*</TableStyledMenuItem>*/}
+                        <TableStyledMenuItem
+                            onClick={handleContinue}
+                            disabled={isContinuing || params.row.status !== "discontinued"}
+                            sx={{
+                                color: theme.palette.success.main,
+                                borderRadius: theme.borderRadius.small,
+                                mx: 1
+                            }}
+                        >
+                            Continue
+                        </TableStyledMenuItem>
+                        <TableStyledMenuItem
+                            onClick={handleDiscontinue}
+                            disabled={isDiscontinuing || params.row.status === "discontinued"}
+                            sx={{
+                                color: theme.palette.warning.main,
+                                borderRadius: theme.borderRadius.small,
+                                mx: 1
+                            }}
+                        >
+                            Discontinue
+                        </TableStyledMenuItem>
+                        <TableStyledMenuItem
+                            onClick={() => setDeleteModalOpen(true)}
+                            disabled={isDeleting}
+                            sx={{
+                                mt: 1,
+                                mx: 1,
+                                border: `1px solid ${theme.palette.error.main}`,
+                                borderRadius: theme.borderRadius.small,
+                                color: theme.palette.error.main,
+                            }}
+                        >
+                            Delete
+                        </TableStyledMenuItem>
+                    </CustomButton>
+                )
+            ),
+        },
+    ], [selectedRow, isDiscontinuing, handleOpenAdjustStockModal, isContinuing])
+
+    if (isError) {
+        const apiError = getApiError(error, `Failed to load Goods.`);
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
+    }
+
+    return (
+        <>
+            <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
+                <Typography variant="h4" component="h1">
+                    Goods
+                </Typography>
+                {canInteract && (
+                    <CustomButton
+                        title={"Add Inventory"}
+                        variant="contained"
+                        startIcon={<AddIcon/>}
+                        onClick={handleOpenFormModal}
+                    />
+                )}
+            </Box>
+            <TableSearchActions
+                searchControl={searchControl}
+                searchSubmit={searchSubmit}
+                handleSearch={handleSearch}
+                placeholder={`Search ${t('inventory')}...`}
+            />
+
+            <Grid container spacing={2}>
+                <Grid size={12}>
+                    <DataGridTable
+                        data={filteredData}
+                        columns={columns}
+                        loading={isLoading || isDiscontinuing || isContinuing || isFetching}
+                    />
+                </Grid>
+            </Grid>
+            <CreateInventoryForm open={formModalOpen} onClose={handleCloseFormModal}/>
+            <InventoryAdjustmentForm
+                open={adjustStockModalOpen}
+                onClose={handleCloseAdjustStockModal}
+                inventoryItem={selectedRow}
+            />
+
+            <DeleteConfirmationModal
+                open={deleteModalOpen}
+                onClose={handleCloseDeleteModal}
+                onConfirm={handleDelete}
+                isLoading={isDeleting}
+                title={`Delete ${t("inventory")}?`}
+            />
+        </>
+    );
+};
+
+export default Goods;

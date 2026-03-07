@@ -1,0 +1,35 @@
+FROM oven/bun:1-alpine AS Build
+
+# Build argument for the API URL
+ARG VITE_APP_API_URL
+
+WORKDIR /app
+
+## Enable corepack to use pnpm
+#RUN corepack enable
+
+COPY package.json bun.lock ./
+
+
+# Install dependencies
+RUN bun install --frozen-lockfile
+
+COPY . .
+
+# Pass the build argument as an environment variable during the build process
+RUN VITE_APP_API_URL=${VITE_APP_API_URL} bun run build
+
+# Serve the application with a lightweight Nginx server
+FROM nginx:alpine AS serve
+
+# Copy the custom Nginx configuration file
+#COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy the built application from the build stage to the Nginx public directory
+COPY --from=Build /app/dist /usr/share/nginx/html
+
+# Expose port 80 to the host machine
+EXPOSE 80
+
+# Command to start Nginx in the foreground
+CMD ["nginx", "-g", "daemon off;"]
