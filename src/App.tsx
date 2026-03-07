@@ -1,11 +1,12 @@
+import {ThemeProvider} from "./theme";
 import './App.css'
 
 function App() {
 
   return (
-    <div>
-      <h1>Hello World</h1>
-    </div>
+    <ThemeProvider>
+        <h1>Hello World</h1>
+    </ThemeProvider>
   )
 }
 
