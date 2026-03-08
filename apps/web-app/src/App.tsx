@@ -7,7 +7,7 @@ import GuardedRoute from "@/routes/guarded-route";
 import {useAppSelector} from "@/store";
 import {useLogoutMutation} from "@/store/slice";
 import {selectCurrentUser, selectTokenExp} from "@/store/slice/auth-slice";
-import {ThemeProvider} from "@/theme";
+import {ThemeProvider} from "../../../packages/ui/src/theme";
 import {ScrollToTop} from "@/utils";
 import {type JSX, useEffect, useRef} from "react";
 import {ErrorBoundary} from "react-error-boundary";
