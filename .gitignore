@@ -29,4 +29,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # lock file
-bun.lockb
+bun.lock
+
+.turbo

@@ -1,5 +1,7 @@
 {
-  "name": "kantisoft-ui",
+  "name": "@kantisoft/ui",
+  "version": "1.0.0",
+  "main": "index.ts",
   "dependencies": {
     "@mui/material": "^7.3.9",
     "@mui/x-data-grid": "^8.27.4",
