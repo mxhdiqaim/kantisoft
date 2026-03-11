@@ -1,0 +1,18 @@
+# Example snippet for your GitHub Action
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Important: fetch all history so Turbo can calculate changes
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install
+        run: bun install
+
+      # Turbo only builds what is affected by the changes in this commit
+      - name: Build
+        run: bunx turbo build --filter=[origin/main]
