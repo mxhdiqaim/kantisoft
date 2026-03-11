@@ -207,6 +207,22 @@ export const getOrderById = async (req: CustomRequest, res: Response) => {
 
         const { id: orderId } = req.params;
 
+        if (!orderId) {
+            return handleError2(
+                res,
+                "Order is required.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
+        if (typeof orderId !== "string") {
+            return handleError2(
+                res,
+                "Invalid order.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
         const whereClause = and(
             eq(orders.id, orderId),
             eq(orders.storeId, finalStoreId),
@@ -452,6 +468,22 @@ export const updateOrderStatus = async (req: CustomRequest, res: Response) => {
 
         const { id: orderId } = req.params;
 
+        if (!orderId) {
+            return handleError2(
+                res,
+                "Order is required.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
+        if (typeof orderId !== "string") {
+            return handleError2(
+                res,
+                "Invalid order.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
         // Add the condition that the order must be 'pending' to be updated
         const whereClause = and(
             eq(orders.id, orderId),
@@ -515,6 +547,22 @@ export const deleteOrder = async (req: CustomRequest, res: Response) => {
         if (!finalStoreId) return;  // Error already handled
 
         const { id: orderId } = req.params;
+
+        if (!orderId) {
+            return handleError2(
+                res,
+                "Order is required.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
+        if (typeof orderId !== "string") {
+            return handleError2(
+                res,
+                "Invalid Order.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
 
         // Add the condition that the order must be 'pending' to be deleted
         const whereClause = and(
@@ -654,6 +702,22 @@ export const getOrderByReference = async (
         if (!finalStoreId) return;  // Error already handled
 
         const { reference } = req.params;
+
+        if (!reference) {
+            return handleError2(
+                res,
+                "Reference is required.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
+        if (typeof reference !== "string") {
+            return handleError2(
+                res,
+                "Invalid Reference.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
 
         // CRITICAL FIX: The where clause must ALWAYS filter by the storeId
         const whereClause = and(

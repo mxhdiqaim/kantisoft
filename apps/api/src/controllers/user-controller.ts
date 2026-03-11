@@ -262,6 +262,18 @@ export const getUserById = async (req: CustomRequest, res: Response) => {
         const { storeIds } = validated;
         const { id: targetUserId } = req.params;
 
+        if (!targetUserId) {
+            return handleError2(res, 'Missing user in request path.', StatusCodes.BAD_REQUEST);
+        }
+
+        if (typeof targetUserId !== "string") {
+            return handleError2(
+                res,
+                "Invalid request user.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
         // Fetch user with Store Join
         const [targetUser] = await db
             .select({
@@ -333,7 +345,6 @@ export const getUserById = async (req: CustomRequest, res: Response) => {
  */
 export const deleteUser = async (req: CustomRequest, res: Response) => {
     try {
-        const { id: targetUserId } = req.params;
         const currentUser = req.user?.data;
 
         // Check for authentication
@@ -343,6 +354,20 @@ export const deleteUser = async (req: CustomRequest, res: Response) => {
                 "Authentication required.",
                 StatusCodes.UNAUTHORIZED,
             );
+        }
+
+        const { id: targetUserId } = req.params;
+
+        if (!targetUserId) {
+            return handleError2(res, 'Missing user in request path.', StatusCodes.BAD_REQUEST);
+        }
+
+        if (typeof targetUserId !== "string") {
+            return handleError2(
+                res,
+                "Invalid request user.",
+                StatusCodes.BAD_REQUEST,
+            )
         }
 
         // Prevent users from deleting themselves
@@ -593,6 +618,19 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
         const { storeIds } = validated;
 
         const { id: targetUserId } = req.params;
+
+        if (!targetUserId) {
+            return handleError2(res, 'Missing user in request path.', StatusCodes.BAD_REQUEST);
+        }
+
+        if (typeof targetUserId !== "string") {
+            return handleError2(
+                res,
+                "Invalid request user.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
         const updateData = req.body;
 
         // Fetch the user to be updated from within the accessible store network
@@ -730,8 +768,6 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
  */
 export const changeUserStore = async (req: CustomRequest, res: Response) => {
     try {
-        const { targetUserId } = req.params;
-        const { newStoreId } = req.body;
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
 
@@ -740,6 +776,21 @@ export const changeUserStore = async (req: CustomRequest, res: Response) => {
                 res,
                 "Authenticated user is not associated with any store.",
                 StatusCodes.UNAUTHORIZED,
+            )
+        }
+
+        const { targetUserId } = req.params;
+        const { newStoreId } = req.body;
+
+        if (!targetUserId) {
+            return handleError2(res, 'Missing user in request path.', StatusCodes.BAD_REQUEST);
+        }
+
+        if (typeof targetUserId !== "string") {
+            return handleError2(
+                res,
+                "Invalid request user.",
+                StatusCodes.BAD_REQUEST,
             )
         }
 

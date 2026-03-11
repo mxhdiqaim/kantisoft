@@ -12,7 +12,6 @@ import {RawMaterialStatusEnum, UserRoleEnum} from "../../types/enums";
 import {determineFinalStoreId} from "../../utils/store-permission-utils";
 import { validateStoreAndExtractDates } from "../../utils/validate-store-dates";
 
-
 /**
  * @description Retrieves a list of all Raw Materials, including their presentation unit data.
  * @route GET /api/v1/raw-materials
@@ -142,6 +141,14 @@ export const getSingleRawMaterial = async (req: CustomRequest, res: Response) =>
             'Missing Raw Material ID in request path.',
             StatusCodes.BAD_REQUEST
         );
+    }
+
+    if (typeof rawMaterialId !== "string") {
+        return handleError2(
+            res,
+            "Invalid raw material.",
+            StatusCodes.BAD_REQUEST,
+        )
     }
 
     try {
@@ -358,6 +365,14 @@ export const updateRawMaterial = async (req: CustomRequest, res: Response) => {
         return handleError2(res, 'Something went wrong!', StatusCodes.BAD_REQUEST);
     }
 
+    if (typeof rawMaterialId !== "string") {
+        return handleError2(
+            res,
+            "Invalid raw material.",
+            StatusCodes.BAD_REQUEST,
+        )
+    }
+
     try {
         const existingMaterial = await db.query.rawMaterials.findFirst({
             where: and(
@@ -492,6 +507,14 @@ export const deleteRawMaterial = async (req: CustomRequest, res: Response) => {
         return handleError2(res, 'Missing Raw Material', StatusCodes.BAD_REQUEST);
     }
 
+    if (typeof rawMaterialId !== "string") {
+        return handleError2(
+            res,
+            "Invalid raw material.",
+            StatusCodes.BAD_REQUEST,
+        )
+    }
+
     try {
         const [result] = await db.update(rawMaterials)
             .set({
@@ -574,8 +597,24 @@ export const recoverRawMaterial = async (req: CustomRequest, res: Response) => {
     const storeId = currentUser?.storeId;
     const { id: rawMaterialId } = req.params;
 
-    if (!storeId || !rawMaterialId) {
-        return handleError2(res, 'Store or Raw Material not found.', StatusCodes.BAD_REQUEST);
+    if (!storeId) {
+        return handleError2(
+            res,
+            'User does not have an associated store.',
+            StatusCodes.BAD_REQUEST
+        )
+    }
+
+    if (!rawMaterialId) {
+        return handleError2(res, 'Raw Material not found.', StatusCodes.BAD_REQUEST);
+    }
+
+    if (typeof rawMaterialId !== "string") {
+        return handleError2(
+            res,
+            "Invalid raw material.",
+            StatusCodes.BAD_REQUEST,
+        )
     }
 
     const userRole = currentUser?.role;

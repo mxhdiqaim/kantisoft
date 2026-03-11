@@ -129,6 +129,23 @@ export const updateCategory = async (req: CustomRequest, res: Response) => {
         const { name, description } = req.body;
         const { targetStoreId } = req.query;
 
+        if (!categoryId) {
+            return handleError2(
+                res,
+                "Category is required.",
+                StatusCodes.BAD_REQUEST,
+            );
+        }
+
+        if (typeof categoryId !== "string") {
+            return handleError2(
+                res,
+                "Invalid category.",
+                StatusCodes.BAD_REQUEST,
+            );
+        }
+
+
         // Determine permission-based Store ID
         const finalStoreId = await determineFinalStoreId(
             res,
@@ -226,6 +243,22 @@ export const deleteCategory = async (req: CustomRequest, res: Response) => {
 
         const { id: categoryId } = req.params;
         const { targetStoreId } = req.query;
+
+        if (!categoryId) {
+            return handleError2(
+                res,
+                "Category is required.",
+                StatusCodes.BAD_REQUEST,
+            );
+        }
+
+        if (typeof categoryId !== "string") {
+            return handleError2(
+                res,
+                "Invalid category.",
+                StatusCodes.BAD_REQUEST,
+            );
+        }
 
         // Determine permission-based Store ID
         const finalStoreId = await determineFinalStoreId(

@@ -94,6 +94,22 @@ export const getMenuItemById = async (req: CustomRequest, res: Response) => {
         const userRole = currentUser?.role;
         const { id: menuItemId } = req.params;
 
+        if (!menuItemId) {
+            return handleError2(
+                res,
+                "Menu item is required.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
+        if (typeof menuItemId !== "string") {
+            return handleError2(
+                res,
+                "Invalid menu item.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
         if (!userStoreId) {
             return handleError2(res, "Store association required.", StatusCodes.FORBIDDEN);
         }
@@ -165,6 +181,22 @@ export const getMenuItemCost = async (req: CustomRequest, res: Response) => {
     }
 
     const { id: menuItemId } = req.params;
+
+    if (!menuItemId) {
+        return handleError2(
+            res,
+            "Menu item is required.",
+            StatusCodes.BAD_REQUEST,
+        )
+    }
+
+    if (typeof menuItemId !== "string") {
+        return handleError2(
+            res,
+            "Invalid menu item.",
+            StatusCodes.BAD_REQUEST,
+        )
+    }
 
     if (!menuItemId) {
         return handleError2(res, 'Something went wrong.', StatusCodes.BAD_REQUEST);
@@ -373,6 +405,22 @@ export const updateMenuItem = async (req: CustomRequest, res: Response) => {
         const { id: menuItemId } = req.params;
         const { name, price, itemCode, sku, categoryId, /*isAvailable */ } = req.body;
 
+        if (!menuItemId) {
+            return handleError2(
+                res,
+                "Menu item is required.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
+        if (typeof menuItemId !== "string") {
+            return handleError2(
+                res,
+                "Invalid menu item.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
         const currentItem = await db.query.menuItems.findFirst({
             where: and(eq(menuItems.id, menuItemId), eq(menuItems.storeId, finalStoreId)),
         });
@@ -495,8 +543,24 @@ export const deleteMenuItem = async (req: CustomRequest, res: Response) => {
             );
         }
 
-        const { id } = req.params;
+        const { id: menuItemId } = req.params;
         const { targetStoreId } = req.query;
+
+        if (!menuItemId) {
+            return handleError2(
+                res,
+                "Menu item is required.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
+        if (typeof menuItemId !== "string") {
+            return handleError2(
+                res,
+                "Invalid menu item.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
 
         // Determine permission-based Store ID
         const finalStoreId = await determineFinalStoreId(
@@ -513,7 +577,7 @@ export const deleteMenuItem = async (req: CustomRequest, res: Response) => {
             .delete(menuItems)
             .where(
                 and(
-                    eq(menuItems.id, id),
+                    eq(menuItems.id, menuItemId),
                     eq(menuItems.storeId, finalStoreId)
                 )
             )

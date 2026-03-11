@@ -28,6 +28,14 @@ export const getStockTransactions = async (req: CustomRequest, res: Response) =>
         return handleError2(res, 'Missing rawMaterialId in request path.', StatusCodes.BAD_REQUEST);
     }
 
+    if (typeof rawMaterialId !== "string") {
+        return handleError2(
+            res,
+            "Invalid raw material.",
+            StatusCodes.BAD_REQUEST,
+        )
+    }
+
     try {
         // Multi-Join Query
         // Join Transactions -> RawMaterials -> Unit -> Users

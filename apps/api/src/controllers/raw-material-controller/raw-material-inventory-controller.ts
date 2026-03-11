@@ -133,6 +133,14 @@ export const getCurrentRawMaterialInventoryStock = async (req: CustomRequest, re
             return handleError2(res, 'Missing Raw Material.', StatusCodes.BAD_REQUEST);
         }
 
+        if (typeof rawMaterialId !== "string") {
+            return handleError2(
+                res,
+                "Invalid raw material.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
         // Multi-Join Query
         // Join Inventory -> RawMaterial -> UnitOfMeasurement
         const [stockRecord] = await db.select({
@@ -378,7 +386,15 @@ export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: 
         const { minStockLevel } = req.body;
 
         if (!inventoryRecordId) {
-            return handleError2(res, 'Raw Material is required', StatusCodes.BAD_REQUEST);
+            return handleError2(res, 'Inventory Record is required', StatusCodes.BAD_REQUEST);
+        }
+
+        if (typeof inventoryRecordId !== "string") {
+            return handleError2(
+                res,
+                "Invalid Inventory Record.",
+                StatusCodes.BAD_REQUEST,
+            )
         }
 
         if (minStockLevel === undefined || typeof minStockLevel !== 'number' || minStockLevel < 0) {
@@ -448,6 +464,14 @@ export const stockInRawMaterialInventory = async (req: CustomRequest, res: Respo
         if (!unitOfMeasurementId) return handleError2(res, 'Unit is required', StatusCodes.BAD_REQUEST);
         if (!source) return handleError2(res, 'Source is required', StatusCodes.BAD_REQUEST);
         if (!quantity || quantity <= 0) return handleError2(res, 'Quantity must be > 0', StatusCodes.BAD_REQUEST);
+
+        if (typeof rawMaterialId !== "string") {
+            return handleError2(
+                res,
+                "Invalid raw material.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
 
         const finalStoreId = await determineFinalStoreId(res, currentUser.role as UserRoleEnum, storeId, req.query.targetStoreId as string);
         if (!finalStoreId) return;

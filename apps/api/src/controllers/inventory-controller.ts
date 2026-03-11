@@ -104,6 +104,22 @@ export const getTransactionsByMenuItem = async (
         const { id: menuItemId } = req.params;
         const { startDate, endDate, targetStoreId } = req.query;
 
+        if (!menuItemId) {
+            return handleError2(
+                res,
+                "Menu item is required.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
+        if (typeof menuItemId !== "string") {
+            return handleError2(
+                res,
+                "Invalid menu item.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
         const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
         if (!finalStoreId) return;  // Error already handled
 
@@ -282,6 +298,22 @@ export const getInventoryByMenuItem = async (
 
         const { id: menuItemId } = req.params;
         const { targetStoreId } = req.query;
+
+        if (!menuItemId) {
+            return handleError2(
+                res,
+                "Menu item is required.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
+        if (typeof menuItemId !== "string") {
+            return handleError2(
+                res,
+                "Invalid menu item.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
 
         const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
         if (!finalStoreId) return;  // Error already handled
@@ -529,6 +561,22 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
 
         const { id: menuItemId } = req.params;
         const { targetStoreId } = req.query;
+
+        if (!menuItemId) {
+            return handleError2(
+                res,
+                "Menu item is required.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
+        if (typeof menuItemId !== "string") {
+            return handleError2(
+                res,
+                "Invalid menu item.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
 
         const { quantityAdjustment, transactionType, notes } = req.body; // quantityAdjustment is the delta (+ or -)
 
@@ -789,6 +837,23 @@ export const discontinueInventory = async (
         const { id: menuItemId } = req.params;
         const { targetStoreId } = req.query;
 
+        if (!menuItemId) {
+            return handleError2(
+                res,
+                "Menu item is required.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
+        if (typeof menuItemId !== "string") {
+            return handleError2(
+                res,
+                "Invalid menu item.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
+
         const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
         if (!finalStoreId) return;  // Error already handled
 
@@ -862,6 +927,23 @@ export const deleteInventoryRecord = async (
 
         const { id: menuItemId } = req.params;
         const { targetStoreId } = req.query;
+
+        if (!menuItemId) {
+            return handleError2(
+                res,
+                "Menu item is required.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
+        if (typeof menuItemId !== "string") {
+            return handleError2(
+                res,
+                "Invalid menu item.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
 
         const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
         if (!finalStoreId) return;  // Error already handled
@@ -986,6 +1068,22 @@ export const continueInventory = async (
 
         const { id: menuItemId } = req.params;
         const { targetStoreId } = req.query;
+
+        if (!menuItemId) {
+            return handleError2(
+                res,
+                "Menu item is required.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
+
+        if (typeof menuItemId !== "string") {
+            return handleError2(
+                res,
+                "Invalid menu item.",
+                StatusCodes.BAD_REQUEST,
+            )
+        }
 
         const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
         if (!finalStoreId) return;

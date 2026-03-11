@@ -45,6 +45,15 @@ export const getBillOfMaterials = async (req: CustomRequest, res: Response) => {
         );
     }
 
+    // OR even better, a check:
+    if (typeof menuItemId !== 'string') {
+        return handleError2(
+            res,
+            'Invalid Menu Item',
+            StatusCodes.BAD_REQUEST
+        );
+    }
+
     try {
         // Multi-Join Query
         // Join BOM -> RawMaterials -> UnitOfMeasurement (the raw material's default presentation unit)
@@ -150,7 +159,7 @@ export const defineBillOfMaterials = async (req: CustomRequest, res: Response) =
         const { id: menuItemId } = req.params;
         const bomItems: BomItemRequest[] = req.body; // Expecting an array of raw material inputs
 
-        if (!menuItemId) {
+        if (!menuItemId || typeof menuItemId !== 'string') {
             return handleError2(res, 'Something went wrong', StatusCodes.BAD_REQUEST);
         }
 
