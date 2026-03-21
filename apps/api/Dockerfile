@@ -26,7 +26,7 @@ COPY apps/api/package.json ./apps/api/
 COPY packages/ui/package.json ./packages/ui/
 
 # Now it will work because the workspace is complete
-RUN bun install --prod --frozen-lockfile
+RUN bun install --prod --no-save
 
 # Copy build artifacts (Keep this as you have it)
 COPY --from=Build /usr/src/app/apps/api/dist ./apps/api/dist
