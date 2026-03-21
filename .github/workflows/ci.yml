@@ -1,18 +1,45 @@
-# Example snippet for your GitHub Action
+name: CI
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
 jobs:
   build:
+    name: Compile and Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repo
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Important: fetch all history so Turbo can calculate changes
+          fetch-depth: 0 # Essential for Turbo to compare changes between commits
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
 
-      - name: Install
+      - name: Install Dependencies
         run: bun install
 
-      # Turbo only builds what is affected by the changes in this commit
+      # This step sets up the Turbo cache so your CI doesn't
+      # rebuild things that haven't changed in previous runs.
+      - name: Turborepo Cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Lint
+        run: bunx turbo lint
+
+      - name: Type Check
+        run: bunx turbo check-types
+
+      # The "Smart" Build: Only builds packages affected by your PR
       - name: Build
-        run: bunx turbo build --filter=[origin/main]
+        run: bunx turbo build --cache-dir=".turbo" --filter=[${{ github.event.pull_request.base.sha || 'HEAD~1' }}...HEAD]
