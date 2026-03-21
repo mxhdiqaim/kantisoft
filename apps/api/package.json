@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "dist/main.js",
   "scripts": {
-    "dev": "bun --watch ./main.ts",
+    "dev": "bun --watch --preload ./src/config/instrument.ts ./main.ts",
     "build": "bun run tsc",
     "start": "bun dist/main.js",
     "lint": "bun eslint .",
@@ -20,7 +20,6 @@
   "description": "",
   "dependencies": {
     "@sentry/bun": "^10.42.0",
-    "@sentry/node": "^10.43.0",
     "@sentry/tracing": "^7.120.4",
     "bcrypt": "^6.0.0",
     "connect-pg-simple": "^10.0.0",

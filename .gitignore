@@ -17,7 +17,7 @@
 .DS_Store
 
 # environment varibales
-.env
+apps/api/.env
 .env.local
 .env.prod
 .env.test
