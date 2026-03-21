@@ -2,22 +2,36 @@ import db from "./";
 import { users } from "../schema/users-schema";
 import { passwordHashService } from "../service/password-hash-service";
 import { UserRoleEnum, UserStatusEnum } from "../types/enums";
+import {getEnvVariable} from "../utils";
 
 (async () => {
-    console.log("🌱 Seeding Super Admin...");
+    try {
+        console.log("🌱 Checking for Super Admin...");
 
-    const hashedPassword = passwordHashService.hash("Rhyzobium36.");
+        const FIRST_NAME = "System";
+        const LAST_NAME = "SuperAdmin";
+        const EMAIL = getEnvVariable("SUPER_ADMIN_EMAIL");
+        const PASSWORD = getEnvVariable("SUPER_ADMIN_PASSWORD");
 
-    await db.insert(users).values({
-        firstName: "System",
-        lastName: "SuperAdmin",
-        email: "admin@kantisoft.com",
-        password: hashedPassword,
-        role: UserRoleEnum.SUPER_ADMIN, // Matches your camelCase pgEnum
-        status: UserStatusEnum.ACTIVE,
-        storeId: null, // Super admins have no store
-    });
+        const hashedPassword = passwordHashService.hash(PASSWORD);
 
-    console.log("✅ Super Admin created. You can now log in.");
-    process.exit(0);
+        await db.insert(users)
+            .values({
+                firstName: FIRST_NAME,
+                lastName: LAST_NAME,
+                email: EMAIL,
+                password: hashedPassword,
+                role: UserRoleEnum.SUPER_ADMIN,
+                status: UserStatusEnum.ACTIVE,
+                storeId: null,
+            })
+            // This is the magic line that prevents "Already exists" errors
+            .onConflictDoNothing({ target: users.email });
+
+        console.log("✅ Seed process finished (Admin created or already exists).");
+    } catch (error) {
+        console.error("❌ Seeding failed:", error);
+    } finally {
+        process.exit(0);
+    }
 })();

@@ -6,12 +6,6 @@ if [ -z "$DB_CONNECTION_STRING" ]; then
   exit 1
 fi
 
-#if [ -z "$REDIS_HOST" ] || [ -z "$REDIS_PORT" ]; then
-#  echo "Error: REDIS_HOST or REDIS_PORT environment variables are not set."
-#  exit 1
-#fi
-
-
 echo "Waiting for the database..."
 
 # Use the connection string for the readiness check
@@ -20,20 +14,7 @@ until pg_isready -d "$DB_CONNECTION_STRING"; do
   sleep 1
 done
 
-echo "Postgres is ready."
-
-
-## REDIS WAIT
-#echo "Waiting for Redis at $REDIS_HOST:$REDIS_PORT..."
-## Netcat (nc) check if a TCP connection is possible
-## Note: This checks port access, not authentication. The API client must handle auth.
-#until nc -z "$REDIS_HOST" "$REDIS_PORT"; do
-#  echo "Redis is unavailable - sleeping"
-#  sleep 1
-#done
-#echo "Redis is ready."
-
-echo "Running migrations..."
+echo "Postgres is ready. Running migrations..."
 
 # Run database migrations using the compiled JavaScript file
 bun run migrate:prod

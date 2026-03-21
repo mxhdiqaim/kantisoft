@@ -12,6 +12,8 @@
     "migrate:prod": "bun dist/src/db/migrate.js",
     "seed": "bun src/db/seed.ts",
     "seed:prod": "bun dist/src/db/seed.js",
+    "seed-super-admin": "bun src/db/seed-super-admin.ts",
+    "seed-super-admin:prod": "bun dist/src/db/seed-super-admin.js",
     "predeploy": "bun run migrate:prod"
   },
   "keywords": [],

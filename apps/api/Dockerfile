@@ -1,40 +1,38 @@
-# Stage 1 Build env
+# Stage 1: Build
 FROM oven/bun:1-alpine AS Build
 
 WORKDIR /usr/src/app
 
-COPY package.json bun.lock ./
+# Copy root files to resolve workspaces
+COPY package.json bun.lock turbo.json ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/ui/package.json ./packages/ui/
 
-# Install all dependencies (including devDep for building)
 RUN bun install
 
 COPY . .
 
-# Build the TypeScript code into a /dist dir
-RUN bun run build
+RUN bunx turbo build --filter=api
 
-# Stage 2 Production Runtime env
-# Use bun image for running
+# Stage 2: Serve
 FROM oven/bun:1-alpine AS serve
 
 WORKDIR /usr/src/app
 
-# Install PostgreSQL client tools for pg_isready
-RUN apk add postgresql-client netcat-openbsd
+RUN apk add --no-cache postgresql-client netcat-openbsd
 
-COPY package.json bun.lock ./
+# Copy configs for production runtime
+COPY package.json bun.lock turbo.json ./
+COPY apps/api/package.json ./apps/api/
 
-# Install only production dep
 RUN bun install --prod --frozen-lockfile
 
-# Copy the built application files from the 'build' stage
-COPY --from=Build /usr/src/app/dist ./dist
+# Copy build artifacts
+COPY --from=Build /usr/src/app/apps/api/dist ./apps/api/dist
+COPY --from=Build /usr/src/app/apps/api/migrations ./apps/api/migrations
+COPY --from=Build /usr/src/app/apps/api/entrypoint.prod.sh ./apps/api/entrypoint.prod.sh
 
-# Copy the migrations folder
-COPY --from=Build /usr/src/app/migrations ./migrations
-
-# Copy the prod entrypoint script
-COPY entrypoint.prod.sh .
+WORKDIR /usr/src/app/apps/api
 RUN chmod +x entrypoint.prod.sh
 
 EXPOSE 5473
