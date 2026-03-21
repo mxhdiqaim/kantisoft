@@ -24,6 +24,7 @@ RUN apk add --no-cache postgresql-client netcat-openbsd
 # Copy configs for production runtime
 COPY package.json bun.lock turbo.json ./
 COPY apps/api/package.json ./apps/api/
+COPY packages/ui/package.json ./packages/ui/
 
 RUN bun install --prod --frozen-lockfile
 
