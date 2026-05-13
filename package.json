@@ -3,8 +3,14 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "turbo run build",
     "dev": "turbo dev --parallel",
+    "dev:tui": "turbo dev --parallel --ui=tui",
+    "dev:app": "turbo dev --parallel --filter=api --filter=web-app",
+    "dev:admin-full": "turbo dev --parallel --filter=api --filter=admin-fe",
+    "dev:api": "turbo dev --filter=api",
+    "dev:web": "turbo dev --filter=web-app",
+    "dev:admin": "turbo dev --filter=admin-fe",
+    "build": "turbo run build",
     "lint": "turbo run lint"
   },
   "devDependencies": {

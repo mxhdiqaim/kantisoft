@@ -40,11 +40,17 @@ bun install
 
 ### Development Scripts
 
-Leverage Turborepo to run commands across all workspaces simultaneously.
+Leverage Turborepo to run commands across all workspaces simultaneously. You can run these scripts using `bun run <script_name>`.
 
-*   `bun run dev`: Starts all applications in development mode parallelly.
-*   `bun run build`: Builds all applications and packages.
-*   `bun run lint`: Runs ESLint across the codebase.
+*   **`bun run dev`**: Starts all applications (`api`, `web-app`, `admin-fe`) in development mode parallelly.
+*   **`bun run dev:tui`**: Starts all applications in development mode with Turborepo's terminal user interface (TUI).
+*   **`bun run dev:app`**: Starts only the backend API (`api`) and the primary user-facing frontend (`web-app`) in parallel.
+*   **`bun run dev:admin-full`**: Starts only the backend API (`api`) and the administrative dashboard (`admin-fe`) in parallel.
+*   **`bun run dev:api`**: Starts only the core backend API service (`api`).
+*   **`bun run dev:web`**: Starts only the primary user-facing frontend (`web-app`).
+*   **`bun run dev:admin`**: Starts only the administrative dashboard (`admin-fe`).
+*   **`bun run build`**: Builds all applications and packages in the monorepo.
+*   **`bun run lint`**: Runs ESLint across the entire codebase to check for linting errors.
 
 ---
 *For more detailed information on a specific app, please refer to the `README.md` inside its respective directory.*
