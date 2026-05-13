@@ -11,16 +11,17 @@ import {SyncProvider} from "@/context/sync-context.tsx";
 
 const VITE_APP_SENTRY_DSN = getEnvVariable("VITE_APP_SENTRY_DSN");
 
-Sentry.init({
-    dsn: VITE_APP_SENTRY_DSN,
-    // tracesSampleRate: 1.0,
-    sendDefaultPii: true,
-    integrations: [
-        Sentry.replayIntegration()
-    ],
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0
-});
+// Only initialise Sentry if we are in production and have a DSN
+if (import.meta.env.PROD && VITE_APP_SENTRY_DSN) {
+    Sentry.init({
+        dsn: VITE_APP_SENTRY_DSN,
+        enabled: import.meta.env.PROD,
+        sendDefaultPii: true,
+        integrations: [Sentry.replayIntegration()],
+        replaysSessionSampleRate: 0.1,
+        replaysOnErrorSampleRate: 1.0,
+    });
+}
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
