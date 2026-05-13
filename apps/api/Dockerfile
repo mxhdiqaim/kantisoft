@@ -8,8 +8,9 @@ COPY package.json bun.lock turbo.json ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/ui/package.json ./packages/ui/
 
-RUN bun install
+RUN bun install --prod --no-save --no-frozen-lockfile
 
+# Copy the rest of the monorepo
 COPY . .
 
 RUN bunx turbo build --filter=api
@@ -18,17 +19,18 @@ RUN bunx turbo build --filter=api
 FROM oven/bun:1-alpine AS serve
 WORKDIR /usr/src/app
 
+# Install postgres client for health checks/migrations if needed
 RUN apk add --no-cache postgresql-client netcat-openbsd
 
-# Copy configs for production runtime
+# Copy workspace configs
 COPY package.json bun.lock turbo.json ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/ui/package.json ./packages/ui/
 
-# Now it will work because the workspace is complete
+# Install only production dependencies
 RUN bun install --prod --no-save
 
-# Copy build artifacts (Keep this as you have it)
+# Copy build artifacts from Stage 1
 COPY --from=Build /usr/src/app/apps/api/dist ./apps/api/dist
 COPY --from=Build /usr/src/app/apps/api/migrations ./apps/api/migrations
 COPY --from=Build /usr/src/app/apps/api/entrypoint.prod.sh ./apps/api/entrypoint.prod.sh
