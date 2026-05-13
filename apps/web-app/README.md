@@ -1,6 +1,6 @@
-# Kantisoft Frontend
+# Kantisoft Frontend (Web App)
 
-A modern Point of Sale (POS) frontend for stores and restaurants, built with React and TypeScript.
+A modern Point of Sale (POS) frontend for stores and restaurants. The Kantisoft Web App is the primary client-facing application of the Kantisoft monorepo. It is a feature-rich Single Page Application (SPA) built with React 19 and Vite.
 
 ## About Kantisoft
 
@@ -8,6 +8,18 @@ A modern Point of Sale (POS) frontend for stores and restaurants, built with Rea
 or **"Shop"**.
 
 - **Pronunciation:** "Kahn-tee" (with 'a' as in "car", and 't' as in "to").
+
+## 🛠 Tech Stack & Key Features
+
+- **Core**: React 19, Vite, TypeScript
+- **Styling & UI**: Material UI (MUI v7), Emotion, and the shared `@kantisoft/ui` package.
+- **State & Routing**: React Redux, React Router v7.
+- **Forms**: React Hook Form with Yup validation.
+- **Offline Storage**: Dexie (IndexedDB wrapper) for offline capabilities and caching.
+- **Data Visualization**: Recharts for charts and `react-countup` for data presentation.
+- **Internationalization**: `i18next` & `react-i18next`.
+- **Utilities**: Data export via `xlsx` and `file-saver`, PDF/print generation via `react-to-print`.
+- **Monitoring**: Sentry (`@sentry/react`).
 
 ## Features
 
@@ -34,41 +46,22 @@ src/
 
 ## Getting Started
 
-1. **Clone the repository:**
+### Prerequisites
+Dependencies are managed at the monorepo root via Bun. Ensure you have installed them from the root directory:
+```bash
+bun install
+```
 
-    ```bash
-    git clone <repository-url>
-    cd <repository-name>
-    ```
+### Development
+To start the Vite development server across the whole monorepo, run this from the monorepo root:
+```bash
+bun run dev
+```
 
-2. **Start the development server with Docker:**
+If you only want to start the Web App, navigate to `apps/web-app` and run:
+```bash
+bun run dev
+```
 
-    ```bash
-    docker compose up
-    ```
-*Ensure you have Docker installed and running.*
-
-Or install it without Docker (pnpm) highly discouraged
-
-3. **Install dependencies:**
-
-    ```bash
-    pnpm install
-    ```
-
-4. **Start the development server:**
-
-    ```bash
-    pnpm dev
-    ```
-
-4. **Open your browser:**
-   Visit [http://localhost:3000](http://localhost:3000)
-
-<!-- ## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
-
-## License
-
-MIT License -->
+### Architecture Context
+This frontend connects directly to the Kantisoft `api` backend. It maintains visual consistency with the rest of the ecosystem by consuming the shared `@kantisoft/ui` package from the monorepo.
