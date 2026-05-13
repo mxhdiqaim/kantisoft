@@ -35,11 +35,12 @@ jobs:
             ${{ runner.os }}-turbo-
 
       - name: Lint
+        # Adding --continue ensures one failure doesn't stop others if you want full reports
         run: bunx turbo lint
 
       - name: Type Check
         run: bunx turbo check-types
 
-      # The "Smart" Build: Only builds packages affected by your PR
       - name: Build
-        run: bunx turbo build --cache-dir=".turbo" --filter=[${{ github.event.pull_request.base.sha || 'HEAD~1' }}...HEAD]
+        # Removed the brackets and simplified the filter logic
+        run: bunx turbo build --cache-dir=".turbo" --filter="..."
