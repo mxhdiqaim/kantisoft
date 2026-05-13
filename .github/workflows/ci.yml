@@ -43,4 +43,4 @@ jobs:
 
       - name: Build
         # Removed the brackets and simplified the filter logic
-        run: bunx turbo build --cache-dir=".turbo" --filter="..."
+        run: bunx turbo build --cache-dir=".turbo"
