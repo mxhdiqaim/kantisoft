@@ -1,10 +1,10 @@
-import {type Control, useWatch} from "react-hook-form";
+import { type Control, type FieldValues, type Path, useWatch } from "react-hook-form";
 import type {UnitOfMeasurementType} from "@/types/unit-of-measurement-types.ts";
 
-export const useMeasurementSymbol = (
-    control: Control<any>,
+export const useMeasurementSymbol = <T extends FieldValues>(
+    control: Control<T>,
     measurements: UnitOfMeasurementType[],
-    fieldName: string = "unitOfMeasurementId"
+    fieldName: Path<T> = "unitOfMeasurementId" as Path<T>,
 ) => {
     const selectedUnitId = useWatch({
         control,
