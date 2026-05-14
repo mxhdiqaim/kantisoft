@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "dist/main.js",
   "scripts": {
-    "dev": "bun --watch --preload ./src/config/instrument.ts ./main.ts",
+    "dev": "bun --watch ./main.ts",
     "build": "bun run tsc",
-    "start": "bun dist/main.js",
+    "start": "bun run dist/index.js",
     "lint": "bun eslint .",
     "generate": "bun drizzle-kit generate",
     "migrate": "bun src/db/migrate.ts",
