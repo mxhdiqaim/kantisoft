@@ -24,7 +24,12 @@ echo "Migrations complete. Seeding data..."
 # Run database seeds
 bun run seed:prod
 
-echo "Seeding complete. Starting the API server..."
+echo "Seeding complete. Starting the API server on port $PORT..."
+
+# Double check that PORT is not empty for Render
+if [ -z "$PORT" ]; then
+  export PORT=10000
+fi
 
 # Use exec to ensure the 'bun start' process keeps the container alive
 exec bun start
