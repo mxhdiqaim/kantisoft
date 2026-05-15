@@ -22,7 +22,7 @@ bun run migrate:prod
 echo "Migrations complete. Seeding data..."
 
 # Run database seeds
-bun run seed:prod
+#bun run seed:prod
 
 echo "Seeding complete. Starting the API server on port $PORT..."
 
