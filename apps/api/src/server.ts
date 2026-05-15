@@ -14,10 +14,10 @@ export const app = express();
 
 app.set("trust proxy", 1);
 
-const NODE_ENV = getEnvVariable("NODE_ENV");
-const LANDING_PAGE = getEnvVariable("LANDING_PAGE");
-const APP_URL = getEnvVariable("APP_URL");
 const ADMIN_APP = getEnvVariable("ADMIN_APP");
+const APP_URL = getEnvVariable("APP_URL");
+const LANDING_PAGE = getEnvVariable("LANDING_PAGE");
+const NODE_ENV = getEnvVariable("NODE_ENV");
 
 const URL =
     NODE_ENV === "development"
