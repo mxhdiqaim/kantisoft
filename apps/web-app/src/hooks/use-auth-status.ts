@@ -1,18 +1,19 @@
 import { useHealthCheckQuery } from "@/store/slice";
-import { selectCurrentToken } from "@/store/slice/auth-slice";
-import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/store/slice/auth-slice";
+import { useAppSelector } from "@/store";
 
 export const useAuthStatus = () => {
-    const token = useSelector(selectCurrentToken);
+    const currentUser = useAppSelector(selectCurrentUser);
 
-    // The 'skip' option prevents the query from running if there's no token.
+    // We only perform the health check if we have a user in Redux
+    // and Firebase is initialized.
     const { isLoading, isSuccess, isError } = useHealthCheckQuery(undefined, {
-        skip: !token,
+        skip: !currentUser, // Skip if no user data in Redux
     });
 
-    // If there is a token, we use the health check query to validate it.
-    // isLoading: The query is in flight.
-    // isAuthenticated: The query succeeded, meaning the token is valid.
-    // isServerOk: The query did not result in a network error.
-    return { isLoading, isAuthenticated: isSuccess, isServerOk: !isError };
+    return {
+        isLoading,
+        isAuthenticated: !!currentUser && isSuccess,
+        isServerOk: !isError,
+    };
 };

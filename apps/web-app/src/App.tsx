@@ -1,22 +1,23 @@
 import AuthGuard from "@/components/auth/auth-guard.tsx";
 import Layout from "@/components/layout";
-import useNotifier from "@/hooks/useNotifier";
 import ErrorFallback from "@/pages/feedbacks/fallback";
 import {appRoutes, type AppRouteType} from "@/routes";
 import GuardedRoute from "@/routes/guarded-route";
-import {useAppSelector} from "@/store";
-import {useLogoutMutation} from "@/store/slice";
-import {selectCurrentUser, selectTokenExp} from "@/store/slice/auth-slice";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { logOut, selectCurrentUser } from "@/store/slice/auth-slice";
 import {ThemeProvider} from "../../../packages/ui/src/theme";
 import {ScrollToTop} from "@/utils";
-import {type JSX, useEffect, useRef} from "react";
+import { type JSX, useEffect, useState } from "react";
 import {ErrorBoundary} from "react-error-boundary";
 import {useTranslation} from "react-i18next";
 import {useSelector} from "react-redux";
-import {BrowserRouter as Router, Route, Routes, useNavigate} from "react-router-dom";
+import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
 import {FullscreenProvider} from "./context/fullscreen-context";
 import {selectActiveStore} from "./store/slice/store-slice";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/config/firebase";
 import "@/config/i18next-config";
+import Spinner from "@/components/feedback/spinner.tsx";
 
 // Recursive function to render routes and their nested children
 const renderRoutes = (routes: AppRouteType[], parentPath = ""): JSX.Element[] => {
@@ -54,49 +55,27 @@ const renderRoutes = (routes: AppRouteType[], parentPath = ""): JSX.Element[] =>
 
 // Component with router-dependent logic
 const AppContent = () => {
-    const {i18n} = useTranslation();
-    const navigate = useNavigate();
-    const notify = useNotifier();
-
+    const { i18n } = useTranslation();
+    const dispatch = useAppDispatch();
     const activeStore = useSelector(selectActiveStore);
     const currentUser = useAppSelector(selectCurrentUser);
 
-    const [logout] = useLogoutMutation();
-    const tokenExp = useSelector(selectTokenExp);
+    const [isFirebaseReady, setIsFirebaseReady] = useState(false);
 
-    const isLoggingOutRef = useRef(false);
-
-    // Effect to handle session timeout
     useEffect(() => {
-        if (!tokenExp || !currentUser) {
-            return;
-        }
-
-        const handleSessionTimeout = async () => {
-            if (isLoggingOutRef.current) {
-                return;
+        // Listen for Firebase to read IndexedDB and determine session status
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            if (!firebaseUser) {
+                // If Firebase says no session exists, force clear Redux state
+                dispatch(logOut());
             }
-            isLoggingOutRef.current = true;
+            // Firebase has completed its boot cycle!
+            setIsFirebaseReady(true);
+        });
 
-            try {
-                await logout({}).unwrap();
-            } catch (error) {
-                console.error("Server logout failed on session timeout:", error);
-                notify("Your session has expired. Please log in again.", "warning");
-            }
-        };
-
-        const timeRemaining = tokenExp - Date.now();
-
-        if (timeRemaining <= 0) {
-            handleSessionTimeout();
-            return;
-        }
-
-        const timerId = setTimeout(handleSessionTimeout, timeRemaining);
-
-        return () => clearTimeout(timerId);
-    }, [tokenExp, currentUser, logout, navigate, notify]);
+        // Cleanup listener on unmounting
+        return () => unsubscribe();
+    }, [dispatch]);
 
     // Effect of language change
     useEffect(() => {
@@ -110,11 +89,16 @@ const AppContent = () => {
         }
     }, [activeStore, i18n]);
 
+    // Block the rest of the app from rendering or making queries until Firebase is ready
+    if (!isFirebaseReady) {
+        return <Spinner />;
+    }
+
     return (
         <>
-            <ScrollToTop/>
+            <ScrollToTop />
             <ErrorBoundary FallbackComponent={ErrorFallback}>
-                <AuthGuard currentUser={currentUser}/>
+                <AuthGuard currentUser={currentUser} />
                 <Routes>{renderRoutes(appRoutes)}</Routes>
             </ErrorBoundary>
         </>

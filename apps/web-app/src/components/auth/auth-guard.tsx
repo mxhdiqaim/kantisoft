@@ -13,44 +13,22 @@ const AuthGuard = ({currentUser}: Props) => {
 
     const publicAuthRoutes = ["/login", "/register", "/forget-password"];
 
-    // The path the user was trying to access before being redirected to log in
-    const from = location.state?.from?.pathname || "/";
-
-
     useEffect(() => {
-        // If a user is logged in AND they are on a public auth page, redirect them.
+        // If logged in and on public page, redirect to dashboard
         if (currentUser && publicAuthRoutes.includes(location.pathname)) {
-            // Fallback to the dashboard.
-            const destinationRoute = appRoutes.find(
-                (route) =>
-                    route.authGuard && // Check for PROTECTED routes
-                    route.roles?.includes(currentUser.role) &&
-                    route.title === "dashboard",
-            );
-
-            // If a previous location exists in history, go back to it.
-            if (window.history.length > 2) {
-                // eslint-disable-next-line
-                // @ts-ignore
-                navigate(-1, {replace: true});
-            } else if (destinationRoute) {
-                // If there's no history, redirect to their default route (dashboard).
-                navigate(destinationRoute.to, {replace: true});
-            } else {
-                // Final fallback if something goes wrong, redirect to the homepage.
-                navigate(from, {replace: true});
-            }
+            navigate("/dashboard", { replace: true });
         }
 
-        // If a user is NOT logged in and tries to access a protected route, redirect to log in.
-        const currentRoute = appRoutes.find(route => route.to === location.pathname);
-        if (currentRoute?.authGuard && !currentUser) {
+        // If NOT logged in and on a protected route, redirect to log in
+        // We find the route by matching the path
+        const isProtectedRoute = appRoutes.some((route) => route.to === location.pathname && route.authGuard !== false);
+
+        if (isProtectedRoute && !currentUser) {
             navigate("/login", {
                 replace: true,
-                state: {from: location}
+                state: { from: location },
             });
         }
-
     }, [currentUser, location.pathname, navigate]);
 
     return null;
