@@ -3,7 +3,6 @@ import * as Sentry from "@sentry/bun";
 import cors from "cors";
 import express from "express";
 import morgan from "morgan";
-import "./config/auth-config";
 import path from "path";
 import routes from "./routes";
 import { getEnvVariable } from "./utils";

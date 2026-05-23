@@ -1,5 +1,4 @@
 import express from "express";
-// import { protectedRoute } from "../config/jwt-config";
 import * as controller from "../controllers/user-controller";
 import { isAuthorized } from "../middlewares/is-authorised-middleware";
 import { UserRoleEnum } from "../types/enums";
