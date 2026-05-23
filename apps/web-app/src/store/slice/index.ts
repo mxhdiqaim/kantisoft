@@ -76,25 +76,18 @@ const baseUrl = getEnvVariable("VITE_APP_API_URL");
 // Create a new base query that wraps fetchBaseQuery
 const baseQuery = fetchBaseQuery({
     baseUrl,
-    prepareHeaders: async (headers, { getState }) => {
+    prepareHeaders: async (headers) => {
         // Try to get the absolute freshest token from Firebase natively
         if (auth.currentUser) {
             try {
                 // getIdToken() automatically refreshes if expired!
                 const freshToken = await auth.currentUser.getIdToken();
                 headers.set("authorization", `Bearer ${freshToken}`);
-                return headers;
             } catch (error) {
                 console.error("Failed to get Firebase token", error);
             }
         }
 
-        // Get the token from the auth state
-        const token = (getState() as RootState).auth.token;
-
-        if (token) {
-            headers.set("authorization", `Bearer ${token}`);
-        }
         return headers;
     },
 });

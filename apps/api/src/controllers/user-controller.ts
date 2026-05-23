@@ -1055,7 +1055,6 @@ export const loginUser = async (req: Request, res: Response) => {
         try {
             decodedToken = await admin.auth().verifyIdToken(token);
         } catch (error) {
-            // Log the failure asynchronously
             ActivityLogService.logSystemEvent({
                 userId: null as unknown as string,
                 storeId: null as unknown as string,
@@ -1077,8 +1076,8 @@ export const loginUser = async (req: Request, res: Response) => {
 
         const { uid, email } = decodedToken;
 
-        // Fetch full User Data + Store Data using Drizzle
-        const [foundUser] = await db
+        // Fetch user dynamically by firebaseUid
+        let userRecord = await db
             .select({
                 id: users.id,
                 firstName: users.firstName,
@@ -1088,6 +1087,7 @@ export const loginUser = async (req: Request, res: Response) => {
                 role: users.role,
                 status: users.status,
                 storeId: users.storeId,
+                firebaseUid: users.firebaseUid,
                 createdAt: users.createdAt,
                 lastModified: users.lastModified,
                 store: {
@@ -1098,42 +1098,72 @@ export const loginUser = async (req: Request, res: Response) => {
             })
             .from(users)
             .leftJoin(stores, eq(users.storeId, stores.id))
-            .where(
-                and(
-                    and(
-                        eq(users.firebaseUid, uid),
-                        eq(users.email, String(email)),
-                    ),
-                    ne(users.status, UserStatusEnum.DELETED),
-                    ne(users.status, UserStatusEnum.BANNED),
-                    ne(users.status, UserStatusEnum.INACTIVE),
-                ),
-            );
+            .where(eq(users.firebaseUid, uid))
+            .then((response) => response[0]);
 
-        // Handle Account Status Restrictions
-        if (!foundUser) {
-            // Check if they exist but are banned/deleted
-            const [restrictedUser] = await db
+        // Migration Bridge for legacy users matching by email
+        if (!userRecord && email) {
+            userRecord = await db
                 .select({
                     id: users.id,
-                    storeId: users.storeId,
+                    firstName: users.firstName,
+                    lastName: users.lastName,
                     email: users.email,
+                    phone: users.phone,
+                    role: users.role,
+                    status: users.status,
+                    storeId: users.storeId,
+                    firebaseUid: users.firebaseUid,
+                    createdAt: users.createdAt,
+                    lastModified: users.lastModified,
+                    store: {
+                        id: stores.id,
+                        name: stores.name,
+                        location: stores.location,
+                    },
                 })
                 .from(users)
-                .where(eq(users.firebaseUid, uid));
+                .leftJoin(stores, eq(users.storeId, stores.id))
+                .where(eq(users.email, String(email)))
+                .then((response) => response[0]);
 
-            if (restrictedUser) {
-                ActivityLogService.logSystemEvent({
-                    userId: restrictedUser.id,
-                    storeId: restrictedUser.storeId || null,
-                    entityId: restrictedUser.id,
-                    entityType: ActivityEntityTypeEnum.USER,
-                    action: "USER_LOGIN_FAILED",
-                    actorName: "Restricted User",
-                    targetName: restrictedUser.email,
-                    details: `Login blocked for ${restrictedUser.email}. Account is Banned, Inactive, or Deleted.`,
-                }).catch((err) => console.error("Logging failed", err));
+            // If found by email, link their account by backfilling the firebaseUid
+            if (userRecord && !userRecord.firebaseUid) {
+                await db
+                    .update(users)
+                    .set({ firebaseUid: uid })
+                    .where(eq(users.id, userRecord.id));
+
+                // Update local memory reference
+                userRecord.firebaseUid = uid;
             }
+        }
+
+        // Handle Completely Unregistered Accounts
+        if (!userRecord) {
+            return handleError2(
+                res,
+                "Access denied. Account unregistered.",
+                StatusCodes.UNAUTHORIZED,
+            );
+        }
+
+        // 4. Handle Account Status Restrictions (Banned, Deleted, Inactive)
+        if (
+            userRecord.status === UserStatusEnum.DELETED ||
+            userRecord.status === UserStatusEnum.BANNED ||
+            userRecord.status === UserStatusEnum.INACTIVE
+        ) {
+            ActivityLogService.logSystemEvent({
+                userId: userRecord.id,
+                storeId: userRecord.storeId || null,
+                entityId: userRecord.id,
+                entityType: ActivityEntityTypeEnum.USER,
+                action: "USER_LOGIN_FAILED",
+                actorName: `${userRecord.firstName} ${userRecord.lastName}`,
+                targetName: userRecord.email,
+                details: `Login blocked for ${userRecord.email}. Account status is ${userRecord.status}.`,
+            }).catch((err) => console.error("Logging failed", err));
 
             return handleError2(
                 res,
@@ -1142,24 +1172,23 @@ export const loginUser = async (req: Request, res: Response) => {
             );
         }
 
-        // Log the Success
+        // Log Successful Login
         await ActivityLogService.logSystemEvent({
-            userId: foundUser.id,
-            storeId: String(foundUser.storeId),
-            entityId: foundUser.id,
+            userId: userRecord.id,
+            storeId: String(userRecord.storeId),
+            entityId: userRecord.id,
             entityType: ActivityEntityTypeEnum.USER,
             action: "USER_LOGIN",
-            actorName: `${foundUser.firstName} ${foundUser.lastName}`,
-            targetName: foundUser.email,
+            actorName: `${userRecord.firstName} ${userRecord.lastName}`,
+            targetName: userRecord.email,
             details: `User logged in successfully. IP: ${req.ip}`,
             isRead: false,
         }).catch((err) => console.error("Logging success failed", err));
 
         // Return the Profile and Token to the Frontend
-        // We echo the token back just in case the frontend relies on `res.data.token`
         return res.status(StatusCodes.OK).json({
             token: token,
-            user: foundUser,
+            user: userRecord,
         });
     } catch (error) {
         return handleError2(

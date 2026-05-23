@@ -43,17 +43,33 @@ const Login = () => {
             const token = await userCredential.user.getIdToken();
 
             // Send the token to your Kantisoft Backend
+            // Note: Earlier we updated authSlice to remove token,
+            // but your RTK mutation still accepts it payload-style here!
             await login({ token }).unwrap();
 
             navigate("/", { replace: true });
         } catch (err) {
-
             if (auth.currentUser) {
                 await signOut(auth);
             }
-            // Use the getApiError helper for clean, consistent error parsing
+
             const defaultMessage = "Something went wrong. Please try again.";
-            const errorMessage = err.code ? err.message : getApiError(err, defaultMessage).message;
+            let errorMessage: string;
+
+            // Type guard: Safe narrowing to verify if err is an object containing 'code'
+            if (err && typeof err === "object" && "code" in err) {
+                const firebaseError = err as { code: string; message: string };
+
+                // Clean up cryptic Firebase auth codes into human-friendly language
+                if (firebaseError.code === "auth/invalid-credential") {
+                    errorMessage = "Invalid email or password.";
+                } else {
+                    errorMessage = firebaseError.message;
+                }
+            } else {
+                // Fall back to your backend API parser if it's an RTK Query error
+                errorMessage = getApiError(err, defaultMessage).message;
+            }
 
             notify(errorMessage, "error");
 

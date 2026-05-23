@@ -1,29 +1,39 @@
-import {appRoutes} from "@/routes";
-import type {UserType} from "@/types/user-types";
-import {useEffect} from "react";
-import {useLocation, useNavigate} from "react-router-dom";
+import { appRoutes } from "@/routes";
+import { type UserType } from "@/types/user-types";
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface Props {
-    currentUser: UserType;
+    currentUser: UserType | null;
 }
 
-const AuthGuard = ({currentUser}: Props) => {
+const AuthGuard = ({ currentUser }: Props) => {
     const navigate = useNavigate();
     const location = useLocation();
 
     const publicAuthRoutes = ["/login", "/register", "/forget-password"];
 
     useEffect(() => {
-        // If logged in and on public page, redirect to dashboard
+        // If the user is logged in AND attempting to access a public auth page
         if (currentUser && publicAuthRoutes.includes(location.pathname)) {
-            navigate("/dashboard", { replace: true });
+            // Check if the user's role has explicit clearance for the dashboard
+            const dashboardRoute = appRoutes.find((route) => route.to === "/dashboard");
+            const hasDashboardAccess = dashboardRoute?.roles?.includes(currentUser.role);
+
+            if (hasDashboardAccess) {
+                navigate("/dashboard", { replace: true });
+            } else {
+                // Cashiers/Guests default to Home ("/") which safely figures out their landing view
+                navigate("/", { replace: true });
+            }
+            return;
         }
 
-        // If NOT logged in and on a protected route, redirect to log in
-        // We find the route by matching the path
-        const isProtectedRoute = appRoutes.some((route) => route.to === location.pathname && route.authGuard !== false);
+        // If the user is NOT logged in and tries to access a protected route
+        const isPublicRoute = publicAuthRoutes.includes(location.pathname);
 
-        if (isProtectedRoute && !currentUser) {
+        // If it's not a public auth route and we have no user, redirect to login
+        if (!isPublicRoute && !currentUser) {
             navigate("/login", {
                 replace: true,
                 state: { from: location },

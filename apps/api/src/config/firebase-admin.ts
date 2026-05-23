@@ -3,7 +3,7 @@ import { getEnvVariable } from "../utils";
 
 const projectId = getEnvVariable("FIREBASE_PROJECT_ID");
 const clientEmail = getEnvVariable("FIREBASE_CLIENT_EMAIL");
-const privateKey = getEnvVariable("FIREBASE_PRIVATE_KEY")?.replace(/\\n/g, "\n");
+const privateKey = getEnvVariable("FIREBASE_PRIVATE_KEY").replace(/\\n/g, "\n");
 
 export const initializeFirebase = () => {
     if (admin.apps.length === 0) {
