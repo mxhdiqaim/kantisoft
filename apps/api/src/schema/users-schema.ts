@@ -28,11 +28,12 @@ export const userStatusEnum = pgEnum("status", [
 export const users = pgTable(
     "users",
     {
-        id: uuid("id").defaultRandom().primaryKey(), // Using UUIDs for IDs
+        id: uuid("id").defaultRandom().primaryKey(),
+        firebaseUid: text("firebaseUid").unique(),
         firstName: text("firstName").notNull(),
         lastName: text("lastName").notNull(),
         email: text("email").notNull(),
-        password: text("password").notNull(),
+        password: text("password"),
         phone: text("phone"),
         role: userRoleEnum("role").notNull().default("user"), // 'manager' || 'admin' || 'user' || 'guest'
         status: userStatusEnum("status").notNull().default("active"), // 'active' || 'inactive' || 'deleted'

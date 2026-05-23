@@ -1,7 +1,10 @@
 import express from "express";
 import * as controller from "../controllers/user-controller";
-import { registerManagerAndStore } from "../controllers/user-controller";
-import { protectedRoute } from "../config/jwt-config";
+import {
+    loginUser,
+    registerManagerAndStore,
+} from "../controllers/user-controller";
+import {authenticateToken} from "../middlewares/auth.middleware";
 
 const router = express.Router();
 
@@ -9,9 +12,9 @@ const router = express.Router();
 router.post("/register", registerManagerAndStore);
 
 // Public route for logging in
-router.post("/login", controller.loginUser);
+router.post("/login", loginUser);
 
 // Protected route for logging out
-router.post("/logout", protectedRoute, controller.logoutUser);
+router.post("/logout", authenticateToken, controller.logoutUser);
 
 export default router;

@@ -2,13 +2,11 @@ import "./config/instrument";
 import * as Sentry from "@sentry/bun";
 import cors from "cors";
 import express from "express";
-import http from "http";
 import morgan from "morgan";
-import "./config/auth-config";
 import path from "path";
-import configureSession from "./config/session-config";
 import routes from "./routes";
 import { getEnvVariable } from "./utils";
+import {initializeFirebase} from "./config/firebase-admin";
 
 export const app = express();
 
@@ -32,8 +30,7 @@ const URL =
               `https://${ADMIN_APP}`,
           ];
 
-/** Session */
-configureSession(app);
+initializeFirebase();
 
 const corsOptions = {
     origin: URL, // FE origins
@@ -79,4 +76,4 @@ app.use((req, res, next) => {
 });
 
 /** Server */
-export default http.createServer(app);
+// export default http.createServer(app);

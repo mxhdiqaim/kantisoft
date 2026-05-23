@@ -1,56 +1,78 @@
-import {getApiError} from "@/helpers/get-api-error";
+// apps/web-app/src/pages/auth/login.tsx
+
+import { getApiError } from "@/helpers/get-api-error";
 import useNotifier from "@/hooks/useNotifier";
-import {useLoginMutation} from "@/store/slice";
-import {loginUserType, type LoginUserType} from "@/types/user-types";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {Box, FormControl, FormHelperText, Grid, Link as MuiLink, Typography, useTheme} from "@mui/material";
+import { useLoginMutation } from "@/store/slice";
+import { loginUserType, type LoginUserType } from "@/types/user-types";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { Box, FormControl, FormHelperText, Grid, Link as MuiLink, Typography, useTheme } from "@mui/material";
 
-import {Controller, useForm} from "react-hook-form";
-import {Link, useNavigate} from "react-router-dom";
+import { Controller, useForm } from "react-hook-form";
+import { Link, useNavigate } from "react-router-dom";
 import CustomButton from "@/components/ui/button.tsx";
-import {StyledTextField} from "@/components/ui";
+import { StyledTextField } from "@/components/ui";
 
-const defaultValues = {
-    email: "",
-    password: "",
-};
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { auth } from "@/config/firebase";
 
 const Login = () => {
     const theme = useTheme();
     const navigate = useNavigate();
-    // const location = useLocation();
     const notify = useNotifier();
-    const [login, {isLoading: loading}] = useLoginMutation();
-
-    // Get the path the user was trying to access before being redirected
-    // const from = location.state?.from?.pathname || "/";
+    const [login, { isLoading: isBackendLoading }] = useLoginMutation();
 
     const {
         control,
         setError,
         handleSubmit,
-        formState: {errors},
+        formState: { errors, isSubmitting },
     } = useForm({
-        defaultValues,
+        defaultValues: {
+            email: "",
+            password: "",
+        },
         mode: "onBlur",
-        resolver: yupResolver(loginUserType)
+        resolver: yupResolver(loginUserType),
     });
+
+    const isLoading = isSubmitting || isBackendLoading;
 
     const onSubmit = async (data: LoginUserType) => {
         try {
-            await login(data).unwrap();
+            // Authenticate with Firebase
+            const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
 
-            // On successful login, navigate to the intended page or a default.
-            navigate("/", {replace: true});
+            // Get the ID Token
+            const token = await userCredential.user.getIdToken();
+
+            // Send the token to your Kantisoft Backend
+            await login({ token }).unwrap();
+
+            navigate("/", { replace: true });
         } catch (err) {
-            // 2. Use the getApiError helper for clean, consistent error parsing
+            if (auth.currentUser) {
+                await signOut(auth);
+            }
+
             const defaultMessage = "Something went wrong. Please try again.";
-            const apiError = getApiError(err, defaultMessage);
+            let errorMessage: string;
 
-            notify(apiError.message, "error");
+            if (err && typeof err === "object" && "code" in err) {
+                const firebaseError = err as { code: string; message: string };
 
-            setError("email", {type: "manual"});
-            setError("password", {type: "manual"});
+                if (firebaseError.code === "auth/invalid-credential") {
+                    errorMessage = "Invalid email or password.";
+                } else {
+                    errorMessage = firebaseError.message;
+                }
+            } else {
+                errorMessage = getApiError(err, defaultMessage).message;
+            }
+
+            notify(errorMessage, "error");
+
+            setError("email", { type: "manual" });
+            setError("password", { type: "manual" });
         }
     };
 
@@ -63,7 +85,7 @@ const Login = () => {
                     justifyContent: "center",
                     alignItems: "center",
                     minHeight: "100vh",
-                    m: {xs: 3, md: 0},
+                    m: { xs: 3, md: 0 },
                 }}
             >
                 <Box
@@ -75,8 +97,8 @@ const Login = () => {
                         },
                     }}
                 >
-                    <Box sx={{textAlign: "center", mb: 5}}>
-                        <Typography variant={"h5"} sx={{fontWeight: 500}}>
+                    <Box sx={{ textAlign: "center", mb: 5 }}>
+                        <Typography variant={"h5"} sx={{ fontWeight: 500 }}>
                             Welcome Back! Login to your account
                         </Typography>
                     </Box>
@@ -85,8 +107,8 @@ const Login = () => {
                             <Controller
                                 name="email"
                                 control={control}
-                                rules={{required: true}}
-                                render={({field: {value, onChange, onBlur}}) => (
+                                rules={{ required: true }}
+                                render={({ field: { value, onChange, onBlur } }) => (
                                     <StyledTextField
                                         autoFocus
                                         label="Email"
@@ -95,20 +117,20 @@ const Login = () => {
                                         onChange={onChange}
                                         error={Boolean(errors.email)}
                                         placeholder="example@gmail.com"
-                                        sx={{borderRadius: theme.borderRadius.small}}
+                                        sx={{ borderRadius: theme.borderRadius.small }}
                                     />
                                 )}
                             />
                             {errors.email && (
-                                <FormHelperText sx={{color: "error.main"}}>{errors.email.message}</FormHelperText>
+                                <FormHelperText sx={{ color: "error.main" }}>{errors.email.message}</FormHelperText>
                             )}
                         </FormControl>
-                        <FormControl fullWidth sx={{mt: 3}}>
+                        <FormControl fullWidth sx={{ mt: 3 }}>
                             <Controller
                                 name="password"
                                 control={control}
-                                rules={{required: true}}
-                                render={({field: {value, onChange, onBlur}}) => (
+                                rules={{ required: true }}
+                                render={({ field: { value, onChange, onBlur } }) => (
                                     <StyledTextField
                                         value={value}
                                         onBlur={onBlur}
@@ -117,14 +139,12 @@ const Login = () => {
                                         id="auth-login-v2-password"
                                         error={Boolean(errors.password)}
                                         type={"password"}
-                                        sx={{borderRadius: theme.borderRadius.small}}
+                                        sx={{ borderRadius: theme.borderRadius.small }}
                                     />
                                 )}
                             />
                             {errors.password && (
-                                <FormHelperText sx={{color: "error.main"}} id="">
-                                    {errors.password.message}
-                                </FormHelperText>
+                                <FormHelperText sx={{ color: "error.main" }}>{errors.password.message}</FormHelperText>
                             )}
                         </FormControl>
                         <Box
@@ -134,22 +154,23 @@ const Login = () => {
                                 my: 3,
                             }}
                         >
-                            <MuiLink component={Link} to="/forget-password" sx={{textDecoration: "none"}}>
+                            <MuiLink component={Link} to="/forget-password" sx={{ textDecoration: "none" }}>
                                 Forgot Password?
                             </MuiLink>
                         </Box>
-                        <Box sx={{display: "flex", justifyContent: "center", mt: 3}}>
+                        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+                            {/* 3. Update title and disabled state to use the combined isLoading flag */}
                             <CustomButton
-                                title={loading ? "Logging in..." : "Login"}
+                                title={isLoading ? "Logging in..." : "Login"}
                                 type="submit"
                                 variant="contained"
                                 sx={{
-                                    width: "100%", // Make the button full width
+                                    width: "100%",
                                     color: "#fff",
                                     p: 2,
                                     mb: 2,
                                 }}
-                                disabled={loading}
+                                disabled={isLoading}
                             />
                         </Box>
                     </Box>

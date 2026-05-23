@@ -22,6 +22,20 @@
       "when": 1772324476249,
       "tag": "0002_smooth_marvel_boy",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778948946968,
+      "tag": "0003_numerous_omega_red",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1779532434387,
+      "tag": "0004_sour_chimera",
+      "breakpoints": true
     }
   ]
 }

@@ -69,19 +69,25 @@ import type {
     ProductionWastageSummaryType
 } from "@/types/production-types.ts";
 import type {CategoryType, CreateCategoryType} from "@/types/categories-types.ts";
-// import {localDb} from "@/db/local-db.ts";
+import { auth } from "@/config/firebase";
 
 const baseUrl = getEnvVariable("VITE_APP_API_URL");
 
 // Create a new base query that wraps fetchBaseQuery
 const baseQuery = fetchBaseQuery({
     baseUrl,
-    prepareHeaders: (headers, {getState}) => {
-        // Get the token from the auth state
-        const token = (getState() as RootState).auth.token;
-        if (token) {
-            headers.set("authorization", `Bearer ${token}`);
+    prepareHeaders: async (headers) => {
+        // Try to get the absolute freshest token from Firebase natively
+        if (auth.currentUser) {
+            try {
+                // getIdToken() automatically refreshes if expired!
+                const freshToken = await auth.currentUser.getIdToken();
+                headers.set("authorization", `Bearer ${freshToken}`);
+            } catch (error) {
+                console.error("Failed to get Firebase token", error);
+            }
         }
+
         return headers;
     },
 });
@@ -186,7 +192,7 @@ export const apiSlice = createApi({
         "FinishedGoodsProfitMargin",
         "InventoryHealthValuation",
         "Category",
-        "Categories"
+        "Categories",
     ],
     endpoints: (builder) => ({
         // -------------------------
@@ -200,14 +206,17 @@ export const apiSlice = createApi({
         // Auth Endpoints
         // -------------------------
         login: builder.mutation({
-            query: (credentials) => ({
+            query: ({ token }) => ({
                 url: "/auth/login",
                 method: "POST",
-                body: credentials,
+                // Pass the token in the Authorization header
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
             }),
-            async onQueryStarted(_args, {dispatch, queryFulfilled}) {
+            async onQueryStarted(_args, { dispatch, queryFulfilled }) {
                 try {
-                    const {data} = await queryFulfilled;
+                    const { data } = await queryFulfilled;
 
                     // On success, dispatch setCredentials to store token and user
                     dispatch(setCredentials(data));
@@ -222,7 +231,7 @@ export const apiSlice = createApi({
                 url: "/auth/logout",
                 method: "POST",
             }),
-            async onQueryStarted(_args, {dispatch, queryFulfilled}) {
+            async onQueryStarted(_args, { dispatch, queryFulfilled }) {
                 try {
                     await queryFulfilled;
                     // Dispatch the logOut action to clear credentials and localStorage
@@ -262,12 +271,12 @@ export const apiSlice = createApi({
         }),
 
         getActivities: builder.query<ActivityLogEntry[], { limit?: number; offset?: number }>({
-            query: ({limit = 20, offset = 0} = {}) => ({
+            query: ({ limit = 20, offset = 0 } = {}) => ({
                 url: "/activities",
-                params: {limit, offset},
+                params: { limit, offset },
             }),
             transformResponse: (response: ActivityLogResponse) => response.data,
-            providesTags: [{type: "ActivityLog", id: "LIST"}],
+            providesTags: [{ type: "ActivityLog", id: "LIST" }],
         }),
 
         // -------------------------
@@ -276,15 +285,15 @@ export const apiSlice = createApi({
         getSalesSummary: builder.query<SaleSummarySchemaType, TimePeriod>({
             query: (timePeriod = "today") => ({
                 url: "/dashboard/sales-summary",
-                params: {timePeriod},
+                params: { timePeriod },
             }),
             providesTags: ["Summary"],
         }),
 
         getTopSells: builder.query<TopSellsItemType[], TopSellsParamType>({
-            query: ({timePeriod = "today", limit = 5, orderBy = "quantity", startDate = "", endDate = ""}) => ({
+            query: ({ timePeriod = "today", limit = 5, orderBy = "quantity", startDate = "", endDate = "" }) => ({
                 url: "/dashboard/top-sells",
-                params: {timePeriod, limit, orderBy, startDate, endDate},
+                params: { timePeriod, limit, orderBy, startDate, endDate },
             }),
             providesTags: ["TopSells"],
         }),
@@ -292,13 +301,13 @@ export const apiSlice = createApi({
         getSalesTrend: builder.query<SalesTrendType[], TimePeriod>({
             query: (timePeriod = "today") => ({
                 url: "/dashboard/sales-trend",
-                params: {timePeriod},
+                params: { timePeriod },
             }),
             providesTags: ["SalesTrend"],
         }),
 
         getFinishedGoodsProfitMargin: builder.query<FinishedGoodsProfitMarginType[], void>({
-            query: () => '/dashboard/finished-goods-profit-margin',
+            query: () => "/dashboard/finished-goods-profit-margin",
 
             providesTags: ["FinishedGoodsProfitMargin"],
         }),
@@ -306,11 +315,10 @@ export const apiSlice = createApi({
         getInventoryValuationHealth: builder.query<InventoryValuationHealthType, TimePeriod>({
             query: (timePeriod = "today") => ({
                 url: "/dashboard/inventory-health-valuation",
-                params: {timePeriod},
+                params: { timePeriod },
             }),
             providesTags: ["InventoryHealthValuation"],
         }),
-
 
         // -------------------------
         // Order Endpoints
@@ -318,17 +326,17 @@ export const apiSlice = createApi({
         getOrdersByPeriod: builder.query<OrdersByPeriodResponse, TimePeriod>({
             query: (timePeriod = "today") => ({
                 url: "/orders/by-period",
-                params: {timePeriod},
+                params: { timePeriod },
             }),
             providesTags: (result) =>
-                result && 'data' in result && Array.isArray(result.data)
-                    ? [...result.data.map(({id}) => ({type: "Order" as const, id})), {type: "Order", id: "LIST"}]
-                    : [{type: "Order", id: "LIST"}],
+                result && "data" in result && Array.isArray(result.data)
+                    ? [...result.data.map(({ id }) => ({ type: "Order" as const, id })), { type: "Order", id: "LIST" }]
+                    : [{ type: "Order", id: "LIST" }],
         }),
 
         getOrderById: builder.query<SingleOrderType, string>({
             query: (id) => `/orders/${id}`,
-            providesTags: (_result, _error, id) => [{type: "Order", id}],
+            providesTags: (_result, _error, id) => [{ type: "Order", id }],
         }),
 
         createOrder: builder.mutation<SingleOrderType, Omit<CreateOrderType, "amountReceived">>({
@@ -337,10 +345,14 @@ export const apiSlice = createApi({
                 method: "POST",
                 body: newOrder,
             }),
-            invalidatesTags: [{type: "Order", id: "LIST"}, {type: "MenuItem", id: "LIST"}, {
-                type: "Inventories",
-                id: "LIST"
-            }],
+            invalidatesTags: [
+                { type: "Order", id: "LIST" },
+                { type: "MenuItem", id: "LIST" },
+                {
+                    type: "Inventories",
+                    id: "LIST",
+                },
+            ],
         }),
 
         // -------------------------
@@ -377,11 +389,8 @@ export const apiSlice = createApi({
 
             providesTags: (result) =>
                 result
-                    ? [
-                        ...result.map(({id}) => ({type: "MenuItem" as const, id})),
-                        {type: "MenuItem", id: "LIST"}
-                    ]
-                    : [{type: "MenuItem", id: "LIST"}],
+                    ? [...result.map(({ id }) => ({ type: "MenuItem" as const, id })), { type: "MenuItem", id: "LIST" }]
+                    : [{ type: "MenuItem", id: "LIST" }],
         }),
 
         createMenuItem: builder.mutation<MenuItemType, CreateMenuItemType>({
@@ -431,7 +440,7 @@ export const apiSlice = createApi({
             //     }
             // },
 
-            invalidatesTags: [{type: "MenuItem", id: "LIST"}],
+            invalidatesTags: [{ type: "MenuItem", id: "LIST" }],
         }),
 
         deleteMenuItem: builder.mutation<void, string>({
@@ -440,13 +449,13 @@ export const apiSlice = createApi({
                 method: "DELETE",
             }),
             invalidatesTags: (_result, _error, id) => [
-                {type: "MenuItem", id},
-                {type: "MenuItem", id: "LIST"}
+                { type: "MenuItem", id },
+                { type: "MenuItem", id: "LIST" },
             ],
         }),
 
         updateMenuItem: builder.mutation<MenuItemType, Partial<MenuItemType> & Pick<MenuItemType, "id">>({
-            query: ({id, ...patch}) => ({
+            query: ({ id, ...patch }) => ({
                 url: `/menu-items/${id}`,
                 method: "PATCH",
                 body: patch,
@@ -480,9 +489,9 @@ export const apiSlice = createApi({
             //     }
             // },
 
-            invalidatesTags: (_result, _error, {id}) => [
-                {type: "MenuItem", id},
-                {type: "MenuItem", id: "LIST"},
+            invalidatesTags: (_result, _error, { id }) => [
+                { type: "MenuItem", id },
+                { type: "MenuItem", id: "LIST" },
             ],
         }),
 
@@ -493,8 +502,8 @@ export const apiSlice = createApi({
             query: () => "/users",
             providesTags: (result) =>
                 result
-                    ? [...result.map(({id}) => ({type: "User" as const, id})), {type: "User", id: "LIST"}]
-                    : [{type: "User", id: "LIST"}],
+                    ? [...result.map(({ id }) => ({ type: "User" as const, id })), { type: "User", id: "LIST" }]
+                    : [{ type: "User", id: "LIST" }],
         }),
         createUser: builder.mutation<UserType, CreateUserType>({
             query: (newUser) => ({
@@ -502,28 +511,28 @@ export const apiSlice = createApi({
                 method: "POST",
                 body: newUser,
             }),
-            invalidatesTags: [{type: "User", id: "LIST"}],
+            invalidatesTags: [{ type: "User", id: "LIST" }],
         }),
         getUserById: builder.query<UserType, string>({
             query: (id) => `/users/${id}`,
-            providesTags: (_result, _error, id) => [{type: "User", id}],
+            providesTags: (_result, _error, id) => [{ type: "User", id }],
         }),
         deleteUser: builder.mutation<{ message: string }, string>({
             query: (id) => ({
                 url: `/users/${id}`,
                 method: "DELETE",
             }),
-            invalidatesTags: [{type: "User", id: "LIST"}],
+            invalidatesTags: [{ type: "User", id: "LIST" }],
         }),
         updateUser: builder.mutation<UserType, Partial<UserType> & Pick<UserType, "id">>({
-            query: ({id, ...patch}) => ({
+            query: ({ id, ...patch }) => ({
                 url: `/users/${id}`,
                 method: "PATCH",
                 body: patch,
             }),
-            invalidatesTags: (_result, _error, {id}) => [
-                {type: "User", id},
-                {type: "User", id: "LIST"},
+            invalidatesTags: (_result, _error, { id }) => [
+                { type: "User", id },
+                { type: "User", id: "LIST" },
             ],
         }),
 
@@ -536,14 +545,14 @@ export const apiSlice = createApi({
         }),
 
         changeUserStore: builder.mutation<UserType, { id: string; newStoreId: string }>({
-            query: ({id, newStoreId}) => ({
+            query: ({ id, newStoreId }) => ({
                 url: `/users/${id}/change-store`,
                 method: "PATCH",
-                body: {newStoreId},
+                body: { newStoreId },
             }),
-            invalidatesTags: (_result, _error, {id}) => [
-                {type: "User", id},
-                {type: "User", id: "LIST"},
+            invalidatesTags: (_result, _error, { id }) => [
+                { type: "User", id },
+                { type: "User", id: "LIST" },
             ],
         }),
 
@@ -555,12 +564,12 @@ export const apiSlice = createApi({
             transformResponse: (response: PaginatedStoreResponse) => response.data,
             providesTags: (result) =>
                 result
-                    ? [...result.map(({id}) => ({type: "Store" as const, id})), {type: "Store", id: "LIST"}]
-                    : [{type: "Store", id: "LIST"}],
+                    ? [...result.map(({ id }) => ({ type: "Store" as const, id })), { type: "Store", id: "LIST" }]
+                    : [{ type: "Store", id: "LIST" }],
         }),
         getStoreById: builder.query<StoreType, string>({
             query: (id) => `/stores/${id}`,
-            providesTags: (_result, _error, id) => [{type: "Store", id}],
+            providesTags: (_result, _error, id) => [{ type: "Store", id }],
         }),
         createStore: builder.mutation<StoreType, CreateStoreType>({
             query: (newStore) => ({
@@ -568,17 +577,17 @@ export const apiSlice = createApi({
                 method: "POST",
                 body: newStore,
             }),
-            invalidatesTags: [{type: "Store", id: "LIST"}],
+            invalidatesTags: [{ type: "Store", id: "LIST" }],
         }),
         updateStore: builder.mutation<StoreType, Partial<StoreType> & Pick<StoreType, "id">>({
-            query: ({id, ...patch}) => ({
+            query: ({ id, ...patch }) => ({
                 url: `/stores/${id}`,
                 method: "PATCH",
                 body: patch,
             }),
-            invalidatesTags: (_result, _error, {id}) => [
-                {type: "Store", id},
-                {type: "Store", id: "LIST"},
+            invalidatesTags: (_result, _error, { id }) => [
+                { type: "Store", id },
+                { type: "Store", id: "LIST" },
             ],
         }),
         deleteStore: builder.mutation<{ message: string }, string>({
@@ -586,7 +595,7 @@ export const apiSlice = createApi({
                 url: `/stores/${id}`,
                 method: "DELETE",
             }),
-            invalidatesTags: [{type: "Store", id: "LIST"}],
+            invalidatesTags: [{ type: "Store", id: "LIST" }],
         }),
 
         // -------------------------
@@ -620,36 +629,45 @@ export const apiSlice = createApi({
             providesTags: (result) =>
                 result
                     ? [
-                        ...result.map(({menuItemId}) => ({type: "Inventories" as const, id: menuItemId})),
-                        {type: "Inventories", id: "LIST"},
-                        "Inventories"
-                    ]
-                    : [{type: "Inventories", id: "LIST"}, "Inventories"],
+                          ...result.map(({ menuItemId }) => ({ type: "Inventories" as const, id: menuItemId })),
+                          { type: "Inventories", id: "LIST" },
+                          "Inventories",
+                      ]
+                    : [{ type: "Inventories", id: "LIST" }, "Inventories"],
         }),
 
-        getTransactionsByMenuItem: builder.query<InventoryTransactionType[], {
-            menuItemId: string;
-            startDate?: string;
-            endDate?: string
-        }>({
-            query: ({menuItemId, ...params}) => ({
+        getTransactionsByMenuItem: builder.query<
+            InventoryTransactionType[],
+            {
+                menuItemId: string;
+                startDate?: string;
+                endDate?: string;
+            }
+        >({
+            query: ({ menuItemId, ...params }) => ({
                 url: `/inventory/transactions/${menuItemId}`,
                 params,
             }),
             providesTags: (result) =>
                 result
-                    ? [...result.map(({id}) => ({
-                        type: "SingleInventoryTransaction" as const,
-                        id
-                    })), {type: "SingleInventoryTransaction", id: "LIST"}]
-                    : [{type: "SingleInventoryTransaction", id: "LIST"}],
+                    ? [
+                          ...result.map(({ id }) => ({
+                              type: "SingleInventoryTransaction" as const,
+                              id,
+                          })),
+                          { type: "SingleInventoryTransaction", id: "LIST" },
+                      ]
+                    : [{ type: "SingleInventoryTransaction", id: "LIST" }],
         }),
 
-        getInventoryTransactions: builder.query<InventoryTransactionResponseType, {
-            timePeriod?: string;
-            startDate?: string;
-            endDate?: string
-        }>({
+        getInventoryTransactions: builder.query<
+            InventoryTransactionResponseType,
+            {
+                timePeriod?: string;
+                startDate?: string;
+                endDate?: string;
+            }
+        >({
             query: (params) => ({
                 url: "/inventory/transactions",
                 params,
@@ -659,7 +677,7 @@ export const apiSlice = createApi({
 
         getInventoryByMenuItem: builder.query<InventoryType, string>({
             query: (menuItemId) => `/inventory/${menuItemId}`,
-            providesTags: (_result, _error, menuItemId) => [{type: "Inventories", id: menuItemId}],
+            providesTags: (_result, _error, menuItemId) => [{ type: "Inventories", id: menuItemId }],
         }),
 
         createInventoryRecord: builder.mutation<InventoryType, CreateInventoryType>({
@@ -668,24 +686,20 @@ export const apiSlice = createApi({
                 method: "POST",
                 body,
             }),
-            invalidatesTags: [
-                {type: "Inventories", id: "LIST"},
-                {type: "MenuItem", id: "LIST"},
-                "Inventories"
-            ],
+            invalidatesTags: [{ type: "Inventories", id: "LIST" }, { type: "MenuItem", id: "LIST" }, "Inventories"],
         }),
 
         adjustStock: builder.mutation<AdjustStockResponseType, AdjustStockType>({
-            query: ({menuItemId, ...body}) => ({
+            query: ({ menuItemId, ...body }) => ({
                 url: `/inventory/adjust-stock/${menuItemId}`,
                 method: "PATCH",
                 body,
             }),
-            invalidatesTags: (_result, _error, {menuItemId}) => [
-                {type: "Inventories", id: menuItemId},
-                {type: "Inventories", id: "LIST"},
-                {type: "MenuItem", id: "LIST"},
-                "Inventories"
+            invalidatesTags: (_result, _error, { menuItemId }) => [
+                { type: "Inventories", id: menuItemId },
+                { type: "Inventories", id: "LIST" },
+                { type: "MenuItem", id: "LIST" },
+                "Inventories",
             ],
         }),
 
@@ -695,10 +709,10 @@ export const apiSlice = createApi({
                 method: "PATCH",
             }),
             invalidatesTags: (_result, _error, menuItemId) => [
-                {type: "Inventories", id: menuItemId},
-                {type: "Inventories", id: "LIST"},
-                {type: "MenuItem", id: "LIST"},
-                "Inventories"
+                { type: "Inventories", id: menuItemId },
+                { type: "Inventories", id: "LIST" },
+                { type: "MenuItem", id: "LIST" },
+                "Inventories",
             ],
         }),
 
@@ -708,10 +722,10 @@ export const apiSlice = createApi({
                 method: "PATCH",
             }),
             invalidatesTags: (_result, _error, menuItemId) => [
-                {type: "Inventories", id: menuItemId},
-                {type: "Inventories", id: "LIST"},
-                {type: "MenuItem", id: "LIST"},
-                "Inventories"
+                { type: "Inventories", id: menuItemId },
+                { type: "Inventories", id: "LIST" },
+                { type: "MenuItem", id: "LIST" },
+                "Inventories",
             ],
         }),
 
@@ -721,12 +735,11 @@ export const apiSlice = createApi({
                 method: "DELETE",
             }),
             invalidatesTags: (_result, _error, menuItemId) => [
-                {type: "Inventories", id: menuItemId},
-                {type: "Inventories", id: "LIST"},
-                "Inventories"
+                { type: "Inventories", id: menuItemId },
+                { type: "Inventories", id: "LIST" },
+                "Inventories",
             ],
         }),
-
 
         getInventoryAlerts: builder.query<InventoryAlertType, void>({
             query: () => "/inventory/alerts",
@@ -740,11 +753,14 @@ export const apiSlice = createApi({
             query: () => "/unit-of-measurement",
             providesTags: (result) =>
                 result
-                    ? [...result.map(({id}) => ({type: "UnitOfMeasurements" as const, id})), {
-                        type: "UnitOfMeasurements",
-                        id: "LIST"
-                    }]
-                    : [{type: "UnitOfMeasurements", id: "LIST"}],
+                    ? [
+                          ...result.map(({ id }) => ({ type: "UnitOfMeasurements" as const, id })),
+                          {
+                              type: "UnitOfMeasurements",
+                              id: "LIST",
+                          },
+                      ]
+                    : [{ type: "UnitOfMeasurements", id: "LIST" }],
         }),
 
         // -------------------------
@@ -754,16 +770,19 @@ export const apiSlice = createApi({
             query: () => "/raw-materials",
             providesTags: (result) =>
                 result
-                    ? [...result.map(({id}) => ({type: "RawMaterials" as const, id})), {
-                        type: "RawMaterials",
-                        id: "LIST"
-                    }]
-                    : [{type: "RawMaterials", id: "LIST"}],
+                    ? [
+                          ...result.map(({ id }) => ({ type: "RawMaterials" as const, id })),
+                          {
+                              type: "RawMaterials",
+                              id: "LIST",
+                          },
+                      ]
+                    : [{ type: "RawMaterials", id: "LIST" }],
         }),
 
         getSingleRawMaterial: builder.query<RawMaterialType, string>({
             query: (id) => `/raw-materials/${id}`,
-            providesTags: (_result, _error, id) => [{type: "RawMaterial", id}],
+            providesTags: (_result, _error, id) => [{ type: "RawMaterial", id }],
         }),
 
         createRawMaterial: builder.mutation<SingleRawMaterialType, CreateRawMaterialType>({
@@ -772,18 +791,21 @@ export const apiSlice = createApi({
                 method: "POST",
                 body,
             }),
-            invalidatesTags: [{type: "RawMaterials", id: "LIST"}],
+            invalidatesTags: [{ type: "RawMaterials", id: "LIST" }],
         }),
 
-        updateRawMaterial: builder.mutation<UpdateRawMaterialResponseType, Partial<UpdateRawMaterialType> & Pick<RawMaterialType, "id">>({
-            query: ({id, ...patch}) => ({
+        updateRawMaterial: builder.mutation<
+            UpdateRawMaterialResponseType,
+            Partial<UpdateRawMaterialType> & Pick<RawMaterialType, "id">
+        >({
+            query: ({ id, ...patch }) => ({
                 url: `/raw-materials/${id}`,
                 method: "PATCH",
                 body: patch,
             }),
-            invalidatesTags: (_result, _error, {id}) => [
-                {type: "RawMaterial", id},
-                {type: "RawMaterials", id: "LIST"},
+            invalidatesTags: (_result, _error, { id }) => [
+                { type: "RawMaterial", id },
+                { type: "RawMaterials", id: "LIST" },
             ],
         }),
 
@@ -793,8 +815,8 @@ export const apiSlice = createApi({
                 method: "DELETE",
             }),
             invalidatesTags: (_result, _error, id) => [
-                {type: "RawMaterial", id},
-                {type: "RawMaterials", id: "LIST"},
+                { type: "RawMaterial", id },
+                { type: "RawMaterials", id: "LIST" },
             ],
         }),
 
@@ -802,11 +824,14 @@ export const apiSlice = createApi({
             query: () => "/raw-materials/deleted",
             providesTags: (result) =>
                 result
-                    ? [...result.map(({id}) => ({type: "DeletedRawMaterials" as const, id})), {
-                        type: "DeletedRawMaterials",
-                        id: "LIST"
-                    }]
-                    : [{type: "DeletedRawMaterials", id: "LIST"}],
+                    ? [
+                          ...result.map(({ id }) => ({ type: "DeletedRawMaterials" as const, id })),
+                          {
+                              type: "DeletedRawMaterials",
+                              id: "LIST",
+                          },
+                      ]
+                    : [{ type: "DeletedRawMaterials", id: "LIST" }],
         }),
 
         recoverRawMaterial: builder.mutation<void, string>({
@@ -815,9 +840,9 @@ export const apiSlice = createApi({
                 method: "PATCH",
             }),
             invalidatesTags: (_result, _error, id) => [
-                {type: "RawMaterial", id},
-                {type: "RawMaterials", id: "LIST"},
-                {type: "DeletedRawMaterials", id: "LIST"},
+                { type: "RawMaterial", id },
+                { type: "RawMaterials", id: "LIST" },
+                { type: "DeletedRawMaterials", id: "LIST" },
             ],
         }),
 
@@ -828,16 +853,19 @@ export const apiSlice = createApi({
             query: () => "/raw-materials/inventory",
             providesTags: (result) =>
                 result
-                    ? [...result.map(({id}) => ({type: "RawMaterialInventories" as const, id})), {
-                        type: "RawMaterialInventories",
-                        id: "LIST"
-                    }]
-                    : [{type: "RawMaterialInventories", id: "LIST"}],
+                    ? [
+                          ...result.map(({ id }) => ({ type: "RawMaterialInventories" as const, id })),
+                          {
+                              type: "RawMaterialInventories",
+                              id: "LIST",
+                          },
+                      ]
+                    : [{ type: "RawMaterialInventories", id: "LIST" }],
         }),
 
         getRawMaterialInventoryStock: builder.query<GetRawMaterialInventoryStockType, string>({
             query: (id) => `/raw-materials/inventory/${id}`,
-            providesTags: (_result, _error, id) => [{type: "RawMaterialInventoryStock", id}],
+            providesTags: (_result, _error, id) => [{ type: "RawMaterialInventoryStock", id }],
         }),
 
         createRawMaterialInventory: builder.mutation<SingleRawMaterialInventoryType, CreateRawMaterialInventoryType>({
@@ -846,67 +874,75 @@ export const apiSlice = createApi({
                 method: "POST",
                 body,
             }),
-            invalidatesTags: (_result, _error, {rawMaterialId}) => [
-                {type: "RawMaterialInventoryStock", id: rawMaterialId},
-                {type: "RawMaterialInventories", id: "LIST"},
+            invalidatesTags: (_result, _error, { rawMaterialId }) => [
+                { type: "RawMaterialInventoryStock", id: rawMaterialId },
+                { type: "RawMaterialInventories", id: "LIST" },
             ],
         }),
 
-        updateRawMaterialInventory: builder.mutation<UpdateRawMaterialInventoryResponseType, UpdateRawMaterialInventoryType & Pick<RawMaterialType, "id">>({
-            query: ({id, ...patch}) => ({
+        updateRawMaterialInventory: builder.mutation<
+            UpdateRawMaterialInventoryResponseType,
+            UpdateRawMaterialInventoryType & Pick<RawMaterialType, "id">
+        >({
+            query: ({ id, ...patch }) => ({
                 url: `/raw-materials/inventory/${id}`,
                 method: "PATCH",
                 body: patch,
             }),
-            invalidatesTags: (_result, _error, {id}) => [
-                {type: "RawMaterialInventoryStock", id: id},
-                {type: "RawMaterialInventories", id: "LIST"},
+            invalidatesTags: (_result, _error, { id }) => [
+                { type: "RawMaterialInventoryStock", id: id },
+                { type: "RawMaterialInventories", id: "LIST" },
             ],
         }),
 
-        stockInRawMaterialInventory: builder.mutation<StockInRawMaterialInventoryType, StockInRawMaterialType & Pick<RawMaterialType, "id">>({
-            query: ({id, ...body}) => ({
+        stockInRawMaterialInventory: builder.mutation<
+            StockInRawMaterialInventoryType,
+            StockInRawMaterialType & Pick<RawMaterialType, "id">
+        >({
+            query: ({ id, ...body }) => ({
                 url: `/raw-materials/inventory/${id}/stock-in`,
                 method: "POST",
                 body,
             }),
-            invalidatesTags: (_result, _error, {id}) => [
-                {type: "RawMaterialInventoryStock", id: id},
-                {type: "RawMaterialInventories", id: "LIST"},
-                {type: "RawMaterialTransactions", id: "LIST"},
-                "RawMaterialTransactions"
+            invalidatesTags: (_result, _error, { id }) => [
+                { type: "RawMaterialInventoryStock", id: id },
+                { type: "RawMaterialInventories", id: "LIST" },
+                { type: "RawMaterialTransactions", id: "LIST" },
+                "RawMaterialTransactions",
             ],
         }),
 
-        getRawMaterialInventoryTransactions: builder.query<RawMaterialInventoryTransactionsResponse, {
-            rawMaterialId?: string,
-            timePeriod?: string;
-            startDate?: string;
-            endDate?: string
-        }>({
+        getRawMaterialInventoryTransactions: builder.query<
+            RawMaterialInventoryTransactionsResponse,
+            {
+                rawMaterialId?: string;
+                timePeriod?: string;
+                startDate?: string;
+                endDate?: string;
+            }
+        >({
             query: (params) => ({
                 url: "/raw-materials/transactions",
                 params,
             }),
-            providesTags: [{type: "RawMaterialTransactions", id: "LIST"}, "RawMaterialTransactions"],
+            providesTags: [{ type: "RawMaterialTransactions", id: "LIST" }, "RawMaterialTransactions"],
         }),
-
 
         // -------------------------
         // BOM Endpoints
         // -------------------------
         getBOM: builder.query<BomTypes[], string>({
             query: (menuItemId) => `/bill-of-materials/${menuItemId}/bom`,
-            providesTags: ['BOM'],
+            providesTags: ["BOM"],
         }),
 
         defineBOM: builder.mutation<void, DefineBomSchemaType & { menuItemId: string }>({
-            query: ({menuItemId, bomItems}) => ({
+            query: ({ menuItemId, bomItems }) => ({
                 url: `/menu-items/${menuItemId}/bom`,
-                method: 'POST',
+                method: "POST",
                 body: bomItems,
             }),
-            invalidatesTags: ['BOM'],
+            invalidatesTags: ["BOM"],
         }),
 
         // -------------------------
@@ -915,7 +951,7 @@ export const apiSlice = createApi({
         getProductionLogs: builder.query<ProductionType[], TimePeriod>({
             query: (timePeriod = "today") => ({
                 url: "/production/logs",
-                params: {timePeriod},
+                params: { timePeriod },
             }),
 
             providesTags: ["ProductionLogs"],
@@ -929,26 +965,26 @@ export const apiSlice = createApi({
 
         runProduction: builder.mutation<void, CreateProductionType>({
             query: (body) => ({
-                url: '/production',
-                method: 'POST',
+                url: "/production",
+                method: "POST",
                 body,
             }),
-            invalidatesTags: ['Inventories', 'RawMaterialInventories', "MenuItem", "ProductionLogs"],
+            invalidatesTags: ["Inventories", "RawMaterialInventories", "MenuItem", "ProductionLogs"],
         }),
 
         recordWastage: builder.mutation<void, CreateWastageType>({
             query: (body) => ({
-                url: '/production/wastage',
-                method: 'POST',
+                url: "/production/wastage",
+                method: "POST",
                 body,
             }),
-            invalidatesTags: ['RawMaterialInventories', "RawMaterialTransactions", "RawMaterials"],
+            invalidatesTags: ["RawMaterialInventories", "RawMaterialTransactions", "RawMaterials"],
         }),
 
         getProductionSummary: builder.query<ProductionSummaryType, TimePeriod>({
             query: (timePeriod = "today") => ({
                 url: "/production/summary",
-                params: {timePeriod},
+                params: { timePeriod },
             }),
             providesTags: ["ProductionSummary"],
         }),
@@ -984,11 +1020,11 @@ export const apiSlice = createApi({
             providesTags: (result) =>
                 result
                     ? [
-                        ...result.map(({id}) => ({type: 'Category' as const, id})),
-                        {type: 'Category', id: 'LIST'},
-                        "Categories"
-                    ]
-                    : [{type: 'Category', id: 'LIST'}, "Categories"],
+                          ...result.map(({ id }) => ({ type: "Category" as const, id })),
+                          { type: "Category", id: "LIST" },
+                          "Categories",
+                      ]
+                    : [{ type: "Category", id: "LIST" }, "Categories"],
         }),
 
         createCategory: builder.mutation<void, CreateCategoryType>({
@@ -997,19 +1033,19 @@ export const apiSlice = createApi({
                 method: "POST",
                 body,
             }),
-            invalidatesTags: [{type: 'Category', id: 'LIST'}, "Categories"],
+            invalidatesTags: [{ type: "Category", id: "LIST" }, "Categories"],
         }),
 
         updateCategory: builder.mutation<void, Partial<CategoryType> & Pick<CategoryType, "id">>({
-            query: ({id, ...patch}) => ({
+            query: ({ id, ...patch }) => ({
                 url: `/categories/${id}`,
                 method: "PATCH",
                 body: patch,
             }),
-            invalidatesTags: (_result, _error, {id}) => [
-                {type: "Category", id},
-                {type: 'Category', id: 'LIST'},
-                "Categories"
+            invalidatesTags: (_result, _error, { id }) => [
+                { type: "Category", id },
+                { type: "Category", id: "LIST" },
+                "Categories",
             ],
         }),
 
@@ -1019,12 +1055,11 @@ export const apiSlice = createApi({
                 method: "DELETE",
             }),
             invalidatesTags: (_result, _error, id) => [
-                {type: "Category", id},
-                {type: 'Category', id: 'LIST'},
-                "Categories"
+                { type: "Category", id },
+                { type: "Category", id: "LIST" },
+                "Categories",
             ],
-        })
-
+        }),
     }),
 });
 
