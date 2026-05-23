@@ -21,7 +21,7 @@ router.post(
 );
 
 router.patch("/:id", controller.updateUser);
-router.patch("/update-password", controller.updatePassword);
+// router.patch("/update-password", controller.updatePassword);
 router.patch(
     "/:targetUserId/change-store",
     isManager,

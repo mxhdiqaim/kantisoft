@@ -14,11 +14,10 @@ import billOfMaterial from "./bill-of-material-routes";
 import production from "./production-routes";
 import categories from "./categories-routes";
 import superAdminRoutes from "./super-admin-routes";
-
-import { protectedRoute } from "../config/jwt-config";
 import { validateStoreAccess } from "../middlewares/validate-store-access";
 import { StatusCodes } from "http-status-codes";
 import { handleTargetStore } from "../middlewares/handle-target-store-middleware";
+import { authenticateToken } from "../middlewares/auth.middleware";
 
 const router = express.Router();
 
@@ -30,11 +29,10 @@ router.get("/health", (_req, res) => {
     });
 });
 
-// Public authentication routes
-router.use("/auth", auth); // Handles /api/v1/auth/register, /api/v1/auth/login, /api/v1/auth/logout (logout is protected within auth-routes)
+// Handles /register, /login, /logout
+router.use("/auth", auth);
 
-// All subsequent routes are protected
-router.use(protectedRoute);
+router.use(authenticateToken);
 
 // Super Admin routes (not store-scoped)
 router.use("/super-admin", superAdminRoutes);

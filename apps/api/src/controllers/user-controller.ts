@@ -1,10 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { and, desc, eq, gte, inArray, lte, ne, or, sql, SQL } from "drizzle-orm";
-import { NextFunction, Request, Response } from "express";
-import passport from "passport";
-import { generateToken } from "../config/jwt-config";
+import { Request, Response } from "express";
 import db from "../db";
-import { InsertUserSchemaT, users, UserSchemaT } from "../schema/users-schema";
+import { InsertUserSchemaT, users } from "../schema/users-schema";
 import { handleError2 } from "../service/error-handling";
 import { passwordHashService } from "../service/password-hash-service";
 import { ActivityEntityTypeEnum, UserRoleEnum, UserStatusEnum } from "../types/enums";
@@ -15,6 +13,7 @@ import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 import { getUserStoreScope } from "../utils/get-store-scope";
 import { ActivityLogService } from "../service/activity-service-log";
 import { activityLog } from "../schema/activity-log-schema";
+import {getFirebaseAdmin} from "../config/firebase-admin";
 
 /**
  * @desc    Register a new Manager and their first Store
@@ -22,6 +21,10 @@ import { activityLog } from "../schema/activity-log-schema";
  * @access  Public
  */
 export const registerManagerAndStore = async (req: Request, res: Response) => {
+    // Keep track of the Firebase UID in case we need to roll back
+    let createdFirebaseUid: string | null = null;
+    const admin = getFirebaseAdmin();
+
     try {
         const {
             firstName,
@@ -34,10 +37,17 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
         } = req.body;
 
         // Validate input
-        if (!email || !password || !firstName || !storeName || !storeType) {
+        if (
+            !email ||
+            !password ||
+            !firstName ||
+            !lastName ||
+            !storeName ||
+            !storeType
+        ) {
             return handleError2(
                 res,
-                "First name, email, password, store name, and store type are required.",
+                "First name, last name, email, password, store name, and store type are required.",
                 StatusCodes.BAD_REQUEST,
             );
         }
@@ -61,14 +71,11 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
             );
         }
 
-        // Check for existing user with either the email OR the provided (non-null) phone
-        // This check is global, as this controller creates the first manager/store
         const existingUser = await db.query.users.findFirst({
             where: whereConditions,
         });
 
         if (existingUser) {
-            // Provide more specific feedback to the user
             if (existingUser.email.toLowerCase() === lowercasedEmail) {
                 return handleError2(
                     res,
@@ -84,18 +91,21 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
                     "A user with this phone number already exists.",
                     StatusCodes.CONFLICT,
                 );
-            } else {
-                // Fallback for general case or if both match (less likely with specific checks above)
-                return handleError2(
-                    res,
-                    "A user with this email or phone number already exists.",
-                    StatusCodes.CONFLICT,
-                );
             }
         }
 
+        // Create the user in Firebase Auth
+        const firebaseUser = await admin.auth().createUser({
+            email: lowercasedEmail,
+            password: password,
+            displayName: `${firstName} ${lastName}`,
+        });
+
+        // Lock in the UID so the catch block can access it if the DB fails
+        createdFirebaseUid = firebaseUser.uid;
+
         // Use a transaction to ensure both user and store are created, or neither.
-        const { user, token } = await db.transaction(async (tx) => {
+        const { user } = await db.transaction(async (tx) => {
             // Create the store first
             const [newStore] = await tx
                 .insert(stores)
@@ -103,31 +113,37 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
                 .returning();
 
             // Then create the user, assigning them the manager role and linking the new store
-            const hashedPassword = await passwordHashService.hash(password);
-            const [newUser] = await tx
+            // const hashedPassword = passwordHashService.hash(password);
+            const [user] = await tx
                 .insert(users)
                 .values({
+                    firebaseUid: firebaseUser.uid,
                     firstName,
                     lastName,
                     email: lowercasedEmail,
-                    password: hashedPassword,
+                    // password: hashedPassword,
                     phone: normalizedPhone,
+                    // TODO User Role will change to ADMIN as we will swap ADMIN & MANAGER
                     role: UserRoleEnum.MANAGER, // Automatically a manager
                     status: UserStatusEnum.ACTIVE,
-                    storeId: newStore.id, // Link to the new store
+                    storeId: newStore.id,
                 })
                 .returning();
 
-            // Generate a token for the new user
-            const token = generateToken(newUser);
 
-            return { user: newUser, token };
+            return { user };
         });
+
+        // 5. Generate a Custom Firebase Token
+        // Since the backend created the user, the frontend isn't logged in yet.
+        // We generate a custom token so the frontend can instantly sign in.
+        const customToken = await admin.auth().createCustomToken(firebaseUser.uid);
 
         // Log activity for manager registration
         await ActivityLogService.logSystemEvent({
             userId: user.id,
             storeId: String(user.storeId),
+            // TODO User Role will change to ADMIN as we will swap ADMIN & MANAGER
             action: "MANAGER_REGISTERED",
             entityId: user.id,
             entityType: ActivityEntityTypeEnum.USER,
@@ -142,18 +158,30 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
 
         res.status(StatusCodes.CREATED).json({
             user: userWithoutPassword,
-            token,
+            token: customToken,
         });
     } catch (error: any) {
-        // console.error("Registration Error:", error);
-        // CRITICAL FIX: Add more specific error handling for unique constraints.
-        // If the database constraint (e.g. users_storeId_phone_unique) is violated,
-        // Drizzle might throw an error with a specific code/constraint name.
+        // 🚨 AUTOMATED ROLLBACK: Prevent the "Ghost User"
+        if (createdFirebaseUid) {
+            try {
+                await admin.auth().deleteUser(createdFirebaseUid);
+                console.log(
+                    `🧹 Rolled back Firebase user ${createdFirebaseUid} due to database failure.`,
+                );
+            } catch (cleanupError) {
+                console.error(
+                    "CRITICAL: Failed to clean up Firebase user:",
+                    cleanupError,
+                );
+            }
+        }
+
+        // Handle PostgreSQL unique constraint violations (e.g., race conditions)
         if (
             error.cause &&
             typeof error.cause === "object" &&
             "code" in error.cause &&
-            error.cause.code === "23505" // PostgreSQL unique violation
+            error.cause.code === "23505"
         ) {
             if ("constraint" in error.cause) {
                 switch (error.cause.constraint) {
@@ -162,20 +190,20 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
                             res,
                             "A user with this email already exists.",
                             StatusCodes.CONFLICT,
-                            error instanceof Error ? error : undefined,
+                            error,
                         );
                     case "users_phone_global_unique":
                         return handleError2(
                             res,
                             "A user with this phone number already exists.",
                             StatusCodes.CONFLICT,
-                            error instanceof Error ? error : undefined,
+                            error,
                         );
                 }
             }
         }
 
-        handleError2(
+        return handleError2(
             res,
             "Registration failed. Please try again.",
             StatusCodes.INTERNAL_SERVER_ERROR,
@@ -909,240 +937,238 @@ export const changeUserStore = async (req: CustomRequest, res: Response) => {
  * @route   PATCH /users/update-password
  * @access  Private (for the logged-in user)
  */
-export const updatePassword = async (req: CustomRequest, res: Response) => {
-    try {
-        const { oldPassword, newPassword } = req.body;
-        const currentUser = req.user?.data;
+// export const updatePassword = async (req: CustomRequest, res: Response) => {
+//     try {
+//         const { oldPassword, newPassword } = req.body;
+//         const currentUser = req.user?.data;
+//
+//         // 1. Basic validation
+//         if (!currentUser) {
+//             return handleError2(
+//                 res,
+//                 "Authentication required.",
+//                 StatusCodes.UNAUTHORIZED,
+//             );
+//         }
+//         if (!oldPassword || !newPassword) {
+//             return handleError2(
+//                 res,
+//                 "Old password and new password are required.",
+//                 StatusCodes.BAD_REQUEST,
+//             );
+//         }
+//
+//         if (oldPassword === newPassword) {
+//             return handleError2(
+//                 res,
+//                 "Old password and new password must be different.",
+//                 StatusCodes.BAD_REQUEST,
+//             );
+//         }
+//
+//         if (newPassword.length < 6) {
+//             return handleError2(
+//                 res,
+//                 "New password must be at least 6 characters long.",
+//                 StatusCodes.BAD_REQUEST,
+//             );
+//         }
+//
+//         // 2. Fetch the user's current password from the DB
+//         const userRecord = await db.query.users.findFirst({
+//             where: eq(users.id, currentUser.id),
+//             columns: { password: true },
+//         });
+//
+//         if (!userRecord) {
+//             return handleError2(
+//                 res,
+//                 "User not found.",
+//                 StatusCodes.NOT_FOUND,
+//             );
+//         }
+//
+//         // 3. Verify the old password
+//         const isMatch = await passwordHashService.compare(
+//             oldPassword,
+//             userRecord.password,
+//         );
+//         if (!isMatch) {
+//             return handleError2(
+//                 res,
+//                 "Incorrect old password.",
+//                 StatusCodes.FORBIDDEN,
+//             );
+//         }
+//
+//         // 4. Hash the new password and update the database
+//         const hashedNewPassword = passwordHashService.hash(newPassword);
+//         await db
+//             .update(users)
+//             .set({ password: hashedNewPassword, lastModified: new Date() })
+//             .where(eq(users.id, currentUser.id));
+//
+//         // Log activity for password change
+//         await ActivityLogService.logSystemEvent({
+//             userId: currentUser.id,
+//             storeId: String(currentUser.storeId),
+//             action: "PASSWORD_CHANGED",
+//             entityId: currentUser.id,
+//             entityType: ActivityEntityTypeEnum.USER,
+//             actorName: `${currentUser.firstName} ${currentUser.lastName}`,
+//             targetName: `${currentUser.firstName} ${currentUser.lastName}`,
+//             details: `Password changed by ${currentUser.firstName} ${currentUser.lastName}.`,
+//         });
+//
+//         res.status(StatusCodes.OK).json({
+//             message: "Password updated successfully.",
+//         });
+//     } catch (error) {
+//         // console.error("Error updating password:", error);
+//         handleError2(
+//             res,
+//             "Failed to update password.",
+//             StatusCodes.INTERNAL_SERVER_ERROR,
+//             error instanceof Error ? error : undefined,
+//         );
+//     }
+// };
 
-        // 1. Basic validation
-        if (!currentUser) {
+export const loginUser = async (req: Request, res: Response) => {
+    try {
+        const authHeader = req.headers.authorization;
+
+        // Ensure the frontend sent the Firebase Token
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
             return handleError2(
                 res,
-                "Authentication required.",
+                "Authentication failed: Missing or malformed token.",
                 StatusCodes.UNAUTHORIZED,
             );
         }
-        if (!oldPassword || !newPassword) {
+
+        const token = authHeader.split(" ")[1];
+        const admin = getFirebaseAdmin();
+        let decodedToken;
+
+        // Verify the Firebase Token
+        try {
+            decodedToken = await admin.auth().verifyIdToken(token);
+        } catch (error) {
+            // Log the failure asynchronously
+            ActivityLogService.logSystemEvent({
+                userId: null as unknown as string,
+                storeId: null as unknown as string,
+                entityId: "AUTH_FAILURE",
+                entityType: ActivityEntityTypeEnum.USER,
+                action: "USER_LOGIN_FAILED",
+                actorName: "Unknown",
+                targetName: "Unknown",
+                details: `Failed login attempt. Reason: Invalid or expired Firebase token. IP: ${req.ip}`,
+            }).catch((err) => console.error("Logging failed", err));
+
             return handleError2(
                 res,
-                "Old password and new password are required.",
-                StatusCodes.BAD_REQUEST,
+                "Authentication failed: Invalid token.",
+                StatusCodes.UNAUTHORIZED,
+                error instanceof Error ? error : undefined,
             );
         }
 
-        if (oldPassword === newPassword) {
+        const { uid, email } = decodedToken;
+
+        // Fetch full User Data + Store Data using Drizzle
+        const [foundUser] = await db
+            .select({
+                id: users.id,
+                firstName: users.firstName,
+                lastName: users.lastName,
+                email: users.email,
+                phone: users.phone,
+                role: users.role,
+                status: users.status,
+                storeId: users.storeId,
+                createdAt: users.createdAt,
+                lastModified: users.lastModified,
+                store: {
+                    id: stores.id,
+                    name: stores.name,
+                    location: stores.location,
+                },
+            })
+            .from(users)
+            .leftJoin(stores, eq(users.storeId, stores.id))
+            .where(
+                and(
+                    and(
+                        eq(users.firebaseUid, uid),
+                        eq(users.email, String(email)),
+                    ),
+                    ne(users.status, UserStatusEnum.DELETED),
+                    ne(users.status, UserStatusEnum.BANNED),
+                    ne(users.status, UserStatusEnum.INACTIVE),
+                ),
+            );
+
+        // Handle Account Status Restrictions
+        if (!foundUser) {
+            // Check if they exist but are banned/deleted
+            const [restrictedUser] = await db
+                .select({
+                    id: users.id,
+                    storeId: users.storeId,
+                    email: users.email,
+                })
+                .from(users)
+                .where(eq(users.firebaseUid, uid));
+
+            if (restrictedUser) {
+                ActivityLogService.logSystemEvent({
+                    userId: restrictedUser.id,
+                    storeId: restrictedUser.storeId || null,
+                    entityId: restrictedUser.id,
+                    entityType: ActivityEntityTypeEnum.USER,
+                    action: "USER_LOGIN_FAILED",
+                    actorName: "Restricted User",
+                    targetName: restrictedUser.email,
+                    details: `Login blocked for ${restrictedUser.email}. Account is Banned, Inactive, or Deleted.`,
+                }).catch((err) => console.error("Logging failed", err));
+            }
+
             return handleError2(
                 res,
-                "Old password and new password must be different.",
-                StatusCodes.BAD_REQUEST,
+                "Access denied. Account may be inactive, deleted, or unregistered.",
+                StatusCodes.UNAUTHORIZED,
             );
         }
 
-        if (newPassword.length < 6) {
-            return handleError2(
-                res,
-                "New password must be at least 6 characters long.",
-                StatusCodes.BAD_REQUEST,
-            );
-        }
-
-        // 2. Fetch the user's current password from the DB
-        const userRecord = await db.query.users.findFirst({
-            where: eq(users.id, currentUser.id),
-            columns: { password: true },
-        });
-
-        if (!userRecord) {
-            return handleError2(
-                res,
-                "User not found.",
-                StatusCodes.NOT_FOUND,
-            );
-        }
-
-        // 3. Verify the old password
-        const isMatch = await passwordHashService.compare(
-            oldPassword,
-            userRecord.password,
-        );
-        if (!isMatch) {
-            return handleError2(
-                res,
-                "Incorrect old password.",
-                StatusCodes.FORBIDDEN,
-            );
-        }
-
-        // 4. Hash the new password and update the database
-        const hashedNewPassword = await passwordHashService.hash(newPassword);
-        await db
-            .update(users)
-            .set({ password: hashedNewPassword, lastModified: new Date() })
-            .where(eq(users.id, currentUser.id));
-
-        // Log activity for password change
+        // Log the Success
         await ActivityLogService.logSystemEvent({
-            userId: currentUser.id,
-            storeId: String(currentUser.storeId),
-            action: "PASSWORD_CHANGED",
-            entityId: currentUser.id,
+            userId: foundUser.id,
+            storeId: String(foundUser.storeId),
+            entityId: foundUser.id,
             entityType: ActivityEntityTypeEnum.USER,
-            actorName: `${currentUser.firstName} ${currentUser.lastName}`,
-            targetName: `${currentUser.firstName} ${currentUser.lastName}`,
-            details: `Password changed by ${currentUser.firstName} ${currentUser.lastName}.`,
-        });
+            action: "USER_LOGIN",
+            actorName: `${foundUser.firstName} ${foundUser.lastName}`,
+            targetName: foundUser.email,
+            details: `User logged in successfully. IP: ${req.ip}`,
+            isRead: false,
+        }).catch((err) => console.error("Logging success failed", err));
 
-        res.status(StatusCodes.OK).json({
-            message: "Password updated successfully.",
+        // Return the Profile and Token to the Frontend
+        // We echo the token back just in case the frontend relies on `res.data.token`
+        return res.status(StatusCodes.OK).json({
+            token: token,
+            user: foundUser,
         });
     } catch (error) {
-        // console.error("Error updating password:", error);
-        handleError2(
+        return handleError2(
             res,
-            "Failed to update password.",
+            "Server error during authentication",
             StatusCodes.INTERNAL_SERVER_ERROR,
             error instanceof Error ? error : undefined,
         );
     }
-};
-
-export const loginUser = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-) => {
-    if (req.body.email) {
-        req.body.email = req.body.email.toLowerCase();
-    }
-
-    passport.authenticate(
-        "user",
-        async (
-            error: Error,
-            user: Express.User,
-            info: { message: string },
-        ) => {
-            // Handle Critical Server Errors
-            if (error) {
-                return handleError2(
-                    res,
-                    "Server error during authentication",
-                    StatusCodes.INTERNAL_SERVER_ERROR,
-                    error,
-                );
-            }
-
-            // Handle Invalid Credentials (FAILED LOGIN)
-            if (!user) {
-                // Log the failure asynchronously
-                ActivityLogService.logSystemEvent({
-                    userId: null as unknown as string,
-                    storeId: null as unknown as string,
-                    entityId: "AUTH_FAILURE",
-                    entityType: ActivityEntityTypeEnum.USER,
-                    action: "USER_LOGIN_FAILED",
-                    actorName: "Unknown",
-                    targetName: req.body.email || "Unknown Email",
-                    details: `Failed login attempt for ${req.body.email}. Reason: ${info.message || 'Invalid credentials'}. IP: ${req.ip}`,
-                }).catch(err => console.error("Logging failed", err));
-
-                return handleError2(
-                    res,
-                    info.message || "Authentication failed",
-                    StatusCodes.UNAUTHORIZED,
-                );
-            }
-
-            // Fetch full User Data
-            const [foundUser] = await db
-                .select({
-                    id: users.id,
-                    firstName: users.firstName,
-                    lastName: users.lastName,
-                    email: users.email,
-                    phone: users.phone,
-                    role: users.role,
-                    status: users.status,
-                    storeId: users.storeId,
-                    createdAt: users.createdAt,
-                    lastModified: users.lastModified,
-                    store: {
-                        id: stores.id,
-                        name: stores.name,
-                        location: stores.location,
-                    },
-                })
-                .from(users)
-                .leftJoin(stores, eq(users.storeId, stores.id))
-                .where(
-                    and(
-                        eq(users.id, user.data.id),
-                        ne(users.status, UserStatusEnum.DELETED),
-                        ne(users.status, UserStatusEnum.BANNED),
-                        ne(users.status, UserStatusEnum.INACTIVE)
-                    )
-                );
-
-            // Handle Account Status Restrictions (FAILED LOGIN - Account Issue)
-            if (!foundUser) {
-                ActivityLogService.logSystemEvent({
-                    userId: user.data.id,
-                    storeId: user.data.storeId || null,
-                    entityId: user.data.id,
-                    entityType: ActivityEntityTypeEnum.USER,
-                    action: "USER_LOGIN_FAILED",
-                    actorName: "Restricted User",
-                    targetName: user.data.email,
-                    details: `Login blocked for ${user.data.email}. Account is Banned, Inactive, or Deleted.`,
-                }).catch(err => console.error("Logging failed", err));
-
-                return handleError2(
-                    res,
-                    "Access denied. Account may be inactive or deleted.",
-                    StatusCodes.UNAUTHORIZED,
-                );
-            }
-
-            // Establish Session and Generate Token (SUCCESSFUL LOGIN)
-            req.login(user, async (loginError) => {
-                if (loginError) {
-                    return handleError2(
-                        res,
-                        "Login session failed",
-                        StatusCodes.INTERNAL_SERVER_ERROR,
-                        loginError
-                    );
-                }
-
-                const token = generateToken(foundUser as unknown as UserSchemaT);
-
-                if (!token) {
-                    return handleError2(
-                        res,
-                        "Token generation failed.",
-                        StatusCodes.INTERNAL_SERVER_ERROR,
-                    );
-                }
-
-                // Log the Success
-                await ActivityLogService.logSystemEvent({
-                    userId: foundUser.id,
-                    storeId: foundUser.storeId || null,
-                    entityId: foundUser.id,
-                    entityType: "user",
-                    action: "USER_LOGIN",
-                    actorName: `${foundUser.firstName} ${foundUser.lastName}`,
-                    targetName: foundUser.email,
-                    details: `User logged in successfully. IP: ${req.ip}`,
-                    isRead: false
-                }).catch(err => console.error("Logging success failed", err));
-
-                return res
-                    .status(StatusCodes.OK)
-                    .json({ token, user: foundUser });
-            });
-        },
-    )(req, res, next);
 };
 
 export const logoutUser = async (req: Request, res: Response) => {
