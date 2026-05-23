@@ -1,14 +1,16 @@
-import {getApiError} from "@/helpers/get-api-error";
-import useNotifier from "@/hooks/useNotifier";
-import {useLoginMutation} from "@/store/slice";
-import {loginUserType, type LoginUserType} from "@/types/user-types";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {Box, FormControl, FormHelperText, Grid, Link as MuiLink, Typography, useTheme} from "@mui/material";
+// apps/web-app/src/pages/auth/login.tsx
 
-import {Controller, useForm} from "react-hook-form";
-import {Link, useNavigate} from "react-router-dom";
+import { getApiError } from "@/helpers/get-api-error";
+import useNotifier from "@/hooks/useNotifier";
+import { useLoginMutation } from "@/store/slice";
+import { loginUserType, type LoginUserType } from "@/types/user-types";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { Box, FormControl, FormHelperText, Grid, Link as MuiLink, Typography, useTheme } from "@mui/material";
+
+import { Controller, useForm } from "react-hook-form";
+import { Link, useNavigate } from "react-router-dom";
 import CustomButton from "@/components/ui/button.tsx";
-import {StyledTextField} from "@/components/ui";
+import { StyledTextField } from "@/components/ui";
 
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth } from "@/config/firebase";
@@ -16,7 +18,6 @@ import { auth } from "@/config/firebase";
 const Login = () => {
     const theme = useTheme();
     const navigate = useNavigate();
-    // const location = useLocation();
     const notify = useNotifier();
     const [login, { isLoading: isBackendLoading }] = useLoginMutation();
 
@@ -24,7 +25,7 @@ const Login = () => {
         control,
         setError,
         handleSubmit,
-        formState: { errors },
+        formState: { errors, isSubmitting },
     } = useForm({
         defaultValues: {
             email: "",
@@ -33,6 +34,8 @@ const Login = () => {
         mode: "onBlur",
         resolver: yupResolver(loginUserType),
     });
+
+    const isLoading = isSubmitting || isBackendLoading;
 
     const onSubmit = async (data: LoginUserType) => {
         try {
@@ -43,8 +46,6 @@ const Login = () => {
             const token = await userCredential.user.getIdToken();
 
             // Send the token to your Kantisoft Backend
-            // Note: Earlier we updated authSlice to remove token,
-            // but your RTK mutation still accepts it payload-style here!
             await login({ token }).unwrap();
 
             navigate("/", { replace: true });
@@ -56,18 +57,15 @@ const Login = () => {
             const defaultMessage = "Something went wrong. Please try again.";
             let errorMessage: string;
 
-            // Type guard: Safe narrowing to verify if err is an object containing 'code'
             if (err && typeof err === "object" && "code" in err) {
                 const firebaseError = err as { code: string; message: string };
 
-                // Clean up cryptic Firebase auth codes into human-friendly language
                 if (firebaseError.code === "auth/invalid-credential") {
                     errorMessage = "Invalid email or password.";
                 } else {
                     errorMessage = firebaseError.message;
                 }
             } else {
-                // Fall back to your backend API parser if it's an RTK Query error
                 errorMessage = getApiError(err, defaultMessage).message;
             }
 
@@ -77,8 +75,6 @@ const Login = () => {
             setError("password", { type: "manual" });
         }
     };
-
-    // const loading = isSubmitting || isBackendLoading;
 
     return (
         <Grid container spacing={2}>
@@ -148,9 +144,7 @@ const Login = () => {
                                 )}
                             />
                             {errors.password && (
-                                <FormHelperText sx={{ color: "error.main" }} id="">
-                                    {errors.password.message}
-                                </FormHelperText>
+                                <FormHelperText sx={{ color: "error.main" }}>{errors.password.message}</FormHelperText>
                             )}
                         </FormControl>
                         <Box
@@ -165,17 +159,18 @@ const Login = () => {
                             </MuiLink>
                         </Box>
                         <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+                            {/* 3. Update title and disabled state to use the combined isLoading flag */}
                             <CustomButton
-                                title={isBackendLoading ? "Logging in..." : "Login"}
+                                title={isLoading ? "Logging in..." : "Login"}
                                 type="submit"
                                 variant="contained"
                                 sx={{
-                                    width: "100%", // Make the button full width
+                                    width: "100%",
                                     color: "#fff",
                                     p: 2,
                                     mb: 2,
                                 }}
-                                disabled={isBackendLoading}
+                                disabled={isLoading}
                             />
                         </Box>
                     </Box>
