@@ -68,7 +68,7 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
         } catch (error) {
             console.error("Server logout failed, proceeding with client-side logout:", error);
         } finally {
-            navigate("/login");
+            navigate("/signin");
         }
     };
 

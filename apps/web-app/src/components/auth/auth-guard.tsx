@@ -11,7 +11,7 @@ const AuthGuard = ({ currentUser }: Props) => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const publicAuthRoutes = ["/login", "/register", "/forget-password"];
+    const publicAuthRoutes = ["/signin", "/signup", "/forget-password"];
 
     useEffect(() => {
         // If the user is logged in AND attempting to access a public auth page
@@ -32,9 +32,9 @@ const AuthGuard = ({ currentUser }: Props) => {
         // If the user is NOT logged in and tries to access a protected route
         const isPublicRoute = publicAuthRoutes.includes(location.pathname);
 
-        // If it's not a public auth route and we have no user, redirect to login
+        // If it's not a public auth route, and we have no user, redirect to login
         if (!isPublicRoute && !currentUser) {
-            navigate("/login", {
+            navigate("/signin", {
                 replace: true,
                 state: { from: location },
             });

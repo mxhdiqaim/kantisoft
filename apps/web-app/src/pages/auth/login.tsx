@@ -1,8 +1,6 @@
-// apps/web-app/src/pages/auth/login.tsx
-
 import { getApiError } from "@/helpers/get-api-error";
 import useNotifier from "@/hooks/useNotifier";
-import { useLoginMutation } from "@/store/slice";
+import { useSigninMutation } from "@/store/slice";
 import { loginUserType, type LoginUserType } from "@/types/user-types";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Box, FormControl, FormHelperText, Grid, Link as MuiLink, Typography, useTheme } from "@mui/material";
@@ -19,7 +17,7 @@ const Login = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const notify = useNotifier();
-    const [login, { isLoading: isBackendLoading }] = useLoginMutation();
+    const [login, { isLoading: isBackendLoading }] = useSigninMutation();
 
     const {
         control,
@@ -161,7 +159,7 @@ const Login = () => {
                         <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
                             {/* 3. Update title and disabled state to use the combined isLoading flag */}
                             <CustomButton
-                                title={isLoading ? "Logging in..." : "Login"}
+                                title={isLoading ? "Signing in..." : "Signin"}
                                 type="submit"
                                 variant="contained"
                                 sx={{
@@ -172,6 +170,12 @@ const Login = () => {
                                 }}
                                 disabled={isLoading}
                             />
+                        </Box>
+                        <Box sx={{ textAlign: "center" }}>
+                            <Typography variant="body1">
+                                Dont have an account?{" "}
+                                <CustomButton title={"Sign Up"} variant="text" onClick={() => navigate("/signup")} />
+                            </Typography>
                         </Box>
                     </Box>
                 </Box>

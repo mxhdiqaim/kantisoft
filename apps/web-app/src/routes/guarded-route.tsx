@@ -23,9 +23,9 @@ const GuardedRoute = memo(function GuardedRoute({ children, authGuard }: GuardPr
     // Show server down page if the server isn't responding
     if (!isServerOk) return <ServerDown />;
 
-    // If route requires auth and user is NOT authenticated, redirect to login
+    // If route requires auth and user is NOT authenticated, redirect to sign in page
     if (authGuard && !isAuthenticated) {
-        return <Navigate to="/login" state={{ from: location }} replace />;
+        return <Navigate to="/signin" state={{ from: location }} replace />;
     }
 
     // If route requires auth and user is authenticated, show the page
