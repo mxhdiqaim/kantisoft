@@ -259,9 +259,8 @@ export const apiSlice = createApi({
             },
         }),
 
-        // Inside endpoints: (builder) => ({
         signUp: builder.mutation<
-            { user: RegisterUserType; token: string },
+            { user: UserType; token: string },
             Omit<RegisterUserType, "confirmPassword">
         >({
             query: (body) => ({
@@ -269,15 +268,6 @@ export const apiSlice = createApi({
                 method: "POST",
                 body,
             }),
-            async onQueryStarted(_args, { dispatch, queryFulfilled }) {
-                try {
-                    const { data } = await queryFulfilled;
-                    // Instantly log them into Redux state just like login!
-                    dispatch(setCredentials({ user: data.user }));
-                } catch (error) {
-                    console.error("Registration Redux sync failed:", error);
-                }
-            },
         }),
 
         getActivities: builder.query<ActivityLogEntry[], { limit?: number; offset?: number }>({

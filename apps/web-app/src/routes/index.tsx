@@ -277,7 +277,6 @@ export const appRoutes: AppRouteType[] = [
         authGuard: false,
         roles: [UserRoleEnum.GUEST],
     },
-
     {
         to: "/signup",
         element: RegisterScreen,

@@ -23,7 +23,7 @@ const AuthGuard = ({ currentUser }: Props) => {
             if (hasDashboardAccess) {
                 navigate("/dashboard", { replace: true });
             } else {
-                // Cashiers/Guests default to Home ("/") which safely figures out their landing view
+                // Guests default Home ("/") which safely figures out their landing view
                 navigate("/", { replace: true });
             }
             return;
@@ -32,7 +32,7 @@ const AuthGuard = ({ currentUser }: Props) => {
         // If the user is NOT logged in and tries to access a protected route
         const isPublicRoute = publicAuthRoutes.includes(location.pathname);
 
-        // If it's not a public auth route, and we have no user, redirect to login
+        // If it's not a public auth route, and we have no user, redirect to signin
         if (!isPublicRoute && !currentUser) {
             navigate("/signin", {
                 replace: true,

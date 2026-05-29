@@ -159,7 +159,7 @@ const Login = () => {
                         <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
                             {/* 3. Update title and disabled state to use the combined isLoading flag */}
                             <CustomButton
-                                title={isLoading ? "Signing in..." : "Signin"}
+                                title={isLoading ? "Signing in..." : "Sign in"}
                                 type="submit"
                                 variant="contained"
                                 sx={{
@@ -173,7 +173,7 @@ const Login = () => {
                         </Box>
                         <Box sx={{ textAlign: "center" }}>
                             <Typography variant="body1">
-                                Dont have an account?{" "}
+                                Don't have an account?{" "}
                                 <CustomButton title={"Sign Up"} variant="text" onClick={() => navigate("/signup")} />
                             </Typography>
                         </Box>

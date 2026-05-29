@@ -22,12 +22,15 @@ import CustomButton from "@/components/ui/button.tsx";
 import { signInWithCustomToken } from "firebase/auth";
 import { auth } from "@/config/firebase";
 import {StyledTextField} from "@/components/ui";
+import {useDispatch} from "react-redux";
+import {setCredentials} from "@/store/slice/auth-slice.ts";
 
 const Register = () => {
     const navigate = useNavigate();
     const notify = useNotifier();
+    const dispatch = useDispatch();
 
-    const [registerManagerAndStore, { isLoading: isBackendLoading }] = useSignUpMutation();
+    const [signUp, { isLoading: isBackendLoading }] = useSignUpMutation();
 
     const [showPassword, setShowPassword] = useState(false);
 
@@ -50,15 +53,15 @@ const Register = () => {
             // eslint-disable-next-line
             const { confirmPassword, ...rest } = data;
 
-            const response = await registerManagerAndStore(rest).unwrap();
+            const response = await signUp(rest).unwrap();
 
             if (response.token) {
                 await signInWithCustomToken(auth, response.token);
             }
 
-            notify("Registration successful!", "success");
+            dispatch(setCredentials({ user: response.user }));
 
-            // Navigate directly into the app—no need to make them log in again!
+            notify("Registration successful!", "success");
             navigate("/", { replace: true });
         } catch (err) {
             const apiMessage = getApiError(err, "Registration failed. Please try again.");
