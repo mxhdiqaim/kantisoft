@@ -3,14 +3,13 @@ import {Box, IconButton, InputAdornment, Typography} from "@mui/material";
 import {Controller, useForm} from "react-hook-form";
 import useNotifier from "@/hooks/useNotifier";
 import {useNavigate} from "react-router-dom";
-import {useUpdatePasswordMutation} from "@/store/slice";
-import {getApiError} from "@/helpers/get-api-error";
 import CustomButton from "@/components/ui/button.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
 import {StyledTextField} from "@/components/ui";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {updatePasswordSchema, type UpdatePasswordType} from "@/types/user-types.ts";
-import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
+import { auth } from "@/config/firebase";
 
 import {ArrowBackIosNewOutlined, Visibility, VisibilityOff} from "@mui/icons-material";
 
@@ -20,8 +19,7 @@ const ChangePasswordScreen = () => {
 
     const [showOldPassword, setShowOldPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
-
-    const [updatePassword, {isLoading, error, isError}] = useUpdatePasswordMutation();
+    const [isFirebaseLoading, setIsFirebaseLoading] = useState(false);
 
     const {
         handleSubmit,
@@ -39,29 +37,44 @@ const ChangePasswordScreen = () => {
         resolver: yupResolver(updatePasswordSchema),
     });
 
-    const onSubmit = async (data: UpdatePasswordType) => {
-        try {
-            const payload = {
-                oldPassword: data.oldPassword as string,
-                newPassword: data.newPassword as string,
-            };
+    const isLoading = isFirebaseLoading || isSubmitting;
 
-            await updatePassword({...payload}).unwrap();
+    const onSubmit = async (data: UpdatePasswordType) => {
+        const user = auth.currentUser;
+
+        if (!user || !user.email) {
+            notify("You must be logged in to change your password.", "error");
+            return;
+        }
+
+        setIsFirebaseLoading(true);
+
+        try {
+            // Re-authenticate the user with their current password
+            const credential = EmailAuthProvider.credential(user.email, data.oldPassword);
+            await reauthenticateWithCredential(user, credential);
+
+            // If successful, update the password
+            await updatePassword(user, data.newPassword);
+
             notify("Password changed successfully!", "success");
             reset();
         } catch (error) {
-            const defaultMessage = `Failed to change password: ${error.message}`;
-            const apiError = getApiError(error, defaultMessage);
-
-            notify(apiError.message, "error");
+            // Handle specific Firebase errors
+            if (error.code === "auth/invalid-credential") {
+                notify("Your current password is incorrect.", "error");
+            } else if (error.code === "auth/weak-password") {
+                notify("Your new password is too weak.", "error");
+            } else if (error.code === "auth/too-many-requests") {
+                notify("Too many failed attempts. Please try again later.", "error");
+            } else {
+                notify("Failed to change password. Please try again.", "error");
+            }
+        } finally {
+            setIsFirebaseLoading(false);
+            navigate(-1)
         }
     };
-
-    if (isError) {
-        const apiError = getApiError(error, "Failed to change Password. Please try again later.");
-        notify(apiError.message, "error");
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
-    }
 
 
     return (

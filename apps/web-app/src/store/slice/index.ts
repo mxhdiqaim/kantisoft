@@ -17,7 +17,6 @@ import type {CreateStoreType, PaginatedStoreResponse, StoreType} from "@/types/s
 import {
     type CreateUserType,
     type RegisterUserType,
-    type UpdatePasswordType,
     UserRoleEnum,
     type UserType
 } from "@/types/user-types";
@@ -534,14 +533,6 @@ export const apiSlice = createApi({
                 { type: "User", id },
                 { type: "User", id: "LIST" },
             ],
-        }),
-
-        updatePassword: builder.mutation<{ message: string }, Omit<UpdatePasswordType, "confirmNewPassword">>({
-            query: (body) => ({
-                url: "/users/update-password",
-                method: "PATCH",
-                body,
-            }),
         }),
 
         changeUserStore: builder.mutation<UserType, { id: string; newStoreId: string }>({
@@ -1073,7 +1064,6 @@ export const {
     useDeleteUserMutation,
     useCreateUserMutation,
     useUpdateUserMutation,
-    useUpdatePasswordMutation,
     useChangeUserStoreMutation,
 
     // Store Management Hooks
