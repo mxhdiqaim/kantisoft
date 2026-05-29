@@ -57,7 +57,7 @@ const AppbarComponent: FC<Props> = ({toggleDrawer, drawerState}) => {
         } catch (error) {
             console.error("Server logout failed, proceeding with client-side logout:", error);
         } finally {
-            navigate("/login");
+            navigate("/signin");
             notify("You have been logged out successfully.", "success");
         }
     };

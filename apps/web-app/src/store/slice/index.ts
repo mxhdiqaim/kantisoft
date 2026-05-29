@@ -143,12 +143,12 @@ const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQuery
             // Reset the entire API state to clear cache and stop other queries
             api.dispatch(apiSlice.util.resetApiState());
 
-            // Redirect to login page
-            window.location.href = "/login";
+            // Redirect to signin page
+            window.location.href = "/signin";
         }
         // Preventing other queries from failing and causing unhandled exceptions
         // while the logout is in progress, return a promise that never resolves.
-        // The page reload to "/login" will render this moot.
+        // The page reload to "/signin" will render this moot.
         return new Promise(() => {
         });
     }
@@ -205,7 +205,7 @@ export const apiSlice = createApi({
         // -------------------------
         // Auth Endpoints
         // -------------------------
-        login: builder.mutation({
+        signin: builder.mutation({
             query: ({ token }) => ({
                 url: "/auth/login",
                 method: "POST",
@@ -239,8 +239,8 @@ export const apiSlice = createApi({
                     // Clear the RTK Query cache
                     dispatch(apiSlice.util.resetApiState());
 
-                    // Redirect to login page
-                    window.location.href = "/login";
+                    // Redirect to signin page
+                    window.location.href = "/signin";
 
                     // reload
                     // window.location.reload();
@@ -250,8 +250,8 @@ export const apiSlice = createApi({
                     dispatch(logOut());
                     dispatch(apiSlice.util.resetApiState());
 
-                    // Redirect to login page
-                    window.location.href = "/login";
+                    // Redirect to signin page
+                    window.location.href = "/signin";
 
                     // reload
                     // window.location.reload();
@@ -259,8 +259,8 @@ export const apiSlice = createApi({
             },
         }),
 
-        registerManagerAndStore: builder.mutation<
-            { user: RegisterUserType; token: string },
+        signUp: builder.mutation<
+            { user: UserType; token: string },
             Omit<RegisterUserType, "confirmPassword">
         >({
             query: (body) => ({
@@ -994,29 +994,6 @@ export const apiSlice = createApi({
         // -------------------------
         getAllCategories: builder.query<CategoryType[], void>({
             query: () => "/categories",
-
-            // // THE SEEDING LOGIC
-            // async onCacheEntryAdded(_arg, {cacheDataLoaded}) {
-            //     try {
-            //         // Wait for the first response to arrive from the backend
-            //         const {data} = await cacheDataLoaded;
-            //
-            //         if (data && data.length > 0) {
-            //             // Bulk save to Dexie.
-            //             // .bulkPut is better than .add because it updates existing records
-            //             const localData: LocalCategoryType[] = data.map(item => ({
-            //                 ...item,
-            //                 syncStatus: localSyncStatusEnum.SYNCED // Mark as already on server
-            //             }));
-            //
-            //             await localDb.categories.bulkPut(localData);
-            //             console.log("Dexie Hydrated: Categories stored locally.");
-            //         }
-            //     } catch (error) {
-            //         console.error("Failed to seed Dexie:", error);
-            //     }
-            // },
-
             providesTags: (result) =>
                 result
                     ? [
@@ -1068,9 +1045,9 @@ export const {
     useHealthCheckQuery,
 
     // Auth hooks
-    useLoginMutation,
+    useSigninMutation,
     useLogoutMutation,
-    useRegisterManagerAndStoreMutation,
+    useSignUpMutation,
 
     // Order hooks
     useGetOrdersByPeriodQuery,
