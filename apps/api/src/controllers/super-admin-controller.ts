@@ -7,7 +7,6 @@ import {
     onboardStoreSchema,
     storeSubscriptions,
 } from "../schema/store-subscriptions-schema";
-import { passwordHashService } from "../service/password-hash-service";
 import { users } from "../schema/users-schema";
 import {
     BillingTypeEnum,
@@ -20,7 +19,6 @@ import { ActivityLogService } from "../service/activity-service-log";
 import { StatusCodes } from "http-status-codes";
 import { handleError2 } from "../service/error-handling";
 import { desc, eq } from "drizzle-orm";
-import { EmailService } from "../service/email-service";
 
 export const getAllStoresForSuperAdmin = async (
     _req: CustomRequest,
@@ -102,16 +100,14 @@ export const onboardNewStore = async (req: CustomRequest, res: Response) => {
                 setupFeePaid: false,
             });
 
-            // Create the Manager User
-            const hashedPassword = passwordHashService.hash(tempPassword);
-
             const [manager] = await tx
                 .insert(users)
                 .values({
                     firstName: firstName,
                     lastName: lastName,
                     email: email.toLowerCase(),
-                    password: hashedPassword,
+                    phone: "",
+                    // password: hashedPassword,
                     role: UserRoleEnum.MANAGER,
                     storeId: newStore.id,
                     status: UserStatusEnum.ACTIVE,
@@ -121,12 +117,12 @@ export const onboardNewStore = async (req: CustomRequest, res: Response) => {
             return { store: newStore, manager };
         });
 
-        EmailService.sendManagerWelcome(
-            email,
-            firstName,
-            tempPassword,
-            storeName,
-        ).catch((err) => console.error("Non-blocking email error:", err));
+        // EmailService.sendManagerWelcome(
+        //     email,
+        //     firstName,
+        //     tempPassword,
+        //     storeName,
+        // ).catch((err) => console.error("Non-blocking email error:", err));
 
         // Log this event
         await ActivityLogService.logSystemEvent({
@@ -199,15 +195,14 @@ export const createStoreManager = async (req: CustomRequest, res: Response) => {
             );
         }
 
-        // Create Manager
-        const hashedPassword = await passwordHashService.hash(password);
         const [newManager] = await db
             .insert(users)
             .values({
                 firstName,
                 lastName,
                 email: email.toLowerCase(),
-                password: hashedPassword,
+                // password: hashedPassword,
+                phone: "",
                 role: UserRoleEnum.MANAGER,
                 storeId: storeId,
                 status: UserStatusEnum.ACTIVE,

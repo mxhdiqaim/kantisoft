@@ -2,14 +2,14 @@ import express from "express";
 import * as controller from "../controllers/user-controller";
 import {
     loginUser,
-    registerManagerAndStore,
+    signUp,
 } from "../controllers/user-controller";
 import {authenticateToken} from "../middlewares/auth.middleware";
 
 const router = express.Router();
 
 // Public route for new manager/store registration
-router.post("/register", registerManagerAndStore);
+router.post("/signup", signUp);
 
 // Public route for logging in
 router.post("/login", loginUser);

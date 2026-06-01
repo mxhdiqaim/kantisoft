@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { and, desc, eq, gte, inArray, lte, ne, or, sql, SQL } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte, ne, or, sql } from "drizzle-orm";
 import { Request, Response } from "express";
 import db from "../db";
 import { InsertUserSchemaT, users } from "../schema/users-schema";
 import { handleError2 } from "../service/error-handling";
-import { passwordHashService } from "../service/password-hash-service";
-import { ActivityEntityTypeEnum, UserRoleEnum, UserStatusEnum } from "../types/enums";
+import {
+    ActivityEntityTypeEnum,
+    UserRoleEnum,
+    UserStatusEnum,
+} from "../types/enums";
 import { stores } from "../schema/stores-schema";
 import { CustomRequest } from "../types/express";
 import { StatusCodes } from "http-status-codes";
@@ -13,14 +16,16 @@ import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 import { getUserStoreScope } from "../utils/get-store-scope";
 import { ActivityLogService } from "../service/activity-service-log";
 import { activityLog } from "../schema/activity-log-schema";
-import {getFirebaseAdmin} from "../config/firebase-admin";
+import { getFirebaseAdmin } from "../config/firebase-admin";
+import { formatPhoneNumber } from "../utils/format-phone-number";
+import { emailService } from "../service/email.service";
 
 /**
  * @desc    Register a new Manager and their first Store
- * @route   POST /api/register
+ * @route   POST /auth/signup
  * @access  Public
  */
-export const registerManagerAndStore = async (req: Request, res: Response) => {
+export const signUp = async (req: Request, res: Response) => {
     // Keep track of the Firebase UID in case we need to roll back
     let createdFirebaseUid: string | null = null;
     const admin = getFirebaseAdmin();
@@ -54,41 +59,37 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
 
         const lowercasedEmail = email.toLowerCase();
 
-        // Normalise phone input: Convert empty string or undefined to null
-        // This ensures consistent storage (NULL for truly optional/blank) and
-        // allows correct SQL NULL handling in uniqueness checks.
-        const normalizedPhone =
-            phone === "" || phone === undefined ? null : phone;
+        // Format and Validate Phone Number
+        const formattedPhone = formatPhoneNumber(phone);
 
-        // Build the base condition (email is always checked)
-        let whereConditions: SQL<unknown> | undefined = eq(users.email, email);
-
-        // If a non-null phone number is provided, combine with the email condition using 'or'
-        if (normalizedPhone !== null) {
-            whereConditions = or(
-                whereConditions,
-                eq(users.phone, normalizedPhone),
+        if (!formattedPhone) {
+            return handleError2(
+                res,
+                "Invalid phone number format. Please provide a valid number.",
+                StatusCodes.BAD_REQUEST,
             );
         }
 
+        // Database Existence Check (Check both email and formatted phone simultaneously)
         const existingUser = await db.query.users.findFirst({
-            where: whereConditions,
+            where: or(
+                eq(users.email, lowercasedEmail),
+                eq(users.phone, formattedPhone),
+            ),
         });
 
         if (existingUser) {
-            if (existingUser.email.toLowerCase() === lowercasedEmail) {
+            if (existingUser.email === lowercasedEmail) {
                 return handleError2(
                     res,
-                    "A user with this email already exists.",
+                    "Email already exists.",
                     StatusCodes.CONFLICT,
                 );
-            } else if (
-                normalizedPhone !== null &&
-                existingUser.phone === normalizedPhone
-            ) {
+            }
+            if (existingUser.phone === formattedPhone) {
                 return handleError2(
                     res,
-                    "A user with this phone number already exists.",
+                    "Phone number already exists.",
                     StatusCodes.CONFLICT,
                 );
             }
@@ -99,9 +100,9 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
             email: lowercasedEmail,
             password: password,
             displayName: `${firstName} ${lastName}`,
+            emailVerified: false,
         });
 
-        // Lock in the UID so the catch block can access it if the DB fails
         createdFirebaseUid = firebaseUser.uid;
 
         // Use a transaction to ensure both user and store are created, or neither.
@@ -112,8 +113,6 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
                 .values({ name: storeName, storeType })
                 .returning();
 
-            // Then create the user, assigning them the manager role and linking the new store
-            // const hashedPassword = passwordHashService.hash(password);
             const [user] = await tx
                 .insert(users)
                 .values({
@@ -121,23 +120,16 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
                     firstName,
                     lastName,
                     email: lowercasedEmail,
-                    // password: hashedPassword,
-                    phone: normalizedPhone,
+                    phone: formattedPhone,
                     // TODO User Role will change to ADMIN as we will swap ADMIN & MANAGER
-                    role: UserRoleEnum.MANAGER, // Automatically a manager
+                    role: UserRoleEnum.MANAGER,
                     status: UserStatusEnum.ACTIVE,
                     storeId: newStore.id,
                 })
                 .returning();
 
-
             return { user };
         });
-
-        // 5. Generate a Custom Firebase Token
-        // Since the backend created the user, the frontend isn't logged in yet.
-        // We generate a custom token so the frontend can instantly sign in.
-        const customToken = await admin.auth().createCustomToken(firebaseUser.uid);
 
         // Log activity for manager registration
         await ActivityLogService.logSystemEvent({
@@ -152,13 +144,27 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
             details: `Manager ${user.firstName} ${user.lastName} registered and created store.`,
         });
 
-        // Return the new user (without password) and the token
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password: _, ...userWithoutPassword } = user;
+        const verificationLink = await admin
+            .auth()
+            .generateEmailVerificationLink(lowercasedEmail);
+
+        try {
+            await emailService.sendVerificationEmail({
+                to: lowercasedEmail,
+                firstName,
+                verificationLink,
+            });
+
+            console.log(
+                `📧 Verification email successfully sent to ${lowercasedEmail}`,
+            );
+        } catch (emailError) {
+            console.error("Failed to send verification email:", emailError);
+        }
 
         res.status(StatusCodes.CREATED).json({
-            user: userWithoutPassword,
-            token: customToken,
+            message:
+                "Account created successfully. Please check your email to verify your account before logging in.",
         });
     } catch (error: any) {
         // 🚨 AUTOMATED ROLLBACK: Prevent the "Ghost User"
@@ -176,7 +182,7 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
             }
         }
 
-        // Handle PostgreSQL unique constraint violations (e.g., race conditions)
+        // Handle PostgreSQL unique constraint violations
         if (
             error.cause &&
             typeof error.cause === "object" &&
@@ -184,21 +190,21 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
             error.cause.code === "23505"
         ) {
             if ("constraint" in error.cause) {
-                switch (error.cause.constraint) {
-                    case "users_email_global_unique":
-                        return handleError2(
-                            res,
-                            "A user with this email already exists.",
-                            StatusCodes.CONFLICT,
-                            error,
-                        );
-                    case "users_phone_global_unique":
-                        return handleError2(
-                            res,
-                            "A user with this phone number already exists.",
-                            StatusCodes.CONFLICT,
-                            error,
-                        );
+                if (error.cause.constraint.includes("users_email_unique")) {
+                    return handleError2(
+                        res,
+                        "A user with this email already exists.",
+                        StatusCodes.CONFLICT,
+                        error,
+                    );
+                }
+                if (error.cause.constraint.includes("users_phone_unique")) {
+                    return handleError2(
+                        res,
+                        "A user with this phone number already exists.",
+                        StatusCodes.CONFLICT,
+                        error,
+                    );
                 }
             }
         }
@@ -214,7 +220,7 @@ export const registerManagerAndStore = async (req: Request, res: Response) => {
 
 /**
  * @desc    Get all users (Admin only)
- * @route   GET /api/v1/users
+ * @route   GET /users
  * @access  Private Managers | Admins
  *          Managers can see all users in their store, Admins can on only the users in their store
  */
@@ -249,12 +255,12 @@ export const getAllUsers = async (req: CustomRequest, res: Response) => {
             .where(
                 and(
                     inArray(users.storeId, storeIds),
-                    ne(users.status, UserStatusEnum.DELETED)
-                )
-            ).orderBy(stores.name, users.firstName);
+                    ne(users.status, UserStatusEnum.DELETED),
+                ),
+            )
+            .orderBy(stores.name, users.firstName);
 
         res.status(StatusCodes.OK).json(allUsers);
-
     } catch (error) {
         // console.error("Error fetching all users:", error);
         return handleError2(
@@ -276,12 +282,12 @@ export const getUserById = async (req: CustomRequest, res: Response) => {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
 
-        if(!storeId) {
+        if (!storeId) {
             return handleError2(
                 res,
                 "Authenticated user is not associated with any store.",
                 StatusCodes.FORBIDDEN,
-            )
+            );
         }
 
         const validated = await validateStoreAndExtractDates(req, res);
@@ -291,7 +297,11 @@ export const getUserById = async (req: CustomRequest, res: Response) => {
         const { id: targetUserId } = req.params;
 
         if (!targetUserId) {
-            return handleError2(res, 'Missing user in request path.', StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Missing user in request path.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof targetUserId !== "string") {
@@ -299,7 +309,7 @@ export const getUserById = async (req: CustomRequest, res: Response) => {
                 res,
                 "Invalid request user.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         // Fetch user with Store Join
@@ -327,8 +337,8 @@ export const getUserById = async (req: CustomRequest, res: Response) => {
                 and(
                     eq(users.id, targetUserId),
                     inArray(users.storeId, storeIds),
-                    ne(users.status, UserStatusEnum.DELETED)
-                )
+                    ne(users.status, UserStatusEnum.DELETED),
+                ),
             );
 
         if (!targetUser) {
@@ -387,7 +397,11 @@ export const deleteUser = async (req: CustomRequest, res: Response) => {
         const { id: targetUserId } = req.params;
 
         if (!targetUserId) {
-            return handleError2(res, 'Missing user in request path.', StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Missing user in request path.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof targetUserId !== "string") {
@@ -395,7 +409,7 @@ export const deleteUser = async (req: CustomRequest, res: Response) => {
                 res,
                 "Invalid request user.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         // Prevent users from deleting themselves
@@ -416,11 +430,7 @@ export const deleteUser = async (req: CustomRequest, res: Response) => {
         });
 
         if (!targetUser) {
-            return handleError2(
-                res,
-                "User not found.",
-                StatusCodes.NOT_FOUND,
-            );
+            return handleError2(res, "User not found.", StatusCodes.NOT_FOUND);
         }
 
         // Authorisation Logic: Who can delete whom?
@@ -547,8 +557,6 @@ export const createUser = async (req: CustomRequest, res: Response) => {
             );
         }
 
-        const hashedPassword = await passwordHashService.hash(payload.password);
-
         // *** CRITICAL CHANGE 3: Handle phone number conversion to NULL ***
         const phoneToInsert =
             payload.phone === "" || payload.phone === undefined
@@ -561,7 +569,7 @@ export const createUser = async (req: CustomRequest, res: Response) => {
             firstName: payload.firstName,
             lastName: payload.lastName,
             email: lowercasedEmail,
-            password: hashedPassword,
+            // password: hashedPassword,
             phone: phoneToInsert, // Use the NULL-safe phone value
             role: targetRole, // Use the validated target role
             status: UserStatusEnum.ACTIVE,
@@ -585,10 +593,9 @@ export const createUser = async (req: CustomRequest, res: Response) => {
             details: `User ${newUser.firstName} ${newUser.lastName} (${newUser.role}) created by ${currentUser.firstName} ${currentUser.lastName}.`,
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password, ...userWithoutPassword } = newUser;
+        // const { password, ...userWithoutPassword } = newUser;
 
-        res.status(StatusCodes.CREATED).json(userWithoutPassword);
+        res.status(StatusCodes.CREATED).json(newUser);
     } catch (error: any) {
         // console.error(error);
         // *** CRITICAL CHANGE 4: More specific error handling for unique constraints ***
@@ -623,7 +630,7 @@ export const createUser = async (req: CustomRequest, res: Response) => {
  * @desc    Update a user's profile information
  * @route   PATCH /users/:id
  * @access  Private
- * @body    { firstName?, lastName?, email?, phone?, role? }
+ * @body    { firstName?, lastName?, email? phone?, role? }
  */
 export const updateUser = async (req: CustomRequest, res: Response) => {
     try {
@@ -648,7 +655,11 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
         const { id: targetUserId } = req.params;
 
         if (!targetUserId) {
-            return handleError2(res, 'Missing user in request path.', StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Missing user in request path.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof targetUserId !== "string") {
@@ -656,7 +667,7 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
                 res,
                 "Invalid request user.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         const updateData = req.body;
@@ -743,7 +754,7 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
         const phoneToUpdate = phone === "" ? null : phone;
 
         // Perform the update, ensuring the target is still in an accessible store
-        // I need to find a way to map each field that wanted to be update manually for security reason,
+        // I need to find a way to map each field that wanted to be update manually for security reason;
         // otherwise it will update any field that is in the req.body which can cause security issues like updating the storeId or role which can cause privilege escalation
         const [updatedUser] = await db
             .update(users)
@@ -772,10 +783,7 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
             details: `User ${targetUser.firstName} ${targetUser.lastName} updated by ${currentUser.firstName} ${currentUser.lastName}.`,
         });
 
-        // Return the updated user data (without password)
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password, ...userWithoutPassword } = updatedUser;
-        res.status(StatusCodes.OK).json(userWithoutPassword);
+        res.status(StatusCodes.OK).json(updatedUser);
     } catch (error) {
         // console.error("Error updating user:", error);
         handleError2(
@@ -799,19 +807,23 @@ export const changeUserStore = async (req: CustomRequest, res: Response) => {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
 
-        if(!storeId) {
+        if (!storeId) {
             return handleError2(
                 res,
                 "Authenticated user is not associated with any store.",
                 StatusCodes.UNAUTHORIZED,
-            )
+            );
         }
 
         const { targetUserId } = req.params;
         const { newStoreId } = req.body;
 
         if (!targetUserId) {
-            return handleError2(res, 'Missing user in request path.', StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Missing user in request path.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof targetUserId !== "string") {
@@ -819,7 +831,7 @@ export const changeUserStore = async (req: CustomRequest, res: Response) => {
                 res,
                 "Invalid request user.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         if (!newStoreId) {
@@ -834,8 +846,8 @@ export const changeUserStore = async (req: CustomRequest, res: Response) => {
             return handleError2(
                 res,
                 "Only Managers can change user stores.",
-                StatusCodes.UNAUTHORIZED
-            )
+                StatusCodes.UNAUTHORIZED,
+            );
         }
 
         if (storeId === targetUserId) {
@@ -853,18 +865,21 @@ export const changeUserStore = async (req: CustomRequest, res: Response) => {
         });
 
         if (!mainStore) {
-            return handleError2(
-                res,
-                "Store not found.",
-                StatusCodes.NOT_FOUND,
-            );
+            return handleError2(res, "Store not found.", StatusCodes.NOT_FOUND);
         }
 
         // Standardised fetch for managed stores
-        const managedStoreIds = await getUserStoreScope(UserRoleEnum.MANAGER, storeId);
+        const managedStoreIds = await getUserStoreScope(
+            UserRoleEnum.MANAGER,
+            storeId,
+        );
 
         if (!managedStoreIds || !managedStoreIds.includes(newStoreId)) {
-            return handleError2(res, "New store is outside your scope.", StatusCodes.FORBIDDEN);
+            return handleError2(
+                res,
+                "New store is outside your scope.",
+                StatusCodes.FORBIDDEN,
+            );
         }
 
         // Fetch using the same logic as your successful getAllUsers
@@ -874,8 +889,8 @@ export const changeUserStore = async (req: CustomRequest, res: Response) => {
             .where(
                 and(
                     eq(users.id, targetUserId),
-                    inArray(users.storeId, managedStoreIds)
-                )
+                    inArray(users.storeId, managedStoreIds),
+                ),
             );
 
         if (!targetUser) {
@@ -919,9 +934,7 @@ export const changeUserStore = async (req: CustomRequest, res: Response) => {
             details: `Store for user ${targetUser.firstName} ${targetUser.lastName} changed to store ID ${newStoreId}.`,
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password, ...userWithoutPassword } = updatedUser;
-        res.status(StatusCodes.OK).json(userWithoutPassword);
+        res.status(StatusCodes.OK).json(updatedUser);
     } catch (error) {
         handleError2(
             res,
@@ -1142,7 +1155,7 @@ export const getLoginHistory = async (req: CustomRequest, res: Response) => {
         if (!validated) return;
 
         const { storeIds, finalStartDate, finalEndDate } = validated;
-        const { page = '1', limit = '20' } = req.query;
+        const { page = "1", limit = "20" } = req.query;
 
         const offset = (Number(page) - 1) * Number(limit);
 
@@ -1150,27 +1163,28 @@ export const getLoginHistory = async (req: CustomRequest, res: Response) => {
         // We strictly look for LOGIN actions within the user's authorized stores
         let whereClause = and(
             eq(activityLog.action, "USER_LOGIN"),
-            inArray(activityLog.storeId, storeIds)
+            inArray(activityLog.storeId, storeIds),
         );
 
         if (finalStartDate && finalEndDate) {
             whereClause = and(
                 whereClause,
                 gte(activityLog.createdAt, finalStartDate),
-                lte(activityLog.createdAt, finalEndDate)
+                lte(activityLog.createdAt, finalEndDate),
             );
         }
 
         // Fetch Logs with Joins
-        const logs = await db.select({
-            id: activityLog.id,
-            timestamp: activityLog.createdAt,
-            details: activityLog.details,
-            userName: activityLog.actorName,
-            userEmail: users.email,
-            userRole: users.role,
-            storeName: stores.name,
-        })
+        const logs = await db
+            .select({
+                id: activityLog.id,
+                timestamp: activityLog.createdAt,
+                details: activityLog.details,
+                userName: activityLog.actorName,
+                userEmail: users.email,
+                userRole: users.role,
+                storeName: stores.name,
+            })
             .from(activityLog)
             .innerJoin(users, eq(activityLog.userId, users.id))
             .leftJoin(stores, eq(activityLog.storeId, stores.id))
@@ -1190,11 +1204,15 @@ export const getLoginHistory = async (req: CustomRequest, res: Response) => {
             pagination: {
                 total: Number(totalCount.count),
                 page: Number(page),
-                totalPages: Math.ceil(Number(totalCount.count) / Number(limit))
-            }
+                totalPages: Math.ceil(Number(totalCount.count) / Number(limit)),
+            },
         });
-
     } catch (error) {
-        return handleError2(res, "Could not fetch login history", StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
+        return handleError2(
+            res,
+            "Could not fetch login history",
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined,
+        );
     }
 };
