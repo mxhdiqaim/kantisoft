@@ -8,6 +8,11 @@ interface SendVerificationEmailArgs {
     verificationLink: string;
 }
 
+export interface SendPasswordResetEmailArgs {
+    to: string;
+    firstName: string;
+    resetLink: string;
+}
 export class EmailService {
     // Encapsulate the transporter so it cannot be tampered with outside this class
     private readonly transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
@@ -92,14 +97,42 @@ export class EmailService {
         return await this.sendMail(mailOptions);
     }
 
-    // // Example extension inside the class later:
-    // public async sendPasswordResetEmail({ to, firstName, resetLink }: ResetArgs) {
-    //     return await this.sendMail({
-    //         to,
-    //         subject: "Reset your Kantisoft Password",
-    //         html: `... template here ...`
-    //     });
-    // }
+    public async sendPasswordResetEmail({
+        to,
+        firstName,
+        resetLink,
+    }: SendPasswordResetEmailArgs): Promise<SMTPTransport.SentMessageInfo> {
+        const mailOptions: nodemailer.SendMailOptions = {
+            to,
+            subject: "Reset your Kantisoft Password",
+            text: `Hello ${firstName},\n\nWe received a request to reset your password. Click the link below to set a new one:\n${resetLink}\n\nIf you did not request this, please ignore this email.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e7; border-radius: 8px;">
+                    <h2 style="color: #18181b;">Password Reset Request</h2>
+                    <p style="color: #4b5563; font-size: 16px; line-height: 1.5;">
+                        Hello ${firstName},<br><br>
+                        We received a request to reset the password for your Kantisoft account. Click the button below to choose a new password.
+                    </p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${resetLink}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 6px; display: inline-block;">
+                            Reset Password
+                        </a>
+                    </div>
+                    <p style="color: #71717a; font-size: 12px; line-height: 1.5;">
+                        If you did not make this request, you can safely ignore this email. Your password will not change until you access the link above and create a new one.<br><br>
+                        Link not working? Paste this into your browser: <br />
+                        <a href="${resetLink}" style="color: #2563eb;">${resetLink}</a>
+                    </p>
+                    <hr style="border: 0; border-top: 1px solid #e4e4e7; margin: 20px 0;" />
+                    <p style="color: #a1a1aa; font-size: 12px; text-align: center;">
+                        &copy; ${new Date().getFullYear()} Kantisoft. All rights reserved.
+                    </p>
+                </div>
+            `,
+        };
+
+        return await this.sendMail(mailOptions);
+    }
 }
 
 // Export a single singleton instance for the app to share

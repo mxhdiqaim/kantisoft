@@ -1,4 +1,4 @@
-import {type ActivityLogEntry, type ActivityLogResponse, type QueryParamType} from "@/types";
+import { type ActivityLogEntry, type ActivityLogResponse, type QueryParamType } from "@/types";
 import type {
     InventoryAlertType,
     SalesTrendType,
@@ -6,20 +6,15 @@ import type {
     TopSellsItemType,
     TopSellsParamType,
 } from "@/types/dashboard-types.ts";
-import type {CreateMenuItemType, MenuItemType} from "@/types/menu-item-type.ts";
+import type { CreateMenuItemType, MenuItemType } from "@/types/menu-item-type.ts";
 import type {
     CreateOrderType,
     OrdersByPeriodResponse,
     Period as TimePeriod,
-    SingleOrderType
+    SingleOrderType,
 } from "@/types/order-types.ts";
-import type {CreateStoreType, PaginatedStoreResponse, StoreType} from "@/types/store-types";
-import {
-    type CreateUserType,
-    type RegisterUserType,
-    UserRoleEnum,
-    type UserType
-} from "@/types/user-types";
+import type { CreateStoreType, PaginatedStoreResponse, StoreType } from "@/types/store-types";
+import { type CreateUserType, type RegisterUserType, UserRoleEnum, type UserType } from "@/types/user-types";
 import {
     type BaseQueryFn,
     createApi,
@@ -27,9 +22,9 @@ import {
     fetchBaseQuery,
     type FetchBaseQueryError,
 } from "@reduxjs/toolkit/query/react";
-import type {RootState} from "..";
-import {logOut, selectCurrentUser, setCredentials} from "./auth-slice";
-import {selectActiveStore} from "@/store/slice/store-slice.ts";
+import type { RootState } from "..";
+import { logOut, selectCurrentUser, setCredentials } from "./auth-slice";
+import { selectActiveStore } from "@/store/slice/store-slice.ts";
 import type {
     AdjustStockResponseType,
     AdjustStockType,
@@ -37,10 +32,10 @@ import type {
     InventoryTransactionResponseType,
     InventoryTransactionType,
     InventoryType,
-    InventoryValuationHealthType
+    InventoryValuationHealthType,
 } from "@/types/inventory-types.ts";
-import {getEnvVariable} from "@/utils";
-import type {UnitOfMeasurementType} from "@/types/unit-of-measurement-types.ts";
+import { getEnvVariable } from "@/utils";
+import type { UnitOfMeasurementType } from "@/types/unit-of-measurement-types.ts";
 import type {
     CreateRawMaterialInventoryType,
     CreateRawMaterialType,
@@ -56,18 +51,18 @@ import type {
     UpdateRawMaterialInventoryResponseType,
     UpdateRawMaterialInventoryType,
     UpdateRawMaterialResponseType,
-    UpdateRawMaterialType
+    UpdateRawMaterialType,
 } from "@/types/raw-material-types.ts";
-import type {BomTypes, DefineBomSchemaType} from "@/types/bom-types.ts";
+import type { BomTypes, DefineBomSchemaType } from "@/types/bom-types.ts";
 import type {
     CreateProductionType,
     CreateWastageType,
     FinishedGoodsProfitMarginType,
     ProductionSummaryType,
     ProductionType,
-    ProductionWastageSummaryType
+    ProductionWastageSummaryType,
 } from "@/types/production-types.ts";
-import type {CategoryType, CreateCategoryType} from "@/types/categories-types.ts";
+import type { CategoryType, CreateCategoryType } from "@/types/categories-types.ts";
 import { auth } from "@/config/firebase";
 
 const baseUrl = getEnvVariable("VITE_APP_API_URL");
@@ -91,10 +86,10 @@ const baseQuery = fetchBaseQuery({
     },
 });
 
-// Lock to prevent multiple logout dispatches
-let isLoggingOut = false;
+// Lock to prevent multiple signout dispatches
+let isSigninOut = false;
 
-// base query function that includes logout logic on 401
+// base query function that includes signout logic on 401
 const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
     args,
     api,
@@ -111,7 +106,7 @@ const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQuery
         if (typeof args === "string") {
             modifiedArgs = {
                 url: args,
-                params: {targetStoreId: activeStore.id},
+                params: { targetStoreId: activeStore.id },
             };
         } else {
             modifiedArgs = {
@@ -124,7 +119,6 @@ const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQuery
         }
     }
 
-
     const result = await baseQuery(modifiedArgs, api, extraOptions);
 
     // Check if the error is a 401 and the request was NOT to the login endpoint
@@ -132,9 +126,9 @@ const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQuery
 
     // If a 401 Unauthorised error occurs, dispatch the logOut action
     if (result.error && result.error.status === 401 && !isLoginAttempt) {
-        if (!isLoggingOut) {
-            isLoggingOut = true; // Set the lock
-            console.warn("Session expired, initiating logout.");
+        if (!isSigninOut) {
+            isSigninOut = true; // Set the lock
+            console.warn("Session expired, initiating signout.");
 
             // Dispatch the logOut action to clear credentials
             api.dispatch(logOut());
@@ -146,10 +140,9 @@ const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQuery
             window.location.href = "/signin";
         }
         // Preventing other queries from failing and causing unhandled exceptions
-        // while the logout is in progress, return a promise that never resolves.
+        // while the signout is in progress, return a promise that never resolves.
         // The page reload to "/signin" will render this moot.
-        return new Promise(() => {
-        });
+        return new Promise(() => {});
     }
 
     return result;
@@ -206,7 +199,7 @@ export const apiSlice = createApi({
         // -------------------------
         signin: builder.mutation({
             query: ({ token }) => ({
-                url: "/auth/login",
+                url: "/auth/signin",
                 method: "POST",
                 // Pass the token in the Authorization header
                 headers: {
@@ -220,14 +213,14 @@ export const apiSlice = createApi({
                     // On success, dispatch setCredentials to store token and user
                     dispatch(setCredentials(data));
                 } catch (error) {
-                    console.error("Login failed:", error);
+                    console.error("Signin failed:", error);
                 }
             },
         }),
 
-        logout: builder.mutation({
+        signout: builder.mutation({
             query: () => ({
-                url: "/auth/logout",
+                url: "/auth/signout",
                 method: "POST",
             }),
             async onQueryStarted(_args, { dispatch, queryFulfilled }) {
@@ -244,8 +237,8 @@ export const apiSlice = createApi({
                     // reload
                     // window.location.reload();
                 } catch (error) {
-                    console.error("Logout failed:", error);
-                    // Even if the server call fails, force a local logout
+                    console.error("Signout failed:", error);
+                    // Even if the server call fails, force a local signout
                     dispatch(logOut());
                     dispatch(apiSlice.util.resetApiState());
 
@@ -258,12 +251,9 @@ export const apiSlice = createApi({
             },
         }),
 
-        signUp: builder.mutation<
-            { user: UserType; token: string },
-            Omit<RegisterUserType, "confirmPassword">
-        >({
+        signup: builder.mutation<{ user: UserType; token: string }, Omit<RegisterUserType, "confirmPassword">>({
             query: (body) => ({
-                url: "/auth/register",
+                url: "/auth/signup",
                 method: "POST",
                 body,
             }),
@@ -1037,8 +1027,8 @@ export const {
 
     // Auth hooks
     useSigninMutation,
-    useLogoutMutation,
-    useSignUpMutation,
+    useSignoutMutation,
+    useSignupMutation,
 
     // Order hooks
     useGetOrdersByPeriodQuery,
@@ -1122,6 +1112,5 @@ export const {
     useGetAllCategoriesQuery,
     useCreateCategoryMutation,
     useUpdateCategoryMutation,
-    useDeleteCategoryMutation
-
+    useDeleteCategoryMutation,
 } = apiSlice;

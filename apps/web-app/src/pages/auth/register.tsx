@@ -1,6 +1,6 @@
 import { getApiError } from "@/helpers/get-api-error";
 import useNotifier from "@/hooks/useNotifier";
-import { useSignUpMutation } from "@/store/slice";
+import { useSignupMutation } from "@/store/slice";
 import { STORE_TYPES } from "@/types/store-types";
 import { registerUserSchema, type RegisterUserType } from "@/types/user-types";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -21,16 +21,16 @@ import { useNavigate } from "react-router-dom";
 import CustomButton from "@/components/ui/button.tsx";
 import { signInWithCustomToken } from "firebase/auth";
 import { auth } from "@/config/firebase";
-import {StyledTextField} from "@/components/ui";
-import {useDispatch} from "react-redux";
-import {setCredentials} from "@/store/slice/auth-slice.ts";
+import { StyledTextField } from "@/components/ui";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "@/store/slice/auth-slice.ts";
 
 const Register = () => {
     const navigate = useNavigate();
     const notify = useNotifier();
     const dispatch = useDispatch();
 
-    const [signUp, { isLoading: isBackendLoading }] = useSignUpMutation();
+    const [signup, { isLoading: isBackendLoading }] = useSignupMutation();
 
     const [showPassword, setShowPassword] = useState(false);
 
@@ -53,7 +53,7 @@ const Register = () => {
             // eslint-disable-next-line
             const { confirmPassword, ...rest } = data;
 
-            const response = await signUp(rest).unwrap();
+            const response = await signup(rest).unwrap();
 
             if (response.token) {
                 await signInWithCustomToken(auth, response.token);

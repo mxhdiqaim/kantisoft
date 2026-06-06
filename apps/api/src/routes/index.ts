@@ -1,5 +1,6 @@
 import express from "express";
 
+import auth from "./auth.routes";
 import users from "./users-routes";
 import menuItems from "./menu-items-routes";
 import orders from "./order-routes";
@@ -7,7 +8,6 @@ import dashboard from "./dashboard-routes";
 import stores from "./store-routes";
 import activities from "./activity-routes";
 import inventory from "./inventory-routes";
-import auth from "./auth-routes";
 import unitOfMeasurement from "./unit-of-measurement-routes";
 import rawMaterials from "./raw-material-routes";
 import billOfMaterial from "./bill-of-material-routes";
