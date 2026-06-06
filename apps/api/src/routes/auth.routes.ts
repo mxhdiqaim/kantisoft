@@ -18,7 +18,6 @@ router.post("/resend-verification", resendVerification);
 
 router.post("/forgot-password", forgotPassword);
 
-// Protected route for logging out
 router.post("/signout", authenticateToken, signout);
 
 export default router;

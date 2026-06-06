@@ -199,7 +199,7 @@ export const apiSlice = createApi({
         // -------------------------
         signin: builder.mutation({
             query: ({ token }) => ({
-                url: "/auth/signin",
+                url: "/auth",
                 method: "POST",
                 // Pass the token in the Authorization header
                 headers: {

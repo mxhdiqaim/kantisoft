@@ -5,10 +5,10 @@ import { eq, or } from "drizzle-orm";
 import { handleError2 } from "../service/error-handling";
 import db from "../db";
 import { users } from "../schema/users-schema";
+import { stores } from "../schema/stores-schema";
 import { formatPhoneNumber } from "../utils/format-phone-number";
 import { getFirebaseAdmin } from "../config/firebase-admin";
 import { emailService } from "../service/email.service";
-import { stores } from "../schema/stores-schema";
 import { ActivityLogService } from "../service/activity-service-log";
 import {
     ActivityEntityTypeEnum,
@@ -16,199 +16,11 @@ import {
     UserStatusEnum,
 } from "../types/enums";
 
-export const signup = async (req: Request, res: Response) => {
-    // Keep track of the Firebase UID in case we need to roll back
-    let createdFirebaseUid: string | null = null;
-    const admin = getFirebaseAdmin();
-
-    try {
-        const {
-            firstName,
-            lastName,
-            email,
-            password,
-            phone,
-            storeName,
-            storeType,
-        } = req.body;
-
-        // Validate input
-        if (
-            !email ||
-            !password ||
-            !firstName ||
-            !lastName ||
-            !storeName ||
-            !storeType
-        ) {
-            return handleError2(
-                res,
-                "First name, last name, email, password, store name, and store type are required.",
-                StatusCodes.BAD_REQUEST,
-            );
-        }
-
-        const lowercasedEmail = email.toLowerCase();
-
-        // Format and Validate Phone Number
-        const formattedPhone = formatPhoneNumber(phone);
-
-        if (!formattedPhone) {
-            return handleError2(
-                res,
-                "Invalid phone number format. Please provide a valid number.",
-                StatusCodes.BAD_REQUEST,
-            );
-        }
-
-        // Database Existence Check (Check both email and formatted phone simultaneously)
-        const existingUser = await db.query.users.findFirst({
-            where: or(
-                eq(users.email, lowercasedEmail),
-                eq(users.phone, formattedPhone),
-            ),
-        });
-
-        if (existingUser) {
-            if (existingUser.email === lowercasedEmail) {
-                return handleError2(
-                    res,
-                    "Email already exists.",
-                    StatusCodes.CONFLICT,
-                );
-            }
-            if (existingUser.phone === formattedPhone) {
-                return handleError2(
-                    res,
-                    "Phone number already exists.",
-                    StatusCodes.CONFLICT,
-                );
-            }
-        }
-
-        // Create the user in Firebase Auth
-        const firebaseUser = await admin.auth().createUser({
-            email: lowercasedEmail,
-            password: password,
-            displayName: `${firstName} ${lastName}`,
-            emailVerified: false,
-        });
-
-        createdFirebaseUid = firebaseUser.uid;
-
-        // Use a transaction to ensure both user and store are created, or neither.
-        const { user } = await db.transaction(async (tx) => {
-            // Create the store first
-            const [newStore] = await tx
-                .insert(stores)
-                .values({ name: storeName, storeType })
-                .returning();
-
-            const [user] = await tx
-                .insert(users)
-                .values({
-                    firebaseUid: firebaseUser.uid,
-                    firstName,
-                    lastName,
-                    email: lowercasedEmail,
-                    phone: formattedPhone,
-                    // TODO User Role will change to ADMIN as we will swap ADMIN & MANAGER
-                    role: UserRoleEnum.MANAGER,
-                    status: UserStatusEnum.ACTIVE,
-                    storeId: newStore.id,
-                })
-                .returning();
-
-            return { user };
-        });
-
-        // Log activity for manager registration
-        await ActivityLogService.logSystemEvent({
-            userId: user.id,
-            storeId: String(user.storeId),
-            // TODO User Role will change to ADMIN as we will swap ADMIN & MANAGER
-            action: "MANAGER_REGISTERED",
-            entityId: user.id,
-            entityType: ActivityEntityTypeEnum.USER,
-            actorName: `${user.firstName} ${user.lastName}`,
-            targetName: `${user.firstName} ${user.lastName}`,
-            details: `Manager ${user.firstName} ${user.lastName} registered and created store.`,
-        });
-
-        const verificationLink = await admin
-            .auth()
-            .generateEmailVerificationLink(lowercasedEmail);
-
-        try {
-            await emailService.sendVerificationEmail({
-                to: lowercasedEmail,
-                firstName,
-                verificationLink,
-            });
-
-            console.log(
-                `📧 Verification email successfully sent to ${lowercasedEmail}`,
-            );
-        } catch (emailError) {
-            console.error("Failed to send verification email:", emailError);
-        }
-
-        res.status(StatusCodes.CREATED).json({
-            message:
-                "Account created successfully. Please check your email to verify your account before logging in.",
-        });
-    } catch (error: any) {
-        // 🚨 AUTOMATED ROLLBACK: Prevent the "Ghost User"
-        if (createdFirebaseUid) {
-            try {
-                await admin.auth().deleteUser(createdFirebaseUid);
-                console.log(
-                    `🧹 Rolled back Firebase user ${createdFirebaseUid} due to database failure.`,
-                );
-            } catch (cleanupError) {
-                console.error(
-                    "CRITICAL: Failed to clean up Firebase user:",
-                    cleanupError,
-                );
-            }
-        }
-
-        // Handle PostgreSQL unique constraint violations
-        if (
-            error.cause &&
-            typeof error.cause === "object" &&
-            "code" in error.cause &&
-            error.cause.code === "23505"
-        ) {
-            if ("constraint" in error.cause) {
-                if (error.cause.constraint.includes("users_email_unique")) {
-                    return handleError2(
-                        res,
-                        "A user with this email already exists.",
-                        StatusCodes.CONFLICT,
-                        error,
-                    );
-                }
-                if (error.cause.constraint.includes("users_phone_unique")) {
-                    return handleError2(
-                        res,
-                        "A user with this phone number already exists.",
-                        StatusCodes.CONFLICT,
-                        error,
-                    );
-                }
-            }
-        }
-
-        return handleError2(
-            res,
-            "Registration failed. Please try again.",
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            error instanceof Error ? error : undefined,
-        );
-    }
-};
-
+/**
+ * @desc    Verify Firebase ID Token and return local Postgres Profile
+ * @route   POST /auth
+ * @access  Public (Expects Bearer Token)
+ */
 export const auth = async (req: Request, res: Response) => {
     try {
         const authHeader = req.headers.authorization;
@@ -225,7 +37,6 @@ export const auth = async (req: Request, res: Response) => {
         const admin = getFirebaseAdmin();
         let decodedToken;
 
-        // Verify the Firebase Token
         try {
             decodedToken = await admin.auth().verifyIdToken(token);
         } catch (error) {
@@ -250,7 +61,6 @@ export const auth = async (req: Request, res: Response) => {
 
         const { uid, email } = decodedToken;
 
-        // Enforce Email Verification Gate
         if (!decodedToken.email_verified) {
             return handleError2(
                 res,
@@ -259,12 +69,10 @@ export const auth = async (req: Request, res: Response) => {
             );
         }
 
-        // Fetch user dynamically by firebaseUid using elegant relational queries
+        // Fetch profile with relational join automatically handled by Drizzle
         let userRecord = await db.query.users.findFirst({
             where: eq(users.firebaseUid, uid),
-            with: {
-                store: true,
-            },
+            with: { store: true },
         });
 
         // Migration Bridge for legacy users matching by email
@@ -274,7 +82,6 @@ export const auth = async (req: Request, res: Response) => {
                 with: { store: true },
             });
 
-            // If found by email, link their account by backfilling the firebaseUid
             if (userRecord && !userRecord.firebaseUid) {
                 await db
                     .update(users)
@@ -285,7 +92,6 @@ export const auth = async (req: Request, res: Response) => {
             }
         }
 
-        // Handle Completely Unregistered Accounts
         if (!userRecord) {
             return handleError2(
                 res,
@@ -294,7 +100,7 @@ export const auth = async (req: Request, res: Response) => {
             );
         }
 
-        // Handle Account Status Restrictions (Banned, Deleted, Inactive)
+        // Enforce Account Status Restrictions
         if (
             userRecord.status === UserStatusEnum.DELETED ||
             userRecord.status === UserStatusEnum.BANNED ||
@@ -318,7 +124,7 @@ export const auth = async (req: Request, res: Response) => {
             );
         }
 
-        // Log Successful Login
+        // Log Successful Authentication
         await ActivityLogService.logSystemEvent({
             userId: userRecord.id,
             storeId: String(userRecord.storeId),
@@ -331,7 +137,6 @@ export const auth = async (req: Request, res: Response) => {
             isRead: false,
         }).catch((err) => console.error("Logging success failed", err));
 
-        // Return the Profile and Token back to RTK Query
         return res.status(StatusCodes.OK).json({
             token: token,
             user: userRecord,
@@ -346,6 +151,173 @@ export const auth = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * @desc    Register a new Manager and their first Store
+ * @route   POST /auth/signup
+ * @access  Public
+ */
+export const signup = async (req: Request, res: Response) => {
+    let createdFirebaseUid: string | null = null;
+    const admin = getFirebaseAdmin();
+
+    try {
+        const {
+            firstName,
+            lastName,
+            email,
+            password,
+            phone,
+            storeName,
+            storeType,
+        } = req.body;
+
+        if (
+            !email ||
+            !password ||
+            !firstName ||
+            !lastName ||
+            !storeName ||
+            !storeType
+        ) {
+            return handleError2(
+                res,
+                "First name, last name, email, password, store name, and store type are required.",
+                StatusCodes.BAD_REQUEST,
+            );
+        }
+
+        const lowercasedEmail = email.toLowerCase();
+        const formattedPhone = formatPhoneNumber(phone);
+
+        if (!formattedPhone) {
+            return handleError2(
+                res,
+                "Invalid phone number format. Please provide a valid number.",
+                StatusCodes.BAD_REQUEST,
+            );
+        }
+
+        const existingUser = await db.query.users.findFirst({
+            where: or(
+                eq(users.email, lowercasedEmail),
+                eq(users.phone, formattedPhone),
+            ),
+        });
+
+        if (existingUser) {
+            const conflictField =
+                existingUser.email === lowercasedEmail
+                    ? "Email"
+                    : "Phone number";
+            return handleError2(
+                res,
+                `${conflictField} already exists.`,
+                StatusCodes.CONFLICT,
+            );
+        }
+
+        const firebaseUser = await admin.auth().createUser({
+            email: lowercasedEmail,
+            password: password,
+            displayName: `${firstName} ${lastName}`,
+            emailVerified: false,
+        });
+
+        createdFirebaseUid = firebaseUser.uid;
+
+        const { user } = await db.transaction(async (tx) => {
+            const [newStore] = await tx
+                .insert(stores)
+                .values({ name: storeName, storeType })
+                .returning();
+
+            const [user] = await tx
+                .insert(users)
+                .values({
+                    firebaseUid: firebaseUser.uid,
+                    firstName,
+                    lastName,
+                    email: lowercasedEmail,
+                    phone: formattedPhone,
+                    role: UserRoleEnum.MANAGER,
+                    status: UserStatusEnum.ACTIVE,
+                    storeId: newStore.id,
+                })
+                .returning();
+
+            return { user };
+        });
+
+        await ActivityLogService.logSystemEvent({
+            userId: user.id,
+            storeId: String(user.storeId),
+            action: "MANAGER_REGISTERED",
+            entityId: user.id,
+            entityType: ActivityEntityTypeEnum.USER,
+            actorName: `${user.firstName} ${user.lastName}`,
+            targetName: `${user.firstName} ${user.lastName}`,
+            details: `Manager ${user.firstName} ${user.lastName} registered and created store.`,
+        });
+
+        const verificationLink = await admin
+            .auth()
+            .generateEmailVerificationLink(lowercasedEmail);
+
+        try {
+            await emailService.sendVerificationEmail({
+                to: lowercasedEmail,
+                firstName,
+                verificationLink,
+            });
+            console.log(
+                `📧 Verification email successfully sent to ${lowercasedEmail}`,
+            );
+        } catch (emailError) {
+            console.error("Failed to send verification email:", emailError);
+        }
+
+        return res.status(StatusCodes.CREATED).json({
+            message:
+                "Account created successfully. Please check your email to verify your account before logging in.",
+        });
+    } catch (error: any) {
+        if (createdFirebaseUid) {
+            try {
+                await admin.auth().deleteUser(createdFirebaseUid);
+                console.log(
+                    `🧹 Rolled back Firebase user ${createdFirebaseUid} due to database failure.`,
+                );
+            } catch (cleanupError) {
+                console.error(
+                    "CRITICAL: Failed to clean up Firebase user:",
+                    cleanupError,
+                );
+            }
+        }
+
+        if (error.cause?.code === "23505" && error.cause?.constraint) {
+            const conflictMsg = error.cause.constraint.includes(
+                "users_email_unique",
+            )
+                ? "A user with this email already exists."
+                : "A user with this phone number already exists.";
+            return handleError2(res, conflictMsg, StatusCodes.CONFLICT, error);
+        }
+
+        return handleError2(
+            res,
+            "Registration failed. Please try again.",
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined,
+        );
+    }
+};
+
+/**
+ * @desc    Resend the email verification link to an unverified user
+ * @route   POST /auth/resend-verification
+ * @access  Public
+ */
 export const resendVerification = async (req: Request, res: Response) => {
     try {
         const { identifier } = req.body;
@@ -361,7 +333,6 @@ export const resendVerification = async (req: Request, res: Response) => {
         let targetEmail = "";
         let dbUserRecord;
 
-        // Resolve Identifier (Is it an email or a phone number?)
         if (identifier.includes("@")) {
             targetEmail = identifier.toLowerCase();
             dbUserRecord = await db.query.users.findFirst({
@@ -397,9 +368,7 @@ export const resendVerification = async (req: Request, res: Response) => {
         let firebaseUser;
         try {
             firebaseUser = await admin.auth().getUserByEmail(targetEmail);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-            // User exists in Postgres but not Firebase (Edge case / Ghost user)
             return res.status(StatusCodes.OK).json({
                 message:
                     "If an account matches that identifier, a new verification link has been sent.",
@@ -448,6 +417,11 @@ export const resendVerification = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * @desc    Initiate a password reset flow (sends email)
+ * @route   POST /auth/forgot-password
+ * @access  Public
+ */
 export const forgotPassword = async (req: Request, res: Response) => {
     try {
         const { identifier } = req.body;
@@ -463,7 +437,6 @@ export const forgotPassword = async (req: Request, res: Response) => {
         let targetEmail = "";
         let dbUserRecord;
 
-        // Resolve Identifier (Email or Phone)
         if (identifier.includes("@")) {
             targetEmail = identifier.toLowerCase();
             dbUserRecord = await db.query.users.findFirst({
@@ -500,12 +473,9 @@ export const forgotPassword = async (req: Request, res: Response) => {
             });
         }
 
-        // Generate the Password Reset Link via Firebase Admin
         const admin = getFirebaseAdmin();
-
         let resetLink;
         try {
-            // TODO: Implement custom UI not use firebase UI.
             resetLink = await admin
                 .auth()
                 .generatePasswordResetLink(targetEmail);
@@ -533,7 +503,6 @@ export const forgotPassword = async (req: Request, res: Response) => {
             );
         }
 
-        // Respond to Client
         return res.status(StatusCodes.OK).json({
             message:
                 "If an account matches that identifier, a password reset link has been sent.",
@@ -548,6 +517,11 @@ export const forgotPassword = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * @desc    Terminate active session
+ * @route   POST /auth/signout
+ * @access  Protected
+ */
 export const signout = async (req: Request, res: Response) => {
     return res.status(StatusCodes.OK).json({ message: "Logout successful" });
 };
