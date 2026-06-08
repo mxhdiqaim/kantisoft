@@ -2,6 +2,26 @@ import nodemailer from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { getEnvVariable } from "../utils";
 
+// Simple, fast utility to escape special HTML characters
+const escapeHtml = (text: string): string => {
+    return text.replace(/[&<>"']/g, (match) => {
+        switch (match) {
+            case "&":
+                return "&amp;";
+            case "<":
+                return "&lt;";
+            case ">":
+                return "&gt;";
+            case '"':
+                return "&quot;";
+            case "'":
+                return "&#039;";
+            default:
+                return match;
+        }
+    });
+};
+
 interface SendVerificationEmailArgs {
     to: string;
     firstName: string;
@@ -67,24 +87,29 @@ export class EmailService {
         firstName,
         verificationLink,
     }: SendVerificationEmailArgs): Promise<SMTPTransport.SentMessageInfo> {
+        // Sanitize inputs for HTML usage
+        const safeFirstName = escapeHtml(firstName);
+        const safeLink = escapeHtml(verificationLink);
+
         const mailOptions: nodemailer.SendMailOptions = {
             to,
             subject: "Verify your Kantisoft Account",
+            // Plain text requires raw characters, NOT escaped HTML entities
             text: `Hello ${firstName},\n\nPlease verify your email by clicking the following link:\n${verificationLink}\n\nIf you did not request this, please ignore this email.`,
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e7; border-radius: 8px;">
-                    <h2 style="color: #18181b;">Welcome to Kantisoft, ${firstName}!</h2>
+                    <h2 style="color: #18181b;">Welcome to Kantisoft, ${safeFirstName}!</h2>
                     <p style="color: #4b5563; font-size: 16px; line-height: 1.5;">
                         Thanks for signing up. To get started managing your store, please verify your email address by clicking the button below:
                     </p>
                     <div style="text-align: center; margin: 30px 0;">
-                        <a href="${verificationLink}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 6px; display: inline-block;">
+                        <a href="${safeLink}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 6px; display: inline-block;">
                             Verify Email Address
                         </a>
                     </div>
                     <p style="color: #71717a; font-size: 12px; line-height: 1.5;">
                         If the button above doesn't work, copy and paste this link into your web browser: <br />
-                        <a href="${verificationLink}" style="color: #2563eb;">${verificationLink}</a>
+                        <a href="${safeLink}" style="color: #2563eb;">${safeLink}</a>
                     </p>
                     <hr style="border: 0; border-top: 1px solid #e4e4e7; margin: 20px 0;" />
                     <p style="color: #a1a1aa; font-size: 12px; text-align: center;">

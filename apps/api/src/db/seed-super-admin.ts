@@ -10,6 +10,7 @@ import { getEnvVariable } from "../utils";
         const FIRST_NAME = "System";
         const LAST_NAME = "SuperAdmin";
         const EMAIL = getEnvVariable("SUPER_ADMIN_EMAIL");
+        const PHONE = getEnvVariable("PHONE");
         // const PASSWORD = getEnvVariable("SUPER_ADMIN_PASSWORD");
 
         await db
@@ -19,7 +20,7 @@ import { getEnvVariable } from "../utils";
                 lastName: LAST_NAME,
                 email: EMAIL,
                 // password: hashedPassword,
-                phone: "",
+                phone: PHONE,
                 role: UserRoleEnum.SUPER_ADMIN,
                 status: UserStatusEnum.ACTIVE,
                 storeId: null,

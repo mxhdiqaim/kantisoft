@@ -5,7 +5,7 @@ import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/config/firebase";
 import useNotifier from "@/hooks/useNotifier";
 import CustomButton from "@/components/ui/button.tsx";
-import { StyledTextField } from "@/components/ui"; // Assuming you export this from here
+import { StyledTextField } from "@/components/ui";
 
 const ForgetPassword = () => {
     const navigate = useNavigate();
@@ -30,9 +30,10 @@ const ForgetPassword = () => {
             setEmail("");
         } catch (error) {
             // Check for specific Firebase error codes
-            const errorMsg = error.code === "auth/user-not-found"
-                ? "No account found with this email."
-                : "Failed to send reset email. Please try again.";
+            const errorMsg =
+                error.code === "auth/user-not-found"
+                    ? "No account found with this email."
+                    : "Failed to send reset email. Please try again.";
 
             notify(errorMsg, "error");
         } finally {
@@ -88,11 +89,7 @@ const ForgetPassword = () => {
                         />
 
                         <Box sx={{ textAlign: "center" }}>
-                            <CustomButton
-                                title="Back to Login"
-                                variant="text"
-                                onClick={() => navigate("/login")}
-                            />
+                            <CustomButton title="Back to signin" variant="text" onClick={() => navigate("/signin")} />
                         </Box>
                     </Box>
                 </Box>

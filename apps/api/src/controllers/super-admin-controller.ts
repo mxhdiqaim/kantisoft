@@ -19,6 +19,7 @@ import { ActivityLogService } from "../service/activity-service-log";
 import { StatusCodes } from "http-status-codes";
 import { handleError2 } from "../service/error-handling";
 import { desc, eq } from "drizzle-orm";
+import { formatPhoneNumber } from "../utils/format-phone-number";
 
 export const getAllStoresForSuperAdmin = async (
     _req: CustomRequest,
@@ -68,8 +69,10 @@ export const onboardNewStore = async (req: CustomRequest, res: Response) => {
             );
         }
 
-        const { firstName, lastName, email, storeName, location } = req.body;
-        const tempPassword = "Welcome@Store123";
+        const { firstName, lastName, email, phone, storeName, location } =
+            req.body;
+        const formattedPhone = formatPhoneNumber(phone);
+        // const tempPassword = "Welcome@Store123";
 
         const existing = await db.query.users.findFirst({
             where: eq(users.email, email.toLowerCase()),
@@ -106,7 +109,7 @@ export const onboardNewStore = async (req: CustomRequest, res: Response) => {
                     firstName: firstName,
                     lastName: lastName,
                     email: email.toLowerCase(),
-                    phone: "",
+                    phone: String(formattedPhone),
                     // password: hashedPassword,
                     role: UserRoleEnum.MANAGER,
                     storeId: newStore.id,
@@ -167,7 +170,8 @@ export const onboardNewStore = async (req: CustomRequest, res: Response) => {
  */
 export const createStoreManager = async (req: CustomRequest, res: Response) => {
     try {
-        const { storeId, firstName, lastName, email, password } = req.body;
+        const { storeId, firstName, lastName, email, phone } = req.body;
+        const formattedPhone = formatPhoneNumber(phone);
 
         // Verify the store exists
         const store = await db.query.stores.findFirst({
@@ -202,7 +206,7 @@ export const createStoreManager = async (req: CustomRequest, res: Response) => {
                 lastName,
                 email: email.toLowerCase(),
                 // password: hashedPassword,
-                phone: "",
+                phone: String(formattedPhone),
                 role: UserRoleEnum.MANAGER,
                 storeId: storeId,
                 status: UserStatusEnum.ACTIVE,

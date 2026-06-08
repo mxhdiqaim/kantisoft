@@ -368,6 +368,7 @@ export const resendVerification = async (req: Request, res: Response) => {
         let firebaseUser;
         try {
             firebaseUser = await admin.auth().getUserByEmail(targetEmail);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             return res.status(StatusCodes.OK).json({
                 message:

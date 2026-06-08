@@ -122,10 +122,16 @@ const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQuery
     const result = await baseQuery(modifiedArgs, api, extraOptions);
 
     // Check if the error is a 401 and the request was NOT to the login endpoint
-    const isLoginAttempt = typeof args === "object" && "url" in args && args.url.includes("/login");
+    // const isLoginAttempt = typeof args === "object" && "url" in args && args.url.includes("/login");
 
-    // If a 401 Unauthorised error occurs, dispatch the logOut action
-    if (result.error && result.error.status === 401 && !isLoginAttempt) {
+    const isAuthRoute =
+        typeof args === "object" &&
+        "url" in args &&
+        typeof args.url === "string" &&
+        (args.url === "/auth" || args.url.startsWith("/auth/"));
+
+    // If a 401 Unauthorized error occurs, and we aren't currently trying to authenticate
+    if (result.error && result.error.status === 401 && !isAuthRoute) {
         if (!isSigninOut) {
             isSigninOut = true; // Set the lock
             console.warn("Session expired, initiating signout.");

@@ -1,17 +1,17 @@
-import {useState} from "react";
-import {Box, IconButton, InputAdornment, Typography} from "@mui/material";
-import {Controller, useForm} from "react-hook-form";
+import { useState } from "react";
+import { Box, IconButton, InputAdornment, Typography } from "@mui/material";
+import { Controller, useForm } from "react-hook-form";
 import useNotifier from "@/hooks/useNotifier";
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import CustomButton from "@/components/ui/button.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import {StyledTextField} from "@/components/ui";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {updatePasswordSchema, type UpdatePasswordType} from "@/types/user-types.ts";
+import { StyledTextField } from "@/components/ui";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { updatePasswordSchema, type UpdatePasswordType } from "@/types/user-types.ts";
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
 import { auth } from "@/config/firebase";
 
-import {ArrowBackIosNewOutlined, Visibility, VisibilityOff} from "@mui/icons-material";
+import { ArrowBackIosNewOutlined, Visibility, VisibilityOff } from "@mui/icons-material";
 
 const ChangePasswordScreen = () => {
     const notify = useNotifier();
@@ -25,7 +25,7 @@ const ChangePasswordScreen = () => {
         handleSubmit,
         control,
         reset,
-        formState: {errors, isSubmitting},
+        formState: { errors, isSubmitting },
     } = useForm({
         mode: "onChange",
         defaultValues: {
@@ -59,7 +59,11 @@ const ChangePasswordScreen = () => {
 
             notify("Password changed successfully!", "success");
             reset();
-        } catch (error) {
+
+            navigate(-1);
+
+            // eslint-disable-next-line
+        } catch (error: any) {
             // Handle specific Firebase errors
             if (error.code === "auth/invalid-credential") {
                 notify("Your current password is incorrect.", "error");
@@ -71,30 +75,27 @@ const ChangePasswordScreen = () => {
                 notify("Failed to change password. Please try again.", "error");
             }
         } finally {
+            // Keep the loading state reset here so the button unlocks on both success and error
             setIsFirebaseLoading(false);
-            navigate(-1)
         }
     };
-
 
     return (
         <Box component={"form"} onSubmit={handleSubmit(onSubmit)} noValidate>
             <CustomButton
                 title={"Go Back"}
-                startIcon={<ArrowBackIosNewOutlined fontSize="small" sx={{mr: 0.5}}/>}
+                startIcon={<ArrowBackIosNewOutlined fontSize="small" sx={{ mr: 0.5 }} />}
                 onClick={() => navigate(-1)}
-                sx={{mb: 2}}
+                sx={{ mb: 2 }}
             />
-            <CustomCard sx={{p: 1}}>
-                <Typography variant="h5">
-                    Change Password
-                </Typography>
+            <CustomCard sx={{ p: 1 }}>
+                <Typography variant="h5">Change Password</Typography>
                 <Box>
                     <Controller
                         name="oldPassword"
                         control={control}
-                        rules={{required: "Current password is required"}}
-                        render={({field}) => (
+                        rules={{ required: "Current password is required" }}
+                        render={({ field }) => (
                             <StyledTextField
                                 {...field}
                                 label="Current Password"
@@ -107,7 +108,7 @@ const ChangePasswordScreen = () => {
                                     endAdornment: (
                                         <InputAdornment position="end">
                                             <IconButton onClick={() => setShowOldPassword((show) => !show)} edge="end">
-                                                {showOldPassword ? <VisibilityOff/> : <Visibility/>}
+                                                {showOldPassword ? <VisibilityOff /> : <Visibility />}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
@@ -118,7 +119,7 @@ const ChangePasswordScreen = () => {
                     <Controller
                         name="newPassword"
                         control={control}
-                        render={({field}) => (
+                        render={({ field }) => (
                             <StyledTextField
                                 {...field}
                                 label="New Password"
@@ -131,7 +132,7 @@ const ChangePasswordScreen = () => {
                                     endAdornment: (
                                         <InputAdornment position="end">
                                             <IconButton onClick={() => setShowNewPassword((show) => !show)} edge="end">
-                                                {showNewPassword ? <VisibilityOff/> : <Visibility/>}
+                                                {showNewPassword ? <VisibilityOff /> : <Visibility />}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
@@ -142,7 +143,7 @@ const ChangePasswordScreen = () => {
                     <Controller
                         name="confirmNewPassword"
                         control={control}
-                        render={({field}) => (
+                        render={({ field }) => (
                             <StyledTextField
                                 {...field}
                                 label="Confirm New Password"
@@ -155,7 +156,7 @@ const ChangePasswordScreen = () => {
                                     endAdornment: (
                                         <InputAdornment position="end">
                                             <IconButton onClick={() => setShowNewPassword((show) => !show)} edge="end">
-                                                {showNewPassword ? <VisibilityOff/> : <Visibility/>}
+                                                {showNewPassword ? <VisibilityOff /> : <Visibility />}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
