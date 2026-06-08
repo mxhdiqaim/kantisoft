@@ -1,9 +1,9 @@
-import {appRoutes, type AppRouteType} from "@/routes";
-import {useAppSelector} from "@/store";
-import {apiSlice, useGetAllStoresQuery, useLogoutMutation} from "@/store/slice";
-import {selectCurrentUser} from "@/store/slice/auth-slice";
-import {selectActiveStore, setActiveStore} from "@/store/slice/store-slice";
-import {LogoutOutlined, StorefrontOutlined} from "@mui/icons-material";
+import { appRoutes, type AppRouteType } from "@/routes";
+import { useAppSelector } from "@/store";
+import { apiSlice, useGetAllStoresQuery, useSignoutMutation } from "@/store/slice";
+import { selectCurrentUser } from "@/store/slice/auth-slice";
+import { selectActiveStore, setActiveStore } from "@/store/slice/store-slice";
+import { LogoutOutlined, StorefrontOutlined } from "@mui/icons-material";
 import useScreenSize from "@/hooks/use-screen-size";
 
 import ExpandLessOutlinedIcon from "@mui/icons-material/ExpandLessOutlined";
@@ -24,13 +24,13 @@ import {
     type Theme,
     useTheme,
 } from "@mui/material";
-import {type FC, Fragment, useEffect, useState} from "react";
-import {useTranslation} from "react-i18next";
-import {useDispatch, useSelector} from "react-redux";
-import {Link, useLocation, useNavigate} from "react-router-dom";
-import type {Props as AppBarProps} from "./appbar";
-import {UserRoleEnum} from "@/types/user-types.ts";
-import type {StoreType} from "@/types/store-types.ts";
+import { type FC, Fragment, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useDispatch, useSelector } from "react-redux";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import type { Props as AppBarProps } from "./appbar";
+import { UserRoleEnum } from "@/types/user-types.ts";
+import type { StoreType } from "@/types/store-types.ts";
 import CustomButton from "@/components/ui/button.tsx";
 
 import Icon from "@/components/ui/icon.tsx";
@@ -42,17 +42,17 @@ interface Props extends AppBarProps {
     showDrawer?: boolean;
 }
 
-const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
-    const {t} = useTranslation();
+const SideBar: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
+    const { t } = useTranslation();
     const theme = useTheme();
     const screenSize = useScreenSize();
     const location = useLocation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const [logout, {isLoading}] = useLogoutMutation();
+    const [signout, { isLoading }] = useSignoutMutation();
     const currentUser = useAppSelector(selectCurrentUser);
 
-    const {data: stores, isLoading: isLoadingStores} = useGetAllStoresQuery();
+    const { data: stores, isLoading: isLoadingStores } = useGetAllStoresQuery();
     const activeStore = useSelector(selectActiveStore);
 
     const handleStoreSelect = (store: StoreType) => {
@@ -64,9 +64,9 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
 
     const handleLogout = async () => {
         try {
-            await logout({}).unwrap();
+            await signout({}).unwrap();
         } catch (error) {
-            console.error("Server logout failed, proceeding with client-side logout:", error);
+            console.error("Server signout failed, proceeding with client-side signout:", error);
         } finally {
             navigate("/signin");
         }
@@ -82,15 +82,15 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
             setExpandedItems((prev) => {
                 // If clicking the same item, close it and all its children levels
                 if (prev[level] === route.to) {
-                    const newState = {...prev};
-                    Object.keys(newState).forEach(key => {
+                    const newState = { ...prev };
+                    Object.keys(newState).forEach((key) => {
                         if (Number(key) >= level) delete newState[Number(key)];
                     });
                     return newState;
                 }
                 // Otherwise, set this level to the new route and clear deeper levels
-                const newState = {...prev, [level]: route.to};
-                Object.keys(newState).forEach(key => {
+                const newState = { ...prev, [level]: route.to };
+                Object.keys(newState).forEach((key) => {
                     if (Number(key) > level) delete newState[Number(key)];
                 });
                 return newState;
@@ -114,7 +114,7 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
             })
             .map((route) => {
                 if (route.children) {
-                    return {...route, children: filterRoutes(route.children)};
+                    return { ...route, children: filterRoutes(route.children) };
                 }
                 return route;
             });
@@ -130,11 +130,11 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
         const isExpanded = expandedItems[level] === route.to;
 
         const hasChildren = route.children && route.children.length > 0;
-        const linkProps = !hasChildren ? {component: Link, to: fullPath} : {};
+        const linkProps = !hasChildren ? { component: Link, to: fullPath } : {};
 
         return (
             <Fragment key={index}>
-                <ListItem disablePadding sx={{px: 2, py: 0.5}}>
+                <ListItem disablePadding sx={{ px: 2, py: 0.5 }}>
                     <ListItemButton
                         selected={isSelected}
                         onClick={() => handleItemClick(route, level)}
@@ -170,7 +170,9 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
                             },
                         }}
                     >
-                        {route?.icon && <ListItemIcon sx={{minWidth: 40, color: "inherit"}}>{route.icon}</ListItemIcon>}
+                        {route?.icon && (
+                            <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>{route.icon}</ListItemIcon>
+                        )}
                         <ListItemText
                             primary={t(route.title as string)}
                             slotProps={{
@@ -185,7 +187,7 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
                         {hasChildren && (
                             <Box
                                 component={isExpanded ? ExpandLessOutlinedIcon : ExpandMoreOutlinedIcon}
-                                sx={{fontSize: 20}}
+                                sx={{ fontSize: 20 }}
                             />
                         )}
                     </ListItemButton>
@@ -246,14 +248,14 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
         <Drawer
             variant="permanent"
             sx={{
-                width: {xs: "100vw", md: `${theme.layout.sidebarWidth}px`},
+                width: { xs: "100vw", md: `${theme.layout.sidebarWidth}px` },
                 flexShrink: 0,
                 "& .MuiDrawer-paper": {
-                    width: {xs: "100vw", md: `${theme.layout.sidebarWidth}px`},
+                    width: { xs: "100vw", md: `${theme.layout.sidebarWidth}px` },
                     boxSizing: "border-box",
                 },
                 background: theme.palette.background.default,
-                position: {xs: "absolute", md: "relative"},
+                position: { xs: "absolute", md: "relative" },
                 zIndex: 10,
                 ...sx,
             }}
@@ -271,11 +273,11 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
                 }}
             >
                 {isLoadingStores ? (
-                    <CircularProgress size={24}/>
+                    <CircularProgress size={24} />
                 ) : (
                     <CustomButton
-                        startIcon={<StorefrontOutlined sx={{mr: 1}}/>}
-                        endIcon={isManager && <ExpandMoreOutlinedIcon/>}
+                        startIcon={<StorefrontOutlined sx={{ mr: 1 }} />}
+                        endIcon={isManager && <ExpandMoreOutlinedIcon />}
                         title={activeStore?.name || "Select Store"}
                         sx={{
                             borderRadius: 1,
@@ -286,30 +288,35 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
                         component={isManager ? "button" : Link}
                         to={!isManager ? "/" : undefined}
                     >
-                        {isManager && (
+                        {isManager &&
                             (stores ?? []).map((store) => (
-                                <MenuItem key={store.id} onClick={() => handleStoreSelect(store)}
-                                          selected={store.id === activeStore?.id}>
+                                <MenuItem
+                                    key={store.id}
+                                    onClick={() => handleStoreSelect(store)}
+                                    selected={store.id === activeStore?.id}
+                                >
                                     {store.name}
                                 </MenuItem>
-                            ))
-                        )}
+                            ))}
                     </CustomButton>
                 )}
                 {screenSize === "mobile" || screenSize === "tablet" ? (
-                    <IconButton aria-label="menu" sx={{borderRadius: 1}}
-                                onClick={() => toggleDrawer && toggleDrawer(!drawerState)}>
-                        <Icon src={CancelSvgIcon} alt={"Cancel Icon"}/>
+                    <IconButton
+                        aria-label="menu"
+                        sx={{ borderRadius: 1 }}
+                        onClick={() => toggleDrawer && toggleDrawer(!drawerState)}
+                    >
+                        <Icon src={CancelSvgIcon} alt={"Cancel Icon"} />
                     </IconButton>
                 ) : (
-                    <IconButton aria-label="menu" sx={{borderRadius: 1}}>
-                        <Icon src={CollapseSvgIcon} alt={"Collapse Icon"}/>
+                    <IconButton aria-label="menu" sx={{ borderRadius: 1 }}>
+                        <Icon src={CollapseSvgIcon} alt={"Collapse Icon"} />
                     </IconButton>
                 )}
             </Box>
 
-            <List sx={{height: "100%", display: "flex", flexDirection: "column", overflowY: "auto"}}>
-                <Box sx={{flexGrow: 1, overflowY: "auto"}}>
+            <List sx={{ height: "100%", display: "flex", flexDirection: "column", overflowY: "auto" }}>
+                <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
                     {filterRoutes(appRoutes).map((route, index) => renderMenuItem(route, index))}
                 </Box>
             </List>
@@ -319,7 +326,7 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
                     onClick={handleLogout}
                     disabled={isLoading}
                     variant="contained"
-                    startIcon={<LogoutOutlined/>}
+                    startIcon={<LogoutOutlined />}
                     sx={{
                         width: "100%",
                         backgroundColor: theme.palette.error.main,
@@ -337,7 +344,6 @@ const SideBar: FC<Props> = ({sx, drawerState, toggleDrawer, showDrawer}) => {
                         },
                     }}
                 />
-
             </Box>
         </Drawer>
     );

@@ -1,18 +1,17 @@
-import {useState} from "react";
-import {Box, IconButton, InputAdornment, Typography} from "@mui/material";
-import {Controller, useForm} from "react-hook-form";
+import { useState } from "react";
+import { Box, IconButton, InputAdornment, Typography } from "@mui/material";
+import { Controller, useForm } from "react-hook-form";
 import useNotifier from "@/hooks/useNotifier";
-import {useNavigate} from "react-router-dom";
-import {useUpdatePasswordMutation} from "@/store/slice";
-import {getApiError} from "@/helpers/get-api-error";
+import { useNavigate } from "react-router-dom";
 import CustomButton from "@/components/ui/button.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import {StyledTextField} from "@/components/ui";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {updatePasswordSchema, type UpdatePasswordType} from "@/types/user-types.ts";
-import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
+import { StyledTextField } from "@/components/ui";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { updatePasswordSchema, type UpdatePasswordType } from "@/types/user-types.ts";
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
+import { auth } from "@/config/firebase";
 
-import {ArrowBackIosNewOutlined, Visibility, VisibilityOff} from "@mui/icons-material";
+import { ArrowBackIosNewOutlined, Visibility, VisibilityOff } from "@mui/icons-material";
 
 const ChangePasswordScreen = () => {
     const notify = useNotifier();
@@ -20,14 +19,13 @@ const ChangePasswordScreen = () => {
 
     const [showOldPassword, setShowOldPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
-
-    const [updatePassword, {isLoading, error, isError}] = useUpdatePasswordMutation();
+    const [isFirebaseLoading, setIsFirebaseLoading] = useState(false);
 
     const {
         handleSubmit,
         control,
         reset,
-        formState: {errors, isSubmitting},
+        formState: { errors, isSubmitting },
     } = useForm({
         mode: "onChange",
         defaultValues: {
@@ -39,49 +37,65 @@ const ChangePasswordScreen = () => {
         resolver: yupResolver(updatePasswordSchema),
     });
 
-    const onSubmit = async (data: UpdatePasswordType) => {
-        try {
-            const payload = {
-                oldPassword: data.oldPassword as string,
-                newPassword: data.newPassword as string,
-            };
+    const isLoading = isFirebaseLoading || isSubmitting;
 
-            await updatePassword({...payload}).unwrap();
+    const onSubmit = async (data: UpdatePasswordType) => {
+        const user = auth.currentUser;
+
+        if (!user || !user.email) {
+            notify("You must be logged in to change your password.", "error");
+            return;
+        }
+
+        setIsFirebaseLoading(true);
+
+        try {
+            // Re-authenticate the user with their current password
+            const credential = EmailAuthProvider.credential(user.email, data.oldPassword);
+            await reauthenticateWithCredential(user, credential);
+
+            // If successful, update the password
+            await updatePassword(user, data.newPassword);
+
             notify("Password changed successfully!", "success");
             reset();
-        } catch (error) {
-            const defaultMessage = `Failed to change password: ${error.message}`;
-            const apiError = getApiError(error, defaultMessage);
 
-            notify(apiError.message, "error");
+            navigate(-1);
+
+            // eslint-disable-next-line
+        } catch (error: any) {
+            // Handle specific Firebase errors
+            if (error.code === "auth/invalid-credential") {
+                notify("Your current password is incorrect.", "error");
+            } else if (error.code === "auth/weak-password") {
+                notify("Your new password is too weak.", "error");
+            } else if (error.code === "auth/too-many-requests") {
+                notify("Too many failed attempts. Please try again later.", "error");
+            } else {
+                notify("Failed to change password. Please try again.", "error");
+            }
+        } finally {
+            // Keep the loading state reset here so the button unlocks on both success and error
+            setIsFirebaseLoading(false);
         }
     };
-
-    if (isError) {
-        const apiError = getApiError(error, "Failed to change Password. Please try again later.");
-        notify(apiError.message, "error");
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
-    }
-
 
     return (
         <Box component={"form"} onSubmit={handleSubmit(onSubmit)} noValidate>
             <CustomButton
                 title={"Go Back"}
-                startIcon={<ArrowBackIosNewOutlined fontSize="small" sx={{mr: 0.5}}/>}
+                startIcon={<ArrowBackIosNewOutlined fontSize="small" sx={{ mr: 0.5 }} />}
                 onClick={() => navigate(-1)}
-                sx={{mb: 2}}
+                sx={{ mb: 2 }}
             />
-            <CustomCard sx={{p: 1}}>
-                <Typography variant="h5">
-                    Change Password
-                </Typography>
+            <CustomCard sx={{ p: 1 }}>
+                <Typography variant="h5">Change Password</Typography>
                 <Box>
                     <Controller
                         name="oldPassword"
                         control={control}
-                        rules={{required: "Current password is required"}}
-                        render={({field}) => (
+                        rules={{ required: "Current password is required" }}
+                        render={({ field }) => (
                             <StyledTextField
                                 {...field}
                                 label="Current Password"
@@ -94,7 +108,7 @@ const ChangePasswordScreen = () => {
                                     endAdornment: (
                                         <InputAdornment position="end">
                                             <IconButton onClick={() => setShowOldPassword((show) => !show)} edge="end">
-                                                {showOldPassword ? <VisibilityOff/> : <Visibility/>}
+                                                {showOldPassword ? <VisibilityOff /> : <Visibility />}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
@@ -105,7 +119,7 @@ const ChangePasswordScreen = () => {
                     <Controller
                         name="newPassword"
                         control={control}
-                        render={({field}) => (
+                        render={({ field }) => (
                             <StyledTextField
                                 {...field}
                                 label="New Password"
@@ -118,7 +132,7 @@ const ChangePasswordScreen = () => {
                                     endAdornment: (
                                         <InputAdornment position="end">
                                             <IconButton onClick={() => setShowNewPassword((show) => !show)} edge="end">
-                                                {showNewPassword ? <VisibilityOff/> : <Visibility/>}
+                                                {showNewPassword ? <VisibilityOff /> : <Visibility />}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
@@ -129,7 +143,7 @@ const ChangePasswordScreen = () => {
                     <Controller
                         name="confirmNewPassword"
                         control={control}
-                        render={({field}) => (
+                        render={({ field }) => (
                             <StyledTextField
                                 {...field}
                                 label="Confirm New Password"
@@ -142,7 +156,7 @@ const ChangePasswordScreen = () => {
                                     endAdornment: (
                                         <InputAdornment position="end">
                                             <IconButton onClick={() => setShowNewPassword((show) => !show)} edge="end">
-                                                {showNewPassword ? <VisibilityOff/> : <Visibility/>}
+                                                {showNewPassword ? <VisibilityOff /> : <Visibility />}
                                             </IconButton>
                                         </InputAdornment>
                                     ),

@@ -1,8 +1,8 @@
-import {useFullscreen} from "@/hooks/use-fullscreen";
+import { useFullscreen } from "@/hooks/use-fullscreen";
 import useNotifier from "@/hooks/useNotifier";
-import {useLogoutMutation} from "@/store/slice";
-import {selectCurrentUser} from "@/store/slice/auth-slice";
-import {LogoutOutlined, PersonOutline} from "@mui/icons-material";
+import { useSignoutMutation } from "@/store/slice";
+import { selectCurrentUser } from "@/store/slice/auth-slice";
+import { LogoutOutlined, PersonOutline } from "@mui/icons-material";
 import FullscreenExitOutlinedIcon from "@mui/icons-material/FullscreenExitOutlined";
 import FullscreenOutlinedIcon from "@mui/icons-material/FullscreenOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
@@ -22,25 +22,25 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import {type FC} from "react";
-import {useSelector} from "react-redux";
-import {useLocation, useNavigate} from "react-router-dom";
+import { type FC } from "react";
+import { useSelector } from "react-redux";
+import { useLocation, useNavigate } from "react-router-dom";
 import CustomButton from "@/components/ui/button.tsx";
-import {findRouteByPath} from "@/utils/routes.ts";
-import {appRoutes} from "@/routes";
-import {useTranslation} from "react-i18next";
+import { findRouteByPath } from "@/utils/routes.ts";
+import { appRoutes } from "@/routes";
+import { useTranslation } from "react-i18next";
 
 export interface Props {
     toggleDrawer?: (open: boolean) => void;
     drawerState?: boolean;
 }
 
-const AppbarComponent: FC<Props> = ({toggleDrawer, drawerState}) => {
+const AppbarComponent: FC<Props> = ({ toggleDrawer, drawerState }) => {
     const theme = useTheme();
-    const {t} = useTranslation();
-    const {isFullscreen, toggleFullscreen} = useFullscreen();
+    const { t } = useTranslation();
+    const { isFullscreen, toggleFullscreen } = useFullscreen();
     const navigate = useNavigate();
-    const {pathname} = useLocation();
+    const { pathname } = useLocation();
     const notify = useNotifier();
 
     const currentUser = useSelector(selectCurrentUser);
@@ -49,13 +49,13 @@ const AppbarComponent: FC<Props> = ({toggleDrawer, drawerState}) => {
     const currentRoute = findRouteByPath(appRoutes, pathname);
     const pageTitle = currentRoute?.title || "Home"; // Fallback to "Home" if no title is found
 
-    const [logout, {isLoading: isLoggingOut}] = useLogoutMutation();
+    const [signout, { isLoading: isLoggingOut }] = useSignoutMutation();
 
     const handleLogout = async () => {
         try {
-            await logout({}).unwrap();
+            await signout({}).unwrap();
         } catch (error) {
-            console.error("Server logout failed, proceeding with client-side logout:", error);
+            console.error("Server signout failed, proceeding with client-side signout:", error);
         } finally {
             navigate("/signin");
             notify("You have been logged out successfully.", "success");
@@ -71,32 +71,34 @@ const AppbarComponent: FC<Props> = ({toggleDrawer, drawerState}) => {
                 boxShadow: "none",
                 backdropFilter: "blur(8px)",
                 borderBottom: `1px solid ${theme.palette.divider}`,
-                width: {md: `calc(100% - ${theme.layout.sidebarWidth})`},
+                width: { md: `calc(100% - ${theme.layout.sidebarWidth})` },
             }}
         >
-            <Toolbar sx={{display: "flex", justifyContent: "space-between", alignItems: "center", height: "100%"}}>
-                <Box component={"span"}
-                     sx={{display: {xs: "flex", md: "none"}, alignItems: "center", justifyContent: "center"}}>
+            <Toolbar sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "100%" }}>
+                <Box
+                    component={"span"}
+                    sx={{ display: { xs: "flex", md: "none" }, alignItems: "center", justifyContent: "center" }}
+                >
                     <IconButton
                         onClick={() => toggleDrawer && toggleDrawer(!drawerState)}
                         aria-label="menu"
                         sx={{
-                            display: {xs: "block", md: "none"},
+                            display: { xs: "block", md: "none" },
                         }}
                     >
-                        <MenuOutlinedIcon/>
+                        <MenuOutlinedIcon />
                     </IconButton>
                 </Box>
 
-                <Box sx={{flexGrow: 1, display: {xs: "none", md: "inline"}}}>
+                <Box sx={{ flexGrow: 1, display: { xs: "none", md: "inline" } }}>
                     <Typography variant="h5" color={"#353F46"} fontWeight={600}>
                         {t(pageTitle)}
                     </Typography>
                 </Box>
 
-                <Box sx={{flexGrow: 1}}/>
+                <Box sx={{ flexGrow: 1 }} />
 
-                <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <IconButton
                         aria-label="toggle fullscreen"
                         onClick={toggleFullscreen}
@@ -104,7 +106,7 @@ const AppbarComponent: FC<Props> = ({toggleDrawer, drawerState}) => {
                             background: theme.palette.background.default,
                         }}
                     >
-                        {isFullscreen ? <FullscreenExitOutlinedIcon/> : <FullscreenOutlinedIcon/>}
+                        {isFullscreen ? <FullscreenExitOutlinedIcon /> : <FullscreenOutlinedIcon />}
                     </IconButton>
 
                     <IconButton
@@ -114,7 +116,7 @@ const AppbarComponent: FC<Props> = ({toggleDrawer, drawerState}) => {
                         }}
                         disabled={true}
                     >
-                        <NotificationsNoneOutlinedIcon/>
+                        <NotificationsNoneOutlinedIcon />
                     </IconButton>
                     <CustomButton
                         variant={"text"}
@@ -123,23 +125,25 @@ const AppbarComponent: FC<Props> = ({toggleDrawer, drawerState}) => {
                         }}
                         startIcon={
                             <Tooltip title="Account settings" placement={"top"}>
-                                <Avatar
-                                    sx={{width: 36, height: 36, backgroundColor: "primary.main"}}>
+                                <Avatar sx={{ width: 36, height: 36, backgroundColor: "primary.main" }}>
                                     {currentUser?.firstName?.charAt(0).toUpperCase()}
                                 </Avatar>
                             </Tooltip>
                         }
                     >
-                        <MenuItem onClick={() => navigate("/admin/users/profile")} sx={{mx: 1, borderRadius: 3}}>
-                            <PersonOutline sx={{mr: 1}}/> Profile
+                        <MenuItem onClick={() => navigate("/admin/users/profile")} sx={{ mx: 1, borderRadius: 3 }}>
+                            <PersonOutline sx={{ mr: 1 }} /> Profile
                         </MenuItem>
-                        <Divider/>
-                        <MenuItem onClick={handleLogout} sx={{color: "error.main", mx: 1, borderRadius: 3}}
-                                  disabled={isLoggingOut}>
+                        <Divider />
+                        <MenuItem
+                            onClick={handleLogout}
+                            sx={{ color: "error.main", mx: 1, borderRadius: 3 }}
+                            disabled={isLoggingOut}
+                        >
                             {isLoggingOut ? (
-                                <CircularProgress size={20} sx={{mr: 1}} color="inherit"/>
+                                <CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />
                             ) : (
-                                <LogoutOutlined sx={{mr: 1}}/>
+                                <LogoutOutlined sx={{ mr: 1 }} />
                             )}
                             {isLoggingOut ? "Logging out..." : "Logout"}
                         </MenuItem>
