@@ -7,6 +7,7 @@ import path from "path";
 import routes from "./routes";
 import { getEnvVariable } from "./shared/utils";
 import { initializeFirebase } from "./config/firebase-admin";
+import { globalErrorHandler } from "./shared/middlewares/error.middleware";
 
 export const app = express();
 
@@ -39,41 +40,25 @@ const corsOptions = {
     credentials: true,
 };
 
-// CORS setup
 app.use(cors(corsOptions));
 
-/** Logging */
 app.use(morgan("dev"));
 
-/** Parse the request */
 app.use(express.urlencoded({ extended: false }));
 
-/** Takes care of JSON data */
 app.use(express.json({ limit: "5mb" }));
 
-/** RULES OF OUR API */
 app.use((req, res, next) => {
     next();
 });
 
-/** Routes */
 app.use("/api/v1", routes);
 
 app.use(express.static(path.join(__dirname, "public")));
 
-// Sentry Error Handler
 Sentry.setupExpressErrorHandler(app);
 
-/** Error handling */
-app.use((req, res, next) => {
-    const error = new Error("not found");
-
-    res.status(404).json({
-        message: error.message,
-    });
-
-    next(error);
-});
+app.use(globalErrorHandler);
 
 /** Server */
 // export default http.createServer(app);
