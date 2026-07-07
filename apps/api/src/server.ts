@@ -59,6 +59,3 @@ app.use(express.static(path.join(__dirname, "public")));
 Sentry.setupExpressErrorHandler(app);
 
 app.use(globalErrorHandler);
-
-/** Server */
-// export default http.createServer(app);
