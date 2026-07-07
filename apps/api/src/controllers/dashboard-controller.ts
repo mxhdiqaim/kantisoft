@@ -23,7 +23,7 @@ import moment from "moment-timezone";
 import { CustomRequest } from "../types/express";
 import { inventory } from "../schema/inventory-schema";
 import { StatusCodes } from "http-status-codes";
-import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
+import { validateStoreAndExtractDates } from "../shared/utils/validate-store-dates";
 import { TIMEZONE } from "../constant";
 import { billOfMaterials } from "../schema/bill-of-materials-schema";
 import { rawMaterials } from "../schema/raw-materials-schema";

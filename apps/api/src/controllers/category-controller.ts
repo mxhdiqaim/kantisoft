@@ -6,8 +6,8 @@ import { handleError2 } from "../service/error-handling";
 import { CustomRequest } from "../types/express";
 import { StatusCodes } from "http-status-codes";
 import { UserRoleEnum } from "../types/enums";
-import { determineFinalStoreId } from "../utils/store-permission-utils";
-import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
+import { determineFinalStoreId } from "../shared/utils/store-permission-utils";
+import { validateStoreAndExtractDates } from "../shared/utils/validate-store-dates";
 
 /**
  * @desc    Get all categories for the active store(s)

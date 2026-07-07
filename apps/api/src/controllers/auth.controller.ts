@@ -6,7 +6,7 @@ import { handleError2 } from "../service/error-handling";
 import db from "../shared/database";
 import { users } from "../schema/users-schema";
 import { stores } from "../schema/stores-schema";
-import { formatPhoneNumber } from "../utils/format-phone-number";
+import { formatPhoneNumber } from "../shared/utils/format-phone-number";
 import { getFirebaseAdmin } from "../config/firebase-admin";
 import { emailService } from "../service/email.service";
 import { ActivityLogService } from "../service/activity-service-log";

@@ -9,7 +9,7 @@ import { rawMaterials } from "../../schema/raw-materials-schema";
 import { unitOfMeasurement } from "../../schema/unit-of-measurement-schema";
 import { users } from "../../schema/users-schema";
 import { eq, and, desc, inArray, SQL, gte, lte } from "drizzle-orm";
-import { validateStoreAndExtractDates } from "../../utils/validate-store-dates";
+import { validateStoreAndExtractDates } from "../../shared/utils/validate-store-dates";
 
 /**
  * @description Retrieves the full transaction history (stock ledger) for a raw material in a store.

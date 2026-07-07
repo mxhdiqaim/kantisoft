@@ -12,14 +12,14 @@ import {
     UserRoleEnum,
 } from "../types/enums";
 import { handleError2 } from "../service/error-handling";
-import { generateOrderReference } from "../utils";
+import { generateOrderReference } from "../shared/utils";
 import { logActivity } from "../service/activity-logger";
 import { CustomRequest } from "../types/express";
 import { decrementStockForOrder } from "./inventory-controller";
 import { StatusCodes } from "http-status-codes";
-import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
+import { validateStoreAndExtractDates } from "../shared/utils/validate-store-dates";
 import { InsufficientStockError } from "../errors";
-import { determineFinalStoreId } from "../utils/store-permission-utils";
+import { determineFinalStoreId } from "../shared/utils/store-permission-utils";
 
 export const getAllOrders = async (req: CustomRequest, res: Response) => {
     try {

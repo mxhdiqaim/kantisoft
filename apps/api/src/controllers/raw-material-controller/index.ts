@@ -12,8 +12,8 @@ import { UnitConversionService } from "../../service/unit-conversion-service";
 import { unitOfMeasurement } from "../../schema/unit-of-measurement-schema";
 import { and, eq, inArray } from "drizzle-orm";
 import { RawMaterialStatusEnum, UserRoleEnum } from "../../types/enums";
-import { determineFinalStoreId } from "../../utils/store-permission-utils";
-import { validateStoreAndExtractDates } from "../../utils/validate-store-dates";
+import { determineFinalStoreId } from "../../shared/utils/store-permission-utils";
+import { validateStoreAndExtractDates } from "../../shared/utils/validate-store-dates";
 
 /**
  * @description Retrieves a list of all Raw Materials, including their presentation unit data.
@@ -494,12 +494,10 @@ export const updateRawMaterial = async (req: CustomRequest, res: Response) => {
         }
 
         if (Object.keys(updatePayload).length === 0) {
-            return res
-                .status(StatusCodes.OK)
-                .json({
-                    success: true,
-                    message: "No fields provided for update.",
-                });
+            return res.status(StatusCodes.OK).json({
+                success: true,
+                message: "No fields provided for update.",
+            });
         }
 
         const [updatedItem] = await db

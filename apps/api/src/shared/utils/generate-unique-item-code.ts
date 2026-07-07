@@ -1,6 +1,6 @@
-import db from "../shared/database";
-import { menuItems } from "../schema/menu-items-schema";
-import { desc, eq, sql } from "drizzle-orm"; // Import asc for ordering
+import db from "../database";
+import { menuItems } from "../../schema/menu-items-schema";
+import { desc, eq, sql } from "drizzle-orm";
 
 /**
  * Generates the next available unique numeric item code for a menu item.

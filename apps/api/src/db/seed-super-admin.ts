@@ -1,7 +1,7 @@
-import db from "./";
+import db from "../shared/database";
 import { users } from "../schema/users-schema";
 import { UserRoleEnum, UserStatusEnum } from "../types/enums";
-import { getEnvVariable } from "../utils";
+import { getEnvVariable } from "../shared/utils";
 
 (async () => {
     try {

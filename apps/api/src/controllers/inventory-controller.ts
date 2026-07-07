@@ -18,22 +18,22 @@ import { logActivity } from "../service/activity-logger";
 import { calculateInventoryStatus, getInventoryByMenuItemId } from "../helpers";
 import { StatusCodes } from "http-status-codes";
 import { inventoryTransactions } from "../schema/inventory-schema/inventory-transaction-schema";
-import { getStockAdjustedAction } from "../utils/inventory-utils";
+import { getStockAdjustedAction } from "../shared/utils/inventory-utils";
 import { menuItems } from "../schema/menu-items-schema";
 import { OrderItemStockUpdate } from "../types";
 import { lte } from "drizzle-orm/sql/expressions/conditions";
-import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
+import { validateStoreAndExtractDates } from "../shared/utils/validate-store-dates";
 import { InsufficientStockError } from "../errors";
 import {
     INVENTORY_TRANSACTION_SUMMARY_TYPES,
     InventoryTransactionTypeEnum,
     UserRoleEnum,
 } from "../types/enums";
-import { determineFinalStoreId } from "../utils/store-permission-utils";
+import { determineFinalStoreId } from "../shared/utils/store-permission-utils";
 import { InventoryAlertService } from "../service/inventory-alert-service";
 import { users } from "../schema/users-schema";
 import { stores } from "../schema/stores-schema";
-import { getInventoryTransactionTypeLabel } from "../utils";
+import { getInventoryTransactionTypeLabel } from "../shared/utils";
 import { PgTransaction } from "drizzle-orm/pg-core";
 import { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import schema from "../db/schema";

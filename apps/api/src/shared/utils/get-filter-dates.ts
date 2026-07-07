@@ -1,5 +1,5 @@
 import moment from "moment-timezone";
-import { DateInput, FilterDates, Period as TimePeriod } from "../types";
+import { DateInput, FilterDates, Period as TimePeriod } from "../../types";
 
 /**
  * @desc Determines the final start and end dates for filtering based on priority:

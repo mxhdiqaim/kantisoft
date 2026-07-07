@@ -8,7 +8,7 @@ import { handleError2 } from "../service/error-handling";
 import { UserRoleEnum } from "../types/enums";
 import { and, desc, eq, ne, sql, SQLWrapper } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
-import { determineFinalStoreId } from "../utils/store-permission-utils";
+import { determineFinalStoreId } from "../shared/utils/store-permission-utils";
 
 export const getActivities = async (req: Request, res: Response) => {
     try {

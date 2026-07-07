@@ -1,5 +1,5 @@
 import admin from "firebase-admin";
-import { getEnvVariable } from "../utils";
+import { getEnvVariable } from "../shared/utils";
 
 const projectId = getEnvVariable("FIREBASE_PROJECT_ID");
 const clientEmail = getEnvVariable("FIREBASE_CLIENT_EMAIL");

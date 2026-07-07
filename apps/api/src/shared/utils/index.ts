@@ -1,5 +1,5 @@
-import { InventoryTransactionSummaryTypeEnum } from "../types/enums";
-import { LogParams } from "../service/activity-service-log";
+import { InventoryTransactionSummaryTypeEnum } from "../../types/enums";
+import { LogParams } from "../../service/activity-service-log";
 
 export const generateOrderReference = (length = 8) => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

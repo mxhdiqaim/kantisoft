@@ -19,7 +19,7 @@ import { ActivityLogService } from "../service/activity-service-log";
 import { StatusCodes } from "http-status-codes";
 import { handleError2 } from "../service/error-handling";
 import { desc, eq } from "drizzle-orm";
-import { formatPhoneNumber } from "../utils/format-phone-number";
+import { formatPhoneNumber } from "../shared/utils/format-phone-number";
 
 export const getAllStoresForSuperAdmin = async (
     _req: CustomRequest,

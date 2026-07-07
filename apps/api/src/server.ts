@@ -5,8 +5,8 @@ import express from "express";
 import morgan from "morgan";
 import path from "path";
 import routes from "./routes";
-import { getEnvVariable } from "./utils";
-import {initializeFirebase} from "./config/firebase-admin";
+import { getEnvVariable } from "./shared/utils";
+import { initializeFirebase } from "./config/firebase-admin";
 
 export const app = express();
 
@@ -33,10 +33,10 @@ const URL =
 initializeFirebase();
 
 const corsOptions = {
-    origin: URL, // FE origins
-    methods: ["GET", "POST", "PATCH", "DELETE"], // Allowed HTTP methods
-    allowedHeaders: ["Content-Type", "Authorization"], // Allowed request headers
-    credentials: true, // Allow cookies and authentication headers
+    origin: URL,
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
 };
 
 // CORS setup

@@ -17,10 +17,10 @@ import {
     UserRoleEnum,
 } from "../../types/enums";
 import { RawMaterialInventoryService } from "../../service/raw-material-inventory-service";
-import { determineFinalStoreId } from "../../utils/store-permission-utils";
-import { generateStockReference } from "../../utils/generate-stock-reference";
+import { determineFinalStoreId } from "../../shared/utils/store-permission-utils";
+import { generateStockReference } from "../../shared/utils/generate-stock-reference";
 import { ActivityLogService } from "../../service/activity-service-log";
-import { validateStoreAndExtractDates } from "../../utils/validate-store-dates";
+import { validateStoreAndExtractDates } from "../../shared/utils/validate-store-dates";
 
 /**
  * @description Retrieves all inventory records for a specific Store.

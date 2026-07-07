@@ -1,8 +1,8 @@
 import { Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import { UserRoleEnum } from "../types/enums";
-import { getStoreAndBranchIds } from "../service/store-service";
-import { handleError2 } from "../service/error-handling";
+import { UserRoleEnum } from "../../types/enums";
+import { getStoreAndBranchIds } from "../../service/store-service";
+import { handleError2 } from "../../service/error-handling";
 
 /**
  * Determines and validates the final store ID based on a user role and a potential targetStoreId.

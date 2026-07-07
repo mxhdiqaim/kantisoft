@@ -1,10 +1,10 @@
 import { ActivityActionType } from "../schema/activity-log-schema";
 import { logActivity } from "./activity-logger";
-import { formatActivityDetails } from "../utils";
+import { formatActivityDetails } from "../shared/utils";
 
 export interface LogParams {
-    userId: string | null; // Allow null
-    storeId: string | null; // Allow null
+    userId: string | null;
+    storeId: string | null;
     entityId: string;
     entityType:
         | "order"

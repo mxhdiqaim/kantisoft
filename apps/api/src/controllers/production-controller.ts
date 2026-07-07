@@ -12,7 +12,7 @@ import {
     UserRoleEnum,
 } from "../types/enums";
 import { menuItems } from "../schema/menu-items-schema";
-import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
+import { validateStoreAndExtractDates } from "../shared/utils/validate-store-dates";
 import { nanoid } from "nanoid";
 import { UnitConversionService } from "../service/unit-conversion-service";
 import { RawMaterialInventoryService } from "../service/raw-material-inventory-service";
@@ -20,9 +20,9 @@ import { users } from "../schema/users-schema";
 import { productions } from "../schema/production-schema";
 import { rawMaterialTransactions } from "../schema/raw-materials-schema/raw-material-stock-transaction-schema";
 import { rawMaterials } from "../schema/raw-materials-schema";
-import { determineFinalStoreId } from "../utils/store-permission-utils";
+import { determineFinalStoreId } from "../shared/utils/store-permission-utils";
 import { rawMaterialInventory } from "../schema/raw-materials-schema/raw-material-inventory-schema";
-import { ActivityLogService } from "../service/activity-service-log"; // For generating a production batch ID
+import { ActivityLogService } from "../service/activity-service-log";
 
 /**
  * @description Get a detailed list of all production transactions

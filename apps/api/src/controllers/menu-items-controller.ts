@@ -3,7 +3,7 @@ import { and, count, desc, eq, inArray, ne } from "drizzle-orm";
 import { Response } from "express";
 import db from "../shared/database";
 import { menuItems } from "../schema/menu-items-schema";
-import { generateUniqueItemCode } from "../utils/generate-unique-item-code";
+import { generateUniqueItemCode } from "../shared/utils/generate-unique-item-code";
 import { handleError2 } from "../service/error-handling";
 import { CustomRequest } from "../types/express";
 import { logActivity } from "../service/activity-logger";
@@ -11,10 +11,10 @@ import { StatusCodes } from "http-status-codes";
 import { UserRoleEnum } from "../types/enums";
 import { getStoreAndBranchIds } from "../service/store-service";
 import { MenuItemCostingService } from "../service/menuitem-costing-service";
-import { determineFinalStoreId } from "../utils/store-permission-utils";
-import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
+import { determineFinalStoreId } from "../shared/utils/store-permission-utils";
+import { validateStoreAndExtractDates } from "../shared/utils/validate-store-dates";
 import { categories } from "../schema/categories-schema";
-import { generateSKU } from "../utils";
+import { generateSKU } from "../shared/utils";
 
 /**
  * @desc    Get all menu items with pagination and role-based filtering.
@@ -217,12 +217,10 @@ export const getMenuItemCost = async (req: CustomRequest, res: Response) => {
             );
 
         if (totalCost === null) {
-            return res
-                .status(StatusCodes.OK)
-                .json({
-                    message:
-                        "No Bill of Materials defined for this menu item. Cost is zero.",
-                });
+            return res.status(StatusCodes.OK).json({
+                message:
+                    "No Bill of Materials defined for this menu item. Cost is zero.",
+            });
         }
 
         return res.status(StatusCodes.OK).json({

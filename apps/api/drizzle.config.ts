@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { defineConfig } from "drizzle-kit";
-import { getEnvVariable } from "./src/utils";
+import { getEnvVariable } from "./src/shared/utils";
 
 const connectionString = getEnvVariable("DB_CONNECTION_STRING");
 const sslRequired = getEnvVariable("DB_SSL_REQUIRED") == "true";

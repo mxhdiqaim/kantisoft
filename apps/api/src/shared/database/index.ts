@@ -2,7 +2,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { Pool } from "pg";
 import schema from "../../db/schema";
-import { getEnvVariable } from "../../utils";
+import { getEnvVariable } from "../utils";
 
 const connectionString = getEnvVariable("DB_CONNECTION_STRING");
 const sslRequired = getEnvVariable("DB_SSL_REQUIRED") === "true";
