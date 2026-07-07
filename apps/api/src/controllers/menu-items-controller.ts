@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {and, count, desc, eq, inArray, ne} from "drizzle-orm";
-import {Response} from "express";
-import db from "../db";
-import {menuItems} from "../schema/menu-items-schema";
-import {generateUniqueItemCode} from "../utils/generate-unique-item-code";
-import {handleError2} from "../service/error-handling";
-import {CustomRequest} from "../types/express";
-import {logActivity} from "../service/activity-logger";
-import {StatusCodes} from "http-status-codes";
-import {UserRoleEnum} from "../types/enums";
-import {getStoreAndBranchIds} from "../service/store-service";
+import { and, count, desc, eq, inArray, ne } from "drizzle-orm";
+import { Response } from "express";
+import db from "../shared/database";
+import { menuItems } from "../schema/menu-items-schema";
+import { generateUniqueItemCode } from "../utils/generate-unique-item-code";
+import { handleError2 } from "../service/error-handling";
+import { CustomRequest } from "../types/express";
+import { logActivity } from "../service/activity-logger";
+import { StatusCodes } from "http-status-codes";
+import { UserRoleEnum } from "../types/enums";
+import { getStoreAndBranchIds } from "../service/store-service";
 import { MenuItemCostingService } from "../service/menuitem-costing-service";
 import { determineFinalStoreId } from "../utils/store-permission-utils";
 import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
@@ -29,7 +29,7 @@ export const getAllMenuItems = async (req: CustomRequest, res: Response) => {
         if (!validated) return;
 
         const { storeIds } = validated;
-        const { page = '1', limit = '10' } = req.query;
+        const { page = "1", limit = "10" } = req.query;
 
         const pageNumber = parseInt(page as string, 10);
         const limitNumber = parseInt(limit as string, 10);
@@ -37,7 +37,10 @@ export const getAllMenuItems = async (req: CustomRequest, res: Response) => {
 
         const whereClause = inArray(menuItems.storeId, storeIds);
 
-        const [totalItemsResult] = await db.select({ value: count() }).from(menuItems).where(whereClause);
+        const [totalItemsResult] = await db
+            .select({ value: count() })
+            .from(menuItems)
+            .where(whereClause);
         const totalItems = totalItemsResult.value;
 
         const allMenuItems = await db.query.menuItems.findMany({
@@ -50,8 +53,8 @@ export const getAllMenuItems = async (req: CustomRequest, res: Response) => {
                 category: {
                     columns: {
                         id: true,
-                        name: true
-                    }
+                        name: true,
+                    },
                 },
                 inventory: {
                     columns: {
@@ -59,8 +62,8 @@ export const getAllMenuItems = async (req: CustomRequest, res: Response) => {
                         status: true,
                         minStockLevel: true,
                         lastCountDate: true,
-                    }
-                }
+                    },
+                },
             },
         });
 
@@ -99,7 +102,7 @@ export const getMenuItemById = async (req: CustomRequest, res: Response) => {
                 res,
                 "Menu item is required.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         if (typeof menuItemId !== "string") {
@@ -107,11 +110,15 @@ export const getMenuItemById = async (req: CustomRequest, res: Response) => {
                 res,
                 "Invalid menu item.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         if (!userStoreId) {
-            return handleError2(res, "Store association required.", StatusCodes.FORBIDDEN);
+            return handleError2(
+                res,
+                "Store association required.",
+                StatusCodes.FORBIDDEN,
+            );
         }
 
         // Get the list of stores this user is allowed to "read" from
@@ -126,30 +133,30 @@ export const getMenuItemById = async (req: CustomRequest, res: Response) => {
         const menuItem = await db.query.menuItems.findFirst({
             where: and(
                 eq(menuItems.id, menuItemId),
-                inArray(menuItems.storeId, allowedStoreIds)
+                inArray(menuItems.storeId, allowedStoreIds),
             ),
             with: {
                 category: {
-                    columns: { id: true, name: true }
+                    columns: { id: true, name: true },
                 },
                 store: {
-                    columns: { name: true }
+                    columns: { name: true },
                 },
                 inventory: {
                     columns: {
                         quantity: true,
                         status: true,
-                        minStockLevel: true
-                    }
-                }
-            }
+                        minStockLevel: true,
+                    },
+                },
+            },
         });
 
         if (!menuItem) {
             return handleError2(
                 res,
                 "Menu item not found or you do not have permission to view it.",
-                StatusCodes.NOT_FOUND
+                StatusCodes.NOT_FOUND,
             );
         }
 
@@ -159,7 +166,7 @@ export const getMenuItemById = async (req: CustomRequest, res: Response) => {
             res,
             "Problem loading menu item details",
             StatusCodes.INTERNAL_SERVER_ERROR,
-            error instanceof Error ? error : undefined
+            error instanceof Error ? error : undefined,
         );
     }
 };
@@ -187,40 +194,47 @@ export const getMenuItemCost = async (req: CustomRequest, res: Response) => {
             res,
             "Menu item is required.",
             StatusCodes.BAD_REQUEST,
-        )
+        );
     }
 
     if (typeof menuItemId !== "string") {
-        return handleError2(
-            res,
-            "Invalid menu item.",
-            StatusCodes.BAD_REQUEST,
-        )
+        return handleError2(res, "Invalid menu item.", StatusCodes.BAD_REQUEST);
     }
 
     if (!menuItemId) {
-        return handleError2(res, 'Something went wrong.', StatusCodes.BAD_REQUEST);
+        return handleError2(
+            res,
+            "Something went wrong.",
+            StatusCodes.BAD_REQUEST,
+        );
     }
 
     try {
         // Use the dedicated service to calculate the cost
-        const totalCost = await MenuItemCostingService.calculateTotalRawMaterialCost(menuItemId);
+        const totalCost =
+            await MenuItemCostingService.calculateTotalRawMaterialCost(
+                menuItemId,
+            );
 
         if (totalCost === null) {
-            return res.status(StatusCodes.OK).json({ message: "No Bill of Materials defined for this menu item. Cost is zero." });
+            return res
+                .status(StatusCodes.OK)
+                .json({
+                    message:
+                        "No Bill of Materials defined for this menu item. Cost is zero.",
+                });
         }
 
         return res.status(StatusCodes.OK).json({
             menuItemId: menuItemId,
             totalRawMaterialCost: totalCost,
         });
-
     } catch (error: any) {
         return handleError2(
             res,
-            'A server error occurred while calculating the menu item cost.',
+            "A server error occurred while calculating the menu item cost.",
             StatusCodes.INTERNAL_SERVER_ERROR,
-            error instanceof Error ? error : undefined
+            error instanceof Error ? error : undefined,
         );
     }
 };
@@ -262,8 +276,13 @@ export const createMenuItem = async (req: CustomRequest, res: Response) => {
 
         const { targetStoreId } = req.query;
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;  // Error already handled
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
+        if (!finalStoreId) return; // Error already handled
 
         if (!name || price === undefined) {
             return handleError2(
@@ -277,11 +296,18 @@ export const createMenuItem = async (req: CustomRequest, res: Response) => {
         let categoryName = "GEN";
         if (categoryId) {
             const category = await db.query.categories.findFirst({
-                where: and(eq(categories.id, categoryId), eq(categories.storeId, finalStoreId)),
+                where: and(
+                    eq(categories.id, categoryId),
+                    eq(categories.storeId, finalStoreId),
+                ),
             });
 
             if (!category) {
-                return handleError2(res, "Selected category not found in this store.", StatusCodes.NOT_FOUND);
+                return handleError2(
+                    res,
+                    "Selected category not found in this store.",
+                    StatusCodes.NOT_FOUND,
+                );
             }
 
             categoryName = category.name;
@@ -311,23 +337,37 @@ export const createMenuItem = async (req: CustomRequest, res: Response) => {
 
         // Check SKU uniqueness
         const existingSku = await db.query.menuItems.findFirst({
-            where: and(eq(menuItems.sku, finalSku), eq(menuItems.storeId, finalStoreId)),
+            where: and(
+                eq(menuItems.sku, finalSku),
+                eq(menuItems.storeId, finalStoreId),
+            ),
         });
 
         if (existingSku) {
             // If the auto-generated SKU somehow conflicts, append an extra random digit or return error
-            return handleError2(res, "SKU already exists. Please provide a unique one or try again.", StatusCodes.CONFLICT);
+            return handleError2(
+                res,
+                "SKU already exists. Please provide a unique one or try again.",
+                StatusCodes.CONFLICT,
+            );
         }
 
         // Handle Item Code
         let finalItemCode: string;
         if (providedItemCode) {
             const existingCode = await db.query.menuItems.findFirst({
-                where: and(eq(menuItems.itemCode, providedItemCode), eq(menuItems.storeId, finalStoreId)),
+                where: and(
+                    eq(menuItems.itemCode, providedItemCode),
+                    eq(menuItems.storeId, finalStoreId),
+                ),
             });
 
             if (existingCode) {
-                return handleError2(res, `Item code '${providedItemCode}' is already in use.`, StatusCodes.CONFLICT);
+                return handleError2(
+                    res,
+                    `Item code '${providedItemCode}' is already in use.`,
+                    StatusCodes.CONFLICT,
+                );
             }
 
             finalItemCode = providedItemCode;
@@ -399,18 +439,24 @@ export const updateMenuItem = async (req: CustomRequest, res: Response) => {
         const { targetStoreId } = req.query;
 
         // Validate Store Access & Find Current Item
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
         if (!finalStoreId) return;
 
         const { id: menuItemId } = req.params;
-        const { name, price, itemCode, sku, categoryId, /*isAvailable */ } = req.body;
+        const { name, price, itemCode, sku, categoryId /*isAvailable */ } =
+            req.body;
 
         if (!menuItemId) {
             return handleError2(
                 res,
                 "Menu item is required.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         if (typeof menuItemId !== "string") {
@@ -418,15 +464,22 @@ export const updateMenuItem = async (req: CustomRequest, res: Response) => {
                 res,
                 "Invalid menu item.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         const currentItem = await db.query.menuItems.findFirst({
-            where: and(eq(menuItems.id, menuItemId), eq(menuItems.storeId, finalStoreId)),
+            where: and(
+                eq(menuItems.id, menuItemId),
+                eq(menuItems.storeId, finalStoreId),
+            ),
         });
 
         if (!currentItem) {
-            return handleError2(res, "Menu item not found.", StatusCodes.NOT_FOUND);
+            return handleError2(
+                res,
+                "Menu item not found.",
+                StatusCodes.NOT_FOUND,
+            );
         }
 
         const updateData: Record<string, any> = {};
@@ -436,10 +489,19 @@ export const updateMenuItem = async (req: CustomRequest, res: Response) => {
         if (name && name !== currentItem.name) {
             // Check for name conflict
             const existing = await db.query.menuItems.findFirst({
-                where: and(eq(menuItems.name, name), eq(menuItems.storeId, finalStoreId), ne(menuItems.id, menuItemId)),
+                where: and(
+                    eq(menuItems.name, name),
+                    eq(menuItems.storeId, finalStoreId),
+                    ne(menuItems.id, menuItemId),
+                ),
             });
 
-            if (existing) return handleError2(res, `Name '${name}' is already in use.`, StatusCodes.CONFLICT);
+            if (existing)
+                return handleError2(
+                    res,
+                    `Name '${name}' is already in use.`,
+                    StatusCodes.CONFLICT,
+                );
 
             updateData.name = name;
             shouldRegenerateSku = true; // Name changed, so SKU should update
@@ -449,10 +511,18 @@ export const updateMenuItem = async (req: CustomRequest, res: Response) => {
         let activeCategoryName = "";
         if (categoryId && categoryId !== currentItem.categoryId) {
             const category = await db.query.categories.findFirst({
-                where: and(eq(categories.id, categoryId), eq(categories.storeId, finalStoreId)),
+                where: and(
+                    eq(categories.id, categoryId),
+                    eq(categories.storeId, finalStoreId),
+                ),
             });
 
-            if (!category) return handleError2(res, "Selected category not found.", StatusCodes.NOT_FOUND);
+            if (!category)
+                return handleError2(
+                    res,
+                    "Selected category not found.",
+                    StatusCodes.NOT_FOUND,
+                );
 
             updateData.categoryId = categoryId;
             activeCategoryName = category.name;
@@ -463,29 +533,55 @@ export const updateMenuItem = async (req: CustomRequest, res: Response) => {
         if (sku && sku !== currentItem.sku) {
             // User provided a manual SKU update
             const existingSku = await db.query.menuItems.findFirst({
-                where: and(eq(menuItems.sku, sku), eq(menuItems.storeId, finalStoreId), ne(menuItems.id, menuItemId)),
+                where: and(
+                    eq(menuItems.sku, sku),
+                    eq(menuItems.storeId, finalStoreId),
+                    ne(menuItems.id, menuItemId),
+                ),
             });
 
-            if (existingSku) return handleError2(res, "This SKU is already assigned to another item.", StatusCodes.CONFLICT);
+            if (existingSku)
+                return handleError2(
+                    res,
+                    "This SKU is already assigned to another item.",
+                    StatusCodes.CONFLICT,
+                );
 
             updateData.sku = sku;
             shouldRegenerateSku = false; // Manual override stops auto-generation
         } else if (shouldRegenerateSku && !sku) {
             // Regenerate if the name / category changed and no manual SKU was provided in this request
             if (!activeCategoryName) {
-                const category = await db.query.categories.findFirst({ where: eq(categories.id, categoryId || currentItem.categoryId!) });
+                const category = await db.query.categories.findFirst({
+                    where: eq(
+                        categories.id,
+                        categoryId || currentItem.categoryId!,
+                    ),
+                });
                 activeCategoryName = category?.name || "GEN";
             }
-            updateData.sku = generateSKU(activeCategoryName, name || currentItem.name);
+            updateData.sku = generateSKU(
+                activeCategoryName,
+                name || currentItem.name,
+            );
         }
 
         // Handle Item Code
         if (itemCode && itemCode !== currentItem.itemCode) {
             const existingCode = await db.query.menuItems.findFirst({
-                where: and(eq(menuItems.itemCode, itemCode), eq(menuItems.storeId, finalStoreId), ne(menuItems.id, menuItemId)),
+                where: and(
+                    eq(menuItems.itemCode, itemCode),
+                    eq(menuItems.storeId, finalStoreId),
+                    ne(menuItems.id, menuItemId),
+                ),
             });
 
-            if (existingCode) return handleError2(res, "Item code is already in use.", StatusCodes.CONFLICT);
+            if (existingCode)
+                return handleError2(
+                    res,
+                    "Item code is already in use.",
+                    StatusCodes.CONFLICT,
+                );
             updateData.itemCode = itemCode;
         }
 
@@ -493,7 +589,11 @@ export const updateMenuItem = async (req: CustomRequest, res: Response) => {
         // if (isAvailable !== undefined) updateData.isAvailable = isAvailable;
 
         if (Object.keys(updateData).length === 0) {
-            return handleError2(res, "No changes provided.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "No changes provided.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         updateData.lastModified = new Date();
@@ -551,7 +651,7 @@ export const deleteMenuItem = async (req: CustomRequest, res: Response) => {
                 res,
                 "Menu item is required.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         if (typeof menuItemId !== "string") {
@@ -559,7 +659,7 @@ export const deleteMenuItem = async (req: CustomRequest, res: Response) => {
                 res,
                 "Invalid menu item.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         // Determine permission-based Store ID
@@ -578,8 +678,8 @@ export const deleteMenuItem = async (req: CustomRequest, res: Response) => {
             .where(
                 and(
                     eq(menuItems.id, menuItemId),
-                    eq(menuItems.storeId, finalStoreId)
-                )
+                    eq(menuItems.storeId, finalStoreId),
+                ),
             )
             .returning();
 
@@ -587,7 +687,7 @@ export const deleteMenuItem = async (req: CustomRequest, res: Response) => {
             return handleError2(
                 res,
                 "Menu item not found or you don't have permission to delete it.",
-                StatusCodes.NOT_FOUND
+                StatusCodes.NOT_FOUND,
             );
         }
 
@@ -603,7 +703,7 @@ export const deleteMenuItem = async (req: CustomRequest, res: Response) => {
 
         res.status(StatusCodes.OK).json({
             message: "Menu item deleted successfully",
-            deletedId: deletedItem.id
+            deletedId: deletedItem.id,
         });
     } catch (error) {
         handleError2(

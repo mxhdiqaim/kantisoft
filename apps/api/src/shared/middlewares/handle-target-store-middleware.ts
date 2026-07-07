@@ -1,8 +1,8 @@
 import { NextFunction, Response } from "express";
-import { CustomRequest } from "../types/express";
-import { UserRoleEnum } from "../types/enums";
-import { getStoreAndBranchIds } from "../service/store-service";
-import { handleError2 } from "../service/error-handling";
+import { CustomRequest } from "../../types/express";
+import { UserRoleEnum } from "../../types/enums";
+import { getStoreAndBranchIds } from "../../service/store-service";
+import { handleError2 } from "../../service/error-handling";
 import { StatusCodes } from "http-status-codes";
 
 /**

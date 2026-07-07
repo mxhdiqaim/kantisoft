@@ -1,6 +1,20 @@
 import { Response } from "express";
-import db from "../db";
-import { and, count, desc, eq, gte, inArray, lt, lte, max, min, sql, SQL, sum } from "drizzle-orm";
+import db from "../shared/database";
+import {
+    and,
+    count,
+    desc,
+    eq,
+    gte,
+    inArray,
+    lt,
+    lte,
+    max,
+    min,
+    sql,
+    SQL,
+    sum,
+} from "drizzle-orm";
 import { orderItems, orders } from "../schema/orders-schema";
 import { handleError2 } from "../service/error-handling";
 import { OrderBy } from "../types";
@@ -27,10 +41,16 @@ export const getSalesSummary = async (req: CustomRequest, res: Response) => {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return; // Error already handled
 
-        const { storeIds, finalStartDate, finalEndDate, periodUsed, storeQueryType } = validated;
+        const {
+            storeIds,
+            finalStartDate,
+            finalEndDate,
+            periodUsed,
+            storeQueryType,
+        } = validated;
 
         // Construct the base WHERE clause with the store ID
-        let whereClause: SQL | undefined  = inArray(orders.storeId, storeIds);
+        let whereClause: SQL | undefined = inArray(orders.storeId, storeIds);
 
         // Apply date range filter first if applicable
         if (finalStartDate && finalEndDate) {
@@ -55,8 +75,10 @@ export const getSalesSummary = async (req: CustomRequest, res: Response) => {
         const salesSummary = {
             storeQueryType,
             timePeriod: periodUsed,
-            startDate: finalStartDate ? finalStartDate.toISOString() : 'All Time',
-            endDate: finalEndDate ? finalEndDate.toISOString() : 'All Time',
+            startDate: finalStartDate
+                ? finalStartDate.toISOString()
+                : "All Time",
+            endDate: finalEndDate ? finalEndDate.toISOString() : "All Time",
             totalRevenue: parseFloat(summary.totalRevenue || "0").toFixed(2),
             totalOrders: parseInt(String(summary.totalOrders || "0")),
             avgOrderValue: parseFloat(
@@ -70,7 +92,7 @@ export const getSalesSummary = async (req: CustomRequest, res: Response) => {
             res,
             `Failed to retrieve sales summary.`,
             StatusCodes.INTERNAL_SERVER_ERROR,
-            error instanceof Error ? error : undefined
+            error instanceof Error ? error : undefined,
         );
     }
 };
@@ -92,10 +114,16 @@ export const getTopSells = async (req: CustomRequest, res: Response) => {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return; // Error already handled
 
-        const { storeIds, finalStartDate, finalEndDate, periodUsed, storeQueryType } = validated;
+        const {
+            storeIds,
+            finalStartDate,
+            finalEndDate,
+            periodUsed,
+            storeQueryType,
+        } = validated;
 
         // Construct the base WHERE clause with the store ID
-        let whereClause: SQL | undefined  = inArray(orders.storeId, storeIds);
+        let whereClause: SQL | undefined = inArray(orders.storeId, storeIds);
 
         if (finalStartDate && finalEndDate) {
             whereClause = and(
@@ -122,13 +150,14 @@ export const getTopSells = async (req: CustomRequest, res: Response) => {
             .where(whereClause)
             .groupBy(orderItems.menuItemId, menuItems.name);
 
-
         let orderedQuery;
 
         // Determine ORDER BY clause
         if (orderBy === "revenue") {
             // Note: The sum column used in SELECT must be explicitly repeated for the ORDER BY
-            const revenueSum = sum(sql`${orderItems.quantity} * ${orderItems.priceAtOrder}`);
+            const revenueSum = sum(
+                sql`${orderItems.quantity} * ${orderItems.priceAtOrder}`,
+            );
             orderedQuery = topItemsQuery.orderBy(desc(revenueSum));
         } else {
             orderedQuery = topItemsQuery.orderBy(
@@ -141,8 +170,10 @@ export const getTopSells = async (req: CustomRequest, res: Response) => {
         const topSells = topItems.map((topItem) => ({
             storeQueryType,
             timePeriod: periodUsed,
-            startDate: finalStartDate ? finalStartDate.toISOString() : 'All Time',
-            endDate: finalEndDate ? finalEndDate.toISOString() : 'All Time',
+            startDate: finalStartDate
+                ? finalStartDate.toISOString()
+                : "All Time",
+            endDate: finalEndDate ? finalEndDate.toISOString() : "All Time",
             ...topItem,
             totalQuantitySold: parseFloat(topItem.totalQuantitySold || "0"),
             totalRevenueGenerated: parseFloat(
@@ -156,7 +187,7 @@ export const getTopSells = async (req: CustomRequest, res: Response) => {
             res,
             `Failed to retrieve top products`,
             StatusCodes.INTERNAL_SERVER_ERROR,
-            error instanceof Error ? error : undefined
+            error instanceof Error ? error : undefined,
         );
     }
 };
@@ -176,8 +207,13 @@ export const getSalesTrend = async (req: CustomRequest, res: Response) => {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return; // Error already handled
 
-        const { storeIds, finalStartDate, finalEndDate, periodUsed, storeQueryType } = validated;
-
+        const {
+            storeIds,
+            finalStartDate,
+            finalEndDate,
+            periodUsed,
+            storeQueryType,
+        } = validated;
 
         // Handle the 'all-time' period by grouping by month
         if (periodUsed === "all-time") {
@@ -303,7 +339,7 @@ export const getSalesTrend = async (req: CustomRequest, res: Response) => {
             res,
             `Failed to retrieve sales trend.`,
             StatusCodes.INTERNAL_SERVER_ERROR,
-            error instanceof Error ? error : undefined
+            error instanceof Error ? error : undefined,
         );
     }
 };
@@ -321,7 +357,13 @@ export const getInventoryValuationAndHealth = async (
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return; // Error already handled
 
-        const { storeIds, finalStartDate, finalEndDate, periodUsed, storeQueryType } = validated;
+        const {
+            storeIds,
+            finalStartDate,
+            finalEndDate,
+            periodUsed,
+            storeQueryType,
+        } = validated;
 
         // Construct the base WHERE clause with the store ID
         let whereClause: SQL | undefined = inArray(inventory.storeId, storeIds);
@@ -331,7 +373,7 @@ export const getInventoryValuationAndHealth = async (
             whereClause = and(
                 whereClause,
                 gte(inventory.lastModified, finalStartDate), // Filter records modified AFTER the start date
-                lte(inventory.lastModified, finalEndDate),   // Filter records modified end date BEFORE
+                lte(inventory.lastModified, finalEndDate), // Filter records modified end date BEFORE
             );
 
             // TODO: will add filter by 'inventory.lastCountDate'
@@ -363,7 +405,10 @@ export const getInventoryValuationAndHealth = async (
             totalInventoryValue += quantity * price;
 
             // Count health status
-            if (quantity > 0 && item.status !== InventoryTransactionTypeEnum.DISCONTINUED) {
+            if (
+                quantity > 0 &&
+                item.status !== InventoryTransactionTypeEnum.DISCONTINUED
+            ) {
                 inStockItemsCount++;
             }
             if (quantity <= 0) {
@@ -382,14 +427,16 @@ export const getInventoryValuationAndHealth = async (
 
         res.status(StatusCodes.OK).json({
             timePeriod: periodUsed,
-            startDate: finalStartDate ? finalStartDate.toISOString() : 'All Time',
-            endDate: finalEndDate ? finalEndDate.toISOString() : 'All Time',
+            startDate: finalStartDate
+                ? finalStartDate.toISOString()
+                : "All Time",
+            endDate: finalEndDate ? finalEndDate.toISOString() : "All Time",
             totalInventoryValue: formattedTotalValue,
             totalTrackedItems,
             inStockItemsCount,
             outOfStockItemsCount,
             stockedItemsPercentage: stockedItemsPercentage.toFixed(2),
-            storeQueryType
+            storeQueryType,
         });
     } catch (error) {
         // console.error("Error fetching inventory health and valuation:", error);
@@ -407,7 +454,10 @@ export const getInventoryValuationAndHealth = async (
  * Formula: (Selling Price - Ingredient Cost) / Selling Price * 100
  * @route GET /api/v1/dashboard/finished-goods-profit-margin
  */
-export const getFinishedGoodsProfitMargin = async (req: CustomRequest, res: Response) => {
+export const getFinishedGoodsProfitMargin = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return; // Error already handled
@@ -426,11 +476,17 @@ export const getFinishedGoodsProfitMargin = async (req: CustomRequest, res: Resp
                     rawPrice: rawMaterials.latestUnitPrice,
                 })
                 .from(menuItems)
-                .leftJoin(billOfMaterials, and(
-                    eq(billOfMaterials.menuItemId, menuItems.id),
-                    inArray(billOfMaterials.storeId, storeIds) // Ensure BOM belongs to target store
-                ))
-                .leftJoin(rawMaterials, eq(billOfMaterials.rawMaterialId, rawMaterials.id))
+                .leftJoin(
+                    billOfMaterials,
+                    and(
+                        eq(billOfMaterials.menuItemId, menuItems.id),
+                        inArray(billOfMaterials.storeId, storeIds), // Ensure BOM belongs to target store
+                    ),
+                )
+                .leftJoin(
+                    rawMaterials,
+                    eq(billOfMaterials.rawMaterialId, rawMaterials.id),
+                )
                 .where(inArray(menuItems.storeId, storeIds)); // ✅ FIX: Filter by the correct store
 
             // Group the results by Menu Item
@@ -447,14 +503,17 @@ export const getFinishedGoodsProfitMargin = async (req: CustomRequest, res: Resp
 
                 const currentItem = itemMap.get(row.itemId);
                 if (row.quantityNeeded && row.rawPrice) {
-                    currentItem.totalCost += (row.quantityNeeded * row.rawPrice);
+                    currentItem.totalCost += row.quantityNeeded * row.rawPrice;
                 }
             });
 
             // Calculate Final Margins
-            return Array.from(itemMap.values()).map(item => {
+            return Array.from(itemMap.values()).map((item) => {
                 const grossProfit = item.sellingPrice - item.totalCost;
-                const marginPercentage = item.sellingPrice > 0 ? (grossProfit / item.sellingPrice) * 100 : 0;
+                const marginPercentage =
+                    item.sellingPrice > 0
+                        ? (grossProfit / item.sellingPrice) * 100
+                        : 0;
 
                 return {
                     storeQueryType,
@@ -463,14 +522,18 @@ export const getFinishedGoodsProfitMargin = async (req: CustomRequest, res: Resp
                     totalCost: Number(item.totalCost.toFixed(2)),
                     grossProfit: Number(grossProfit.toFixed(2)),
                     marginPercentage: Number(marginPercentage.toFixed(2)),
-                    status: marginPercentage < 35 ? "LOW_MARGIN" : "HEALTHY"
+                    status: marginPercentage < 35 ? "LOW_MARGIN" : "HEALTHY",
                 };
             });
-
         });
 
         return res.status(StatusCodes.OK).json(report);
     } catch (error) {
-        return handleError2(res, 'Margin calculation failed', StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
+        return handleError2(
+            res,
+            "Margin calculation failed",
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined,
+        );
     }
 };

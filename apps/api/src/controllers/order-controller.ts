@@ -2,11 +2,15 @@ import { and, eq, gte, inArray, sum, count } from "drizzle-orm";
 import { sql, desc } from "drizzle-orm";
 import { lte } from "drizzle-orm/sql/expressions/conditions";
 import { Response } from "express";
-import db from "../db";
+import db from "../shared/database";
 import { menuItems } from "../schema/menu-items-schema";
 import { orderItems, orders } from "../schema/orders-schema";
 import { users } from "../schema/users-schema";
-import { OrderPaymentMethodEnum, OrderStatusEnum, UserRoleEnum } from "../types/enums";
+import {
+    OrderPaymentMethodEnum,
+    OrderStatusEnum,
+    UserRoleEnum,
+} from "../types/enums";
 import { handleError2 } from "../service/error-handling";
 import { generateOrderReference } from "../utils";
 import { logActivity } from "../service/activity-logger";
@@ -33,8 +37,13 @@ export const getAllOrders = async (req: CustomRequest, res: Response) => {
         const userRole = currentUser?.role;
         const { targetStoreId } = req.query;
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;  // Error already handled
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
+        if (!finalStoreId) return; // Error already handled
 
         const allOrders = await db.query.orders.findMany({
             where: eq(orders.storeId, finalStoreId),
@@ -74,7 +83,13 @@ export const getOrdersByPeriod = async (req: CustomRequest, res: Response) => {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return;
 
-        const { storeIds, finalStartDate: startDate, finalEndDate: endDate, periodUsed, storeQueryType } = validated;
+        const {
+            storeIds,
+            finalStartDate: startDate,
+            finalEndDate: endDate,
+            periodUsed,
+            storeQueryType,
+        } = validated;
 
         let whereClause =
             startDate && endDate
@@ -152,8 +167,8 @@ export const getOrdersByPeriod = async (req: CustomRequest, res: Response) => {
 
         const response = {
             timePeriod: periodUsed,
-            startDate: startDate ? startDate.toISOString() : 'All Time',
-            endDate: endDate ? endDate.toISOString() : 'All Time',
+            startDate: startDate ? startDate.toISOString() : "All Time",
+            endDate: endDate ? endDate.toISOString() : "All Time",
             totalRevenue: parseFloat(summary.totalRevenue || "0").toFixed(2),
             totalOrders: summary.totalOrders || 0,
             mostOrderedItem: mostOrderedItem
@@ -171,7 +186,7 @@ export const getOrdersByPeriod = async (req: CustomRequest, res: Response) => {
                   }
                 : null,
             orders: ordersList,
-            storeQueryType
+            storeQueryType,
         };
 
         return res.status(StatusCodes.OK).json(response);
@@ -202,8 +217,13 @@ export const getOrderById = async (req: CustomRequest, res: Response) => {
 
         const { targetStoreId } = req.query;
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;  // Error already handled
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
+        if (!finalStoreId) return; // Error already handled
 
         const { id: orderId } = req.params;
 
@@ -212,15 +232,11 @@ export const getOrderById = async (req: CustomRequest, res: Response) => {
                 res,
                 "Order is required.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         if (typeof orderId !== "string") {
-            return handleError2(
-                res,
-                "Invalid order.",
-                StatusCodes.BAD_REQUEST,
-            )
+            return handleError2(res, "Invalid order.", StatusCodes.BAD_REQUEST);
         }
 
         const whereClause = and(
@@ -286,8 +302,13 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
         const userRole = currentUser?.role;
         const { targetStoreId } = req.query;
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;  // Error already handled
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
+        if (!finalStoreId) return; // Error already handled
 
         const {
             items,
@@ -309,7 +330,12 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
         const existingMenuItems = await db
             .select()
             .from(menuItems)
-            .where(and(inArray(menuItems.id, menuItemIds), eq(menuItems.storeId, finalStoreId)));
+            .where(
+                and(
+                    inArray(menuItems.id, menuItemIds),
+                    eq(menuItems.storeId, finalStoreId),
+                ),
+            );
 
         if (existingMenuItems.length !== menuItemIds.length) {
             return handleError2(
@@ -319,12 +345,16 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
             );
         }
 
-        const priceMap = new Map(existingMenuItems.map((item) => [item.id, item.price]));
+        const priceMap = new Map(
+            existingMenuItems.map((item) => [item.id, item.price]),
+        );
 
         // Calculate total price
         let totalAmount = 0;
         const orderItemsToInsert = items.map((item) => {
-            const priceAtOrder = parseFloat(priceMap.get(item.menuItemId) || "0");
+            const priceAtOrder = parseFloat(
+                priceMap.get(item.menuItemId) || "0",
+            );
             const subTotal = priceAtOrder * item.quantity;
             totalAmount += subTotal;
 
@@ -363,10 +393,12 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
             // This service should now update the 'inventory' table status to 'outOfStock' if quantity hits 0
             // This must run within the transaction (tx) so that if stock is not enough,
             // the entire order (step 1 & 2) is automatically rolled back.
-            const itemsForStockDecrement = items.map(item => ({
+            const itemsForStockDecrement = items.map((item) => ({
                 menuItemId: item.menuItemId,
                 quantity: Number(item.quantity),
-                priceAtOrder: parseFloat(priceMap.get(item.menuItemId) as string)
+                priceAtOrder: parseFloat(
+                    priceMap.get(item.menuItemId) as string,
+                ),
             }));
 
             await decrementStockForOrder(
@@ -463,8 +495,13 @@ export const updateOrderStatus = async (req: CustomRequest, res: Response) => {
         const userRole = currentUser?.role;
         const { targetStoreId } = req.query;
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;  // Error already handled
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
+        if (!finalStoreId) return; // Error already handled
 
         const { id: orderId } = req.params;
 
@@ -473,15 +510,11 @@ export const updateOrderStatus = async (req: CustomRequest, res: Response) => {
                 res,
                 "Order is required.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         if (typeof orderId !== "string") {
-            return handleError2(
-                res,
-                "Invalid order.",
-                StatusCodes.BAD_REQUEST,
-            )
+            return handleError2(res, "Invalid order.", StatusCodes.BAD_REQUEST);
         }
 
         // Add the condition that the order must be 'pending' to be updated
@@ -543,8 +576,13 @@ export const deleteOrder = async (req: CustomRequest, res: Response) => {
         const userRole = currentUser?.role;
         const { targetStoreId } = req.query;
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;  // Error already handled
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
+        if (!finalStoreId) return; // Error already handled
 
         const { id: orderId } = req.params;
 
@@ -553,22 +591,18 @@ export const deleteOrder = async (req: CustomRequest, res: Response) => {
                 res,
                 "Order is required.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         if (typeof orderId !== "string") {
-            return handleError2(
-                res,
-                "Invalid Order.",
-                StatusCodes.BAD_REQUEST,
-            )
+            return handleError2(res, "Invalid Order.", StatusCodes.BAD_REQUEST);
         }
 
         // Add the condition that the order must be 'pending' to be deleted
         const whereClause = and(
             eq(orders.id, orderId),
             eq(orders.storeId, finalStoreId),
-            eq(orders.orderStatus, OrderStatusEnum.PENDING)
+            eq(orders.orderStatus, OrderStatusEnum.PENDING),
         );
 
         // The 'onDelete: cascade' in the schema will automatically delete related orderItems.
@@ -627,10 +661,15 @@ export const getMostOrderedItem = async (req: CustomRequest, res: Response) => {
         const userRole = currentUser?.role;
         const { targetStoreId } = req.query;
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;  // Error already handled
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
+        if (!finalStoreId) return; // Error already handled
 
-        const whereClause = eq(orders.storeId, finalStoreId)
+        const whereClause = eq(orders.storeId, finalStoreId);
 
         // Aggregate total quantity for each menu item
         const [orderItemResult] = await db
@@ -647,11 +686,7 @@ export const getMostOrderedItem = async (req: CustomRequest, res: Response) => {
             .limit(1);
 
         if (!orderItemResult) {
-            return handleError2(
-                res,
-                "No orders found.",
-                StatusCodes.NOT_FOUND,
-            );
+            return handleError2(res, "No orders found.", StatusCodes.NOT_FOUND);
         }
 
         // Fetch menu item details
@@ -698,8 +733,13 @@ export const getOrderByReference = async (
         const userRole = currentUser?.role;
         const { targetStoreId } = req.query;
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;  // Error already handled
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
+        if (!finalStoreId) return; // Error already handled
 
         const { reference } = req.params;
 
@@ -708,7 +748,7 @@ export const getOrderByReference = async (
                 res,
                 "Reference is required.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         if (typeof reference !== "string") {
@@ -716,7 +756,7 @@ export const getOrderByReference = async (
                 res,
                 "Invalid Reference.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         // CRITICAL FIX: The where clause must ALWAYS filter by the storeId

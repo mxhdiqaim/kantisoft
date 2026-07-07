@@ -1,9 +1,9 @@
 import { NextFunction, Response } from "express";
-import { handleError2 } from "../service/error-handling";
-import { CustomRequest } from "../types/express";
+import { handleError2 } from "../../service/error-handling";
+import { CustomRequest } from "../../types/express";
 import { StatusCodes } from "http-status-codes";
-import { determineFinalStoreId } from "../utils/store-permission-utils";
-import { UserRoleEnum } from "../types/enums";
+import { determineFinalStoreId } from "../../utils/store-permission-utils";
+import { UserRoleEnum } from "../../types/enums";
 
 /**
  * Middleware to ensure that Admins and Users must be associated to a store.

@@ -1,13 +1,13 @@
-import {and, desc, eq, inArray, ne} from "drizzle-orm";
-import {Response} from "express";
-import db from "../db";
-import {categories} from "../schema/categories-schema";
-import {handleError2} from "../service/error-handling";
-import {CustomRequest} from "../types/express";
-import {StatusCodes} from "http-status-codes";
-import {UserRoleEnum} from "../types/enums";
-import {determineFinalStoreId} from "../utils/store-permission-utils";
-import {validateStoreAndExtractDates} from "../utils/validate-store-dates";
+import { and, desc, eq, inArray, ne } from "drizzle-orm";
+import { Response } from "express";
+import db from "../shared/database";
+import { categories } from "../schema/categories-schema";
+import { handleError2 } from "../service/error-handling";
+import { CustomRequest } from "../types/express";
+import { StatusCodes } from "http-status-codes";
+import { UserRoleEnum } from "../types/enums";
+import { determineFinalStoreId } from "../utils/store-permission-utils";
+import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
 
 /**
  * @desc    Get all categories for the active store(s)
@@ -144,7 +144,6 @@ export const updateCategory = async (req: CustomRequest, res: Response) => {
                 StatusCodes.BAD_REQUEST,
             );
         }
-
 
         // Determine permission-based Store ID
         const finalStoreId = await determineFinalStoreId(

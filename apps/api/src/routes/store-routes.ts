@@ -1,6 +1,6 @@
 import { Router } from "express";
 import * as controller from "../controllers/store-controller";
-import { isManager } from "../middlewares/is-manager-middleware";
+import { isManager } from "../shared/middlewares/is-manager-middleware";
 
 const router = Router();
 

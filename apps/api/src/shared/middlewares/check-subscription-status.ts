@@ -1,9 +1,9 @@
-import { CustomRequest } from "../types/express";
+import { CustomRequest } from "../../types/express";
 import { NextFunction, Response } from "express";
-import db from "../db";
+import db from "../database";
 import { eq } from "drizzle-orm";
-import { storeSubscriptions } from "../schema/store-subscriptions-schema";
-import { handleError2 } from "../service/error-handling";
+import { storeSubscriptions } from "../../schema/store-subscriptions-schema";
+import { handleError2 } from "../../service/error-handling";
 import { StatusCodes } from "http-status-codes";
 
 export const checkSubscriptionStatus = async (

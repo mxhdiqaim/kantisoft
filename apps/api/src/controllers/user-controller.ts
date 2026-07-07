@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { and, desc, eq, gte, inArray, lte, ne, sql } from "drizzle-orm";
 import { Response } from "express";
-import db from "../db";
+import db from "../shared/database";
 import { InsertUserSchemaT, users } from "../schema/users-schema";
 import { handleError2 } from "../service/error-handling";
 import {

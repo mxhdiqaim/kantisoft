@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import db from "../db";
+import db from "../shared/database";
 import { rawMaterialInventory } from "../schema/raw-materials-schema/raw-material-inventory-schema";
 import {
     InsertRawMaterialTransactionSchemaT,

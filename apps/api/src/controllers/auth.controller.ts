@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { eq, or } from "drizzle-orm";
 import { handleError2 } from "../service/error-handling";
-import db from "../db";
+import db from "../shared/database";
 import { users } from "../schema/users-schema";
 import { stores } from "../schema/stores-schema";
 import { formatPhoneNumber } from "../utils/format-phone-number";

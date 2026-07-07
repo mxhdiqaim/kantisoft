@@ -14,10 +14,10 @@ import billOfMaterial from "./bill-of-material-routes";
 import production from "./production-routes";
 import categories from "./categories-routes";
 import superAdminRoutes from "./super-admin-routes";
-import { validateStoreAccess } from "../middlewares/validate-store-access";
+import { validateStoreAccess } from "../shared/middlewares/validate-store-access";
 import { StatusCodes } from "http-status-codes";
-import { handleTargetStore } from "../middlewares/handle-target-store-middleware";
-import { authenticateToken } from "../middlewares/auth.middleware";
+import { handleTargetStore } from "../shared/middlewares/handle-target-store-middleware";
+import { authenticateToken } from "../shared/middlewares/auth.middleware";
 
 const router = express.Router();
 

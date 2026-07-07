@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
-import db from "../db";
+import db from "../shared/database";
 import { activityLog } from "../schema/activity-log-schema";
 import { users } from "../schema/users-schema";
 import { stores } from "../schema/stores-schema";

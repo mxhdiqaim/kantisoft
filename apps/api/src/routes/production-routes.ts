@@ -1,6 +1,6 @@
 import Express from "express";
 import * as controller from "../controllers/production-controller";
-import { isAuthorized } from "../middlewares/is-authorised-middleware";
+import { isAuthorized } from "../shared/middlewares/is-authorised-middleware";
 import { UserRoleEnum } from "../types/enums";
 
 const router = Express.Router();

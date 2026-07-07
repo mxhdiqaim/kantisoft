@@ -3,11 +3,10 @@ import {
     unitOfMeasurement,
     UnitOfMeasurementFamilyType,
 } from "../schema/unit-of-measurement-schema";
-import db, { pool } from "./index";
+import db, { pool } from "../shared/database";
 import { sql } from "drizzle-orm";
 
 const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
-    // Weight Units
     {
         name: "gram",
         symbol: "g",

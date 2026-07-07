@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import db from "../db";
+import db from "../shared/database";
 import { users } from "../schema/users-schema";
 import { and, eq, lt, sql } from "drizzle-orm";
 import { storeSubscriptions } from "../schema/store-subscriptions-schema";

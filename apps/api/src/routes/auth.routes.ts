@@ -6,7 +6,7 @@ import {
     forgotPassword,
     auth,
 } from "../controllers/auth.controller";
-import { authenticateToken } from "../middlewares/auth.middleware";
+import { authenticateToken } from "../shared/middlewares/auth.middleware";
 
 const router = express.Router();
 

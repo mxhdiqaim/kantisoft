@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { UserRoleEnum } from "../types/enums";
-import db from "../db";
+import db from "../shared/database";
 import { stores } from "../schema/stores-schema";
 
 /**

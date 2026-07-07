@@ -1,6 +1,6 @@
 import { CustomRequest } from "../types/express";
 import { Response } from "express";
-import db from "../db";
+import db from "../shared/database";
 import { stores } from "../schema/stores-schema";
 import {
     billingTransactions,
