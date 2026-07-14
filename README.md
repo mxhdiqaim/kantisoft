@@ -1,8 +1,6 @@
-# Kantisoft Monorepo
+# Kantisoft
 
-Welcome to the **Kantisoft** monorepo! This project is a modern, scalable full-stack ecosystem managed by [Turborepo](https://turbo.build/) and [Bun](https://bun.sh/). 
-
-## 🏗 Architecture Overview
+## 🏗 Architecture
 
 Kantisoft is divided into standalone applications and shared packages to ensure modularity and code reuse.
 
@@ -16,7 +14,7 @@ Kantisoft is divided into standalone applications and shared packages to ensure 
 
 *   **`@kantisoft/ui`**: A shared React component library powered by Material UI (MUI v7). This ensures consistent design language and reusable UI components across both `web-app` and `admin-fe`.
 
-## 🚀 Tech Stack Highlights
+## 🚀 Tech Stack
 
 *   **Package Manager & Runtime**: Bun
 *   **Monorepo Tooling**: Turborepo
