@@ -56,6 +56,18 @@ app.use("/api/v1", routes);
 
 app.use(express.static(path.join(__dirname, "public")));
 
+app.use((req, res, next) => {
+    const error = new Error(
+        `Route not found: ${req.method} ${req.originalUrl}`,
+    );
+
+    res.status(404).json({
+        message: error.message,
+    });
+
+    next(error);
+});
+
 Sentry.setupExpressErrorHandler(app);
 
 app.use(globalErrorHandler);
