@@ -1,9 +1,14 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { getEnvVariable } from "../utils";
 import { AppError } from "../errors/custom.error";
 
-export const globalErrorHandler = (err: Error, req: Request, res: Response) => {
+export const globalErrorHandler = (
+    err: Error,
+    req: Request,
+    res: Response,
+    next: NextFunction,
+) => {
     const NODE_ENV = getEnvVariable("NODE_ENV") || "development";
 
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
