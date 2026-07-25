@@ -23,6 +23,7 @@
   "dependencies": {
     "@sentry/bun": "^10.42.0",
     "@sentry/tracing": "^7.120.4",
+    "@types/newrelic": "^9.14.8",
     "bcrypt": "^6.0.0",
     "connect-pg-simple": "^10.0.0",
     "connect-redis": "^9.0.0",
@@ -41,6 +42,7 @@
     "moment-timezone": "^0.6.0",
     "morgan": "^1.10.0",
     "nanoid": "^3.3.11",
+    "newrelic": "^14.3.3",
     "node-cron": "^4.2.1",
     "nodemailer": "^8.0.10",
     "pino": "^10.3.1",

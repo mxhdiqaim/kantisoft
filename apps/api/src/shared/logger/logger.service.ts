@@ -1,54 +1,54 @@
-import fs from "fs";
+import fs from "fs/promises";
 import path from "path";
-import { promisify } from "util";
 import logger from "./index";
 import { AppError } from "../errors/custom.error";
 
-class LoggerService {
-    private readdir = promisify(fs.readdir);
-    private readFile = promisify(fs.readFile);
+export type LogFolder = "error" | "combined";
 
-    public logDirectory = path.join(__dirname, "../../.log");
+class LogReaderService {
+    private readonly logDirectory: string;
 
-    public async getAllForLevel(logLevel: string): Promise<string[]> {
+    constructor() {
+        this.logDirectory = path.join(__dirname, "../../.log");
+    }
+
+    private getFolderPath(folderName: LogFolder): string {
+        return path.join(this.logDirectory, folderName);
+    }
+
+    public async getFilesForFolder(folderName: LogFolder): Promise<string[]> {
+        const folderPath = this.getFolderPath(folderName);
+
         try {
-            // With our pino-roll setup, folders are 'error' and 'combined'
-            const folderName = logLevel === "error" ? "error" : "combined";
-            const levelPath = path.join(this.logDirectory, folderName);
+            const files = await fs.readdir(folderPath);
 
-            if (!fs.existsSync(levelPath)) return [];
-
-            const files = await this.readdir(levelPath);
-
-            // combined.YYYY-MM-DD.1.log
-            const logFilePattern = new RegExp(
-                `^${folderName}\\.\\d{4}-\\d{2}-\\d{2}\\.\\d+\\.log$`,
-            );
+            // Matches pino-roll pattern: combined.2026-07-25.1.log
+            const logFilePattern = new RegExp(`^${folderName}\\.\\d{4}-\\d{2}-\\d{2}\\.\\d+\\.log$`);
 
             return files.filter((file) => logFilePattern.test(file));
-        } catch (error) {
-            logger.error("Failed to read log directory", error as Error);
-            throw new AppError("Log files not found.", 404);
+        } catch (error: any) {
+            // ENOENT means the folder doesn't exist yet (e.g., no errors logged yet)
+            if (error.code === "ENOENT") {
+                return [];
+            }
+            logger.error(`Failed to read log directory: ${folderPath}`, error);
+            throw new AppError("Log directory could not be accessed.", 500);
         }
     }
 
-    public async getLogContent(
-        logLevel: string,
-        fileName: string,
-    ): Promise<string> {
-        const folderName = logLevel === "error" ? "error" : "combined";
-        const filePath = path.join(this.logDirectory, folderName, fileName);
+    public async getLogContent(folderName: LogFolder, fileName: string): Promise<string> {
+        const filePath = path.join(this.getFolderPath(folderName), fileName);
 
         try {
-            if (!fs.existsSync(filePath)) {
-                throw new Error();
+            return await fs.readFile(filePath, "utf8");
+        } catch (error: any) {
+            if (error.code === "ENOENT") {
+                throw new AppError("This log file does not exist.", 404);
             }
-            return await this.readFile(filePath, "utf8");
-        } catch (error) {
-            logger.error("Error reading log file content", error as Error);
-            throw new AppError("This log file does not exist.", 404);
+            logger.error(`Error reading log file: ${filePath}`, error);
+            throw new AppError("Failed to read log file content.", 500);
         }
     }
 }
 
-export default new LoggerService();
+export default new LogReaderService();

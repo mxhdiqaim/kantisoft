@@ -3,99 +3,109 @@ import path from "path";
 import { getEnvVariable } from "../utils";
 import { requestContext } from "./context";
 
-const NODE_ENV = getEnvVariable("NODE_ENV");
-const isDevelopment = NODE_ENV === "development";
-const logDirectory = path.join(__dirname, "../../.log");
+interface CustomPinoLogger extends pino.Logger {
+    http: pino.LogFn;
+    query: pino.LogFn;
+}
 
-const customLevels = {
-    fatal: 60,
-    error: 50,
-    warn: 40,
-    info: 30,
-    http: 25,
-    query: 24,
-    debug: 20,
-    trace: 10,
-};
+class LoggerService {
+    private readonly pinoInstance: CustomPinoLogger;
+    private readonly isDevelopment: boolean = getEnvVariable("NODE_ENV") === "development";
+    private readonly logDirectory: string = path.join(__dirname, "../../.log");
 
-const transports = pino.transport({
-    targets: isDevelopment
-        ? [
-              {
-                  target: "pino-pretty",
-                  level: "trace",
-                  options: { colorize: true, translateTime: "SYS:standard" },
-              },
-          ]
-        : [
-              {
-                  target: "pino-roll",
-                  level: "error",
-                  options: {
-                      file: path.join(logDirectory, "error/error"),
-                      frequency: "daily",
-                      extension: ".log",
-                      mkdir: true,
-                  },
-              },
-              {
-                  target: "pino-roll",
-                  level: "trace",
-                  options: {
-                      file: path.join(logDirectory, "combined/combined"),
-                      frequency: "daily",
-                      extension: ".log",
-                      mkdir: true,
-                  },
-              },
-          ],
-});
+    constructor() {
+        this.pinoInstance = this.initializePino();
+    }
 
-const pinoInstance = pino(
-    {
-        level: isDevelopment ? "trace" : "info",
-        customLevels,
-        useOnlyCustomLevels: true,
-        mixin() {
-            const context = requestContext.getStore();
-            return context
-                ? {
-                      requestId: context.requestId,
-                      tenantId: context.tenantId,
-                      locationId: context.locationId,
-                  }
-                : {};
-        },
-    },
-    transports,
-);
+    private initializePino(): CustomPinoLogger {
+        const customLevels = {
+            fatal: 60,
+            error: 50,
+            warn: 40,
+            info: 30,
+            http: 25,
+            query: 24,
+            debug: 20,
+            trace: 10,
+        };
 
-class Logger {
-    public error(
-        message: string,
-        meta?: Record<string, unknown> | Error,
-    ): void {
+        const transports = pino.transport({
+            targets: this.isDevelopment
+                ? [
+                      {
+                          target: "pino-pretty",
+                          level: "trace",
+                          options: { colorize: true, translateTime: "SYS:standard" },
+                      },
+                  ]
+                : [
+                      {
+                          target: "pino-roll",
+                          level: "error",
+                          options: {
+                              file: path.join(this.logDirectory, "error/error"),
+                              frequency: "daily",
+                              extension: ".log",
+                              mkdir: true,
+                          },
+                      },
+                      {
+                          target: "pino-roll",
+                          level: "trace",
+                          options: {
+                              file: path.join(this.logDirectory, "combined/combined"),
+                              frequency: "daily",
+                              extension: ".log",
+                              mkdir: true,
+                          },
+                      },
+                  ],
+        });
+
+        const instance = pino(
+            {
+                level: this.isDevelopment ? "trace" : "info",
+                customLevels,
+                useOnlyCustomLevels: true,
+                mixin() {
+                    const context = requestContext.getStore();
+                    return context
+                        ? {
+                              requestId: context.requestId,
+                              tenantId: context.tenantId,
+                              locationId: context.locationId,
+                          }
+                        : {};
+                },
+            },
+            transports,
+        );
+
+        return instance as unknown as CustomPinoLogger;
+    }
+
+    public error(message: string, meta?: Record<string, unknown> | Error): void {
         if (meta instanceof Error) {
-            pinoInstance.error({ err: meta }, message);
+            this.pinoInstance.error({ err: meta }, message);
         } else {
-            pinoInstance.error(meta || {}, message);
+            this.pinoInstance.error(meta || {}, message);
         }
     }
 
     public warn(message: string, meta?: Record<string, unknown>): void {
-        pinoInstance.warn(meta || {}, message);
+        this.pinoInstance.warn(meta || {}, message);
     }
 
     public info(message: string, meta?: Record<string, unknown>): void {
-        pinoInstance.info(meta || {}, message);
+        this.pinoInstance.info(meta || {}, message);
     }
 
     public debug(message: string, meta?: Record<string, unknown>): void {
-        pinoInstance.debug(meta || {}, message);
+        this.pinoInstance.debug(meta || {}, message);
     }
 
     public http(message: string, meta?: Record<string, unknown>): void {
-        pinoInstance.http(meta || {}, message);
+        this.pinoInstance.http(meta || {}, message);
     }
 
     public query(
@@ -103,11 +113,11 @@ class Logger {
         meta?: {
             sql?: string;
             executionTime?: number;
-            parameters?: any[];
-            [key: string]: any;
+            parameters?: unknown[];
+            [key: string]: unknown;
         },
     ): void {
-        pinoInstance.query(meta || {}, message);
+        this.pinoInstance.query(meta || {}, message);
     }
 
     public getHttpLogStream() {
@@ -119,4 +129,5 @@ class Logger {
     }
 }
 
-export default new Logger();
+// Export as a module-level singleton
+export default new LoggerService();

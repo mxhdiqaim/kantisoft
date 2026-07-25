@@ -1,7 +1,7 @@
 import "./config/instrument";
 import * as Sentry from "@sentry/bun";
 import cors from "cors";
-import express from "express";
+import express, { Application, Request, Response, NextFunction } from "express";
 import morgan from "morgan";
 import path from "path";
 import routes from "./routes";
@@ -12,76 +12,99 @@ import logger from "./shared/logger";
 import { requestContext } from "./shared/logger/context";
 import { AppError } from "./shared/errors/custom.error";
 
-export const app = express();
+class Server {
+    private readonly ADMIN_APP = getEnvVariable("ADMIN_APP");
+    private readonly APP_URL = getEnvVariable("APP_URL");
+    private readonly LANDING_PAGE = getEnvVariable("LANDING_PAGE");
+    private readonly NODE_ENV = getEnvVariable("NODE_ENV");
 
-app.set("trust proxy", 1);
+    public app: Application;
 
-const ADMIN_APP = getEnvVariable("ADMIN_APP");
-const APP_URL = getEnvVariable("APP_URL");
-const LANDING_PAGE = getEnvVariable("LANDING_PAGE");
-const NODE_ENV = getEnvVariable("NODE_ENV");
+    constructor() {
+        this.app = express();
 
-const URL =
-    NODE_ENV === "development"
-        ? [
-              "http://localhost:3000",
-              "http://localhost:3001",
-              "http://localhost:3002",
-          ]
-        : [
-              `https://${LANDING_PAGE}`,
-              `https://${APP_URL}`,
-              `https://${ADMIN_APP}`,
-          ];
+        // The order of these initializations is critical
+        this.initializeExternalServices();
+        this.configureServer();
+        this.setupMiddlewares();
+        this.setupRoutes();
+        this.setupErrorHandling();
+    }
 
-initializeFirebase();
+    private initializeExternalServices(): void {
+        initializeFirebase();
+    }
 
-const corsOptions = {
-    origin: URL,
-    methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-};
+    private configureServer(): void {
+        this.app.set("trust proxy", 1);
+    }
 
-app.use(cors(corsOptions));
+    private getCorsOptions(): cors.CorsOptions {
+        const allowedOrigins =
+            this.NODE_ENV === "development"
+                ? [
+                      "http://localhost:3000",
+                      "http://localhost:3001",
+                      "http://localhost:3002",
+                  ]
+                : [
+                      `https://${this.ADMIN_APP}`,
+                      `https://${this.APP_URL}`,
+                      `https://${this.LANDING_PAGE}`,
+                  ];
 
-// Initialize Request Context
-app.use((req, res, next) => {
-    const requestId =
-        (req.headers["x-request-id"] as string) || crypto.randomUUID();
+        return {
+            origin: allowedOrigins,
+            methods: ["GET", "HEAD", "POST", "PATCH", "PUT", "DELETE"],
+            allowedHeaders: ["Content-Type", "Authorization"],
+            credentials: true,
+        };
+    }
 
-    // We initialize the store with just the requestId for now.
-    // The tenantId and locationId will be added later by the Clerk auth middleware.
-    requestContext.run({ requestId }, () => {
-        next();
-    });
-});
+    private setupMiddlewares(): void {
+        this.app.use(cors(this.getCorsOptions()));
 
-//  Pipe HTTP Logs to Pino
-app.use(morgan("dev", { stream: logger.getHttpLogStream() }));
+        // Initialize Request Context (AsyncLocalStorage)
+        this.app.use((req: Request, res: Response, next: NextFunction) => {
+            const requestId =
+                (req.headers["x-request-id"] as string) || crypto.randomUUID();
 
-app.use(express.urlencoded({ extended: false }));
+            // The tenantId and locationId will be added later by the Clerk auth middleware.
+            requestContext.run({ requestId }, () => {
+                next();
+            });
+        });
 
-app.use(express.json({ limit: "5mb" }));
+        // Pipe HTTP Logs to Pino
+        this.app.use(morgan("dev", { stream: logger.getHttpLogStream() }));
 
-app.use((req, res, next) => {
-    next();
-});
+        // Body Parsers
+        this.app.use(express.urlencoded({ extended: false }));
+        this.app.use(express.json({ limit: "5mb" }));
+    }
 
-app.use("/api/v1", routes);
+    private setupRoutes(): void {
+        this.app.use("/api/v1", routes);
+        this.app.use(express.static(path.join(__dirname, "public")));
+    }
 
-app.use(express.static(path.join(__dirname, "public")));
+    private setupErrorHandling(): void {
+        // 404 Catch-All
+        this.app.use((req: Request, res: Response, next: NextFunction) => {
+            const error = new AppError(
+                `Route not found: ${req.method} ${req.originalUrl}`,
+                404,
+            );
+            next(error);
+        });
 
-app.use((req, res, next) => {
-    const error = new Error(
-        `Route not found: ${req.method} ${req.originalUrl}`,
-    );
+        // Sentry Error Handler (Must execute before your global error handler)
+        Sentry.setupExpressErrorHandler(this.app);
 
-    (error as unknown as { status: number }).status = 404;
+        // Global Error Handler
+        this.app.use(globalErrorHandler);
+    }
+}
 
-    next(error);
-});
-
-Sentry.setupExpressErrorHandler(app);
-
-app.use(globalErrorHandler);
+// Export the initialized Express application instance.
+export const app = new Server().app;
