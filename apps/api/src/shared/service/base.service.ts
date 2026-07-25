@@ -26,7 +26,7 @@ export abstract class BaseService<T extends PgTable> {
         return conditions;
     }
 
-    protected async getAll(customWhere?: SQL): Promise<InferSelect<T>[]> {
+    protected async getAll(customWhere?: SQL) {
         const contextConditions = this.getContextConditions();
 
         const conditionsToApply = [...contextConditions];
@@ -42,16 +42,7 @@ export abstract class BaseService<T extends PgTable> {
         return result as InferSelect<T>[];
     }
 
-    protected async getAllPaginated(
-        page = 1,
-        pageSize = 10,
-        customWhere?: SQL,
-    ): Promise<{
-        data: InferSelect<T>[];
-        total: number;
-        page: number;
-        pageSize: number;
-    }> {
+    protected async getAllPaginated(page = 1, pageSize = 10, customWhere?: SQL) {
         const sanitizedPage = Math.max(1, page);
         const sanitizedPageSize = Math.max(1, pageSize);
         const offset = (sanitizedPage - 1) * sanitizedPageSize;
@@ -84,7 +75,7 @@ export abstract class BaseService<T extends PgTable> {
         };
     }
 
-    protected async getById(id: string): Promise<InferSelect<T> | null> {
+    protected async getById(id: string) {
         const columns = this.table as unknown as Record<string, AnyPgColumn>;
 
         if (!columns.id) {
@@ -102,10 +93,7 @@ export abstract class BaseService<T extends PgTable> {
         return (result as InferSelect<T>) || null;
     }
 
-    protected async getOrError(
-        id: string,
-        errorMessage = "The requested resource could not be found.",
-    ): Promise<InferSelect<T>> {
+    protected async getOrError(id: string, errorMessage = "The requested resource could not be found.") {
         const record = await this.getById(id);
         if (!record) {
             throw new NotFoundError(errorMessage);
@@ -113,7 +101,7 @@ export abstract class BaseService<T extends PgTable> {
         return record;
     }
 
-    protected async deleteById(id: string): Promise<InferSelect<T> | null> {
+    protected async deleteById(id: string) {
         const columns = this.table as unknown as Record<string, AnyPgColumn>;
 
         if (!columns.id) {
