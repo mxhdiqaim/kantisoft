@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
-import db from "../db";
+import db from "../shared/database";
 import { activityLog } from "../schema/activity-log-schema";
 import { users } from "../schema/users-schema";
 import { stores } from "../schema/stores-schema";
@@ -8,7 +8,7 @@ import { handleError2 } from "../service/error-handling";
 import { UserRoleEnum } from "../types/enums";
 import { and, desc, eq, ne, sql, SQLWrapper } from "drizzle-orm";
 import { StatusCodes } from "http-status-codes";
-import { determineFinalStoreId } from "../utils/store-permission-utils";
+import { determineFinalStoreId } from "../shared/utils/store-permission-utils";
 
 export const getActivities = async (req: Request, res: Response) => {
     try {

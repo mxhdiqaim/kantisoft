@@ -1,8 +1,8 @@
 import express from "express";
 import * as controller from "../controllers/user-controller";
-import { isAuthorized } from "../middlewares/is-authorised-middleware";
+import { isAuthorized } from "../shared/middlewares/is-authorised-middleware";
 import { UserRoleEnum } from "../types/enums";
-import { isManager } from "../middlewares/is-manager-middleware";
+import { isManager } from "../shared/middlewares/is-manager-middleware";
 
 const router = express.Router();
 

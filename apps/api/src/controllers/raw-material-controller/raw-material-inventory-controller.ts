@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Response } from 'express';
+import { Response } from "express";
 import { CustomRequest } from "../../types/express";
 import { handleError2 } from "../../service/error-handling";
 import { StatusCodes } from "http-status-codes";
-import db from "../../db";
+import db from "../../shared/database";
 import { and, desc, eq, inArray, notInArray } from "drizzle-orm";
-import {rawMaterialInventory} from "../../schema/raw-materials-schema/raw-material-inventory-schema";
-import {rawMaterials} from "../../schema/raw-materials-schema";
-import {unitOfMeasurement} from "../../schema/unit-of-measurement-schema";
-import {UnitConversionService} from "../../service/unit-conversion-service";
+import { rawMaterialInventory } from "../../schema/raw-materials-schema/raw-material-inventory-schema";
+import { rawMaterials } from "../../schema/raw-materials-schema";
+import { unitOfMeasurement } from "../../schema/unit-of-measurement-schema";
+import { UnitConversionService } from "../../service/unit-conversion-service";
 import { RawMaterialTransactionSource } from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
 import {
     ActivityEntityTypeEnum,
@@ -16,18 +16,21 @@ import {
     RawMaterialTransactionSourceEnum,
     UserRoleEnum,
 } from "../../types/enums";
-import {RawMaterialInventoryService} from "../../service/raw-material-inventory-service";
-import { determineFinalStoreId } from "../../utils/store-permission-utils";
-import { generateStockReference } from "../../utils/generate-stock-reference";
+import { RawMaterialInventoryService } from "../../service/raw-material-inventory-service";
+import { determineFinalStoreId } from "../../shared/utils/store-permission-utils";
+import { generateStockReference } from "../../shared/utils/generate-stock-reference";
 import { ActivityLogService } from "../../service/activity-service-log";
-import { validateStoreAndExtractDates } from "../../utils/validate-store-dates";
+import { validateStoreAndExtractDates } from "../../shared/utils/validate-store-dates";
 
 /**
  * @description Retrieves all inventory records for a specific Store.
  * @route GET /api/v1/raw-materials/inventory
  * @access Admin, Manager
  */
-export const getAllRawMaterialInventory = async (req: CustomRequest, res: Response) => {
+export const getAllRawMaterialInventory = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return;
@@ -41,29 +44,32 @@ export const getAllRawMaterialInventory = async (req: CustomRequest, res: Respon
             with: {
                 rawMaterial: {
                     with: {
-                        unitOfMeasurement: true // Crucial for the conversion factor
-                    }
+                        unitOfMeasurement: true, // Crucial for the conversion factor
+                    },
                 },
                 store: true,
             },
         });
 
         // Map and Format using UnitConversionService
-        const formattedData = inventoryRecords.map(item => {
+        const formattedData = inventoryRecords.map((item) => {
             const material = item.rawMaterial;
             const unit = material.unitOfMeasurement;
 
             // Conversion Logic: Base -> Presentation (e.g., 5000g -> 5kg)
             // Quantity = Base / Factor
-            const displayQuantity = item.quantity / (unit.conversionFactorToBase || 1);
-            const displayMinLevel = item.minStockLevel / (unit.conversionFactorToBase || 1);
+            const displayQuantity =
+                item.quantity / (unit.conversionFactorToBase || 1);
+            const displayMinLevel =
+                item.minStockLevel / (unit.conversionFactorToBase || 1);
 
             // Price Logic: Base Price -> Presentation Price (e.g., $0.05/g -> $50/kg)
             // We use your service's logic here
-            const displayPrice = UnitConversionService.displayPriceInPresentationUnit(
-                Number(material.latestUnitPrice || 0),
-                unit
-            );
+            const displayPrice =
+                UnitConversionService.displayPriceInPresentationUnit(
+                    Number(material.latestUnitPrice || 0),
+                    unit,
+                );
 
             return {
                 id: item.id,
@@ -84,7 +90,6 @@ export const getAllRawMaterialInventory = async (req: CustomRequest, res: Respon
                     unitOfMeasurementFamily: unit.unitOfMeasurementFamily,
                 },
 
-
                 // Status and Metadata
                 status: item.status,
                 lastModified: item.lastModified,
@@ -97,20 +102,18 @@ export const getAllRawMaterialInventory = async (req: CustomRequest, res: Respon
                 // System/Debug data (Optional, useful for frontend math checks)
                 system: {
                     baseQuantity: item.quantity,
-                    conversionFactor: unit.conversionFactorToBase
-                }
+                    conversionFactor: unit.conversionFactorToBase,
+                },
             };
         });
 
         res.status(StatusCodes.OK).json(formattedData);
-
     } catch (error) {
-
         handleError2(
             res,
             "Problem loading raw material inventory",
             StatusCodes.INTERNAL_SERVER_ERROR,
-            error instanceof Error ? error : undefined
+            error instanceof Error ? error : undefined,
         );
     }
 };
@@ -120,7 +123,10 @@ export const getAllRawMaterialInventory = async (req: CustomRequest, res: Respon
  * @route GET /api/v1/raw-materials/inventory/:id
  * @access Admin, Manager
  */
-export const getCurrentRawMaterialInventoryStock = async (req: CustomRequest, res: Response) => {
+export const getCurrentRawMaterialInventoryStock = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return;
@@ -130,7 +136,11 @@ export const getCurrentRawMaterialInventoryStock = async (req: CustomRequest, re
         const { id: rawMaterialId } = req.params;
 
         if (!rawMaterialId) {
-            return handleError2(res, 'Missing Raw Material.', StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Missing Raw Material.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof rawMaterialId !== "string") {
@@ -138,47 +148,52 @@ export const getCurrentRawMaterialInventoryStock = async (req: CustomRequest, re
                 res,
                 "Invalid raw material.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         // Multi-Join Query
         // Join Inventory -> RawMaterial -> UnitOfMeasurement
-        const [stockRecord] = await db.select({
-            // Inventory Fields
-            id: rawMaterialInventory.id,
-            quantity: rawMaterialInventory.quantity, // Stored in Base Unit (g, ml)
-            minStockLevel: rawMaterialInventory.minStockLevel, // Stored in Base Unit
-            status: rawMaterialInventory.status,
-            rawMaterialId: rawMaterialInventory.rawMaterialId,
-            storeId: rawMaterialInventory.storeId,
-            createdAt: rawMaterialInventory.createdAt,
-            lastModified: rawMaterialInventory.lastModified,
+        const [stockRecord] = await db
+            .select({
+                // Inventory Fields
+                id: rawMaterialInventory.id,
+                quantity: rawMaterialInventory.quantity, // Stored in Base Unit (g, ml)
+                minStockLevel: rawMaterialInventory.minStockLevel, // Stored in Base Unit
+                status: rawMaterialInventory.status,
+                rawMaterialId: rawMaterialInventory.rawMaterialId,
+                storeId: rawMaterialInventory.storeId,
+                createdAt: rawMaterialInventory.createdAt,
+                lastModified: rawMaterialInventory.lastModified,
 
-            // Raw Material Fields
-            rawMaterialName: rawMaterials.name,
-            latestUnitPrice: rawMaterials.latestUnitPrice, // Price per Base Unit
+                // Raw Material Fields
+                rawMaterialName: rawMaterials.name,
+                latestUnitPrice: rawMaterials.latestUnitPrice, // Price per Base Unit
 
-            // Unit Fields (needed for conversion)
-            unitOfMeasurement: {
-                id: unitOfMeasurement.id,
-                name: unitOfMeasurement.name,
-                symbol: unitOfMeasurement.symbol,
-                conversionFactorToBase: unitOfMeasurement.conversionFactorToBase,
-            }
-        })
+                // Unit Fields (needed for conversion)
+                unitOfMeasurement: {
+                    id: unitOfMeasurement.id,
+                    name: unitOfMeasurement.name,
+                    symbol: unitOfMeasurement.symbol,
+                    conversionFactorToBase:
+                        unitOfMeasurement.conversionFactorToBase,
+                },
+            })
             .from(rawMaterialInventory)
             .innerJoin(
                 rawMaterials,
-                eq(rawMaterialInventory.rawMaterialId, rawMaterials.id)
+                eq(rawMaterialInventory.rawMaterialId, rawMaterials.id),
             )
-            .innerJoin( // Use inner join here because inventory shouldn't exist without a raw material
+            .innerJoin(
+                // Use inner join here because inventory shouldn't exist without a raw material
                 unitOfMeasurement,
-                eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id)
+                eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id),
             )
-            .where(and(
-                inArray(rawMaterialInventory.storeId, storeIds),
-                eq(rawMaterialInventory.rawMaterialId, rawMaterialId),
-            ))
+            .where(
+                and(
+                    inArray(rawMaterialInventory.storeId, storeIds),
+                    eq(rawMaterialInventory.rawMaterialId, rawMaterialId),
+                ),
+            )
             .limit(1)
             .execute();
 
@@ -186,7 +201,7 @@ export const getCurrentRawMaterialInventoryStock = async (req: CustomRequest, re
             return handleError2(
                 res,
                 `Inventory record for the Raw Material not found in this store.`,
-                StatusCodes.NOT_FOUND
+                StatusCodes.NOT_FOUND,
             );
         }
 
@@ -206,10 +221,11 @@ export const getCurrentRawMaterialInventoryStock = async (req: CustomRequest, re
         // const minStockLevelPresentation = stockRecord.minStockLevel / conversionFactor;
 
         // c. Price Conversion (for display)
-        const latestUnitPricePresentation = UnitConversionService.displayPriceInPresentationUnit(
-            stockRecord.latestUnitPrice,
-            stockRecord.unitOfMeasurement
-        );
+        const latestUnitPricePresentation =
+            UnitConversionService.displayPriceInPresentationUnit(
+                stockRecord.latestUnitPrice,
+                stockRecord.unitOfMeasurement,
+            );
 
         // Format Response
         return res.status(StatusCodes.OK).json({
@@ -231,13 +247,12 @@ export const getCurrentRawMaterialInventoryStock = async (req: CustomRequest, re
 
             unitOfMeasurement: stockRecord.unitOfMeasurement,
         });
-
     } catch (error: any) {
         return handleError2(
             res,
-            'A server error occurred while fetching the raw material stock.',
+            "A server error occurred while fetching the raw material stock.",
             StatusCodes.INTERNAL_SERVER_ERROR,
-            error instanceof Error ? error : undefined
+            error instanceof Error ? error : undefined,
         );
     }
 };
@@ -249,7 +264,10 @@ export const getCurrentRawMaterialInventoryStock = async (req: CustomRequest, re
  * @access Admin, Manager
  * @body { rawMaterialId: string, minStockLevel: number, quantity?: number }
  */
-export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: Response) => {
+export const createRawMaterialInventoryRecord = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
@@ -257,29 +275,51 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
         if (!storeId) {
             return handleError2(
                 res,
-                'User does not have an associated store.',
-                StatusCodes.BAD_REQUEST
+                "User does not have an associated store.",
+                StatusCodes.BAD_REQUEST,
             );
         }
 
         const userRole = currentUser?.role;
         const { targetStoreId } = req.query;
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
         if (!finalStoreId) return;
 
-        const { minStockLevel, quantity, rawMaterialId, unitOfMeasurementId } = req.body;
+        const { minStockLevel, quantity, rawMaterialId, unitOfMeasurementId } =
+            req.body;
 
         if (!rawMaterialId || !unitOfMeasurementId) {
-            return handleError2(res, 'Raw Material and Unit are required', StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Raw Material and Unit are required",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
-        if (minStockLevel === undefined || typeof minStockLevel !== 'number' || minStockLevel < 0) {
-            return handleError2(res, 'Minimum Stock Level is required and must be equal to or greater 0', StatusCodes.BAD_REQUEST);
+        if (
+            minStockLevel === undefined ||
+            typeof minStockLevel !== "number" ||
+            minStockLevel < 0
+        ) {
+            return handleError2(
+                res,
+                "Minimum Stock Level is required and must be equal to or greater 0",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof quantity !== "number" || quantity < 0) {
-            return handleError2(res, 'Quantity must be equal to or greater 0', StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Quantity must be equal to or greater 0",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         // Fetch BOTH the Raw Material and the Unit in parallel
@@ -287,44 +327,60 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
             db.query.rawMaterials.findFirst({
                 where: eq(rawMaterials.id, rawMaterialId),
                 // Ensure your rawMaterials table includes its unit information
-                with: { unitOfMeasurement: true }
+                with: { unitOfMeasurement: true },
             }),
 
-            UnitConversionService.fetchUnitById(unitOfMeasurementId)
+            UnitConversionService.fetchUnitById(unitOfMeasurementId),
         ]);
 
         if (!materialRecord) {
-            return handleError2(res, 'Raw Material not found', StatusCodes.NOT_FOUND);
+            return handleError2(
+                res,
+                "Raw Material not found",
+                StatusCodes.NOT_FOUND,
+            );
         }
 
         if (!unitRecord) {
-            return handleError2(res, 'Invalid Unit of Measurement', StatusCodes.NOT_FOUND);
+            return handleError2(
+                res,
+                "Invalid Unit of Measurement",
+                StatusCodes.NOT_FOUND,
+            );
         }
 
         // CRITICAL: Cross-Family Validation
         // Assuming rawMaterials has a unitOfMeasurementId or a family field
-        const materialFamily = materialRecord.unitOfMeasurement.unitOfMeasurementFamily;
+        const materialFamily =
+            materialRecord.unitOfMeasurement.unitOfMeasurementFamily;
         const selectedUnitFamily = unitRecord.unitOfMeasurementFamily;
 
         if (materialFamily !== selectedUnitFamily) {
             return handleError2(
                 res,
                 `Incompatible Units: This material is tracked by ${materialFamily}, but you selected a ${selectedUnitFamily} unit.`,
-                StatusCodes.BAD_REQUEST
+                StatusCodes.BAD_REQUEST,
             );
         }
 
         // Convert user-facing quantity/minLevel to the system's Base Unit
-        const quantityBase = UnitConversionService.convertToBaseUnit(quantity || 0, unitRecord);
-        const minStockLevelBase = UnitConversionService.convertToBaseUnit(minStockLevel, unitRecord);
+        const quantityBase = UnitConversionService.convertToBaseUnit(
+            quantity || 0,
+            unitRecord,
+        );
+        const minStockLevelBase = UnitConversionService.convertToBaseUnit(
+            minStockLevel,
+            unitRecord,
+        );
 
-        const inventoryRecord = await RawMaterialInventoryService.setupInitialInventory({
-            rawMaterialId,
-            storeId: finalStoreId,
-            minStockLevel: minStockLevelBase,
-            quantity: quantityBase,
-            userId: currentUser.id,
-        });
+        const inventoryRecord =
+            await RawMaterialInventoryService.setupInitialInventory({
+                rawMaterialId,
+                storeId: finalStoreId,
+                minStockLevel: minStockLevelBase,
+                quantity: quantityBase,
+                userId: currentUser.id,
+            });
 
         // Log the activity for the audit trail
         await ActivityLogService.logSystemEvent({
@@ -338,28 +394,27 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
             meta: {
                 quantity: quantityBase,
                 minStockLevel: minStockLevelBase,
-                unit: unitRecord.name
-            }
+                unit: unitRecord.name,
+            },
         });
 
         return res.status(StatusCodes.CREATED).json(inventoryRecord);
-
     } catch (error: any) {
         // Handle cases where the rawMaterialId or storeId doesn't exist (foreign key constraint)
-        if (error.code === '23503') {
+        if (error.code === "23503") {
             return handleError2(
                 res,
-                'Invalid Raw Material ID or Store ID.',
+                "Invalid Raw Material ID or Store ID.",
                 StatusCodes.NOT_FOUND,
-                error instanceof Error ? error : undefined
+                error instanceof Error ? error : undefined,
             );
         }
 
         return handleError2(
             res,
-            'A server error occurred during inventory setup.',
+            "A server error occurred during inventory setup.",
             StatusCodes.INTERNAL_SERVER_ERROR,
-            error instanceof Error ? error : undefined
+            error instanceof Error ? error : undefined,
         );
     }
 };
@@ -370,13 +425,20 @@ export const createRawMaterialInventoryRecord = async (req: CustomRequest, res: 
  * @access Admin, Manager
  * @body { minStockLevel: number }
  */
-export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: Response) => {
+export const updateRawMaterialInventoryRecord = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
 
         if (!storeId) {
-            return handleError2(res, 'User does not have an associated store.', StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "User does not have an associated store.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         const userRole = currentUser?.role;
@@ -386,7 +448,11 @@ export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: 
         const { minStockLevel } = req.body;
 
         if (!inventoryRecordId) {
-            return handleError2(res, 'Inventory Record is required', StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Inventory Record is required",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof inventoryRecordId !== "string") {
@@ -394,14 +460,27 @@ export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: 
                 res,
                 "Invalid Inventory Record.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
-        if (minStockLevel === undefined || typeof minStockLevel !== 'number' || minStockLevel < 0) {
-            return handleError2(res, 'Minimum Stock Level is required and must be equal to or greater 0', StatusCodes.BAD_REQUEST);
+        if (
+            minStockLevel === undefined ||
+            typeof minStockLevel !== "number" ||
+            minStockLevel < 0
+        ) {
+            return handleError2(
+                res,
+                "Minimum Stock Level is required and must be equal to or greater 0",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
         if (!finalStoreId) return;
 
         const result = await RawMaterialInventoryService.updateMinStockLevel({
@@ -423,20 +502,24 @@ export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: 
             targetName: result.updated.rawMaterialId, // Or fetch the material name
             meta: {
                 oldLimit: result.previous.minStockLevel,
-                newLimit: minStockLevel
-            }
+                newLimit: minStockLevel,
+            },
         });
 
         return res.status(StatusCodes.OK).json(result.updated);
     } catch (error: any) {
         if (error.message === "NOT_FOUND") {
-            return handleError2(res, 'Inventory record not found.', StatusCodes.NOT_FOUND);
+            return handleError2(
+                res,
+                "Inventory record not found.",
+                StatusCodes.NOT_FOUND,
+            );
         }
         return handleError2(
             res,
-            'A server error occurred while updating the inventory record.',
+            "A server error occurred while updating the inventory record.",
             StatusCodes.INTERNAL_SERVER_ERROR,
-            error instanceof Error ? error : undefined
+            error instanceof Error ? error : undefined,
         );
     }
 };
@@ -447,58 +530,99 @@ export const updateRawMaterialInventoryRecord = async (req: CustomRequest, res: 
  * @access Admin, Manager
  * @body { unitOfMeasurementId: string, source: RawMaterialTransactionSource, quantity: number, documentRefId: string, notes?: string }
  */
-export const stockInRawMaterialInventory = async (req: CustomRequest, res: Response) => {
+export const stockInRawMaterialInventory = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
 
         if (!storeId) {
-            return handleError2(res, 'Authentication required.', StatusCodes.UNAUTHORIZED);
+            return handleError2(
+                res,
+                "Authentication required.",
+                StatusCodes.UNAUTHORIZED,
+            );
         }
 
         const { id: rawMaterialId } = req.params;
-        const { unitOfMeasurementId, source, quantity, documentRefId, notes } = req.body;
+        const { unitOfMeasurementId, source, quantity, documentRefId, notes } =
+            req.body;
 
         // Validation Logic
-        if (!rawMaterialId) return handleError2(res, 'Missing Raw Material', StatusCodes.BAD_REQUEST);
-        if (!unitOfMeasurementId) return handleError2(res, 'Unit is required', StatusCodes.BAD_REQUEST);
-        if (!source) return handleError2(res, 'Source is required', StatusCodes.BAD_REQUEST);
-        if (!quantity || quantity <= 0) return handleError2(res, 'Quantity must be > 0', StatusCodes.BAD_REQUEST);
+        if (!rawMaterialId)
+            return handleError2(
+                res,
+                "Missing Raw Material",
+                StatusCodes.BAD_REQUEST,
+            );
+        if (!unitOfMeasurementId)
+            return handleError2(
+                res,
+                "Unit is required",
+                StatusCodes.BAD_REQUEST,
+            );
+        if (!source)
+            return handleError2(
+                res,
+                "Source is required",
+                StatusCodes.BAD_REQUEST,
+            );
+        if (!quantity || quantity <= 0)
+            return handleError2(
+                res,
+                "Quantity must be > 0",
+                StatusCodes.BAD_REQUEST,
+            );
 
         if (typeof rawMaterialId !== "string") {
             return handleError2(
                 res,
                 "Invalid raw material.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
-        const finalStoreId = await determineFinalStoreId(res, currentUser.role as UserRoleEnum, storeId, req.query.targetStoreId as string);
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            currentUser.role as UserRoleEnum,
+            storeId,
+            req.query.targetStoreId as string,
+        );
         if (!finalStoreId) return;
 
         // Reference Logic
         let finalReference = documentRefId;
-        if (source === RawMaterialTransactionSourceEnum.PURCHASE_RECEIPT && !finalReference) {
-            return handleError2(res, 'Reference mandatory for purchase receipts.', StatusCodes.BAD_REQUEST);
+        if (
+            source === RawMaterialTransactionSourceEnum.PURCHASE_RECEIPT &&
+            !finalReference
+        ) {
+            return handleError2(
+                res,
+                "Reference mandatory for purchase receipts.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (!finalReference) finalReference = generateStockReference();
 
         // Execute via Service
         // We use processRawMaterialStockAdjustment because it handles unit conversion and master update
-        const updatedInventory = await RawMaterialInventoryService.processRawMaterialStockAdjustment(
-            {
-                rawMaterialId,
-                storeId: finalStoreId,
-                userId: currentUser.id,
-                type: RawMaterialInventoryTransactionTypeEnum.COMING_IN,
-                source: source as RawMaterialTransactionSource,
-                documentRefId: finalReference,
-                notes: notes || `Stock added via ${source}.`
-            },
-            quantity,
-            unitOfMeasurementId
-        );
+        const updatedInventory =
+            await RawMaterialInventoryService.processRawMaterialStockAdjustment(
+                {
+                    rawMaterialId,
+                    storeId: finalStoreId,
+                    userId: currentUser.id,
+                    type: RawMaterialInventoryTransactionTypeEnum.COMING_IN,
+                    source: source as RawMaterialTransactionSource,
+                    documentRefId: finalReference,
+                    notes: notes || `Stock added via ${source}.`,
+                },
+                quantity,
+                unitOfMeasurementId,
+            );
 
         // Activity Log (Audit Trail)
         await ActivityLogService.logSystemEvent({
@@ -513,30 +637,39 @@ export const stockInRawMaterialInventory = async (req: CustomRequest, res: Respo
                 type: "STOCK_IN",
                 added: quantity,
                 ref: finalReference,
-                source: source
-            }
+                source: source,
+            },
         });
 
         // Response formatting
-        const unitRecord = await UnitConversionService.fetchUnitById(unitOfMeasurementId);
+        const unitRecord =
+            await UnitConversionService.fetchUnitById(unitOfMeasurementId);
         const conversionFactor = unitRecord?.conversionFactorToBase || 1;
 
         return res.status(StatusCodes.OK).json({
             ...updatedInventory,
-            currentQuantityPresentation: updatedInventory.quantity / conversionFactor,
+            currentQuantityPresentation:
+                updatedInventory.quantity / conversionFactor,
         });
-
     } catch (error: any) {
         // Handle custom errors thrown by the service
-        if (error.message.includes('not found') || error.message.includes('does not exist')) {
-            return handleError2(res, error.message, StatusCodes.NOT_FOUND, error);
+        if (
+            error.message.includes("not found") ||
+            error.message.includes("does not exist")
+        ) {
+            return handleError2(
+                res,
+                error.message,
+                StatusCodes.NOT_FOUND,
+                error,
+            );
         }
 
         return handleError2(
             res,
-            'A server error occurred while processing the stock addition.',
+            "A server error occurred while processing the stock addition.",
             StatusCodes.INTERNAL_SERVER_ERROR,
-            error instanceof Error ? error : undefined
+            error instanceof Error ? error : undefined,
         );
     }
 };
@@ -547,30 +680,35 @@ export const stockInRawMaterialInventory = async (req: CustomRequest, res: Respo
  * @route GET /api/v1/raw-materials/inventory/unstocked
  * @access Admin, Manager
  */
-export const getUnstockedMaterials = async (req: CustomRequest, res: Response) => {
-   try {
-       const validated = await validateStoreAndExtractDates(req, res);
-       if (!validated) return;
+export const getUnstockedMaterials = async (
+    req: CustomRequest,
+    res: Response,
+) => {
+    try {
+        const validated = await validateStoreAndExtractDates(req, res);
+        if (!validated) return;
 
-       const { storeIds } = validated;
+        const { storeIds } = validated;
 
-       // Subquery: Get all IDs already in inventory for this store
-       const stockedIds = db.select({ id: rawMaterialInventory.rawMaterialId })
-           .from(rawMaterialInventory)
-           .where(inArray(rawMaterialInventory.storeId, storeIds));
+        // Subquery: Get all IDs already in inventory for this store
+        const stockedIds = db
+            .select({ id: rawMaterialInventory.rawMaterialId })
+            .from(rawMaterialInventory)
+            .where(inArray(rawMaterialInventory.storeId, storeIds));
 
-       // Main Query: Get materials NOT in that list
-       const availableToStock = await db.select()
-           .from(rawMaterials)
-           .where(notInArray(rawMaterials.id, stockedIds));
+        // Main Query: Get materials NOT in that list
+        const availableToStock = await db
+            .select()
+            .from(rawMaterials)
+            .where(notInArray(rawMaterials.id, stockedIds));
 
-       return res.status(StatusCodes.OK).json(availableToStock);
-   } catch (error) {
-       return handleError2(
-           res,
-           'A server error occurred while getting the unstocked materials.',
-           StatusCodes.INTERNAL_SERVER_ERROR,
-           error instanceof Error ? error : undefined
-       );
-   }
+        return res.status(StatusCodes.OK).json(availableToStock);
+    } catch (error) {
+        return handleError2(
+            res,
+            "A server error occurred while getting the unstocked materials.",
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined,
+        );
+    }
 };

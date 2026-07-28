@@ -1,6 +1,6 @@
-import db from "../db";
-import {eq, or} from "drizzle-orm";
-import {stores} from "../schema/stores-schema";
+import db from "../shared/database";
+import { eq, or } from "drizzle-orm";
+import { stores } from "../schema/stores-schema";
 
 /**
  * Retrieves the IDs of a main store and all its branches given a store ID.

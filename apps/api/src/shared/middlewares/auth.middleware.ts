@@ -1,11 +1,11 @@
 import { Response, NextFunction } from "express";
 import { eq } from "drizzle-orm";
 import admin from "firebase-admin";
-import db from "../db";
-import { users } from "../schema/users-schema";
-import { CustomRequest } from "../types/express";
-import { UserStatusEnum } from "../types/enums";
-import { handleError2 } from "../service/error-handling";
+import db from "../database";
+import { users } from "../../schema/users-schema";
+import { CustomRequest } from "../../types/express";
+import { UserStatusEnum } from "../../types/enums";
+import { handleError2 } from "../../service/error-handling";
 
 export const authenticateToken = async (
     req: CustomRequest,
@@ -20,7 +20,7 @@ export const authenticateToken = async (
             return handleError2(
                 res,
                 "Unauthorized: Missing or malformed token format. Use 'Bearer <TOKEN>'.",
-                401
+                401,
             );
         }
 

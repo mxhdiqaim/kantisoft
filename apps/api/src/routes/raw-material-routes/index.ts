@@ -2,7 +2,7 @@ import express from "express";
 import * as controller from "../../controllers/raw-material-controller";
 import rawMaterialInventory from "./raw-material-inventory-routes";
 import rawMaterialStockTransaction from "./raw-material-stock-transaction-routes";
-import { isAuthorized } from "../../middlewares/is-authorised-middleware";
+import { isAuthorized } from "../../shared/middlewares/is-authorised-middleware";
 import { UserRoleEnum } from "../../types/enums";
 
 const router = express.Router();

@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import { getEnvVariable } from "../utils";
+import { getEnvVariable } from "../shared/utils";
 
 export const handleError2 = (
     res: Response,

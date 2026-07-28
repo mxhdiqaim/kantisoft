@@ -6,7 +6,7 @@ import {
     onboardNewStore,
     storeSetupPayment,
 } from "../controllers/super-admin-controller";
-import { restrictTo } from "../middlewares/restricted-to";
+import { restrictTo } from "../shared/middlewares/restricted-to";
 
 const router = express.Router();
 

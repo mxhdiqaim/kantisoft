@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
-import { getEnvVariable } from "../utils";
+import { getEnvVariable } from "../shared/utils";
 
 // Simple, fast utility to escape special HTML characters
 const escapeHtml = (text: string): string => {

@@ -1,9 +1,9 @@
-import db from "../db";
-import {rawMaterials} from "../schema/raw-materials-schema";
-import {rawMaterialInventory} from "../schema/raw-materials-schema/raw-material-inventory-schema";
-import {and, eq, inArray, sql} from "drizzle-orm";
-import {menuItems} from "../schema/menu-items-schema";
-import {inventory} from "../schema/inventory-schema";
+import db from "../shared/database";
+import { rawMaterials } from "../schema/raw-materials-schema";
+import { rawMaterialInventory } from "../schema/raw-materials-schema/raw-material-inventory-schema";
+import { and, eq, inArray, sql } from "drizzle-orm";
+import { menuItems } from "../schema/menu-items-schema";
+import { inventory } from "../schema/inventory-schema";
 
 /**
  * @description Scans both Raw Materials and Menu Items for low stock levels.

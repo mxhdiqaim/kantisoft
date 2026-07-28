@@ -1,7 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { and, desc, eq, ExtractTablesWithRelations, gte, inArray, ne, SQL } from "drizzle-orm";
+import {
+    and,
+    desc,
+    eq,
+    ExtractTablesWithRelations,
+    gte,
+    inArray,
+    ne,
+    SQL,
+} from "drizzle-orm";
 import { Response } from "express";
-import db from "../db";
+import db from "../shared/database";
 import { inventory } from "../schema/inventory-schema";
 import { handleError2 } from "../service/error-handling";
 import { CustomRequest } from "../types/express";
@@ -9,22 +18,22 @@ import { logActivity } from "../service/activity-logger";
 import { calculateInventoryStatus, getInventoryByMenuItemId } from "../helpers";
 import { StatusCodes } from "http-status-codes";
 import { inventoryTransactions } from "../schema/inventory-schema/inventory-transaction-schema";
-import { getStockAdjustedAction } from "../utils/inventory-utils";
+import { getStockAdjustedAction } from "../shared/utils/inventory-utils";
 import { menuItems } from "../schema/menu-items-schema";
 import { OrderItemStockUpdate } from "../types";
 import { lte } from "drizzle-orm/sql/expressions/conditions";
-import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
+import { validateStoreAndExtractDates } from "../shared/utils/validate-store-dates";
 import { InsufficientStockError } from "../errors";
 import {
     INVENTORY_TRANSACTION_SUMMARY_TYPES,
     InventoryTransactionTypeEnum,
     UserRoleEnum,
 } from "../types/enums";
-import { determineFinalStoreId } from "../utils/store-permission-utils";
+import { determineFinalStoreId } from "../shared/utils/store-permission-utils";
 import { InventoryAlertService } from "../service/inventory-alert-service";
 import { users } from "../schema/users-schema";
 import { stores } from "../schema/stores-schema";
-import { getInventoryTransactionTypeLabel } from "../utils";
+import { getInventoryTransactionTypeLabel } from "../shared/utils";
 import { PgTransaction } from "drizzle-orm/pg-core";
 import { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import schema from "../db/schema";
@@ -47,7 +56,7 @@ export const getAllInventory = async (req: CustomRequest, res: Response) => {
         if (!validated) return;
 
         const { storeIds } = validated;
-        const { page = '1', limit = '10' } = req.query;
+        const { page = "1", limit = "10" } = req.query;
 
         const pageNumber = parseInt(page as string, 10);
         const limitNumber = parseInt(limit as string, 10);
@@ -61,7 +70,9 @@ export const getAllInventory = async (req: CustomRequest, res: Response) => {
             limit: limitNumber,
             offset: offset,
             with: {
-                menuItem: { columns: { name: true, itemCode: true, sku: true } },
+                menuItem: {
+                    columns: { name: true, itemCode: true, sku: true },
+                },
                 store: { columns: { name: true } },
             },
         });
@@ -76,7 +87,6 @@ export const getAllInventory = async (req: CustomRequest, res: Response) => {
         );
     }
 };
-
 
 /**
  * @desc    Get all inventory transaction history for a single menu item
@@ -109,7 +119,7 @@ export const getTransactionsByMenuItem = async (
                 res,
                 "Menu item is required.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         if (typeof menuItemId !== "string") {
@@ -117,11 +127,16 @@ export const getTransactionsByMenuItem = async (
                 res,
                 "Invalid menu item.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;  // Error already handled
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
+        if (!finalStoreId) return; // Error already handled
 
         // Base condition: Filter by the item ID and the store ID
         let whereClause = and(
@@ -133,8 +148,14 @@ export const getTransactionsByMenuItem = async (
         if (startDate && endDate) {
             whereClause = and(
                 whereClause,
-                gte(inventoryTransactions.transactionDate, new Date(startDate as string)),
-                lte(inventoryTransactions.transactionDate, new Date(endDate as string)),
+                gte(
+                    inventoryTransactions.transactionDate,
+                    new Date(startDate as string),
+                ),
+                lte(
+                    inventoryTransactions.transactionDate,
+                    new Date(endDate as string),
+                ),
             );
         }
 
@@ -143,7 +164,9 @@ export const getTransactionsByMenuItem = async (
             orderBy: [desc(inventoryTransactions.transactionDate)],
             with: {
                 // Fetch related data for context
-                performedByUser: { columns: { firstName: true, lastName: true } },
+                performedByUser: {
+                    columns: { firstName: true, lastName: true },
+                },
                 menuItem: { columns: { name: true, itemCode: true } },
             },
         });
@@ -167,23 +190,34 @@ export const getTransactionsByMenuItem = async (
     }
 };
 
-
 /**
  * @desc    Get a summary of all inventory movements within a specified period
  * @route   GET /api/v1/inventory/transactions
  * @access  Private (Store-associated users only)
  * @query   ?timePeriod=week OR ?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
  */
-export const getInventoryTransactions = async (req: CustomRequest, res: Response) => {
+export const getInventoryTransactions = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return;
 
-        const { storeIds, finalStartDate, finalEndDate, periodUsed, storeQueryType } = validated;
+        const {
+            storeIds,
+            finalStartDate,
+            finalEndDate,
+            periodUsed,
+            storeQueryType,
+        } = validated;
         const { menuItemId } = req.query; // Optional filter for specific product
 
         // Construct the Base WHERE clause
-        let whereClause: SQL | undefined = inArray(inventoryTransactions.storeId, storeIds);
+        let whereClause: SQL | undefined = inArray(
+            inventoryTransactions.storeId,
+            storeIds,
+        );
 
         // Date Filtering
         if (finalStartDate && finalEndDate) {
@@ -196,42 +230,52 @@ export const getInventoryTransactions = async (req: CustomRequest, res: Response
 
         // Specific Item Filter
         if (menuItemId && menuItemId !== "all") {
-            whereClause = and(whereClause, eq(inventoryTransactions.menuItemId, menuItemId as string));
+            whereClause = and(
+                whereClause,
+                eq(inventoryTransactions.menuItemId, menuItemId as string),
+            );
         }
 
         // The Detailed Select Query (Joining for "Elaboration")
-        const transactionLogs = await db.select({
-            id: inventoryTransactions.id,
-            type: inventoryTransactions.transactionType,
-            quantityChange: inventoryTransactions.quantityChange,
-            notes: inventoryTransactions.notes,
-            transactionDate: inventoryTransactions.transactionDate,
-            createdAt: inventoryTransactions.createdAt,
+        const transactionLogs = await db
+            .select({
+                id: inventoryTransactions.id,
+                type: inventoryTransactions.transactionType,
+                quantityChange: inventoryTransactions.quantityChange,
+                notes: inventoryTransactions.notes,
+                transactionDate: inventoryTransactions.transactionDate,
+                createdAt: inventoryTransactions.createdAt,
 
-            // Item details
-            item: {
-                name: menuItems.name,
-                price: menuItems.price,
-            },
+                // Item details
+                item: {
+                    name: menuItems.name,
+                    price: menuItems.price,
+                },
 
-            // User details (Actor)
-            actor: {
-                firstName: users.firstName,
-                lastName: users.lastName,
-            },
+                // User details (Actor)
+                actor: {
+                    firstName: users.firstName,
+                    lastName: users.lastName,
+                },
 
-            // Store details (Context)
-            storeName: stores.name,
-        })
+                // Store details (Context)
+                storeName: stores.name,
+            })
             .from(inventoryTransactions)
-            .innerJoin(menuItems, eq(inventoryTransactions.menuItemId, menuItems.id))
+            .innerJoin(
+                menuItems,
+                eq(inventoryTransactions.menuItemId, menuItems.id),
+            )
             .leftJoin(users, eq(inventoryTransactions.performedBy, users.id)) // Use leftJoin if performedBy can be null
             .innerJoin(stores, eq(inventoryTransactions.storeId, stores.id))
             .where(whereClause)
-            .orderBy(desc(inventoryTransactions.transactionDate), desc(inventoryTransactions.createdAt));
+            .orderBy(
+                desc(inventoryTransactions.transactionDate),
+                desc(inventoryTransactions.createdAt),
+            );
 
         // Post-Processing (Labels and formatting)
-        const transactionHistory = transactionLogs.map(item => {
+        const transactionHistory = transactionLogs.map((item) => {
             return {
                 id: item.id,
                 itemName: item.item.name,
@@ -255,14 +299,15 @@ export const getInventoryTransactions = async (req: CustomRequest, res: Response
         });
 
         return res.status(StatusCodes.OK).json({
-            startDate: finalStartDate ? finalStartDate.toISOString() : 'All Time',
-            endDate: finalEndDate ? finalEndDate.toISOString() : 'All Time',
+            startDate: finalStartDate
+                ? finalStartDate.toISOString()
+                : "All Time",
+            endDate: finalEndDate ? finalEndDate.toISOString() : "All Time",
             timePeriod: periodUsed,
             storeQueryType,
             count: transactionHistory.length,
             transactions: transactionHistory,
         });
-
     } catch (error) {
         return handleError2(
             res,
@@ -272,7 +317,6 @@ export const getInventoryTransactions = async (req: CustomRequest, res: Response
         );
     }
 };
-
 
 /**
  * @desc    Get a single inventory record by Menu Item ID
@@ -304,7 +348,7 @@ export const getInventoryByMenuItem = async (
                 res,
                 "Menu item is required.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         if (typeof menuItemId !== "string") {
@@ -312,11 +356,16 @@ export const getInventoryByMenuItem = async (
                 res,
                 "Invalid menu item.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;  // Error already handled
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
+        if (!finalStoreId) return; // Error already handled
 
         const inventoryItem = await getInventoryByMenuItemId(
             menuItemId,
@@ -368,8 +417,13 @@ export const createInventoryRecord = async (
         const { targetStoreId } = req.query;
         const { menuItemId, quantity, minStockLevel } = req.body;
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;  // Error already handled
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
+        if (!finalStoreId) return; // Error already handled
 
         // Validation and Existence Checks
         if (!menuItemId || quantity === undefined) {
@@ -536,13 +590,13 @@ export const createInventoryRecord = async (
 // };
 
 /*
-    * @desc    Adjust stock level for a menu item (manual adjustment)
-    * @route   PATCH /api/v1/inventory/adjust-stock/:menuItemId
-    * @access  Private (Store-associated users only)
-    * @body    { quantityAdjustment: number, transactionType: string, notes?: string }
-    * quantityAdjustment: positive or negative number indicating the change
-    * transactionType: one of 'adjustmentIn', 'adjustmentOut', 'purchaseReceive'
-    * notes: optional reason for adjustment
+ * @desc    Adjust stock level for a menu item (manual adjustment)
+ * @route   PATCH /api/v1/inventory/adjust-stock/:menuItemId
+ * @access  Private (Store-associated users only)
+ * @body    { quantityAdjustment: number, transactionType: string, notes?: string }
+ * quantityAdjustment: positive or negative number indicating the change
+ * transactionType: one of 'adjustmentIn', 'adjustmentOut', 'purchaseReceive'
+ * notes: optional reason for adjustment
  */
 export const adjustStock = async (req: CustomRequest, res: Response) => {
     try {
@@ -567,7 +621,7 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
                 res,
                 "Menu item is required.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         if (typeof menuItemId !== "string") {
@@ -575,13 +629,18 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
                 res,
                 "Invalid menu item.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         const { quantityAdjustment, transactionType, notes } = req.body; // quantityAdjustment is the delta (+ or -)
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;  // Error already handled
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
+        if (!finalStoreId) return; // Error already handled
 
         // Validation
         if (quantityAdjustment === undefined || !transactionType) {
@@ -642,7 +701,6 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
 
         // Update the Inventory table and log the Transaction (within a transaction block for safety)
         const updatedInventory = await db.transaction(async (tx) => {
-
             //  Update the Inventory record
             const [updated] = await tx
                 .update(inventory)
@@ -691,7 +749,6 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
         });
 
         res.status(StatusCodes.OK).json(updatedInventory);
-
     } catch (error) {
         // console.error(error);
         handleError2(
@@ -715,7 +772,7 @@ export const decrementStockForOrder = async (
     items: OrderItemStockUpdate[],
     performedBy: string,
     storeId: string,
-    tx: Transaction
+    tx: Transaction,
 ) => {
     try {
         if (!items || items.length === 0) {
@@ -748,13 +805,15 @@ export const decrementStockForOrder = async (
             // If the inventory record is missing, throw an error and roll back the Order.
             // Suggestion: Fetch the name from the inventory record (if joined) or pass it in so the error message is human-readable.
             if (!currentRecord) {
-                throw new InsufficientStockError(`Item not found in inventory.`);
+                throw new InsufficientStockError(
+                    `Item not found in inventory.`,
+                );
             }
 
             if (currentRecord.quantity < item.quantity) {
                 // Insufficient stock, throw an error and roll back the Order.
                 throw new InsufficientStockError(
-                    `Insufficient stock. Available: ${currentRecord.quantity}. requested: ${item.quantity}.`
+                    `Insufficient stock. Available: ${currentRecord.quantity}. requested: ${item.quantity}.`,
                 );
             }
         }
@@ -842,7 +901,7 @@ export const discontinueInventory = async (
                 res,
                 "Menu item is required.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         if (typeof menuItemId !== "string") {
@@ -850,12 +909,16 @@ export const discontinueInventory = async (
                 res,
                 "Invalid menu item.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
-
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;  // Error already handled
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
+        if (!finalStoreId) return; // Error already handled
 
         const [updatedInventory] = await db
             .update(inventory)
@@ -868,7 +931,10 @@ export const discontinueInventory = async (
                     eq(inventory.menuItemId, menuItemId),
                     eq(inventory.storeId, finalStoreId),
                     // Prevent discontinuing if already discontinued
-                    ne(inventory.status, InventoryTransactionTypeEnum.DISCONTINUED),
+                    ne(
+                        inventory.status,
+                        InventoryTransactionTypeEnum.DISCONTINUED,
+                    ),
                 ),
             )
             .returning();
@@ -933,7 +999,7 @@ export const deleteInventoryRecord = async (
                 res,
                 "Menu item is required.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         if (typeof menuItemId !== "string") {
@@ -941,12 +1007,16 @@ export const deleteInventoryRecord = async (
                 res,
                 "Invalid menu item.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
-
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
-        if (!finalStoreId) return;  // Error already handled
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
+        if (!finalStoreId) return; // Error already handled
 
         // Fetch the record before deleting to get the Inventory ID for logging
         const inventoryToDelete = await getInventoryByMenuItemId(
@@ -994,7 +1064,6 @@ export const deleteInventoryRecord = async (
                 .returning();
         });
 
-
         // Log activity
         await logActivity({
             userId: userId,
@@ -1006,7 +1075,8 @@ export const deleteInventoryRecord = async (
         });
 
         res.status(StatusCodes.OK).json({
-            message: "Inventory record and all associated transactions deleted successfully.",
+            message:
+                "Inventory record and all associated transactions deleted successfully.",
         });
     } catch (error) {
         handleError2(
@@ -1017,7 +1087,6 @@ export const deleteInventoryRecord = async (
         );
     }
 };
-
 
 /**
  * @desc    Get inventory alerts for low stock items (raw materials and menu items)
@@ -1031,15 +1100,21 @@ export const getInventoryAlerts = async (req: CustomRequest, res: Response) => {
 
         const { storeIds, storeQueryType } = validated;
 
-        const report = await InventoryAlertService.getUnifiedAlertReport(storeIds);
+        const report =
+            await InventoryAlertService.getUnifiedAlertReport(storeIds);
 
         return res.status(StatusCodes.OK).json({
             ...report,
             storeQueryType,
-            totalAlertCount: report.rawMaterials.total + report.menuItems.total
+            totalAlertCount: report.rawMaterials.total + report.menuItems.total,
         });
     } catch (error: any) {
-        return handleError2(res, "Failed to fetch Inventory Alerts", StatusCodes.INTERNAL_SERVER_ERROR, error instanceof Error ? error : undefined);
+        return handleError2(
+            res,
+            "Failed to fetch Inventory Alerts",
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            error instanceof Error ? error : undefined,
+        );
     }
 };
 
@@ -1048,10 +1123,7 @@ export const getInventoryAlerts = async (req: CustomRequest, res: Response) => {
  * @route   PATCH /api/v1/inventory/continue/:menuItemId
  * @access  Private (Manager/Admin only)
  */
-export const continueInventory = async (
-    req: CustomRequest,
-    res: Response,
-) => {
+export const continueInventory = async (req: CustomRequest, res: Response) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
@@ -1074,7 +1146,7 @@ export const continueInventory = async (
                 res,
                 "Menu item is required.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
         if (typeof menuItemId !== "string") {
@@ -1082,10 +1154,15 @@ export const continueInventory = async (
                 res,
                 "Invalid menu item.",
                 StatusCodes.BAD_REQUEST,
-            )
+            );
         }
 
-        const finalStoreId = await determineFinalStoreId(res, userRole as UserRoleEnum, storeId, targetStoreId as string);
+        const finalStoreId = await determineFinalStoreId(
+            res,
+            userRole as UserRoleEnum,
+            storeId,
+            targetStoreId as string,
+        );
         if (!finalStoreId) return;
 
         const [updatedInventory] = await db
@@ -1099,7 +1176,10 @@ export const continueInventory = async (
                     eq(inventory.menuItemId, menuItemId),
                     eq(inventory.storeId, finalStoreId),
                     // Only update if it is currently discontinued
-                    eq(inventory.status, InventoryTransactionTypeEnum.DISCONTINUED),
+                    eq(
+                        inventory.status,
+                        InventoryTransactionTypeEnum.DISCONTINUED,
+                    ),
                 ),
             )
             .returning();

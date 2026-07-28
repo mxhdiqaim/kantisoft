@@ -1,4 +1,4 @@
-import db from "../db";
+import db from "../shared/database";
 import { billOfMaterials } from "../schema/bill-of-materials-schema";
 import { rawMaterials } from "../schema/raw-materials-schema";
 import { and, eq } from "drizzle-orm";

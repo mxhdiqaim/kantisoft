@@ -1,6 +1,6 @@
 import { Router } from "express";
 import * as controller from "../controllers/inventory-controller";
-import { isAuthorized } from "../middlewares/is-authorised-middleware";
+import { isAuthorized } from "../shared/middlewares/is-authorised-middleware";
 import { UserRoleEnum } from "../types/enums";
 
 const router = Router();

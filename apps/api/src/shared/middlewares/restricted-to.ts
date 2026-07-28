@@ -1,8 +1,8 @@
-import {NextFunction, Response} from "express";
-import {StatusCodes} from "http-status-codes";
-import {CustomRequest} from "../types/express";
-import {handleError2} from "../service/error-handling";
-import {UserRoleEnum} from "../types/enums";
+import { NextFunction, Response } from "express";
+import { StatusCodes } from "http-status-codes";
+import { CustomRequest } from "../../types/express";
+import { handleError2 } from "../../service/error-handling";
+import { UserRoleEnum } from "../../types/enums";
 
 /**
  * @desc Restricts access based on User Roles

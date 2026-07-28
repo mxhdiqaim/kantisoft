@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { and, desc, eq, gte, inArray, lte, ne, sql } from "drizzle-orm";
 import { Response } from "express";
-import db from "../db";
+import db from "../shared/database";
 import { InsertUserSchemaT, users } from "../schema/users-schema";
 import { handleError2 } from "../service/error-handling";
 import {
@@ -12,8 +12,8 @@ import {
 import { stores } from "../schema/stores-schema";
 import { CustomRequest } from "../types/express";
 import { StatusCodes } from "http-status-codes";
-import { validateStoreAndExtractDates } from "../utils/validate-store-dates";
-import { getUserStoreScope } from "../utils/get-store-scope";
+import { validateStoreAndExtractDates } from "../shared/utils/validate-store-dates";
+import { getUserStoreScope } from "../shared/utils/get-store-scope";
 import { ActivityLogService } from "../service/activity-service-log";
 import { activityLog } from "../schema/activity-log-schema";
 

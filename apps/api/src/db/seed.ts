@@ -3,11 +3,11 @@ import {
     unitOfMeasurement,
     UnitOfMeasurementFamilyType,
 } from "../schema/unit-of-measurement-schema";
-import db, { pool } from "./index";
+import db, { database } from "../shared/database";
 import { sql } from "drizzle-orm";
+import logger from "../shared/logger";
 
 const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
-    // Weight Units
     {
         name: "gram",
         symbol: "g",
@@ -74,8 +74,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
         unitOfMeasurementFamily: "count" as UnitOfMeasurementFamilyType,
         isBaseUnit: true,
         conversionFactorToBase: 1,
-        calculationLogic:
-            "The base unit for discrete items (e.g., eggs, pieces).",
+        calculationLogic: "The base unit for discrete items (e.g., eggs, pieces).",
     },
     {
         name: "dozen",
@@ -122,7 +121,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
 ];
 
 const seedUnitsOfMeasurement = async () => {
-    console.log("-> Seeding Units of Measurement...");
+    logger.info("-> Seeding Units of Measurement...");
 
     // Perform the Upsert operation
     const result = await db
@@ -135,47 +134,32 @@ const seedUnitsOfMeasurement = async () => {
             // Define which columns to update if a conflict is detected.
             // We update all other fields that might change (name, family, factors).
             set: {
-                name: sql`excluded
-                .
-                name`, // Update with the incoming value
-                symbol: sql`excluded
-                .
-                symbol`, // Update with the incoming value
-                unitOfMeasurementFamily: sql`excluded
-                .
-                "unitOfMeasurementFamily"`, // Update with the incoming value
-                isBaseUnit: sql`excluded
-                .
-                "isBaseUnit"`, // Update with the incoming value
-                conversionFactorToBase: sql`excluded
-                .
-                "conversionFactorToBase"`, // Update with the incoming value
-                calculationLogic: sql`excluded
-                .
-                "calculationLogic"`, // Update with the incoming value
+                name: sql`excluded.name`,
+                symbol: sql`excluded.symbol`,
+                unitOfMeasurementFamily: sql`excluded."unitOfMeasurementFamily"`,
+                isBaseUnit: sql`excluded."isBaseUnit"`,
+                conversionFactorToBase: sql`excluded."conversionFactorToBase"`,
+                calculationLogic: sql`excluded."calculationLogic"`,
             },
         })
         .returning();
 
-    console.log(
-        `✅ Successfully processed ${result.length} unit of measurement records (Inserted/Updated).`,
-    );
+    logger.info(`✅ Successfully processed ${result.length} unit of measurement records (Inserted/Updated).`);
 };
 
 const main = async () => {
-    console.log("🌱 Starting seed...");
+    logger.info("🌱 Starting seed...");
     await seedUnitsOfMeasurement();
     // Add other seed functions here if needed
-    console.log("✅ Seed successful!");
+    logger.info("✅ Seed successful!");
 };
 
 main()
     .catch((error) => {
-        console.error("❌ Seed failed:", error);
+        logger.error("❌ Seed failed:", error as Error);
         process.exit(1);
     })
     .finally(async () => {
-        console.log("🔌 Closing database connection pool...");
-        await pool.end();
-        console.log("🔌 Pool closed. Seed process finished.");
+        logger.info("🔌 Finishing seed process...");
+        await database.disconnect();
     });
