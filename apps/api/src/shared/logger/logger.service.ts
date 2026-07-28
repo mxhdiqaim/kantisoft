@@ -26,12 +26,12 @@ class LogReaderService {
             const logFilePattern = new RegExp(`^${folderName}\\.\\d{4}-\\d{2}-\\d{2}\\.\\d+\\.log$`);
 
             return files.filter((file) => logFilePattern.test(file));
-        } catch (error: any) {
-            // ENOENT means the folder doesn't exist yet (e.g., no errors logged yet)
-            if (error.code === "ENOENT") {
+        } catch (error: unknown) {
+            const sysError = error as NodeJS.ErrnoException;
+            if (sysError.code === "ENOENT") {
                 return [];
             }
-            logger.error(`Failed to read log directory: ${folderPath}`, error);
+            logger.error(`Failed to read log directory: ${folderPath}`, sysError);
             throw new AppError("Log directory could not be accessed.", 500);
         }
     }
@@ -41,11 +41,12 @@ class LogReaderService {
 
         try {
             return await fs.readFile(filePath, "utf8");
-        } catch (error: any) {
-            if (error.code === "ENOENT") {
+        } catch (error: unknown) {
+            const sysError = error as NodeJS.ErrnoException;
+            if (sysError.code === "ENOENT") {
                 throw new AppError("This log file does not exist.", 404);
             }
-            logger.error(`Error reading log file: ${filePath}`, error);
+            logger.error(`Error reading log file: ${filePath}`, sysError);
             throw new AppError("Failed to read log file content.", 500);
         }
     }
