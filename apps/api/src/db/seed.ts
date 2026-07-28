@@ -3,7 +3,7 @@ import {
     unitOfMeasurement,
     UnitOfMeasurementFamilyType,
 } from "../schema/unit-of-measurement-schema";
-import db, { disconnect } from "../shared/database";
+import db, { database } from "../shared/database";
 import { sql } from "drizzle-orm";
 import logger from "../shared/logger";
 
@@ -74,8 +74,7 @@ const unitsSeedData: InsertUnitOfMeasurementSchemaT[] = [
         unitOfMeasurementFamily: "count" as UnitOfMeasurementFamilyType,
         isBaseUnit: true,
         conversionFactorToBase: 1,
-        calculationLogic:
-            "The base unit for discrete items (e.g., eggs, pieces).",
+        calculationLogic: "The base unit for discrete items (e.g., eggs, pieces).",
     },
     {
         name: "dozen",
@@ -145,9 +144,7 @@ const seedUnitsOfMeasurement = async () => {
         })
         .returning();
 
-    logger.info(
-        `✅ Successfully processed ${result.length} unit of measurement records (Inserted/Updated).`,
-    );
+    logger.info(`✅ Successfully processed ${result.length} unit of measurement records (Inserted/Updated).`);
 };
 
 const main = async () => {
@@ -164,5 +161,5 @@ main()
     })
     .finally(async () => {
         logger.info("🔌 Finishing seed process...");
-        await disconnect();
+        await database.disconnect();
     });
