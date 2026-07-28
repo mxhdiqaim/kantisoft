@@ -20,7 +20,7 @@ const dbCredentials = {
 
 export default defineConfig({
     dialect: "postgresql",
-    schema: "./src/shared/schema/index.ts",
+    schema: "./src/shared/database/schema.database.ts",
     out: "./migrations",
     dbCredentials: dbCredentials,
     verbose: true,
