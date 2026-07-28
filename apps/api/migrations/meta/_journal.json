@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1771418261797,
-      "tag": "0000_panoramic_trauma",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1771522305517,
-      "tag": "0001_loud_nuke",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1772324476249,
-      "tag": "0002_smooth_marvel_boy",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1778948946968,
-      "tag": "0003_numerous_omega_red",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1779532434387,
-      "tag": "0004_sour_chimera",
+      "when": 1785277922226,
+      "tag": "0000_lethal_lightspeed",
       "breakpoints": true
     }
   ]

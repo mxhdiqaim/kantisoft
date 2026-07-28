@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { InventoryTransactionSummaryTypeEnum } from "../../types/enums";
 import { LogParams } from "../../service/activity-service-log";
 
@@ -66,10 +67,7 @@ export const getInventoryTransactionTypeLabel = (type: string) => {
     }
 };
 
-type FormatDetailsParams = Pick<
-    LogParams,
-    "action" | "actorName" | "entityType" | "targetName" | "entityId" | "meta"
->;
+type FormatDetailsParams = Pick<LogParams, "action" | "actorName" | "entityType" | "targetName" | "entityId" | "meta">;
 
 export const formatActivityDetails = ({
     action,
