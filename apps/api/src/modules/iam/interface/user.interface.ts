@@ -12,4 +12,5 @@ export enum UserStatusEnum {
     INACTIVE = "inactive",
     DELETED = "deleted",
     BANNED = "banned",
+    INVITED = "invited",
 }

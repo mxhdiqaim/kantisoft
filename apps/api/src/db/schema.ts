@@ -1,7 +1,5 @@
-import * as users from "../schema/users-schema";
 import * as orders from "../schema/orders-schema";
 import * as menuItems from "../schema/menu-items-schema";
-import * as stores from "../schema/stores-schema";
 import * as activityLog from "../schema/activity-log-schema";
 import * as inventory from "../schema/inventory-schema";
 import * as inventoryTransactions from "../schema/inventory-schema/inventory-transaction-schema";
@@ -11,10 +9,7 @@ import * as billOfMaterials from "../schema/bill-of-materials-schema";
 import * as unitOfMeasurement from "../schema/unit-of-measurement-schema";
 import * as productions from "../schema/production-schema";
 import * as categories from "../schema/categories-schema";
-import {
-    billingTransactions,
-    storeSubscriptions,
-} from "../schema/store-subscriptions-schema";
+import { billingTransactions, storeSubscriptions } from "../schema/store-subscriptions-schema";
 
 import * as menuItemsRelations from "../schema/relations/menu-items-relation";
 import * as ordersRelations from "../schema/relations/orders-relation";
@@ -41,10 +36,8 @@ const relations = {
 };
 
 const schema = {
-    ...users,
     ...orders,
     ...menuItems,
-    ...stores,
     ...activityLog,
     ...inventory,
     ...inventoryTransactions,

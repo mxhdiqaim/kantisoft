@@ -1,7 +1,7 @@
 import { pgEnum, pgTable, text, timestamp, uuid, primaryKey } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
-import { UserRoleEnum, UserStatusEnum } from "./iam.interface";
+import { UserRoleEnum, UserStatusEnum } from "./interface";
 
 export const UserRolePgEnum = pgEnum("role", [
     UserRoleEnum.OWNER,
@@ -17,6 +17,7 @@ export const UserStatusPgEnum = pgEnum("status", [
     UserStatusEnum.INACTIVE,
     UserStatusEnum.DELETED,
     UserStatusEnum.BANNED,
+    UserStatusEnum.INVITED,
 ]);
 
 export const tenantSchema = pgTable("tenants", {
