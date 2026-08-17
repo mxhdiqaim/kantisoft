@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { BaseService } from "../../../shared/service";
-import { InsertLocationSchemaT, locationSchema } from "../iam.schema";
 import { db } from "../../../shared/database";
+import { InsertLocationSchemaT, locationSchema } from "../schema";
 
 class LocationService extends BaseService<typeof locationSchema> {
     constructor() {

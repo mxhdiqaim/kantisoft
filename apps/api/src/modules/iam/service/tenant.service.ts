@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { BaseService } from "../../../shared/service";
-import { InsertUserSchemaT, tenantSchema, userSchema } from "../iam.schema";
 import { db } from "../../../shared/database";
 import { UserRoleEnum, UserStatusEnum } from "../interface";
+import { InsertUserSchemaT, tenantSchema, userSchema } from "../schema";
 
 class TenantService extends BaseService<typeof tenantSchema> {
     constructor() {
