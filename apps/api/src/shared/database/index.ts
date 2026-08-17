@@ -46,6 +46,7 @@ class Database {
 
 // Instantiate the module-level singleton
 export const database = new Database();
+export const client = database.client;
 
 const db = database.orm;
 export default db;
