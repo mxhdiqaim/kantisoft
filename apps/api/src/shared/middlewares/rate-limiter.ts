@@ -2,10 +2,10 @@ import { rateLimit } from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import { NextFunction, Request, Response } from "express";
 import { createClient } from "redis";
-import { getEnvVariable } from "../utils";
+import { helperUtil } from "../utils";
 
 export let redisClient: ReturnType<typeof createClient>;
-const NODE_ENV = getEnvVariable("NODE_ENV");
+const NODE_ENV = helperUtil.getEnvVariable("NODE_ENV");
 
 export const createRateLimiter = () => {
     if (NODE_ENV === "production" && redisClient) {
@@ -16,8 +16,7 @@ export const createRateLimiter = () => {
             legacyHeaders: false, // Disable the X-RateLimit headers
             message: "Too many requests from this IP, please try again later.",
             store: new RedisStore({
-                sendCommand: (...args: string[]) =>
-                    redisClient.sendCommand(args),
+                sendCommand: (...args: string[]) => redisClient.sendCommand(args),
             }),
         });
     }

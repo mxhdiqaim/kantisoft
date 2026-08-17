@@ -1,9 +1,9 @@
 import admin from "firebase-admin";
-import { getEnvVariable } from "../shared/utils";
+import { helperUtil } from "../shared/utils";
 
-const projectId = getEnvVariable("FIREBASE_PROJECT_ID");
-const clientEmail = getEnvVariable("FIREBASE_CLIENT_EMAIL");
-const privateKey = getEnvVariable("FIREBASE_PRIVATE_KEY").replace(/\\n/g, "\n");
+const projectId = helperUtil.getEnvVariable("FIREBASE_PROJECT_ID");
+const clientEmail = helperUtil.getEnvVariable("FIREBASE_CLIENT_EMAIL");
+const privateKey = helperUtil.getEnvVariable("FIREBASE_PRIVATE_KEY").replace(/\\n/g, "\n");
 
 export const initializeFirebase = () => {
     if (admin.apps.length === 0) {

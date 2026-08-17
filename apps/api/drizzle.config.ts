@@ -1,12 +1,12 @@
 import dotenv from "dotenv";
 import { defineConfig } from "drizzle-kit";
-import { getEnvVariable } from "./src/shared/utils";
+import { helperUtil } from "./src/shared/utils";
 
 dotenv.config({ path: ".env.local" });
 dotenv.config({ path: ".env" });
 
-const connectionString = getEnvVariable("DB_CONNECTION_STRING");
-const sslRequired = getEnvVariable("DB_SSL_REQUIRED") === "true";
+const connectionString = helperUtil.getEnvVariable("DB_CONNECTION_STRING");
+const sslRequired = helperUtil.getEnvVariable("DB_SSL_REQUIRED") === "true";
 const dbUrl = new URL(connectionString);
 
 const dbCredentials = {

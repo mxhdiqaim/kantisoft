@@ -1,7 +1,7 @@
 import "newrelic";
 import { Server } from "http";
 import { app } from "./src/server";
-import { getEnvVariable } from "./src/shared/utils";
+import { helperUtil } from "./src/shared/utils";
 import { createRateLimiter } from "./src/shared/middlewares/rate-limiter";
 import logger from "./src/shared/logger";
 import { database } from "./src/shared/database";
@@ -16,7 +16,7 @@ class Application {
     private isShuttingDown: boolean = false;
 
     constructor() {
-        this.port = parseInt(getEnvVariable("PORT") || "3000", 10);
+        this.port = parseInt(helperUtil.getEnvVariable("PORT") || "7789", 10);
     }
 
     public async start(): Promise<void> {
@@ -33,16 +33,16 @@ class Application {
             });
 
             // Initialize Process Listeners
-            this.setupGracefulShutdown();
+            this.shutdownSetup();
         } catch (error) {
             logger.error("Failed to start application", error as Error);
             process.exit(1);
         }
     }
 
-    private setupGracefulShutdown(): void {
-        process.on("SIGINT", () => this.gracefulShutdown("SIGINT")); // Ctrl+C in terminal
-        process.on("SIGTERM", () => this.gracefulShutdown("SIGTERM")); // Docker/K8s termination
+    private shutdownSetup(): void {
+        process.on("SIGINT", () => this.shutdown("SIGINT")); // Ctrl+C in terminal
+        process.on("SIGTERM", () => this.shutdown("SIGTERM")); // Docker/K8s termination
 
         // Catch unhandled promises
         process.on("unhandledRejection", (reason, promise) => {
@@ -50,14 +50,14 @@ class Application {
         });
     }
 
-    private async gracefulShutdown(signal: string): Promise<void> {
+    private async shutdown(signal: string): Promise<void> {
         // Prevent duplicate shutdown triggers
         if (this.isShuttingDown) {
             return;
         }
 
         this.isShuttingDown = true;
-        logger.info(`${signal} received. Initiating graceful shutdown...`);
+        logger.info(`${signal} received. Initiating shutdown...`);
 
         try {
             // Stop accepting new HTTP connections
@@ -80,14 +80,14 @@ class Application {
             // Safely close database connections
             await database.disconnect();
 
-            logger.info("Graceful shutdown completed successfully.");
+            logger.info("Shutdown completed successfully.");
             process.exit(0);
         } catch (error) {
-            logger.error("Error during graceful shutdown:", error as Error);
+            logger.error("Error during shutdown:", error as Error);
             process.exit(1);
         }
     }
 }
 
 const application = new Application();
-application.start();
+application.start().then(() => console.log("Server started successfully"));

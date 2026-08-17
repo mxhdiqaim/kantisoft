@@ -1,6 +1,6 @@
 import pino from "pino";
 import path from "path";
-import { getEnvVariable } from "../utils";
+import { helperUtil } from "../utils";
 import { requestContext } from "./context";
 
 interface CustomPinoLogger extends pino.Logger {
@@ -10,7 +10,7 @@ interface CustomPinoLogger extends pino.Logger {
 
 class LoggerService {
     private readonly pinoInstance: CustomPinoLogger;
-    private readonly isDevelopment: boolean = getEnvVariable("NODE_ENV") === "development";
+    private readonly isDevelopment: boolean = helperUtil.getEnvVariable("NODE_ENV") === "development";
     private readonly logDirectory: string = path.join(__dirname, "../../.log");
 
     constructor() {

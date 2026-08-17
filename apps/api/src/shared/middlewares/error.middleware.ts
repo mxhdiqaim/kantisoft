@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import { getEnvVariable } from "../utils";
+import { helperUtil } from "../utils";
 import { AppError } from "../errors/custom.error";
 
 export const globalErrorHandler = (err: Error, req: Request, res: Response) => {
-    const NODE_ENV = getEnvVariable("NODE_ENV") || "development";
+    const NODE_ENV = helperUtil.getEnvVariable("NODE_ENV") || "development";
 
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     let message = "Something went wrong. Server Error!";
