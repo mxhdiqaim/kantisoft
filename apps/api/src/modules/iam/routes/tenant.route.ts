@@ -1,17 +1,18 @@
 import { Router } from "express";
 import { TenantController } from "../controller";
 
-class TenantRoutes extends TenantController {
+class TenantRoutes {
     public readonly router: Router;
+    private readonly controller: TenantController;
 
     constructor() {
-        super();
         this.router = Router();
-        this.initializeRoutes();
+        this.controller = new TenantController();
+        this.routes();
     }
 
-    private initializeRoutes() {
-        this.router.post("/tenant", this.create);
+    private routes() {
+        this.router.post("/tenant", this.controller.create);
     }
 }
 

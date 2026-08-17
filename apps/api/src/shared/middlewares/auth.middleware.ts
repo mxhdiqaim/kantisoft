@@ -10,7 +10,7 @@ import { UnauthorizedError, ForbiddenError } from "../errors/custom.error";
 
 class AuthMiddleware {
     // Ensures the request contains a valid Clerk session.
-    public static requireAuth(req: Request, res: Response, next: NextFunction) {
+    public requireAuth(req: Request, res: Response, next: NextFunction) {
         const { isAuthenticated } = getAuth(req);
 
         if (!isAuthenticated) {
@@ -24,7 +24,7 @@ class AuthMiddleware {
      * Resolves the user's business from the DB, validates location access,
      * and wraps the request in an AsyncLocalStorage context.
      */
-    public static async withTenantContext(req: Request, res: Response, next: NextFunction) {
+    public async withTenantContext(req: Request, res: Response, next: NextFunction) {
         try {
             const { userId: clerkId } = getAuth(req);
 

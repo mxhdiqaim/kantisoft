@@ -57,9 +57,13 @@ class UserService extends BaseService<typeof userSchema> {
      * ONBOARDING STEP 1
      * Handles newly registered users from Clerk.
      */
-    public async syncClerkUserCreated(newUser: InsertUserSchemaT) {
-        const { clerkId, firstName, lastName, email, phone } = newUser;
-
+    public async syncClerkUserCreated(
+        clerkId: string,
+        firstName: string,
+        lastName: string,
+        email: string,
+        phone: string,
+    ) {
         // Check if this email belongs to an invited staff member
         const existingUser = await this.get(eq(userSchema.email, email));
 

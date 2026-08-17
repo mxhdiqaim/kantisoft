@@ -3,7 +3,7 @@ import { tenantService } from "../service";
 import { getAuth } from "@clerk/express";
 
 export default class TenantController {
-    protected async create(req: Request, res: Response, next: NextFunction) {
+    public async create(req: Request, res: Response, next: NextFunction) {
         try {
             const { businessName } = req.body;
             // Clerk Express middleware automatically attaches the user's Clerk ID to req.auth

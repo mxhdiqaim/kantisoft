@@ -1,5 +1,7 @@
 import { Router } from "express";
+import { authMiddleware } from "../../../shared/middlewares";
 import tenantRoute from "./tenant.route";
+import webhookRoute from "./webhook.route";
 
 class IamRoutes {
     public readonly router: Router;
@@ -10,25 +12,9 @@ class IamRoutes {
     }
 
     private initializeRoutes() {
-        this.router.post(
-            "/tenant",
-            // AuthMiddleware.requireAuth,
-            tenantRoute,
-        );
+        this.router.post("/tenant", authMiddleware.requireAuth, tenantRoute);
 
-        // this.router.post(
-        //     "/locations",
-        //     // AuthMiddleware.requireAuth,
-        //     // AuthMiddleware.withTenantContext,
-        //     LocationController.create,
-        // );
-        //
-        // this.router.post(
-        //     "/staff/invite",
-        //     // AuthMiddleware.requireAuth,
-        //     // AuthMiddleware.withTenantContext,
-        //     UserController.inviteStaff,
-        // );
+        this.router.use("/webhooks", webhookRoute);
     }
 }
 
