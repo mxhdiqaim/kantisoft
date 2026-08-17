@@ -1,6 +1,6 @@
 import { eq, sql, and, SQL } from "drizzle-orm";
 import { PgTable, AnyPgColumn } from "drizzle-orm/pg-core";
-import db from "../database";
+import { db } from "../database";
 import { NotFoundError } from "../errors/custom.error";
 import { requestContext } from "../logger/context";
 

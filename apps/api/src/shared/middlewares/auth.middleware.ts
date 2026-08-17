@@ -1,27 +1,19 @@
 import { Response, NextFunction } from "express";
 import { eq } from "drizzle-orm";
 import admin from "firebase-admin";
-import db from "../database";
+import { db } from "../database";
 import { users } from "../../schema/users-schema";
 import { CustomRequest } from "../../types/express";
 import { UserStatusEnum } from "../../types/enums";
 import { handleError2 } from "../../service/error-handling";
 
-export const authenticateToken = async (
-    req: CustomRequest,
-    res: Response,
-    next: NextFunction,
-) => {
+export const authenticateToken = async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
         const authHeader = req.headers.authorization;
 
         // Check for standard Bearer Token structure
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return handleError2(
-                res,
-                "Unauthorized: Missing or malformed token format. Use 'Bearer <TOKEN>'.",
-                401,
-            );
+            return handleError2(res, "Unauthorized: Missing or malformed token format. Use 'Bearer <TOKEN>'.", 401);
         }
 
         const token = authHeader.split(" ")[1];
@@ -44,10 +36,7 @@ export const authenticateToken = async (
             });
 
             if (userData) {
-                await db
-                    .update(users)
-                    .set({ firebaseUid: uid })
-                    .where(eq(users.id, userData.id));
+                await db.update(users).set({ firebaseUid: uid }).where(eq(users.id, userData.id));
             }
         }
 

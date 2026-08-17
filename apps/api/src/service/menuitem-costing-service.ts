@@ -1,4 +1,4 @@
-import db from "../shared/database";
+import { db } from "../shared/database";
 import { billOfMaterials } from "../schema/bill-of-materials-schema";
 import { rawMaterials } from "../schema/raw-materials-schema";
 import { eq } from "drizzle-orm";
@@ -10,22 +10,16 @@ export const MenuItemCostingService = {
      * @param menuItemId The ID of the menu item (finished product).
      * @returns The total raw material cost (number) or null if no BOM is defined.
      */
-    async calculateTotalRawMaterialCost(
-        menuItemId: string,
-    ): Promise<number | null> {
+    async calculateTotalRawMaterialCost(menuItemId: string): Promise<number | null> {
         // Fetch BOM data with current Raw Material Price
         // We only need the consumption quantity (Base) and the latest price (Base) for the calculation.
         const results = await db
             .select({
-                consumptionQuantityBase:
-                    billOfMaterials.consumptionQuantityBase,
+                consumptionQuantityBase: billOfMaterials.consumptionQuantityBase,
                 latestUnitPriceBase: rawMaterials.latestUnitPrice,
             })
             .from(billOfMaterials)
-            .innerJoin(
-                rawMaterials,
-                eq(billOfMaterials.rawMaterialId, rawMaterials.id),
-            )
+            .innerJoin(rawMaterials, eq(billOfMaterials.rawMaterialId, rawMaterials.id))
             .where(eq(billOfMaterials.menuItemId, menuItemId))
             .execute();
 
@@ -38,8 +32,7 @@ export const MenuItemCostingService = {
 
         for (const item of results) {
             // Formula: Cost = Consumption Quantity (Base) * Latest Price (Base)
-            const ingredientCost =
-                item.consumptionQuantityBase * item.latestUnitPriceBase;
+            const ingredientCost = item.consumptionQuantityBase * item.latestUnitPriceBase;
 
             // Note: We use standard number addition here. If high-precision financial
             // arithmetic is strictly required (e.g. preventing floating point errors),

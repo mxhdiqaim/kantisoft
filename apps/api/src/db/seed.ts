@@ -3,7 +3,7 @@ import {
     unitOfMeasurement,
     UnitOfMeasurementFamilyType,
 } from "../schema/unit-of-measurement-schema";
-import db, { database } from "../shared/database";
+import { db, DBDisconnect } from "../shared/database";
 import { sql } from "drizzle-orm";
 import logger from "../shared/logger";
 
@@ -161,5 +161,5 @@ main()
     })
     .finally(async () => {
         logger.info("🔌 Finishing seed process...");
-        await database.disconnect();
+        await DBDisconnect();
     });

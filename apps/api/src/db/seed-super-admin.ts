@@ -1,4 +1,4 @@
-import db from "../shared/database";
+import { db } from "../shared/database";
 import { users } from "../schema/users-schema";
 import { UserRoleEnum, UserStatusEnum } from "../types/enums";
 import { helperUtil } from "../shared/utils";

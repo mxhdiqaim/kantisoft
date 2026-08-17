@@ -4,7 +4,7 @@ import { app } from "./src/server";
 import { helperUtil } from "./src/shared/utils";
 import { createRateLimiter } from "./src/shared/middlewares/rate-limiter";
 import logger from "./src/shared/logger";
-import { database } from "./src/shared/database";
+import { DBConnect, DBDisconnect } from "./src/shared/database";
 
 interface SystemError extends Error {
     code?: string;
@@ -22,7 +22,7 @@ class Application {
     public async start(): Promise<void> {
         try {
             // Establish Database Connections
-            await database.connect();
+            await DBConnect();
 
             // Rate Limiter Middlewares
             app.use(createRateLimiter());
@@ -78,7 +78,7 @@ class Application {
             }
 
             // Safely close database connections
-            await database.disconnect();
+            await DBDisconnect();
 
             logger.info("Shutdown completed successfully.");
             process.exit(0);

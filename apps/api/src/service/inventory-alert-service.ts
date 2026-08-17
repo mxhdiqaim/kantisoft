@@ -1,4 +1,4 @@
-import db from "../shared/database";
+import { db } from "../shared/database";
 import { rawMaterials } from "../schema/raw-materials-schema";
 import { rawMaterialInventory } from "../schema/raw-materials-schema/raw-material-inventory-schema";
 import { and, eq, inArray, sql } from "drizzle-orm";
@@ -21,10 +21,7 @@ export const InventoryAlertService = {
                 storeId: rawMaterialInventory.storeId,
             })
             .from(rawMaterialInventory)
-            .innerJoin(
-                rawMaterials,
-                eq(rawMaterialInventory.rawMaterialId, rawMaterials.id),
-            )
+            .innerJoin(rawMaterials, eq(rawMaterialInventory.rawMaterialId, rawMaterials.id))
             .where(
                 and(
                     inArray(rawMaterialInventory.storeId, storeIds),
@@ -57,21 +54,13 @@ export const InventoryAlertService = {
         // Categorize for easy frontend consumption
         return {
             rawMaterials: {
-                outOfStock: rawMaterialsAlerts.filter(
-                    (i) => i.status === "outOfStock",
-                ),
-                lowStock: rawMaterialsAlerts.filter(
-                    (i) => i.status === "lowStock",
-                ),
+                outOfStock: rawMaterialsAlerts.filter((i) => i.status === "outOfStock"),
+                lowStock: rawMaterialsAlerts.filter((i) => i.status === "lowStock"),
                 total: rawMaterialsAlerts.length,
             },
             menuItems: {
-                outOfStock: menuItemsAlerts.filter(
-                    (i) => i.status === "outOfStock",
-                ),
-                lowStock: menuItemsAlerts.filter(
-                    (i) => i.status === "lowStock",
-                ),
+                outOfStock: menuItemsAlerts.filter((i) => i.status === "outOfStock"),
+                lowStock: menuItemsAlerts.filter((i) => i.status === "lowStock"),
                 total: menuItemsAlerts.length,
             },
             timestamp: new Date(),

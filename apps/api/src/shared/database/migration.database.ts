@@ -1,5 +1,5 @@
 import { migrate } from "drizzle-orm/postgres-js/migrator";
-import db, { client } from "./index";
+import { db, DBClient } from "./index";
 import logger from "../logger";
 
 class MigrationRunner {
@@ -17,7 +17,7 @@ class MigrationRunner {
         } finally {
             // Gracefully close the PostgreSQL connection so the Node script can exit
             logger.info("Closing migration database connection...");
-            await client.end({ timeout: 5 });
+            await DBClient.end({ timeout: 5 });
         }
     }
 }

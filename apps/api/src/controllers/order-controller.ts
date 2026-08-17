@@ -2,15 +2,11 @@ import { and, eq, gte, inArray, sum, count } from "drizzle-orm";
 import { sql, desc } from "drizzle-orm";
 import { lte } from "drizzle-orm/sql/expressions/conditions";
 import { Response } from "express";
-import db from "../shared/database";
+import { db } from "../shared/database";
 import { menuItems } from "../schema/menu-items-schema";
 import { orderItems, orders } from "../schema/orders-schema";
 import { users } from "../schema/users-schema";
-import {
-    OrderPaymentMethodEnum,
-    OrderStatusEnum,
-    UserRoleEnum,
-} from "../types/enums";
+import { OrderPaymentMethodEnum, OrderStatusEnum, UserRoleEnum } from "../types/enums";
 import { handleError2 } from "../service/error-handling";
 import { generateOrderReference } from "../shared/utils";
 import { logActivity } from "../service/activity-logger";
@@ -27,11 +23,7 @@ export const getAllOrders = async (req: CustomRequest, res: Response) => {
         const storeId = currentUser?.storeId;
 
         if (!storeId) {
-            return handleError2(
-                res,
-                "User not associated with a store.",
-                StatusCodes.UNAUTHORIZED,
-            );
+            return handleError2(res, "User not associated with a store.", StatusCodes.UNAUTHORIZED);
         }
 
         const userRole = currentUser?.role;
@@ -83,83 +75,66 @@ export const getOrdersByPeriod = async (req: CustomRequest, res: Response) => {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return;
 
-        const {
-            storeIds,
-            finalStartDate: startDate,
-            finalEndDate: endDate,
-            periodUsed,
-            storeQueryType,
-        } = validated;
+        const { storeIds, finalStartDate: startDate, finalEndDate: endDate, periodUsed, storeQueryType } = validated;
 
         let whereClause =
-            startDate && endDate
-                ? and(
-                      gte(orders.createdAt, startDate),
-                      lte(orders.createdAt, endDate),
-                  )
-                : undefined;
+            startDate && endDate ? and(gte(orders.createdAt, startDate), lte(orders.createdAt, endDate)) : undefined;
 
         // If the user is an Admin, add their storeId to the where clause
         if (storeIds) {
             const storeCondition = inArray(orders.storeId, storeIds);
-            whereClause = whereClause
-                ? and(whereClause, storeCondition)
-                : storeCondition;
+            whereClause = whereClause ? and(whereClause, storeCondition) : storeCondition;
         }
 
         // Fetch all data in parallel
-        const [ordersList, salesSummary, mostOrdered, topSellerResult] =
-            await Promise.all([
-                // Get the list of orders
-                db.query.orders.findMany({
-                    where: whereClause,
-                    orderBy: (orders, { desc }) => [desc(orders.createdAt)],
-                    with: {
-                        seller: {
-                            columns: { firstName: true, lastName: true },
-                        },
-                        orderItems: { with: { menuItem: true } },
+        const [ordersList, salesSummary, mostOrdered, topSellerResult] = await Promise.all([
+            // Get the list of orders
+            db.query.orders.findMany({
+                where: whereClause,
+                orderBy: (orders, { desc }) => [desc(orders.createdAt)],
+                with: {
+                    seller: {
+                        columns: { firstName: true, lastName: true },
                     },
-                }),
-                // Get total sales and order count
-                db
-                    .select({
-                        totalRevenue: sum(orders.totalAmount),
-                        totalOrders: count(orders.id),
-                    })
-                    .from(orders)
-                    .where(whereClause),
-                // Get the most ordered item
-                db
-                    .select({
-                        name: menuItems.name,
-                        quantity: sum(orderItems.quantity),
-                    })
-                    .from(orderItems)
-                    .innerJoin(orders, eq(orderItems.orderId, orders.id))
-                    .innerJoin(
-                        menuItems,
-                        eq(orderItems.menuItemId, menuItems.id),
-                    )
-                    .where(whereClause)
-                    .groupBy(menuItems.name)
-                    .orderBy(desc(sum(orderItems.quantity)))
-                    .limit(1),
-                //  Get the top seller by revenue
-                db
-                    .select({
-                        sellerId: users.id,
-                        firstName: users.firstName,
-                        lastName: users.lastName,
-                        totalRevenue: sum(orders.totalAmount),
-                    })
-                    .from(orders)
-                    .innerJoin(users, eq(orders.sellerId, users.id))
-                    .where(whereClause)
-                    .groupBy(users.id, users.firstName, users.lastName)
-                    .orderBy(desc(sum(orders.totalAmount)))
-                    .limit(1),
-            ]);
+                    orderItems: { with: { menuItem: true } },
+                },
+            }),
+            // Get total sales and order count
+            db
+                .select({
+                    totalRevenue: sum(orders.totalAmount),
+                    totalOrders: count(orders.id),
+                })
+                .from(orders)
+                .where(whereClause),
+            // Get the most ordered item
+            db
+                .select({
+                    name: menuItems.name,
+                    quantity: sum(orderItems.quantity),
+                })
+                .from(orderItems)
+                .innerJoin(orders, eq(orderItems.orderId, orders.id))
+                .innerJoin(menuItems, eq(orderItems.menuItemId, menuItems.id))
+                .where(whereClause)
+                .groupBy(menuItems.name)
+                .orderBy(desc(sum(orderItems.quantity)))
+                .limit(1),
+            //  Get the top seller by revenue
+            db
+                .select({
+                    sellerId: users.id,
+                    firstName: users.firstName,
+                    lastName: users.lastName,
+                    totalRevenue: sum(orders.totalAmount),
+                })
+                .from(orders)
+                .innerJoin(users, eq(orders.sellerId, users.id))
+                .where(whereClause)
+                .groupBy(users.id, users.firstName, users.lastName)
+                .orderBy(desc(sum(orders.totalAmount)))
+                .limit(1),
+        ]);
 
         const summary = salesSummary[0];
         const mostOrderedItem = mostOrdered[0];
@@ -180,9 +155,7 @@ export const getOrdersByPeriod = async (req: CustomRequest, res: Response) => {
             topSeller: topSeller
                 ? {
                       name: `${topSeller.firstName} ${topSeller.lastName}`,
-                      totalRevenue: parseFloat(
-                          topSeller.totalRevenue || "0",
-                      ).toFixed(2),
+                      totalRevenue: parseFloat(topSeller.totalRevenue || "0").toFixed(2),
                   }
                 : null,
             orders: ordersList,
@@ -208,11 +181,7 @@ export const getOrderById = async (req: CustomRequest, res: Response) => {
         const userRole = currentUser?.role;
 
         if (!storeId) {
-            return handleError2(
-                res,
-                "User not associated with a store.",
-                StatusCodes.UNAUTHORIZED,
-            );
+            return handleError2(res, "User not associated with a store.", StatusCodes.UNAUTHORIZED);
         }
 
         const { targetStoreId } = req.query;
@@ -228,21 +197,14 @@ export const getOrderById = async (req: CustomRequest, res: Response) => {
         const { id: orderId } = req.params;
 
         if (!orderId) {
-            return handleError2(
-                res,
-                "Order is required.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Order is required.", StatusCodes.BAD_REQUEST);
         }
 
         if (typeof orderId !== "string") {
             return handleError2(res, "Invalid order.", StatusCodes.BAD_REQUEST);
         }
 
-        const whereClause = and(
-            eq(orders.id, orderId),
-            eq(orders.storeId, finalStoreId),
-        );
+        const whereClause = and(eq(orders.id, orderId), eq(orders.storeId, finalStoreId));
 
         const order = await db.query.orders.findFirst({
             where: whereClause,
@@ -262,11 +224,7 @@ export const getOrderById = async (req: CustomRequest, res: Response) => {
         });
 
         if (!order) {
-            return handleError2(
-                res,
-                "The order is not found",
-                StatusCodes.NOT_FOUND,
-            );
+            return handleError2(res, "The order is not found", StatusCodes.NOT_FOUND);
         }
         res.status(StatusCodes.OK).json(order);
     } catch (error) {
@@ -292,11 +250,7 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
         const storeId = currentUser?.storeId;
 
         if (!storeId) {
-            return handleError2(
-                res,
-                "User is not associated with a store.",
-                StatusCodes.FORBIDDEN,
-            );
+            return handleError2(res, "User is not associated with a store.", StatusCodes.FORBIDDEN);
         }
 
         const userRole = currentUser?.role;
@@ -317,11 +271,7 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
         } = req.body;
 
         if (!items || !Array.isArray(items) || items.length === 0) {
-            return handleError2(
-                res,
-                "Order must contain at least one item.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Order must contain at least one item.", StatusCodes.BAD_REQUEST);
         }
 
         const menuItemIds: string[] = items.map((item) => item.menuItemId);
@@ -330,31 +280,18 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
         const existingMenuItems = await db
             .select()
             .from(menuItems)
-            .where(
-                and(
-                    inArray(menuItems.id, menuItemIds),
-                    eq(menuItems.storeId, finalStoreId),
-                ),
-            );
+            .where(and(inArray(menuItems.id, menuItemIds), eq(menuItems.storeId, finalStoreId)));
 
         if (existingMenuItems.length !== menuItemIds.length) {
-            return handleError2(
-                res,
-                "Menu item(s) not found.",
-                StatusCodes.NOT_FOUND,
-            );
+            return handleError2(res, "Menu item(s) not found.", StatusCodes.NOT_FOUND);
         }
 
-        const priceMap = new Map(
-            existingMenuItems.map((item) => [item.id, item.price]),
-        );
+        const priceMap = new Map(existingMenuItems.map((item) => [item.id, item.price]));
 
         // Calculate total price
         let totalAmount = 0;
         const orderItemsToInsert = items.map((item) => {
-            const priceAtOrder = parseFloat(
-                priceMap.get(item.menuItemId) || "0",
-            );
+            const priceAtOrder = parseFloat(priceMap.get(item.menuItemId) || "0");
             const subTotal = priceAtOrder * item.quantity;
             totalAmount += subTotal;
 
@@ -396,9 +333,7 @@ export const createOrder = async (req: CustomRequest, res: Response) => {
             const itemsForStockDecrement = items.map((item) => ({
                 menuItemId: item.menuItemId,
                 quantity: Number(item.quantity),
-                priceAtOrder: parseFloat(
-                    priceMap.get(item.menuItemId) as string,
-                ),
+                priceAtOrder: parseFloat(priceMap.get(item.menuItemId) as string),
             }));
 
             await decrementStockForOrder(
@@ -475,21 +410,13 @@ export const updateOrderStatus = async (req: CustomRequest, res: Response) => {
         const storeId = currentUser?.storeId;
 
         if (!storeId) {
-            return handleError2(
-                res,
-                "User not associated with a store.",
-                StatusCodes.UNAUTHORIZED,
-            );
+            return handleError2(res, "User not associated with a store.", StatusCodes.UNAUTHORIZED);
         }
 
         const { orderStatus } = req.body;
 
         if (!orderStatus) {
-            return handleError2(
-                res,
-                "Order status is required.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Order status is required.", StatusCodes.BAD_REQUEST);
         }
 
         const userRole = currentUser?.role;
@@ -506,11 +433,7 @@ export const updateOrderStatus = async (req: CustomRequest, res: Response) => {
         const { id: orderId } = req.params;
 
         if (!orderId) {
-            return handleError2(
-                res,
-                "Order is required.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Order is required.", StatusCodes.BAD_REQUEST);
         }
 
         if (typeof orderId !== "string") {
@@ -524,11 +447,7 @@ export const updateOrderStatus = async (req: CustomRequest, res: Response) => {
             eq(orders.orderStatus, OrderStatusEnum.PENDING),
         );
 
-        const updatedOrder = await db
-            .update(orders)
-            .set({ orderStatus })
-            .where(whereClause)
-            .returning();
+        const updatedOrder = await db.update(orders).set({ orderStatus }).where(whereClause).returning();
 
         if (updatedOrder.length === 0) {
             return handleError2(
@@ -566,11 +485,7 @@ export const deleteOrder = async (req: CustomRequest, res: Response) => {
         const storeId = currentUser?.storeId;
 
         if (!storeId) {
-            return handleError2(
-                res,
-                "User not associated with a store.",
-                StatusCodes.UNAUTHORIZED,
-            );
+            return handleError2(res, "User not associated with a store.", StatusCodes.UNAUTHORIZED);
         }
 
         const userRole = currentUser?.role;
@@ -587,11 +502,7 @@ export const deleteOrder = async (req: CustomRequest, res: Response) => {
         const { id: orderId } = req.params;
 
         if (!orderId) {
-            return handleError2(
-                res,
-                "Order is required.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Order is required.", StatusCodes.BAD_REQUEST);
         }
 
         if (typeof orderId !== "string") {
@@ -651,11 +562,7 @@ export const getMostOrderedItem = async (req: CustomRequest, res: Response) => {
         const storeId = currentUser?.storeId;
 
         if (!storeId) {
-            return handleError2(
-                res,
-                "User not associated with a store.",
-                StatusCodes.UNAUTHORIZED,
-            );
+            return handleError2(res, "User not associated with a store.", StatusCodes.UNAUTHORIZED);
         }
 
         const userRole = currentUser?.role;
@@ -675,9 +582,7 @@ export const getMostOrderedItem = async (req: CustomRequest, res: Response) => {
         const [orderItemResult] = await db
             .select({
                 menuItemId: orderItems.menuItemId,
-                totalQuantity: sql<number>`SUM(${orderItems.quantity})`.as(
-                    "totalQuantity",
-                ),
+                totalQuantity: sql<number>`SUM(${orderItems.quantity})`.as("totalQuantity"),
             })
             .from(orderItems)
             .where(whereClause)
@@ -691,8 +596,7 @@ export const getMostOrderedItem = async (req: CustomRequest, res: Response) => {
 
         // Fetch menu item details
         const menuItem = await db.query.menuItems.findFirst({
-            where: (menuItems, { eq }) =>
-                eq(menuItems.id, orderItemResult.menuItemId),
+            where: (menuItems, { eq }) => eq(menuItems.id, orderItemResult.menuItemId),
         });
 
         res.status(StatusCodes.OK).json({
@@ -714,20 +618,13 @@ export const getMostOrderedItem = async (req: CustomRequest, res: Response) => {
  * @route   GET /api/orders/reference/:reference
  * @access  Private
  */
-export const getOrderByReference = async (
-    req: CustomRequest,
-    res: Response,
-) => {
+export const getOrderByReference = async (req: CustomRequest, res: Response) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
 
         if (!storeId) {
-            return handleError2(
-                res,
-                "User not associated with a store.",
-                StatusCodes.UNAUTHORIZED,
-            );
+            return handleError2(res, "User not associated with a store.", StatusCodes.UNAUTHORIZED);
         }
 
         const userRole = currentUser?.role;
@@ -744,26 +641,15 @@ export const getOrderByReference = async (
         const { reference } = req.params;
 
         if (!reference) {
-            return handleError2(
-                res,
-                "Reference is required.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Reference is required.", StatusCodes.BAD_REQUEST);
         }
 
         if (typeof reference !== "string") {
-            return handleError2(
-                res,
-                "Invalid Reference.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Invalid Reference.", StatusCodes.BAD_REQUEST);
         }
 
         // CRITICAL FIX: The where clause must ALWAYS filter by the storeId
-        const whereClause = and(
-            eq(orders.reference, reference),
-            eq(orders.storeId, finalStoreId),
-        );
+        const whereClause = and(eq(orders.reference, reference), eq(orders.storeId, finalStoreId));
 
         const order = await db.query.orders.findFirst({
             where: whereClause,
@@ -783,11 +669,7 @@ export const getOrderByReference = async (
         });
 
         if (!order) {
-            return handleError2(
-                res,
-                "The order is not found",
-                StatusCodes.NOT_FOUND,
-            );
+            return handleError2(res, "The order is not found", StatusCodes.NOT_FOUND);
         }
         res.status(StatusCodes.OK).json(order);
     } catch (error) {

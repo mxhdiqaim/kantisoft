@@ -44,9 +44,11 @@ class Database {
     };
 }
 
-// Instantiate the module-level singleton
-export const database = new Database();
-export const client = database.client;
+const database = new Database();
 
+const DBClient = database.client;
+const DBConnect = database.connect;
+const DBDisconnect = database.disconnect;
 const db = database.orm;
-export default db;
+
+export { DBClient, DBConnect, DBDisconnect, db };

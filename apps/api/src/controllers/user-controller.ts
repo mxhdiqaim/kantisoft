@@ -1,14 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { and, desc, eq, gte, inArray, lte, ne, sql } from "drizzle-orm";
 import { Response } from "express";
-import db from "../shared/database";
+import { db } from "../shared/database";
 import { InsertUserSchemaT, users } from "../schema/users-schema";
 import { handleError2 } from "../service/error-handling";
-import {
-    ActivityEntityTypeEnum,
-    UserRoleEnum,
-    UserStatusEnum,
-} from "../types/enums";
+import { ActivityEntityTypeEnum, UserRoleEnum, UserStatusEnum } from "../types/enums";
 import { stores } from "../schema/stores-schema";
 import { CustomRequest } from "../types/express";
 import { StatusCodes } from "http-status-codes";
@@ -51,12 +47,7 @@ export const getAllUsers = async (req: CustomRequest, res: Response) => {
             })
             .from(users)
             .leftJoin(stores, eq(users.storeId, stores.id))
-            .where(
-                and(
-                    inArray(users.storeId, storeIds),
-                    ne(users.status, UserStatusEnum.DELETED),
-                ),
-            )
+            .where(and(inArray(users.storeId, storeIds), ne(users.status, UserStatusEnum.DELETED)))
             .orderBy(stores.name, users.firstName);
 
         res.status(StatusCodes.OK).json(allUsers);
@@ -82,11 +73,7 @@ export const getUserById = async (req: CustomRequest, res: Response) => {
         const storeId = currentUser?.storeId;
 
         if (!storeId) {
-            return handleError2(
-                res,
-                "Authenticated user is not associated with any store.",
-                StatusCodes.FORBIDDEN,
-            );
+            return handleError2(res, "Authenticated user is not associated with any store.", StatusCodes.FORBIDDEN);
         }
 
         const validated = await validateStoreAndExtractDates(req, res);
@@ -96,19 +83,11 @@ export const getUserById = async (req: CustomRequest, res: Response) => {
         const { id: targetUserId } = req.params;
 
         if (!targetUserId) {
-            return handleError2(
-                res,
-                "Missing user in request path.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Missing user in request path.", StatusCodes.BAD_REQUEST);
         }
 
         if (typeof targetUserId !== "string") {
-            return handleError2(
-                res,
-                "Invalid request user.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Invalid request user.", StatusCodes.BAD_REQUEST);
         }
 
         // Fetch user with Store Join
@@ -151,17 +130,11 @@ export const getUserById = async (req: CustomRequest, res: Response) => {
         // Authorisation Logic
         const isManager = currentUser.role === UserRoleEnum.MANAGER;
         const isOwnProfile = currentUser.id === targetUser.id;
-        const isAdminInSameStore =
-            currentUser.role === UserRoleEnum.ADMIN &&
-            storeId === targetUser.storeId;
+        const isAdminInSameStore = currentUser.role === UserRoleEnum.ADMIN && storeId === targetUser.storeId;
 
         // Deny access if none of the conditions are met
         if (!isManager && !isOwnProfile && !isAdminInSameStore) {
-            return handleError2(
-                res,
-                "You do not have permission to view this profile.",
-                StatusCodes.FORBIDDEN,
-            );
+            return handleError2(res, "You do not have permission to view this profile.", StatusCodes.FORBIDDEN);
         }
 
         res.status(StatusCodes.OK).json(targetUser);
@@ -186,46 +159,27 @@ export const deleteUser = async (req: CustomRequest, res: Response) => {
 
         // Check for authentication
         if (!currentUser) {
-            return handleError2(
-                res,
-                "Authentication required.",
-                StatusCodes.UNAUTHORIZED,
-            );
+            return handleError2(res, "Authentication required.", StatusCodes.UNAUTHORIZED);
         }
 
         const { id: targetUserId } = req.params;
 
         if (!targetUserId) {
-            return handleError2(
-                res,
-                "Missing user in request path.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Missing user in request path.", StatusCodes.BAD_REQUEST);
         }
 
         if (typeof targetUserId !== "string") {
-            return handleError2(
-                res,
-                "Invalid request user.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Invalid request user.", StatusCodes.BAD_REQUEST);
         }
 
         // Prevent users from deleting themselves
         if (currentUser.id === targetUserId) {
-            return handleError2(
-                res,
-                "You cannot perform this action",
-                StatusCodes.FORBIDDEN,
-            );
+            return handleError2(res, "You cannot perform this action", StatusCodes.FORBIDDEN);
         }
 
         // Fetch the user to be deleted, but only if they are in the current user's store.
         const targetUser = await db.query.users.findFirst({
-            where: and(
-                eq(users.id, targetUserId),
-                eq(users.storeId, String(currentUser.storeId)),
-            ),
+            where: and(eq(users.id, targetUserId), eq(users.storeId, String(currentUser.storeId))),
         });
 
         if (!targetUser) {
@@ -241,16 +195,11 @@ export const deleteUser = async (req: CustomRequest, res: Response) => {
             (isManager && targetUser.role !== UserRoleEnum.MANAGER) ||
             // An Admin can delete Users or Guests in the same store
             (isAdmin &&
-                (targetUser.role === UserRoleEnum.USER ||
-                    targetUser.role === UserRoleEnum.GUEST) &&
+                (targetUser.role === UserRoleEnum.USER || targetUser.role === UserRoleEnum.GUEST) &&
                 currentUser.storeId === targetUser.storeId);
 
         if (!canDelete) {
-            return handleError2(
-                res,
-                "You do not have permission to delete this user.",
-                StatusCodes.FORBIDDEN,
-            );
+            return handleError2(res, "You do not have permission to delete this user.", StatusCodes.FORBIDDEN);
         }
 
         // Perform the soft delete by updating the status
@@ -295,11 +244,7 @@ export const createUser = async (req: CustomRequest, res: Response) => {
         const storeId = currentUser?.storeId;
 
         if (!storeId) {
-            return handleError2(
-                res,
-                "User does not belong to a store.",
-                StatusCodes.FORBIDDEN,
-            );
+            return handleError2(res, "User does not belong to a store.", StatusCodes.FORBIDDEN);
         }
 
         const payload = req.body;
@@ -310,20 +255,11 @@ export const createUser = async (req: CustomRequest, res: Response) => {
         const existingUserByEmail = await db
             .select()
             .from(users)
-            .where(
-                and(
-                    eq(users.email, lowercasedEmail),
-                    eq(users.storeId, storeId),
-                ),
-            )
+            .where(and(eq(users.email, lowercasedEmail), eq(users.storeId, storeId)))
             .limit(1);
 
         if (existingUserByEmail.length > 0) {
-            return handleError2(
-                res,
-                "A user with this email already exists in this store.",
-                StatusCodes.CONFLICT,
-            );
+            return handleError2(res, "A user with this email already exists in this store.", StatusCodes.CONFLICT);
         }
 
         // Authorisation: Current user's role vs. target user's role
@@ -332,35 +268,19 @@ export const createUser = async (req: CustomRequest, res: Response) => {
 
         // Define allowed roles for creation based on the current user's role
         const allowedCreations: { [key: string]: string[] } = {
-            [UserRoleEnum.MANAGER]: [
-                UserRoleEnum.MANAGER,
-                UserRoleEnum.ADMIN,
-                UserRoleEnum.USER,
-                UserRoleEnum.GUEST,
-            ],
-            [UserRoleEnum.ADMIN]: [
-                UserRoleEnum.ADMIN,
-                UserRoleEnum.USER,
-                UserRoleEnum.GUEST,
-            ],
+            [UserRoleEnum.MANAGER]: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST],
+            [UserRoleEnum.ADMIN]: [UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST],
         };
 
         // Get the list of roles the current user is allowed to create
         const canCreateRoles = allowedCreations[currentRole] || [];
 
         if (!canCreateRoles.includes(targetRole)) {
-            return handleError2(
-                res,
-                "You don't have permission to create this user type.",
-                StatusCodes.FORBIDDEN,
-            );
+            return handleError2(res, "You don't have permission to create this user type.", StatusCodes.FORBIDDEN);
         }
 
         // *** CRITICAL CHANGE 3: Handle phone number conversion to NULL ***
-        const phoneToInsert =
-            payload.phone === "" || payload.phone === undefined
-                ? null
-                : payload.phone;
+        const phoneToInsert = payload.phone === "" || payload.phone === undefined ? null : payload.phone;
 
         // Construct the user object for insertion, explicitly picking fields
         // This prevents unexpected fields from req.body from being inserted
@@ -376,10 +296,7 @@ export const createUser = async (req: CustomRequest, res: Response) => {
         };
 
         // CRITICAL FIX: Add the storeId to the value object
-        const [newUser] = await db
-            .insert(users)
-            .values(newUserToInsert)
-            .returning();
+        const [newUser] = await db.insert(users).values(newUserToInsert).returning();
 
         await ActivityLogService.logSystemEvent({
             userId: currentUser.id,
@@ -401,11 +318,7 @@ export const createUser = async (req: CustomRequest, res: Response) => {
         if (error.cause && error.cause.code === "23505") {
             // PostgresSQL unique violation error code
             if (error.cause.constraint === "users_email_unique") {
-                return handleError2(
-                    res,
-                    "A user with this email already exists.",
-                    StatusCodes.CONFLICT,
-                );
+                return handleError2(res, "A user with this email already exists.", StatusCodes.CONFLICT);
             }
             if (error.cause.constraint === "users_storeId_phone_unique") {
                 // Your new constraint name
@@ -454,19 +367,11 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
         const { id: targetUserId } = req.params;
 
         if (!targetUserId) {
-            return handleError2(
-                res,
-                "Missing user in request path.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Missing user in request path.", StatusCodes.BAD_REQUEST);
         }
 
         if (typeof targetUserId !== "string") {
-            return handleError2(
-                res,
-                "Invalid request user.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Invalid request user.", StatusCodes.BAD_REQUEST);
         }
 
         const updateData = req.body;
@@ -481,11 +386,7 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
         });
 
         if (!targetUser) {
-            return handleError2(
-                res,
-                "User not found or not within your managed stores.",
-                StatusCodes.NOT_FOUND,
-            );
+            return handleError2(res, "User not found or not within your managed stores.", StatusCodes.NOT_FOUND);
         }
 
         // Sanitise payload - password cannot be updated here
@@ -510,10 +411,7 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
             canUpdate = true;
         } else if (isAdmin) {
             // Admins can update users (not Managers/Admins) in their store or branches
-            if (
-                targetUser.role !== UserRoleEnum.MANAGER &&
-                targetUser.role !== UserRoleEnum.ADMIN
-            ) {
+            if (targetUser.role !== UserRoleEnum.MANAGER && targetUser.role !== UserRoleEnum.ADMIN) {
                 // Admins cannot change a user's role or store assignment
                 delete updateData.role;
                 delete updateData.storeId;
@@ -522,28 +420,16 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
         }
 
         if (!canUpdate) {
-            return handleError2(
-                res,
-                "You do not have permission to update this user.",
-                StatusCodes.FORBIDDEN,
-            );
+            return handleError2(res, "You do not have permission to update this user.", StatusCodes.FORBIDDEN);
         }
 
         if (Object.keys(updateData).length === 0) {
-            return handleError2(
-                res,
-                "No valid fields provided for update.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "No valid fields provided for update.", StatusCodes.BAD_REQUEST);
         }
 
         // Perform the update
         if (Object.keys(updateData).length === 0) {
-            return handleError2(
-                res,
-                "No valid fields provided for update.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "No valid fields provided for update.", StatusCodes.BAD_REQUEST);
         }
 
         const { phone, email } = updateData;
@@ -563,12 +449,7 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
                 lastModified: new Date(),
                 ...updateData,
             })
-            .where(
-                and(
-                    eq(users.id, targetUserId),
-                    inArray(users.storeId, storeIds),
-                ),
-            )
+            .where(and(eq(users.id, targetUserId), inArray(users.storeId, storeIds)))
             .returning();
 
         await ActivityLogService.logSystemEvent({
@@ -607,54 +488,30 @@ export const changeUserStore = async (req: CustomRequest, res: Response) => {
         const storeId = currentUser?.storeId;
 
         if (!storeId) {
-            return handleError2(
-                res,
-                "Authenticated user is not associated with any store.",
-                StatusCodes.UNAUTHORIZED,
-            );
+            return handleError2(res, "Authenticated user is not associated with any store.", StatusCodes.UNAUTHORIZED);
         }
 
         const { targetUserId } = req.params;
         const { newStoreId } = req.body;
 
         if (!targetUserId) {
-            return handleError2(
-                res,
-                "Missing user in request path.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Missing user in request path.", StatusCodes.BAD_REQUEST);
         }
 
         if (typeof targetUserId !== "string") {
-            return handleError2(
-                res,
-                "Invalid request user.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Invalid request user.", StatusCodes.BAD_REQUEST);
         }
 
         if (!newStoreId) {
-            return handleError2(
-                res,
-                "New store ID is required.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "New store ID is required.", StatusCodes.BAD_REQUEST);
         }
 
         if (currentUser.role !== UserRoleEnum.MANAGER) {
-            return handleError2(
-                res,
-                "Only Managers can change user stores.",
-                StatusCodes.UNAUTHORIZED,
-            );
+            return handleError2(res, "Only Managers can change user stores.", StatusCodes.UNAUTHORIZED);
         }
 
         if (storeId === targetUserId) {
-            return handleError2(
-                res,
-                "Users cannot change their own store.",
-                StatusCodes.FORBIDDEN,
-            );
+            return handleError2(res, "Users cannot change their own store.", StatusCodes.FORBIDDEN);
         }
 
         // Get all stores managed by the current manager
@@ -668,43 +525,23 @@ export const changeUserStore = async (req: CustomRequest, res: Response) => {
         }
 
         // Standardised fetch for managed stores
-        const managedStoreIds = await getUserStoreScope(
-            UserRoleEnum.MANAGER,
-            storeId,
-        );
+        const managedStoreIds = await getUserStoreScope(UserRoleEnum.MANAGER, storeId);
 
         if (!managedStoreIds || !managedStoreIds.includes(newStoreId)) {
-            return handleError2(
-                res,
-                "New store is outside your scope.",
-                StatusCodes.FORBIDDEN,
-            );
+            return handleError2(res, "New store is outside your scope.", StatusCodes.FORBIDDEN);
         }
 
         // Fetch using the same logic as your successful getAllUsers
         const [targetUser] = await db
             .select()
             .from(users)
-            .where(
-                and(
-                    eq(users.id, targetUserId),
-                    inArray(users.storeId, managedStoreIds),
-                ),
-            );
+            .where(and(eq(users.id, targetUserId), inArray(users.storeId, managedStoreIds)));
 
         if (!targetUser) {
-            return handleError2(
-                res,
-                "User not found in your branches.",
-                StatusCodes.NOT_FOUND,
-            );
+            return handleError2(res, "User not found in your branches.", StatusCodes.NOT_FOUND);
         }
 
-        const allowedRolesToChange = [
-            UserRoleEnum.ADMIN,
-            UserRoleEnum.USER,
-            UserRoleEnum.GUEST,
-        ];
+        const allowedRolesToChange = [UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST];
 
         if (!allowedRolesToChange.includes(targetUser.role as UserRoleEnum)) {
             return handleError2(
@@ -790,10 +627,7 @@ export const getLoginHistory = async (req: CustomRequest, res: Response) => {
 
         // Build the Where Clause
         // We strictly look for LOGIN actions within the user's authorized stores
-        let whereClause = and(
-            eq(activityLog.action, "USER_LOGIN"),
-            inArray(activityLog.storeId, storeIds),
-        );
+        let whereClause = and(eq(activityLog.action, "USER_LOGIN"), inArray(activityLog.storeId, storeIds));
 
         if (finalStartDate && finalEndDate) {
             whereClause = and(
