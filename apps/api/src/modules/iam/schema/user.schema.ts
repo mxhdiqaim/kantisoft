@@ -33,13 +33,7 @@ export const userSchema = pgTable("users", {
     phone: text("phone").notNull().unique(),
     role: UserRolePgEnum("role").notNull().default(UserRoleEnum.CASHIER),
     status: UserStatusPgEnum("status").notNull().default(UserStatusEnum.ACTIVE),
-
-    // Users are tied strictly to the business (tenant).
-    // Location assignments are handled by the user_locations junction table below.
-    tenantId: uuid("tenantId")
-        .references(() => tenantSchema.id, { onDelete: "cascade" })
-        .notNull(),
-
+    tenantId: uuid("tenantId").references(() => tenantSchema.id, { onDelete: "cascade" }),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt")
         .defaultNow()

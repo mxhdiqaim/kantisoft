@@ -4,13 +4,14 @@ import cors from "cors";
 import express, { Application, Request, Response, NextFunction } from "express";
 import morgan from "morgan";
 import path from "path";
-import routes from "./routes";
+import routesV1 from "./routes";
 import { helperUtil } from "./shared/utils";
 import { initializeFirebase } from "./config/firebase-admin";
 import { globalErrorHandler } from "./shared/middlewares/error.middleware";
 import logger from "./shared/logger";
 import { requestContext } from "./shared/logger/context";
 import { AppError } from "./shared/errors/custom.error";
+import { clerkMiddleware } from "@clerk/express";
 
 class Server {
     private readonly ADMIN_APP = helperUtil.getEnvVariable("ADMIN_APP");
@@ -27,7 +28,7 @@ class Server {
         this.initializeExternalServices();
         this.configureServer();
         this.setupMiddlewares();
-        this.setupRoutes();
+        this.initializeRoutes();
         this.setupErrorHandling();
     }
 
@@ -72,10 +73,12 @@ class Server {
         // Body Parsers
         this.app.use(express.urlencoded({ extended: false }));
         this.app.use(express.json({ limit: "5mb" }));
+
+        this.app.use(clerkMiddleware());
     }
 
-    private setupRoutes(): void {
-        this.app.use("/api/v1", routes);
+    private initializeRoutes() {
+        this.app.use("/api/v1", routesV1);
         this.app.use(express.static(path.join(__dirname, "public")));
     }
 

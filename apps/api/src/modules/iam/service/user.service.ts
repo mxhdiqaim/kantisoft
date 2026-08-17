@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { BaseService } from "../../../shared/service";
 import { db } from "../../../shared/database";
-import { UserStatusEnum } from "../interface";
+import { UserRoleEnum, UserStatusEnum } from "../interface";
 import { InsertUserSchemaT, userLocationsSchema, userSchema } from "../schema";
 
 class UserService extends BaseService<typeof userSchema> {
@@ -51,6 +51,44 @@ class UserService extends BaseService<typeof userSchema> {
         const [assignment] = await db.insert(userLocationsSchema).values({ userId, locationId }).returning();
 
         return assignment;
+    }
+
+    /*
+     * ONBOARDING STEP 1
+     * Handles newly registered users from Clerk.
+     */
+    public async syncClerkUserCreated(newUser: InsertUserSchemaT) {
+        const { clerkId, firstName, lastName, email, phone } = newUser;
+
+        // Check if this email belongs to an invited staff member
+        const existingUser = await this.get(eq(userSchema.email, email));
+
+        if (existingUser) {
+            // It's an invited staff member! Sync their new Clerk ID and activate them.
+            const [updatedUser] = await this.updateByQuery(eq(userSchema.id, existingUser.id), {
+                clerkId,
+                firstName,
+                lastName,
+                status: UserStatusEnum.ACTIVE,
+            });
+            return updatedUser;
+        }
+
+        // If it's a brand-new Business Owner. We create their profile immediately, leaving tenantId as null.
+        const [newOwner] = await db
+            .insert(userSchema)
+            .values({
+                clerkId,
+                firstName,
+                lastName,
+                email,
+                phone,
+                role: UserRoleEnum.OWNER,
+                status: UserStatusEnum.ACTIVE,
+            })
+            .returning();
+
+        return newOwner;
     }
 }
 

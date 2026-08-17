@@ -19,6 +19,7 @@
     "license": "ISC",
     "description": "",
     "dependencies": {
+        "@clerk/express": "^2.1.57",
         "@sentry/bun": "^10.42.0",
         "@sentry/tracing": "^7.120.4",
         "@types/newrelic": "^9.14.8",
