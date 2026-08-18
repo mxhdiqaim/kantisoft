@@ -6,11 +6,10 @@ import morgan from "morgan";
 import path from "path";
 import routesV1 from "./routes";
 import { helperUtil } from "./shared/utils";
-import { globalErrorHandler } from "./shared/middlewares/error.middleware";
 import logger from "./shared/logger";
 import { requestContext } from "./shared/logger/context";
-import { AppError } from "./shared/errors/custom.error";
 import { clerkMiddleware } from "@clerk/express";
+import { errorMiddleware } from "./shared/middlewares";
 
 class Server {
     private readonly ADMIN_APP = helperUtil.getEnvVariable("ADMIN_APP");
@@ -66,7 +65,13 @@ class Server {
 
         // Body Parsers
         this.app.use(express.urlencoded({ extended: false }));
-        this.app.use(express.json({ limit: "5mb" }));
+
+        this.app.use((req: Request, res: Response, next: NextFunction) => {
+            if (req.originalUrl.includes("/iam/webhooks")) {
+                return next();
+            }
+            express.json({ limit: "5mb" })(req, res, next);
+        });
 
         this.app.use(clerkMiddleware());
     }
@@ -78,16 +83,13 @@ class Server {
 
     private setupErrorHandling(): void {
         // 404 Catch-All
-        this.app.use((req: Request, res: Response, next: NextFunction) => {
-            const error = new AppError(`Route not found: ${req.method} ${req.originalUrl}`, 404);
-            next(error);
-        });
+        this.app.use(errorMiddleware.notFoundHandler);
 
         // Sentry Error Handler (Must execute before your global error handler)
         Sentry.setupExpressErrorHandler(this.app);
 
         // Global Error Handler
-        this.app.use(globalErrorHandler);
+        this.app.use(errorMiddleware.globalErrorHandler);
     }
 }
 

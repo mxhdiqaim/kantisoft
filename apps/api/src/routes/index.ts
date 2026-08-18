@@ -1,5 +1,5 @@
 import { Router } from "express";
-import iamRoutes from "../modules/iam/routes";
+import { iamRoutes } from "../modules/iam";
 
 class AppRouter {
     public readonly router: Router;

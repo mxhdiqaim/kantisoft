@@ -14,7 +14,7 @@ class IamRoutes {
     }
 
     private routes() {
-        this.router.use("/tenant", authMiddleware.requireAuth, tenantRoute);
+        this.router.use("/tenants", authMiddleware.requireAuth, tenantRoute);
 
         this.router.use("/webhooks", webhookRoute);
 
