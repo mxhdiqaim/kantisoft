@@ -12,7 +12,7 @@ class TenantRoutes {
     }
 
     private routes() {
-        this.router.post("/tenant", this.controller.create);
+        this.router.post("/", this.controller.create);
     }
 }
 
