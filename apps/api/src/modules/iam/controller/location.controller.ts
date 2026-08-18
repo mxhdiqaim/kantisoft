@@ -1,36 +1,38 @@
 import { Request, Response, NextFunction } from "express";
 import { locationService } from "../service";
 import { requestContext } from "../../../shared/logger/context";
+import { BadRequestError, UnauthorizedError } from "../../../shared/errors/custom.error";
 
 export default class LocationController {
-    /**
-     * STEP 3: CREATE LOCATION
-     * The tenant exists, now the owner is setting up their first (or subsequent) branch.
-     */
-    public static async create(req: Request, res: Response, next: NextFunction) {
+    public create = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { name, address } = req.body;
 
-            // Extract the securely injected tenantId from our AsyncLocalStorage context
+            // Extract tenantId from the AsyncLocalStorage context
             const context = requestContext.getStore();
             const tenantId = context?.tenantId;
 
             if (!tenantId) {
-                return res.status(403).json({ error: "You must create a business before adding locations." });
+                throw new UnauthorizedError("Tenant context missing. Cannot create location.");
             }
 
             if (!name) {
-                return res.status(400).json({ error: "Location name is required." });
+                throw new BadRequestError("Location name is required.");
             }
 
-            const newLocation = await locationService.createLocation({ name, address: address || null }, tenantId);
+            // Create the location tied strictly to this tenant
+            const location = await locationService.create({
+                tenantId,
+                name,
+                address,
+            });
 
             return res.status(201).json({
                 message: "Location created successfully.",
-                data: newLocation,
+                data: location,
             });
         } catch (error) {
             next(error);
         }
-    }
+    };
 }

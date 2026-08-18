@@ -11,7 +11,6 @@ export default class WebhookController {
         try {
             const webhookSecret = helperUtil.getEnvVariable("CLERK_WEBHOOK_SECRET");
 
-            // Extract Svix headers
             const svix_id = req.headers["svix-id"] as string;
             const svix_timestamp = req.headers["svix-timestamp"] as string;
             const svix_signature = req.headers["svix-signature"] as string;
@@ -20,12 +19,15 @@ export default class WebhookController {
                 throw new BadRequestError("Missing Svix headers");
             }
 
-            // Extract the raw body (Buffer) and convert to string
+            // Ensure body is a raw Buffer
+            if (!Buffer.isBuffer(req.body)) {
+                throw new BadRequestError("Request body must be raw Buffer. Check middleware order.");
+            }
+
             const payload = req.body.toString("utf8");
             const wh = new Webhook(webhookSecret);
             let evt: WebhookEvent;
 
-            // Verify the cryptographic signature
             try {
                 evt = wh.verify(payload, {
                     "svix-id": svix_id,
@@ -37,11 +39,10 @@ export default class WebhookController {
                 throw new BadRequestError("Invalid webhook signature");
             }
 
-            // Process the specific event type
             if (evt.type === "user.created") {
                 const { id, email_addresses, first_name, last_name, phone_numbers } = evt.data;
                 const primaryEmail = email_addresses?.[0]?.email_address;
-                const primaryPhone = phone_numbers?.[0].phone_number;
+                const primaryPhone = phone_numbers?.[0]?.phone_number;
 
                 if (primaryEmail) {
                     await userService.syncClerkUserCreated(
@@ -55,7 +56,6 @@ export default class WebhookController {
                 }
             }
 
-            // Return 200 OK so Clerk knows the webhook was received successfully
             return res.status(200).json({ success: true });
         } catch (error) {
             next(error);

@@ -6,7 +6,6 @@ import morgan from "morgan";
 import path from "path";
 import routesV1 from "./routes";
 import { helperUtil } from "./shared/utils";
-import { initializeFirebase } from "./config/firebase-admin";
 import { globalErrorHandler } from "./shared/middlewares/error.middleware";
 import logger from "./shared/logger";
 import { requestContext } from "./shared/logger/context";
@@ -25,15 +24,10 @@ class Server {
         this.app = express();
 
         // The order of these initializations is critical
-        this.initializeExternalServices();
         this.configureServer();
         this.setupMiddlewares();
         this.initializeRoutes();
         this.setupErrorHandling();
-    }
-
-    private initializeExternalServices(): void {
-        initializeFirebase();
     }
 
     private configureServer(): void {

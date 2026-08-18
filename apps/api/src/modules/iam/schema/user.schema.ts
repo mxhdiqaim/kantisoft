@@ -30,7 +30,7 @@ export const userSchema = pgTable("users", {
     firstName: text("firstName").notNull(),
     lastName: text("lastName").notNull(),
     email: text("email").notNull().unique(),
-    phone: text("phone").notNull().unique(),
+    phone: text("phone").unique(),
     role: UserRolePgEnum("role").notNull().default(UserRoleEnum.CASHIER),
     status: UserStatusPgEnum("status").notNull().default(UserStatusEnum.ACTIVE),
     tenantId: uuid("tenantId").references(() => tenantSchema.id, { onDelete: "cascade" }),

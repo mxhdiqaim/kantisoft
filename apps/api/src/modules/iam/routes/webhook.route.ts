@@ -8,10 +8,10 @@ class WebhookRoutes {
     constructor() {
         this.router = Router();
         this.controller = new WebhookController();
-        this.initializeRoutes();
+        this.routes();
     }
 
-    private initializeRoutes() {
+    private routes() {
         this.router.post("/clerk", express.raw({ type: "application/json" }), this.controller.handleClerkWebhook);
     }
 }

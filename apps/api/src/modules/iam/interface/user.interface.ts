@@ -14,3 +14,13 @@ export enum UserStatusEnum {
     BANNED = "banned",
     INVITED = "invited",
 }
+
+export type InviteUserDto = {
+    firstName: string;
+    lastName: string;
+    tenantId: string;
+    email: string;
+    role: UserRoleEnum;
+    locationId: string;
+    phone?: string;
+};

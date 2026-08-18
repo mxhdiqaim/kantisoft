@@ -1,42 +1,41 @@
 import { Request, Response, NextFunction } from "express";
 import { userService } from "../service";
 import { requestContext } from "../../../shared/logger/context";
+import { BadRequestError, UnauthorizedError } from "../../../shared/errors/custom.error";
 
 export default class UserController {
-    public static async inviteStaff(req: Request, res: Response, next: NextFunction) {
+    public inviteStaff = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { email, firstName, lastName, phone, role, assignedLocationIds } = req.body;
+            const { firstName, lastName, email, phone, role, locationId } = req.body;
 
             const context = requestContext.getStore();
             const tenantId = context?.tenantId;
 
             if (!tenantId) {
-                return res.status(403).json({ error: "Tenant context is missing." });
+                throw new UnauthorizedError("Tenant context missing.");
             }
 
-            // Ensure they aren't inviting another owner (only one owner per business for now)
-            if (role === "owner") {
-                return res.status(403).json({ error: "Cannot invite additional owners." });
+            // Validate all required fields
+            if (!firstName || !lastName || !email || !role || !locationId) {
+                throw new BadRequestError("First name, last name, email, role, and locationId are required.");
             }
 
-            const newUser = await userService.inviteUser(
-                {
-                    email,
-                    firstName,
-                    lastName,
-                    phone,
-                    role,
-                    tenantId,
-                },
-                assignedLocationIds || [],
-            );
+            const invitation = await userService.inviteUser({
+                firstName,
+                lastName,
+                tenantId,
+                email,
+                role,
+                locationId,
+                phone,
+            });
 
-            return res.status(201).json({
+            return res.status(200).json({
                 message: "Staff invited successfully.",
-                data: newUser,
+                data: invitation,
             });
         } catch (error) {
             next(error);
         }
-    }
+    };
 }

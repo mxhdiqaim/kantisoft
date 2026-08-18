@@ -8,12 +8,11 @@ class LocationService extends BaseService<typeof locationSchema> {
         super(locationSchema);
     }
 
-    public async createLocation(data: Omit<InsertLocationSchemaT, "tenantId">, tenantId: string) {
+    public async create(data: InsertLocationSchemaT) {
         const [newLocation] = await db
             .insert(locationSchema)
             .values({
                 ...data,
-                tenantId,
             })
             .returning();
 

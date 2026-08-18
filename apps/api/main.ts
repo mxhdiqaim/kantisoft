@@ -11,7 +11,7 @@ interface SystemError extends Error {
 }
 
 class Application {
-    private port: number;
+    private readonly port: number;
     private server?: Server;
     private isShuttingDown: boolean = false;
 
@@ -29,7 +29,7 @@ class Application {
 
             // Start the Express Server
             this.server = app.listen(this.port, "0.0.0.0", () => {
-                logger.info(`Server has been started and listening on port ${this.port}`);
+                logger.info(`Server has been started and listening on port http://localhost:${this.port}`);
             });
 
             // Initialize Process Listeners

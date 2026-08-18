@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { BaseService } from "../../../shared/service";
 import { db } from "../../../shared/database";
-import { UserRoleEnum, UserStatusEnum } from "../interface";
-import { InsertUserSchemaT, userLocationsSchema, userSchema } from "../schema";
+import { InviteUserDto, UserRoleEnum, UserStatusEnum } from "../interface";
+import { userLocationsSchema, userSchema } from "../schema";
 
 class UserService extends BaseService<typeof userSchema> {
     constructor() {
@@ -21,24 +21,26 @@ class UserService extends BaseService<typeof userSchema> {
         return this.updateByQuery(eq(userSchema.id, userId), { status });
     }
 
-    public async inviteUser(userData: Omit<InsertUserSchemaT, "clerkId" | "status">, assignedLocationIds: string[]) {
+    public async inviteUser(userData: InviteUserDto) {
         return await db.transaction(async (tx) => {
+            const { locationId, ...userInsertData } = userData;
+
+            // Insert the pending user
             const [newUser] = await tx
                 .insert(userSchema)
                 .values({
-                    ...userData,
+                    ...userInsertData,
                     status: UserStatusEnum.INVITED,
                     clerkId: `pending-${crypto.randomUUID()}`,
                 })
                 .returning();
 
-            if (assignedLocationIds.length > 0) {
-                const locationAssignments = assignedLocationIds.map((locationId) => ({
+            // Assign the user to the junction table using the single locationId
+            if (locationId) {
+                await tx.insert(userLocationsSchema).values({
                     userId: newUser.id,
                     locationId: locationId,
-                }));
-
-                await tx.insert(userLocationsSchema).values(locationAssignments);
+                });
             }
 
             return newUser;
