@@ -13,7 +13,7 @@ export const tenantSchema = pgTable("tenants", {
         .references(() => userSchema.id, { onDelete: "cascade" })
         .notNull()
         .unique(),
-    name: text("name").notNull(),
+    tenantName: text("name").notNull(),
     slug: text("slug").notNull().unique(),
     countryId: uuid("country_id")
         .references(() => countrySchema.id, { onDelete: "restrict" })

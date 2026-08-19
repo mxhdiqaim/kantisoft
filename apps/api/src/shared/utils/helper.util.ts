@@ -10,6 +10,15 @@ class HelperUtil {
 
         return value;
     }
+
+    public getSlug(text: string): string {
+        return text
+            .toLowerCase()
+            .trim()
+            .replace(/[^\w\s-]/g, "")
+            .replace(/[\s_-]+/g, "-")
+            .replace(/^-+|-+$/g, "");
+    }
 }
 
 export default new HelperUtil();

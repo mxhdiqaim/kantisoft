@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from "express";
-import { z, ZodError } from "zod";
+import { NextFunction, Request, Response } from "express";
+import { z, ZodError, ZodSchema } from "zod";
 import { BadRequestError } from "../errors/custom.error";
 
 class SystemMiddleware {
@@ -40,6 +40,43 @@ class SystemMiddleware {
             }
             next(error);
         }
+    };
+
+    /**
+     * Higher-order middleware to validate the request body against a provided Zod schema.
+     * @param schema The Zod schema to validate against
+     * @param isRequired Whether the body is mandatory (default: true)
+     */
+    public validateRequestBody = (schema: ZodSchema, isRequired: boolean = true) => {
+        return (req: Request, res: Response, next: NextFunction): void => {
+            try {
+                const isBodyEmpty = !req.body || Object.keys(req.body).length === 0;
+
+                // Body is required but missing
+                if (isRequired && isBodyEmpty) {
+                    throw new BadRequestError("Request body is required.");
+                }
+
+                // Body is optional and missing
+                if (!isRequired && isBodyEmpty) {
+                    return next();
+                }
+
+                req.body = schema.parse(req.body);
+
+                next();
+            } catch (error) {
+                if (error instanceof ZodError) {
+                    const errorMessages = error.issues.map((issue) => ({
+                        // Fallback to "body" if the path is empty (e.g., expecting an array but got an object)
+                        field: issue.path.join(".") || "body",
+                        message: issue.message,
+                    }));
+                    return next(new BadRequestError("Invalid request body", errorMessages));
+                }
+                next(error);
+            }
+        };
     };
 }
 

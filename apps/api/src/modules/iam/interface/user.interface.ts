@@ -1,3 +1,5 @@
+import { InsertTenantSchemaT } from "../schema";
+
 export enum UserRoleEnum {
     OWNER = "owner",
     ADMIN = "admin",
@@ -25,12 +27,12 @@ export type InviteUserDto = {
     phone?: string;
 };
 
-export type OnboardBusinessDTO = {
-    businessName: string;
+export interface OnboardBusinessDTO extends Omit<
+    InsertTenantSchemaT,
+    "id" | "userId" | "createdAt" | "updatedAt" | "slug"
+> {
     clerkUserId: string;
-    countryId: string;
-    slug?: string;
-};
+}
 
 export type SyncClerkUserDTO = {
     clerkId: string;
