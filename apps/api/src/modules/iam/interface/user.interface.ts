@@ -31,3 +31,13 @@ export type OnboardBusinessDTO = {
     countryId: string;
     slug?: string;
 };
+
+export type SyncClerkUserDTO = {
+    clerkId: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    avatarUrl: string;
+    role?: UserRoleEnum;
+};

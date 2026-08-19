@@ -1,8 +1,9 @@
 import { eq } from "drizzle-orm";
 import { BaseService } from "../../../shared/service";
 import { db } from "../../../shared/database";
-import { InviteUserDto, UserRoleEnum, UserStatusEnum } from "../interface";
+import { InviteUserDto, SyncClerkUserDTO, UserRoleEnum, UserStatusEnum } from "../interface";
 import { userLocationsSchema, userSchema } from "../schema";
+import logger from "../../../shared/logger";
 
 class UserService extends BaseService<typeof userSchema> {
     constructor() {
@@ -55,46 +56,61 @@ class UserService extends BaseService<typeof userSchema> {
         return assignment;
     }
 
-    /*
-     * ONBOARDING STEP 1
-     * Handles newly registered users from Clerk.
-     */
-    public async syncClerkUserCreated(
-        clerkId: string,
-        firstName: string,
-        lastName: string,
-        email: string,
-        phone: string,
-    ) {
-        // Check if this email belongs to an invited staff member
-        const existingUser = await this.get(eq(userSchema.email, email));
+    public async syncClerkUserCreated(data: SyncClerkUserDTO) {
+        const { clerkId, email, firstName, lastName, phoneNumber, avatarUrl, role } = data;
+
+        // Idempotency check: don't recreate if user already exists
+        const [existingUser] = await db
+            .select({ id: userSchema.id })
+            .from(userSchema)
+            .where(eq(userSchema.clerkId, clerkId))
+            .limit(1);
 
         if (existingUser) {
-            // It's an invited staff member! Sync their new Clerk ID and activate them.
-            const [updatedUser] = await this.updateByQuery(eq(userSchema.id, existingUser.id), {
-                clerkId,
-                firstName,
-                lastName,
-                status: UserStatusEnum.ACTIVE,
-            });
-            return updatedUser;
+            logger.warn(`User with clerkId ${clerkId} already exists in local DB. Skipping creation.`);
+            return existingUser;
         }
 
-        // If it's a brand-new Business Owner. We create their profile immediately, leaving tenantId as null.
-        const [newOwner] = await db
+        // Default self-signup users to OWNER unless explicitly specified otherwise (e.g. invited staff)
+        const userRole = role || UserRoleEnum.OWNER;
+
+        const [newUser] = await db
             .insert(userSchema)
             .values({
                 clerkId,
+                email,
                 firstName,
                 lastName,
-                email,
-                phone,
-                role: UserRoleEnum.OWNER,
-                status: UserStatusEnum.ACTIVE,
+                phoneNumber: phoneNumber || null,
+                avatarUrl: avatarUrl || null,
+                role: userRole,
             })
+            .onConflictDoNothing({ target: userSchema.clerkId })
             .returning();
 
-        return newOwner;
+        return newUser;
+    }
+
+    public async syncClerkUserUpdated(data: SyncClerkUserDTO) {
+        const { clerkId, email, firstName, lastName, phoneNumber, avatarUrl } = data;
+
+        const [updatedUser] = await db
+            .update(userSchema)
+            .set({
+                email,
+                firstName,
+                lastName,
+                phoneNumber: phoneNumber || null,
+                avatarUrl: avatarUrl || null,
+            })
+            .where(eq(userSchema.clerkId, clerkId))
+            .returning();
+
+        return updatedUser;
+    }
+
+    public async syncClerkUserDeleted(clerkId: string) {
+        return await db.delete(userSchema).where(eq(userSchema.clerkId, clerkId));
     }
 }
 
