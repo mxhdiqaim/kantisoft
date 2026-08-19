@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { UserController } from "../controller";
-import AuthMiddleware from "../../../shared/middlewares/auth.middleware";
 
 class UserRoutes {
     public readonly router: Router;
@@ -13,12 +12,7 @@ class UserRoutes {
     }
 
     private initializeRoutes() {
-        this.router.post(
-            "/invite",
-            AuthMiddleware.requireAuth,
-            AuthMiddleware.withTenantContext,
-            this.controller.inviteStaff,
-        );
+        this.router.post("/invite", this.controller.inviteStaff);
     }
 }
 

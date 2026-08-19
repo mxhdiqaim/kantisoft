@@ -14,9 +14,13 @@ class IamRoutes {
     }
 
     private routes() {
-        this.router.use("/tenants", authMiddleware.requireAuth, tenantRoute);
-
         this.router.use("/webhooks", webhookRoute);
+
+        this.router.use(authMiddleware.requireAuth);
+
+        this.router.use("/tenants", tenantRoute);
+
+        this.router.use(authMiddleware.validateAccess);
 
         this.router.use("/locations", locationRoute);
 

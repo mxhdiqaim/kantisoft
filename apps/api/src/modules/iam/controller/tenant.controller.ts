@@ -5,7 +5,8 @@ import { getAuth } from "@clerk/express";
 export default class TenantController {
     public async create(req: Request, res: Response, next: NextFunction) {
         try {
-            const { businessName } = req.body;
+            const { businessName, countryId } = req.body;
+
             // Clerk Express middleware automatically attaches the user's Clerk ID to req.auth
             const { userId: clerkId } = getAuth(req);
 
@@ -17,7 +18,16 @@ export default class TenantController {
                 return res.status(400).json({ error: "Business name is required." });
             }
 
-            const data = await tenantService.onboardNewBusiness(businessName, clerkId);
+            if (!countryId) {
+                return res.status(400).json({ error: "Country ID is required." });
+            }
+
+            // Construct the DTO expected by the refactored service
+            const data = await tenantService.onboardNewBusiness({
+                businessName,
+                clerkUserId: clerkId,
+                countryId,
+            });
 
             return res.status(201).json({
                 message: "Tenant created successfully.",

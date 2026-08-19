@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { LocationController } from "../controller";
-import AuthMiddleware from "../../../shared/middlewares/auth.middleware";
 
 class LocationRoutes {
     public readonly router: Router;
@@ -13,12 +12,7 @@ class LocationRoutes {
     }
 
     private initializeRoutes() {
-        this.router.post(
-            "/",
-            AuthMiddleware.requireAuth,
-            AuthMiddleware.withTenantContext, // Ensures the user has a tenant
-            this.controller.create,
-        );
+        this.router.post("/", this.controller.create);
     }
 }
 

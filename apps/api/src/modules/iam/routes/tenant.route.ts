@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { TenantController } from "../controller";
+import { tenantMiddleware } from "../../../shared/middlewares";
 
 class TenantRoutes {
     public readonly router: Router;
@@ -13,6 +14,8 @@ class TenantRoutes {
 
     private routes() {
         this.router.post("/", this.controller.create);
+
+        this.router.use(tenantMiddleware.validateTenantOwnership);
     }
 }
 

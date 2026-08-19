@@ -38,6 +38,6 @@ export type SyncClerkUserDTO = {
     firstName: string;
     lastName: string;
     phoneNumber: string;
-    avatarUrl: string;
+    avatarUrl?: string;
     role?: UserRoleEnum;
 };

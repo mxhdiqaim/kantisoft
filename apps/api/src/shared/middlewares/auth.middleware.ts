@@ -1,127 +1,135 @@
 import { Request, Response, NextFunction } from "express";
 import { getAuth } from "@clerk/express";
-import { v4 as uuidv4 } from "uuid";
 import { eq, and } from "drizzle-orm";
 import { db } from "../database";
 import { requestContext } from "../logger/context";
 import { UserRoleEnum } from "../../modules/iam/interface";
 import { UnauthorizedError, ForbiddenError, BadRequestError } from "../errors/custom.error";
 import { locationSchema, tenantSchema, userLocationsSchema, userSchema } from "../../modules";
+import { v4 as uuidv7 } from "uuid";
 
 class AuthMiddleware {
-    public requireAuth(req: Request, res: Response, next: NextFunction) {
-        const { isAuthenticated } = getAuth(req);
-
-        if (!isAuthenticated) {
-            return next(new UnauthorizedError("Authentication failed or missing."));
-        }
-
-        next();
-    }
-
-    public async withTenantContext(req: Request, res: Response, next: NextFunction) {
+    // Verifies the Clerk token, fetches the user from the database, and attaches it to req.user.
+    public requireAuth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { userId: clerkId } = getAuth(req);
+            const { isAuthenticated, userId: clerkId } = getAuth(req);
 
-            if (!clerkId) {
-                return next(new UnauthorizedError("Authentication failed or missing."));
+            if (!isAuthenticated || !clerkId) {
+                throw new UnauthorizedError("Authentication failed or missing.");
             }
 
-            const [user] = await db
-                .select({
-                    id: userSchema.id,
-                    role: userSchema.role,
-                })
-                .from(userSchema)
-                .where(eq(userSchema.clerkId, clerkId))
-                .limit(1);
+            const [user] = await db.select().from(userSchema).where(eq(userSchema.clerkId, clerkId)).limit(1);
 
             if (!user) {
-                return next(new UnauthorizedError("User profile syncing. Please wait a moment."));
+                throw new UnauthorizedError("User profile syncing. Please wait a moment.");
             }
 
-            let resolvedTenantId: string | null = null;
-            const targetLocationId = (req.headers["x-location-id"] as string) || undefined;
-
-            // Resolve Tenant based on Role Strategy
-            if (user.role === UserRoleEnum.OWNER) {
-                // OWNER PATH: Find the tenant they own directly
-                const [ownedTenant] = await db
-                    .select({ id: tenantSchema.id })
-                    .from(tenantSchema)
-                    .where(eq(tenantSchema.userId, user.id))
-                    .limit(1);
-
-                if (!ownedTenant) {
-                    return next(
-                        new ForbiddenError("You must create a business profile before accessing this resource."),
-                    );
-                }
-
-                resolvedTenantId = ownedTenant.id;
-
-                // If owner targets a specific location, optionally verify it belongs to their tenant
-                if (targetLocationId) {
-                    const [locationExists] = await db
-                        .select({ id: locationSchema.id })
-                        .from(locationSchema)
-                        .where(
-                            and(eq(locationSchema.id, targetLocationId), eq(locationSchema.tenantId, resolvedTenantId)),
-                        )
-                        .limit(1);
-
-                    if (!locationExists) {
-                        return next(new ForbiddenError("The requested location does not belong to your business."));
-                    }
-                }
-            } else {
-                // STAFF PATH: They MUST provide a target location to establish tenant context
-                if (!targetLocationId) {
-                    return next(new BadRequestError("Missing required header: x-location-id for staff access."));
-                }
-
-                // Verify assignment AND resolve the tenantId in one join query
-                const [staffContext] = await db
-                    .select({
-                        locationId: userLocationsSchema.locationId,
-                        tenantId: locationSchema.tenantId,
-                    })
-                    .from(userLocationsSchema)
-                    .innerJoin(locationSchema, eq(userLocationsSchema.locationId, locationSchema.id))
-                    .where(
-                        and(
-                            eq(userLocationsSchema.userId, user.id),
-                            eq(userLocationsSchema.locationId, targetLocationId),
-                        ),
-                    )
-                    .limit(1);
-
-                if (!staffContext) {
-                    return next(
-                        new ForbiddenError("You do not have permission to access this location or it does not exist."),
-                    );
-                }
-
-                resolvedTenantId = staffContext.tenantId;
-            }
-
-            // Trace & Context binding
-            const requestId = (req.headers["x-request-id"] as string) || uuidv4();
-
-            const context = {
-                requestId,
-                tenantId: resolvedTenantId,
-                locationId: targetLocationId, // Could be undefined for Owners viewing global dashboard
-                role: user.role,
-            };
-
-            requestContext.run(context, () => {
-                next();
-            });
+            // Attach user to the request object for downstream use
+            req.user = user;
+            return next();
         } catch (error) {
             next(error);
         }
-    }
+    };
+
+    // Validates if the authenticated user has access to the requested tenant/location via headers.
+    public validateAccess = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const user = req.user;
+
+            if (!user) {
+                throw new UnauthorizedError("User not found on request. Ensure requireAuth runs first.");
+            }
+
+            const tenantId = req.headers["x-tenant-id"] as string;
+            const locationId = req.headers["x-location-id"] as string;
+
+            if (!tenantId) {
+                throw new BadRequestError("No tenant (business) selected.");
+            }
+
+            // --- OWNER ACCESS VALIDATION ---
+            if (user.role === UserRoleEnum.OWNER) {
+                const [tenant] = await db
+                    .select()
+                    .from(tenantSchema)
+                    .where(and(eq(tenantSchema.id, tenantId), eq(tenantSchema.userId, user.id)))
+                    .limit(1);
+
+                if (tenant) {
+                    req.tenant = tenant;
+
+                    if (locationId) {
+                        const [location] = await db
+                            .select()
+                            .from(locationSchema)
+                            .where(and(eq(locationSchema.id, locationId), eq(locationSchema.tenantId, tenantId)))
+                            .limit(1);
+
+                        if (!location) {
+                            throw new ForbiddenError(
+                                "The requested branch does not exist in your business or you don't have permission",
+                            );
+                        }
+                        req.location = location;
+                    }
+
+                    // Wrap in your context logger and continue
+                    return this.runWithContext(req, next);
+                }
+            }
+
+            // --- STAFF ACCESS VALIDATION ---
+            // If the code reaches here, either the user is STAFF, or an OWNER trying to access a tenant they don't own.
+            if (!locationId) {
+                throw new BadRequestError("No branch selected for staff access.");
+            }
+
+            const [staffContext] = await db
+                .select({
+                    location: locationSchema,
+                    tenant: tenantSchema,
+                })
+                .from(userLocationsSchema)
+                .innerJoin(locationSchema, eq(userLocationsSchema.locationId, locationSchema.id))
+                .innerJoin(tenantSchema, eq(locationSchema.tenantId, tenantSchema.id))
+                .where(
+                    and(
+                        eq(userLocationsSchema.userId, user.id),
+                        eq(userLocationsSchema.locationId, locationId),
+                        eq(locationSchema.tenantId, tenantId),
+                    ),
+                )
+                .limit(1);
+
+            if (!staffContext) {
+                throw new ForbiddenError("You do not have access to this branch or business.");
+            }
+
+            req.tenant = staffContext.tenant;
+            req.location = staffContext.location;
+
+            return this.runWithContext(req, next);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    // Helper to run the logger context (since req.user/req.tenant are now resolved)
+    private runWithContext = (req: Request, next: NextFunction) => {
+        const requestId = (req.headers["x-request-id"] as string) || uuidv7();
+
+        const context = {
+            requestId,
+            tenantId: req.tenant?.id,
+            location: req.location,
+            user: req.user,
+        };
+
+        requestContext.run(context, () => {
+            next();
+        });
+    };
 }
 
 export default new AuthMiddleware();
