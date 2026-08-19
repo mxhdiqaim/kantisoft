@@ -7,10 +7,10 @@ import { locationSchema } from "./location.schema";
 export const userLocationsSchema = pgTable(
     "user_locations",
     {
-        userId: uuid("userId")
+        userId: uuid("user_id")
             .references(() => userSchema.id, { onDelete: "cascade" })
             .notNull(),
-        locationId: uuid("locationId")
+        locationId: uuid("location_id")
             .references(() => locationSchema.id, { onDelete: "cascade" })
             .notNull(),
     },

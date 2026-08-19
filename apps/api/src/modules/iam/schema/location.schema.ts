@@ -8,13 +8,13 @@ export const locationSchema = pgTable("locations", {
     id: uuid("id")
         .primaryKey()
         .$defaultFn(() => uuidv7()),
-    tenantId: uuid("tenantId")
+    tenantId: uuid("tenant_id")
         .references(() => tenantSchema.id, { onDelete: "cascade" })
         .notNull(),
     name: text("name").notNull(),
     address: text("address"),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-    updatedAt: timestamp("updatedAt")
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
         .defaultNow()
         .notNull()
         .$onUpdateFn(() => new Date()),

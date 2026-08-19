@@ -24,3 +24,10 @@ export type InviteUserDto = {
     locationId: string;
     phone?: string;
 };
+
+export type OnboardBusinessDTO = {
+    businessName: string;
+    clerkUserId: string;
+    countryId: string;
+    slug?: string;
+};

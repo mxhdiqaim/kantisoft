@@ -26,16 +26,17 @@ export const userSchema = pgTable("users", {
     id: uuid("id")
         .primaryKey()
         .$defaultFn(() => uuidv7()),
-    clerkId: text("clerkId").unique().notNull(),
-    firstName: text("firstName").notNull(),
-    lastName: text("lastName").notNull(),
+    clerkId: text("clerk_id").unique().notNull(),
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name").notNull(),
     email: text("email").notNull().unique(),
-    phone: text("phone").unique(),
+    phoneNumber: text("phone_number").unique(),
+    phoneNumberVerifiedAt: timestamp("phone_number_verified_at"),
+    avatarUrl: text("avatar_url"),
     role: UserRolePgEnum("role").notNull().default(UserRoleEnum.CASHIER),
     status: UserStatusPgEnum("status").notNull().default(UserStatusEnum.ACTIVE),
-    tenantId: uuid("tenantId").references(() => tenantSchema.id, { onDelete: "cascade" }),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-    updatedAt: timestamp("updatedAt")
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
         .defaultNow()
         .notNull()
         .$onUpdateFn(() => new Date()),
@@ -44,9 +45,7 @@ export const userSchema = pgTable("users", {
 export type InsertUserSchemaT = typeof userSchema.$inferInsert;
 
 export const userSchemaRelations = relations(userSchema, ({ one, many }) => ({
-    tenant: one(tenantSchema, {
-        fields: [userSchema.tenantId],
-        references: [tenantSchema.id],
-    }),
+    // Defines the inverse of the 1-to-1 relationship (the user owns one tenant)
+    ownedTenant: one(tenantSchema),
     userLocations: many(userLocationsSchema),
 }));
