@@ -1,16 +1,16 @@
 // import { createClient } from "redis";
-// import { getEnvVariable } from "../utils";
+// import { helperUtil } from "../utils";
 // import { NODE_ENV } from "../db";
 // import { readFileSync } from "fs";
 
 // export let redisClient: ReturnType<typeof createClient>;
 
 // if (NODE_ENV === "production") {
-//     const redisHost = getEnvVariable("REDIS_HOST");
-//     const redisPort = getEnvVariable("REDIS_PORT");
+//     const redisHost = helperUtil.getEnvVariable("REDIS_HOST");
+//     const redisPort = helperUtil.getEnvVariable("REDIS_PORT");
 //
 //     // Read password from a Docker secret file
-//     const passwordFile = getEnvVariable("REDIS_PASSWORD_FILE");
+//     const passwordFile = helperUtil.getEnvVariable("REDIS_PASSWORD_FILE");
 //     const redisPassword = readFileSync(passwordFile, "utf8").trim();
 //
 //     const encodedPassword = encodeURIComponent(redisPassword);

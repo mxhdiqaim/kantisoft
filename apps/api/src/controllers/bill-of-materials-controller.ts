@@ -3,11 +3,8 @@ import { Response } from "express";
 import { CustomRequest } from "../types/express";
 import { handleError2 } from "../service/error-handling";
 import { StatusCodes } from "http-status-codes";
-import db from "../shared/database";
-import {
-    billOfMaterials,
-    InsertBillOfMaterialsSchemaT,
-} from "../schema/bill-of-materials-schema";
+import { db } from "../shared/database";
+import { billOfMaterials, InsertBillOfMaterialsSchemaT } from "../schema/bill-of-materials-schema";
 import { rawMaterials } from "../schema/raw-materials-schema";
 import { unitOfMeasurement } from "../schema/unit-of-measurement-schema";
 import { eq } from "drizzle-orm";
@@ -31,21 +28,13 @@ export const getBillOfMaterials = async (req: CustomRequest, res: Response) => {
     const storeId = currentUser?.storeId;
 
     if (!storeId) {
-        return handleError2(
-            res,
-            "User does not have an associated store.",
-            StatusCodes.BAD_REQUEST,
-        );
+        return handleError2(res, "User does not have an associated store.", StatusCodes.BAD_REQUEST);
     }
 
     const { id: menuItemId } = req.params;
 
     if (!menuItemId) {
-        return handleError2(
-            res,
-            "Something went wrong.",
-            StatusCodes.BAD_REQUEST,
-        );
+        return handleError2(res, "Something went wrong.", StatusCodes.BAD_REQUEST);
     }
 
     // OR even better, a check:
@@ -61,8 +50,7 @@ export const getBillOfMaterials = async (req: CustomRequest, res: Response) => {
             .select({
                 // BOM Fields
                 bomId: billOfMaterials.id,
-                consumptionQuantityBase:
-                    billOfMaterials.consumptionQuantityBase,
+                consumptionQuantityBase: billOfMaterials.consumptionQuantityBase,
 
                 // Raw Material Fields
                 rawMaterialId: rawMaterials.id,
@@ -74,45 +62,33 @@ export const getBillOfMaterials = async (req: CustomRequest, res: Response) => {
                     id: unitOfMeasurement.id,
                     name: unitOfMeasurement.name,
                     symbol: unitOfMeasurement.symbol,
-                    conversionFactorToBase:
-                        unitOfMeasurement.conversionFactorToBase,
+                    conversionFactorToBase: unitOfMeasurement.conversionFactorToBase,
                 },
             })
             .from(billOfMaterials)
-            .innerJoin(
-                rawMaterials,
-                eq(billOfMaterials.rawMaterialId, rawMaterials.id),
-            )
+            .innerJoin(rawMaterials, eq(billOfMaterials.rawMaterialId, rawMaterials.id))
             // Join to get the default unit linked to the raw material master record
-            .innerJoin(
-                unitOfMeasurement,
-                eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id),
-            )
+            .innerJoin(unitOfMeasurement, eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id))
             .where(eq(billOfMaterials.menuItemId, menuItemId))
             .execute();
 
         if (results.length === 0) {
-            return res
-                .status(StatusCodes.OK)
-                .json({
-                    message: "No Bill of Materials defined for this menu item.",
-                });
+            return res.status(StatusCodes.OK).json({
+                message: "No Bill of Materials defined for this menu item.",
+            });
         }
 
         // Post-Processing and Conversion
         const recipe = results.map((item) => {
             // CRITICAL: Convert the stored Base Consumption Quantity back to Presentation Quantity for display
             // Formula: Qty_Presentation = Qty_Base / ConversionFactorToBase
-            const conversionFactor =
-                item.unitOfMeasurement.conversionFactorToBase;
+            const conversionFactor = item.unitOfMeasurement.conversionFactorToBase;
 
-            const consumptionQuantityPresentation =
-                item.consumptionQuantityBase / conversionFactor;
+            const consumptionQuantityPresentation = item.consumptionQuantityBase / conversionFactor;
 
             // Calculate the current cost for this single ingredient
             // Cost = Qty_Base * Price_Base
-            const ingredientCost =
-                item.consumptionQuantityBase * item.latestUnitPriceBase;
+            const ingredientCost = item.consumptionQuantityBase * item.latestUnitPriceBase;
 
             return {
                 bomId: item.bomId,
@@ -150,31 +126,20 @@ export const getBillOfMaterials = async (req: CustomRequest, res: Response) => {
  * @route POST /api/v1/menu-items/:id/bom
  * @access Admin, Manager
  */
-export const defineBillOfMaterials = async (
-    req: CustomRequest,
-    res: Response,
-) => {
+export const defineBillOfMaterials = async (req: CustomRequest, res: Response) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
 
         if (!storeId) {
-            return handleError2(
-                res,
-                "User does not have an associated store.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "User does not have an associated store.", StatusCodes.BAD_REQUEST);
         }
 
         const { id: menuItemId } = req.params;
         const bomItems: BomItemRequest[] = req.body; // Expecting an array of raw material inputs
 
         if (!menuItemId || typeof menuItemId !== "string") {
-            return handleError2(
-                res,
-                "Something went wrong",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Something went wrong", StatusCodes.BAD_REQUEST);
         }
 
         if (!Array.isArray(bomItems) || bomItems.length === 0) {
@@ -187,11 +152,7 @@ export const defineBillOfMaterials = async (
 
             // Process and Validate Each BOM Item
             for (const item of bomItems) {
-                const {
-                    rawMaterialId,
-                    consumptionQuantityPresentation,
-                    unitOfMeasurementId,
-                } = item;
+                const { rawMaterialId, consumptionQuantityPresentation, unitOfMeasurementId } = item;
 
                 if (
                     !rawMaterialId ||
@@ -199,16 +160,11 @@ export const defineBillOfMaterials = async (
                     !unitOfMeasurementId ||
                     consumptionQuantityPresentation <= 0
                 ) {
-                    throw new Error(
-                        "Invalid BOM item data: material ID, positive quantity, and unit ID are required.",
-                    );
+                    throw new Error("Invalid BOM item data: material ID, positive quantity, and unit ID are required.");
                 }
 
                 // Fetch the Unit Record (the unit the user specified, e.g., 'cup')
-                const unitOfMeasurementRecord =
-                    await UnitConversionService.fetchUnitById(
-                        unitOfMeasurementId,
-                    );
+                const unitOfMeasurementRecord = await UnitConversionService.fetchUnitById(unitOfMeasurementId);
 
                 if (!unitOfMeasurementRecord) {
                     throw new Error(`Unit of Measurement not found.`);
@@ -216,11 +172,10 @@ export const defineBillOfMaterials = async (
 
                 // 3. CRITICAL: Convert Consumption Quantity to the Raw Material's BASE Unit
                 // (e.g. 2 cups * 240 g/cup = 480 g)
-                const consumptionQuantityBase =
-                    UnitConversionService.convertToBaseUnit(
-                        consumptionQuantityPresentation,
-                        unitOfMeasurementRecord,
-                    );
+                const consumptionQuantityBase = UnitConversionService.convertToBaseUnit(
+                    consumptionQuantityPresentation,
+                    unitOfMeasurementRecord,
+                );
 
                 // Check if the Raw Material itself is valid (FK check)
                 const rawMaterialCheck = await tx.query.rawMaterials.findFirst({
@@ -242,16 +197,11 @@ export const defineBillOfMaterials = async (
             // Database Operations: Overwrite
 
             // Delete existing BOM items for this menuItemId (Overwrite/Reset)
-            await tx
-                .delete(billOfMaterials)
-                .where(eq(billOfMaterials.menuItemId, menuItemId));
+            await tx.delete(billOfMaterials).where(eq(billOfMaterials.menuItemId, menuItemId));
 
             // Insert the new BOM items (only if the list is not empty)
             if (recordsToInsert.length > 0) {
-                return await tx
-                    .insert(billOfMaterials)
-                    .values(recordsToInsert)
-                    .returning();
+                return await tx.insert(billOfMaterials).values(recordsToInsert).returning();
             }
 
             return []; // Return an empty array if the recipe was just cleared
@@ -259,16 +209,8 @@ export const defineBillOfMaterials = async (
 
         return res.status(StatusCodes.CREATED).json(insertedBOMs);
     } catch (error: any) {
-        if (
-            error.message.includes("not found") ||
-            error.message.includes("Invalid")
-        ) {
-            return handleError2(
-                res,
-                error.message,
-                StatusCodes.BAD_REQUEST,
-                error,
-            );
+        if (error.message.includes("not found") || error.message.includes("Invalid")) {
+            return handleError2(res, error.message, StatusCodes.BAD_REQUEST, error);
         }
 
         return handleError2(

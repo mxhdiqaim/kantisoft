@@ -1,8 +1,5 @@
-import {
-    unitOfMeasurement,
-    UnitOfMeasurementSchemaT,
-} from "../schema/unit-of-measurement-schema";
-import db from "../shared/database";
+import { unitOfMeasurement, UnitOfMeasurementSchemaT } from "../schema/unit-of-measurement-schema";
+import { db } from "../shared/database";
 import { eq } from "drizzle-orm";
 
 /**
@@ -14,9 +11,7 @@ export const UnitConversionService = {
      * @param unitOfMeasurementId The UUID of the unit to fetch.
      * @returns The UnitOfMeasurementSchemaT object or null if not found.
      */
-    async fetchUnitById(
-        unitOfMeasurementId: string,
-    ): Promise<UnitOfMeasurementSchemaT | undefined> {
+    async fetchUnitById(unitOfMeasurementId: string): Promise<UnitOfMeasurementSchemaT | undefined> {
         return db.query.unitOfMeasurement.findFirst({
             where: eq(unitOfMeasurement.id, unitOfMeasurementId),
         });
@@ -30,10 +25,7 @@ export const UnitConversionService = {
      * @param sourceUnit The unit object (must contain conversionFactorToBase).
      * @returns The converted quantity in the base unit (e.g. 5000 for 5000 g).
      */
-    convertToBaseUnit(
-        quantity: number,
-        sourceUnit: Pick<UnitOfMeasurementSchemaT, "conversionFactorToBase">,
-    ): number {
+    convertToBaseUnit(quantity: number, sourceUnit: Pick<UnitOfMeasurementSchemaT, "conversionFactorToBase">): number {
         if (sourceUnit.conversionFactorToBase <= 0) {
             throw new Error("Conversion factor must be positive and non-zero.");
         }

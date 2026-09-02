@@ -1,4 +1,4 @@
-import db from "../database";
+import { db } from "../database";
 import { menuItems } from "../../schema/menu-items-schema";
 import { desc, eq, sql } from "drizzle-orm";
 

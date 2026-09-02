@@ -3,7 +3,7 @@ import { Response } from "express";
 import { CustomRequest } from "../../types/express";
 import { handleError2 } from "../../service/error-handling";
 import { StatusCodes } from "http-status-codes";
-import db from "../../shared/database";
+import { db } from "../../shared/database";
 import { rawMaterialTransactions } from "../../schema/raw-materials-schema/raw-material-stock-transaction-schema";
 import { rawMaterials } from "../../schema/raw-materials-schema";
 import { unitOfMeasurement } from "../../schema/unit-of-measurement-schema";
@@ -16,35 +16,20 @@ import { validateStoreAndExtractDates } from "../../shared/utils/validate-store-
  * @route GET /api/v1/raw-materials/transactions/:id
  * @access Admin, Manager, Staff
  */
-export const getStockTransactions = async (
-    req: CustomRequest,
-    res: Response,
-) => {
+export const getStockTransactions = async (req: CustomRequest, res: Response) => {
     const currentUser = req.user?.data;
     const storeId = currentUser?.storeId;
     const { id: rawMaterialId } = req.params;
 
     if (!storeId) {
-        return handleError2(
-            res,
-            "User does not have an associated store.",
-            StatusCodes.BAD_REQUEST,
-        );
+        return handleError2(res, "User does not have an associated store.", StatusCodes.BAD_REQUEST);
     }
     if (!rawMaterialId) {
-        return handleError2(
-            res,
-            "Missing rawMaterialId in request path.",
-            StatusCodes.BAD_REQUEST,
-        );
+        return handleError2(res, "Missing rawMaterialId in request path.", StatusCodes.BAD_REQUEST);
     }
 
     if (typeof rawMaterialId !== "string") {
-        return handleError2(
-            res,
-            "Invalid raw material.",
-            StatusCodes.BAD_REQUEST,
-        );
+        return handleError2(res, "Invalid raw material.", StatusCodes.BAD_REQUEST);
     }
 
     try {
@@ -80,19 +65,12 @@ export const getStockTransactions = async (
                     id: unitOfMeasurement.id,
                     name: unitOfMeasurement.name,
                     symbol: unitOfMeasurement.symbol,
-                    conversionFactorToBase:
-                        unitOfMeasurement.conversionFactorToBase,
+                    conversionFactorToBase: unitOfMeasurement.conversionFactorToBase,
                 },
             })
             .from(rawMaterialTransactions)
-            .innerJoin(
-                rawMaterials,
-                eq(rawMaterialTransactions.rawMaterialId, rawMaterials.id),
-            )
-            .innerJoin(
-                unitOfMeasurement,
-                eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id),
-            )
+            .innerJoin(rawMaterials, eq(rawMaterialTransactions.rawMaterialId, rawMaterials.id))
+            .innerJoin(unitOfMeasurement, eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id))
             .leftJoin(
                 // Use left join just in case the userId is missing/null in future
                 users,
@@ -109,16 +87,14 @@ export const getStockTransactions = async (
 
         if (results.length === 0) {
             return res.status(StatusCodes.OK).json({
-                message:
-                    "No stock transaction history found for this material and store.",
+                message: "No stock transaction history found for this material and store.",
             });
         }
 
         // Post-Processing and Conversion
         const transactionHistory = results.map((item) => {
             // CRITICAL: Convert Base Quantity back to Presentation Quantity for display
-            const conversionFactor =
-                item.unitOfMeasurement.conversionFactorToBase;
+            const conversionFactor = item.unitOfMeasurement.conversionFactorToBase;
             const quantityPresentation = item.quantityBase / conversionFactor;
 
             return {
@@ -158,29 +134,17 @@ export const getStockTransactions = async (
  * @description Retrieves transaction logs for a specific raw material or the whole store.
  * @route GET /api/v1/raw-materials/transactions
  */
-export const getRawMaterialInventoryTransactions = async (
-    req: CustomRequest,
-    res: Response,
-) => {
+export const getRawMaterialInventoryTransactions = async (req: CustomRequest, res: Response) => {
     try {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return; // Error already handled
 
-        const {
-            storeIds,
-            finalStartDate,
-            finalEndDate,
-            periodUsed,
-            storeQueryType,
-        } = validated;
+        const { storeIds, finalStartDate, finalEndDate, periodUsed, storeQueryType } = validated;
 
         const { rawMaterialId } = req.query; // Optional filter
 
         // Construct the Base WHERE clause (Store Filter)
-        let whereClause: SQL | undefined = inArray(
-            rawMaterialTransactions.storeId,
-            storeIds,
-        );
+        let whereClause: SQL | undefined = inArray(rawMaterialTransactions.storeId, storeIds);
 
         // Apply the Date Filter (Copied from getInventoryTransactions)
         if (finalStartDate && finalEndDate) {
@@ -193,13 +157,7 @@ export const getRawMaterialInventoryTransactions = async (
 
         // Add the Raw Material Filter if provided
         if (rawMaterialId && rawMaterialId !== "all") {
-            whereClause = and(
-                whereClause,
-                eq(
-                    rawMaterialTransactions.rawMaterialId,
-                    rawMaterialId as string,
-                ),
-            );
+            whereClause = and(whereClause, eq(rawMaterialTransactions.rawMaterialId, rawMaterialId as string));
         }
 
         const transactionLogs = await db
@@ -230,25 +188,15 @@ export const getRawMaterialInventoryTransactions = async (
                     // id: unitOfMeasurement.id,
                     // name: unitOfMeasurement.name,
                     symbol: unitOfMeasurement.symbol,
-                    conversionFactorToBase:
-                        unitOfMeasurement.conversionFactorToBase,
+                    conversionFactorToBase: unitOfMeasurement.conversionFactorToBase,
                 },
             })
             .from(rawMaterialTransactions)
             .innerJoin(users, eq(rawMaterialTransactions.userId, users.id))
-            .innerJoin(
-                rawMaterials,
-                eq(rawMaterialTransactions.rawMaterialId, rawMaterials.id),
-            )
-            .innerJoin(
-                unitOfMeasurement,
-                eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id),
-            )
+            .innerJoin(rawMaterials, eq(rawMaterialTransactions.rawMaterialId, rawMaterials.id))
+            .innerJoin(unitOfMeasurement, eq(rawMaterials.unitOfMeasurementId, unitOfMeasurement.id))
             .where(whereClause) // Using the unified whereClause
-            .orderBy(
-                desc(rawMaterialTransactions.transactionDate),
-                desc(rawMaterialTransactions.createdAt),
-            );
+            .orderBy(desc(rawMaterialTransactions.transactionDate), desc(rawMaterialTransactions.createdAt));
 
         // Post-Processing and Conversion
         const transactionHistory = transactionLogs.map((item) => {
@@ -280,9 +228,7 @@ export const getRawMaterialInventoryTransactions = async (
         });
 
         return res.status(StatusCodes.OK).json({
-            startDate: finalStartDate
-                ? finalStartDate.toISOString()
-                : "All Time",
+            startDate: finalStartDate ? finalStartDate.toISOString() : "All Time",
             endDate: finalEndDate ? finalEndDate.toISOString() : "All Time",
             transactions: transactionHistory,
             timePeriod: periodUsed,

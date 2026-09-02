@@ -3,18 +3,14 @@ import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { eq, or } from "drizzle-orm";
 import { handleError2 } from "../service/error-handling";
-import db from "../shared/database";
+import { db } from "../shared/database";
 import { users } from "../schema/users-schema";
 import { stores } from "../schema/stores-schema";
 import { formatPhoneNumber } from "../shared/utils/format-phone-number";
 import { getFirebaseAdmin } from "../config/firebase-admin";
 import { emailService } from "../service/email.service";
 import { ActivityLogService } from "../service/activity-service-log";
-import {
-    ActivityEntityTypeEnum,
-    UserRoleEnum,
-    UserStatusEnum,
-} from "../types/enums";
+import { ActivityEntityTypeEnum, UserRoleEnum, UserStatusEnum } from "../types/enums";
 
 /**
  * @desc    Verify Firebase ID Token and return local Postgres Profile
@@ -26,11 +22,7 @@ export const auth = async (req: Request, res: Response) => {
         const authHeader = req.headers.authorization;
 
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return handleError2(
-                res,
-                "Authentication failed: Missing or malformed token.",
-                StatusCodes.UNAUTHORIZED,
-            );
+            return handleError2(res, "Authentication failed: Missing or malformed token.", StatusCodes.UNAUTHORIZED);
         }
 
         const token = authHeader.split(" ")[1];
@@ -62,11 +54,7 @@ export const auth = async (req: Request, res: Response) => {
         const { uid, email } = decodedToken;
 
         if (!decodedToken.email_verified) {
-            return handleError2(
-                res,
-                "Please verify your email address before logging in.",
-                StatusCodes.FORBIDDEN,
-            );
+            return handleError2(res, "Please verify your email address before logging in.", StatusCodes.FORBIDDEN);
         }
 
         // Fetch profile with relational join automatically handled by Drizzle
@@ -83,21 +71,14 @@ export const auth = async (req: Request, res: Response) => {
             });
 
             if (userRecord && !userRecord.firebaseUid) {
-                await db
-                    .update(users)
-                    .set({ firebaseUid: uid })
-                    .where(eq(users.id, userRecord.id));
+                await db.update(users).set({ firebaseUid: uid }).where(eq(users.id, userRecord.id));
 
                 userRecord.firebaseUid = uid;
             }
         }
 
         if (!userRecord) {
-            return handleError2(
-                res,
-                "Access denied. Account unregistered.",
-                StatusCodes.UNAUTHORIZED,
-            );
+            return handleError2(res, "Access denied. Account unregistered.", StatusCodes.UNAUTHORIZED);
         }
 
         // Enforce Account Status Restrictions
@@ -161,24 +142,9 @@ export const signup = async (req: Request, res: Response) => {
     const admin = getFirebaseAdmin();
 
     try {
-        const {
-            firstName,
-            lastName,
-            email,
-            password,
-            phone,
-            storeName,
-            storeType,
-        } = req.body;
+        const { firstName, lastName, email, password, phone, storeName, storeType } = req.body;
 
-        if (
-            !email ||
-            !password ||
-            !firstName ||
-            !lastName ||
-            !storeName ||
-            !storeType
-        ) {
+        if (!email || !password || !firstName || !lastName || !storeName || !storeType) {
             return handleError2(
                 res,
                 "First name, last name, email, password, store name, and store type are required.",
@@ -198,22 +164,12 @@ export const signup = async (req: Request, res: Response) => {
         }
 
         const existingUser = await db.query.users.findFirst({
-            where: or(
-                eq(users.email, lowercasedEmail),
-                eq(users.phone, formattedPhone),
-            ),
+            where: or(eq(users.email, lowercasedEmail), eq(users.phone, formattedPhone)),
         });
 
         if (existingUser) {
-            const conflictField =
-                existingUser.email === lowercasedEmail
-                    ? "Email"
-                    : "Phone number";
-            return handleError2(
-                res,
-                `${conflictField} already exists.`,
-                StatusCodes.CONFLICT,
-            );
+            const conflictField = existingUser.email === lowercasedEmail ? "Email" : "Phone number";
+            return handleError2(res, `${conflictField} already exists.`, StatusCodes.CONFLICT);
         }
 
         const firebaseUser = await admin.auth().createUser({
@@ -226,10 +182,7 @@ export const signup = async (req: Request, res: Response) => {
         createdFirebaseUid = firebaseUser.uid;
 
         const { user } = await db.transaction(async (tx) => {
-            const [newStore] = await tx
-                .insert(stores)
-                .values({ name: storeName, storeType })
-                .returning();
+            const [newStore] = await tx.insert(stores).values({ name: storeName, storeType }).returning();
 
             const [user] = await tx
                 .insert(users)
@@ -259,9 +212,7 @@ export const signup = async (req: Request, res: Response) => {
             details: `Manager ${user.firstName} ${user.lastName} registered and created store.`,
         });
 
-        const verificationLink = await admin
-            .auth()
-            .generateEmailVerificationLink(lowercasedEmail);
+        const verificationLink = await admin.auth().generateEmailVerificationLink(lowercasedEmail);
 
         try {
             await emailService.sendVerificationEmail({
@@ -269,36 +220,26 @@ export const signup = async (req: Request, res: Response) => {
                 firstName,
                 verificationLink,
             });
-            console.log(
-                `📧 Verification email successfully sent to ${lowercasedEmail}`,
-            );
+            console.log(`📧 Verification email successfully sent to ${lowercasedEmail}`);
         } catch (emailError) {
             console.error("Failed to send verification email:", emailError);
         }
 
         return res.status(StatusCodes.CREATED).json({
-            message:
-                "Account created successfully. Please check your email to verify your account before logging in.",
+            message: "Account created successfully. Please check your email to verify your account before logging in.",
         });
     } catch (error: any) {
         if (createdFirebaseUid) {
             try {
                 await admin.auth().deleteUser(createdFirebaseUid);
-                console.log(
-                    `🧹 Rolled back Firebase user ${createdFirebaseUid} due to database failure.`,
-                );
+                console.log(`🧹 Rolled back Firebase user ${createdFirebaseUid} due to database failure.`);
             } catch (cleanupError) {
-                console.error(
-                    "CRITICAL: Failed to clean up Firebase user:",
-                    cleanupError,
-                );
+                console.error("CRITICAL: Failed to clean up Firebase user:", cleanupError);
             }
         }
 
         if (error.cause?.code === "23505" && error.cause?.constraint) {
-            const conflictMsg = error.cause.constraint.includes(
-                "users_email_unique",
-            )
+            const conflictMsg = error.cause.constraint.includes("users_email_unique")
                 ? "A user with this email already exists."
                 : "A user with this phone number already exists.";
             return handleError2(res, conflictMsg, StatusCodes.CONFLICT, error);
@@ -323,11 +264,7 @@ export const resendVerification = async (req: Request, res: Response) => {
         const { identifier } = req.body;
 
         if (!identifier) {
-            return handleError2(
-                res,
-                "Please provide your email or phone number.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Please provide your email or phone number.", StatusCodes.BAD_REQUEST);
         }
 
         let targetEmail = "";
@@ -341,11 +278,7 @@ export const resendVerification = async (req: Request, res: Response) => {
         } else {
             const formattedPhone = formatPhoneNumber(identifier);
             if (!formattedPhone) {
-                return handleError2(
-                    res,
-                    "Invalid phone number format.",
-                    StatusCodes.BAD_REQUEST,
-                );
+                return handleError2(res, "Invalid phone number format.", StatusCodes.BAD_REQUEST);
             }
 
             dbUserRecord = await db.query.users.findFirst({
@@ -359,8 +292,7 @@ export const resendVerification = async (req: Request, res: Response) => {
 
         if (!dbUserRecord || !targetEmail) {
             return res.status(StatusCodes.OK).json({
-                message:
-                    "If an account matches that identifier, a new verification link has been sent.",
+                message: "If an account matches that identifier, a new verification link has been sent.",
             });
         }
 
@@ -371,8 +303,7 @@ export const resendVerification = async (req: Request, res: Response) => {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             return res.status(StatusCodes.OK).json({
-                message:
-                    "If an account matches that identifier, a new verification link has been sent.",
+                message: "If an account matches that identifier, a new verification link has been sent.",
             });
         }
 
@@ -384,9 +315,7 @@ export const resendVerification = async (req: Request, res: Response) => {
             );
         }
 
-        const verificationLink = await admin
-            .auth()
-            .generateEmailVerificationLink(targetEmail);
+        const verificationLink = await admin.auth().generateEmailVerificationLink(targetEmail);
 
         try {
             await emailService.sendVerificationEmail({
@@ -405,8 +334,7 @@ export const resendVerification = async (req: Request, res: Response) => {
         }
 
         return res.status(StatusCodes.OK).json({
-            message:
-                "A new verification link has been sent to your email address.",
+            message: "A new verification link has been sent to your email address.",
         });
     } catch (error) {
         return handleError2(
@@ -428,11 +356,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
         const { identifier } = req.body;
 
         if (!identifier) {
-            return handleError2(
-                res,
-                "Please provide your email or phone number.",
-                StatusCodes.BAD_REQUEST,
-            );
+            return handleError2(res, "Please provide your email or phone number.", StatusCodes.BAD_REQUEST);
         }
 
         let targetEmail = "";
@@ -446,11 +370,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
         } else {
             const formattedPhone = formatPhoneNumber(identifier);
             if (!formattedPhone) {
-                return handleError2(
-                    res,
-                    "Invalid phone number format.",
-                    StatusCodes.BAD_REQUEST,
-                );
+                return handleError2(res, "Invalid phone number format.", StatusCodes.BAD_REQUEST);
             }
 
             dbUserRecord = await db.query.users.findFirst({
@@ -469,22 +389,18 @@ export const forgotPassword = async (req: Request, res: Response) => {
             dbUserRecord.status === UserStatusEnum.BANNED
         ) {
             return res.status(StatusCodes.OK).json({
-                message:
-                    "If an account matches that identifier, a password reset link has been sent.",
+                message: "If an account matches that identifier, a password reset link has been sent.",
             });
         }
 
         const admin = getFirebaseAdmin();
         let resetLink;
         try {
-            resetLink = await admin
-                .auth()
-                .generatePasswordResetLink(targetEmail);
+            resetLink = await admin.auth().generatePasswordResetLink(targetEmail);
         } catch (error) {
             console.error("Firebase reset link generation failed:", error);
             return res.status(StatusCodes.OK).json({
-                message:
-                    "If an account matches that identifier, a password reset link has been sent.",
+                message: "If an account matches that identifier, a password reset link has been sent.",
             });
         }
 
@@ -505,8 +421,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
         }
 
         return res.status(StatusCodes.OK).json({
-            message:
-                "If an account matches that identifier, a password reset link has been sent.",
+            message: "If an account matches that identifier, a password reset link has been sent.",
         });
     } catch (error) {
         return handleError2(

@@ -1,13 +1,13 @@
 import { drizzle, PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import schema from "../../db/schema";
-import { getEnvVariable } from "../utils";
+import * as schema from "./schema.database";
+import { helperUtil } from "../utils";
 import logger from "../logger";
 
 class Database {
-    private readonly DB_CONNECTION_STRING = getEnvVariable("DB_CONNECTION_STRING");
-    private readonly DB_SSL_REQUIRED = getEnvVariable("DB_SSL_REQUIRED") === "true";
-    private readonly DB_MAX_CONNECTION = parseInt(getEnvVariable("DB_MAX_CONNECTION")) ?? 10;
+    private readonly DB_CONNECTION_STRING = helperUtil.getEnvVariable("DB_CONNECTION_STRING");
+    private readonly DB_SSL_REQUIRED = helperUtil.getEnvVariable("DB_SSL_REQUIRED") === "true";
+    private readonly DB_MAX_CONNECTION = parseInt(helperUtil.getEnvVariable("DB_MAX_CONNECTION")) ?? 10;
 
     public readonly client: postgres.Sql;
     public readonly orm: PostgresJsDatabase<typeof schema>;
@@ -44,8 +44,11 @@ class Database {
     };
 }
 
-// Instantiate the module-level singleton
-export const database = new Database();
+const database = new Database();
 
+const DBClient = database.client;
+const DBConnect = database.connect;
+const DBDisconnect = database.disconnect;
 const db = database.orm;
-export default db;
+
+export { DBClient, DBConnect, DBDisconnect, db };
