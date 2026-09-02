@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, ne } from "drizzle-orm";
 import { Response } from "express";
-import { db } from "../shared/database";
+import db from "../shared/database";
 import { categories } from "../schema/categories-schema";
 import { handleError2 } from "../service/error-handling";
 import { CustomRequest } from "../types/express";
@@ -47,7 +47,11 @@ export const createCategory = async (req: CustomRequest, res: Response) => {
         const userRole = currentUser?.role;
 
         if (!storeId) {
-            return handleError2(res, "Store not found for the authenticated user.", StatusCodes.FORBIDDEN);
+            return handleError2(
+                res,
+                "Store not found for the authenticated user.",
+                StatusCodes.FORBIDDEN,
+            );
         }
 
         const { name, description } = req.body;
@@ -63,16 +67,27 @@ export const createCategory = async (req: CustomRequest, res: Response) => {
         if (!finalStoreId) return; // Error already handled
 
         if (!name) {
-            return handleError2(res, "Category name is required.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Category name is required.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         // Check for duplicates in the SAME store
         const existingCategory = await db.query.categories.findFirst({
-            where: and(eq(categories.name, name), eq(categories.storeId, finalStoreId)),
+            where: and(
+                eq(categories.name, name),
+                eq(categories.storeId, finalStoreId),
+            ),
         });
 
         if (existingCategory) {
-            return handleError2(res, "A category with this name already exists in this store.", StatusCodes.CONFLICT);
+            return handleError2(
+                res,
+                "A category with this name already exists in this store.",
+                StatusCodes.CONFLICT,
+            );
         }
 
         // Insert
@@ -115,11 +130,19 @@ export const updateCategory = async (req: CustomRequest, res: Response) => {
         const { targetStoreId } = req.query;
 
         if (!categoryId) {
-            return handleError2(res, "Category is required.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Category is required.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof categoryId !== "string") {
-            return handleError2(res, "Invalid category.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Invalid category.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         // Determine permission-based Store ID
@@ -133,11 +156,18 @@ export const updateCategory = async (req: CustomRequest, res: Response) => {
 
         // Find a category and verify it belongs to the target store
         const categoryToUpdate = await db.query.categories.findFirst({
-            where: and(eq(categories.id, categoryId), eq(categories.storeId, finalStoreId)),
+            where: and(
+                eq(categories.id, categoryId),
+                eq(categories.storeId, finalStoreId),
+            ),
         });
 
         if (!categoryToUpdate) {
-            return handleError2(res, "Category not found in this store.", StatusCodes.NOT_FOUND);
+            return handleError2(
+                res,
+                "Category not found in this store.",
+                StatusCodes.NOT_FOUND,
+            );
         }
 
         const updateData: Partial<typeof categories.$inferInsert> = {};
@@ -153,14 +183,22 @@ export const updateCategory = async (req: CustomRequest, res: Response) => {
             });
 
             if (existing) {
-                return handleError2(res, `Category "${name}" already exists.`, StatusCodes.CONFLICT);
+                return handleError2(
+                    res,
+                    `Category "${name}" already exists.`,
+                    StatusCodes.CONFLICT,
+                );
             }
             updateData.name = name;
         }
 
         if (description !== undefined) updateData.description = description;
         if (Object.keys(updateData).length === 0) {
-            return handleError2(res, "No changes provided.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "No changes provided.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         updateData.lastModified = new Date();
@@ -169,7 +207,12 @@ export const updateCategory = async (req: CustomRequest, res: Response) => {
         const [updatedCategory] = await db
             .update(categories)
             .set(updateData)
-            .where(and(eq(categories.id, categoryId), eq(categories.storeId, finalStoreId)))
+            .where(
+                and(
+                    eq(categories.id, categoryId),
+                    eq(categories.storeId, finalStoreId),
+                ),
+            )
             .returning();
 
         res.status(StatusCodes.OK).json(updatedCategory);
@@ -201,11 +244,19 @@ export const deleteCategory = async (req: CustomRequest, res: Response) => {
         const { targetStoreId } = req.query;
 
         if (!categoryId) {
-            return handleError2(res, "Category is required.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Category is required.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof categoryId !== "string") {
-            return handleError2(res, "Invalid category.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Invalid category.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         // Determine permission-based Store ID
@@ -220,11 +271,20 @@ export const deleteCategory = async (req: CustomRequest, res: Response) => {
         // Perform delete scoped by ID and StoreID
         const deletedCategory = await db
             .delete(categories)
-            .where(and(eq(categories.id, categoryId), eq(categories.storeId, finalStoreId)))
+            .where(
+                and(
+                    eq(categories.id, categoryId),
+                    eq(categories.storeId, finalStoreId),
+                ),
+            )
             .returning();
 
         if (deletedCategory.length === 0) {
-            return handleError2(res, "Category not found or permission denied.", StatusCodes.NOT_FOUND);
+            return handleError2(
+                res,
+                "Category not found or permission denied.",
+                StatusCodes.NOT_FOUND,
+            );
         }
 
         res.status(StatusCodes.OK).json({

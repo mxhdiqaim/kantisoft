@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
-import { db } from "../shared/database";
+import db from "../shared/database";
 import { activityLog } from "../schema/activity-log-schema";
 import { users } from "../schema/users-schema";
 import { stores } from "../schema/stores-schema";
@@ -16,10 +16,18 @@ export const getActivities = async (req: Request, res: Response) => {
         const storeId = currentUser?.storeId;
 
         if (!storeId) {
-            return handleError2(res, "User not associated with a store.", StatusCodes.UNAUTHORIZED);
+            return handleError2(
+                res,
+                "User not associated with a store.",
+                StatusCodes.UNAUTHORIZED,
+            );
         }
 
-        const { limit: queryLimit = 20, offset: queryOffset = 0, targetStoreId } = req.query;
+        const {
+            limit: queryLimit = 20,
+            offset: queryOffset = 0,
+            targetStoreId,
+        } = req.query;
         const userRole = currentUser?.role;
 
         const finalStoreId = await determineFinalStoreId(
@@ -34,7 +42,9 @@ export const getActivities = async (req: Request, res: Response) => {
         const offset = Math.max(0, Number(queryOffset));
 
         // Initialise base conditions for the current store
-        const conditions: (SQLWrapper | undefined)[] = [eq(activityLog.storeId, finalStoreId)];
+        const conditions: (SQLWrapper | undefined)[] = [
+            eq(activityLog.storeId, finalStoreId),
+        ];
 
         let includeUsersTable = false; // Flag to determine if we need to join users' table for filtering
         let selectUsersColumns = false; // Flag to determine if we need to select user details
@@ -85,31 +95,48 @@ export const getActivities = async (req: Request, res: Response) => {
         // Conditionally apply leftJoin for users based on the flag
         if (includeUsersTable || selectUsersColumns) {
             // Join if we need to filter or select user columns
-            queryBuilder = queryBuilder.leftJoin(users, eq(activityLog.userId, users.id));
+            queryBuilder = queryBuilder.leftJoin(
+                users,
+                eq(activityLog.userId, users.id),
+            );
         }
 
         // Apply all built conditions
-        const finalQuery = queryBuilder.where(and(...conditions.filter(Boolean))); // Filter out undefined conditions
+        const finalQuery = queryBuilder.where(
+            and(...conditions.filter(Boolean)),
+        ); // Filter out undefined conditions
 
         // Execute the query with ordering and pagination
-        const activities = await finalQuery.orderBy(desc(activityLog.createdAt)).limit(limit).offset(offset);
+        const activities = await finalQuery
+            .orderBy(desc(activityLog.createdAt))
+            .limit(limit)
+            .offset(offset);
 
         // Get total count for pagination (important to run separately or use countDistinct)
         // The count query also needs to respect the same join and filter conditions
-        let countQueryBuilder: any = db.select({ count: sql<number>`count(*)` }).from(activityLog);
+        let countQueryBuilder: any = db
+            .select({ count: sql<number>`count(*)` })
+            .from(activityLog);
 
         if (includeUsersTable || selectUsersColumns) {
             // Apply the same conditional join for count
-            countQueryBuilder = countQueryBuilder.leftJoin(users, eq(activityLog.userId, users.id));
+            countQueryBuilder = countQueryBuilder.leftJoin(
+                users,
+                eq(activityLog.userId, users.id),
+            );
         }
 
-        const finalCountQuery = countQueryBuilder.where(and(...conditions.filter(Boolean)));
+        const finalCountQuery = countQueryBuilder.where(
+            and(...conditions.filter(Boolean)),
+        );
         const totalCountResult = await finalCountQuery;
         const totalCount = totalCountResult[0]?.count || 0;
 
         const formattedData = activities.map((item: any) => {
             const user = item.user || {};
-            const userName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "System";
+            const userName =
+                [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+                "System";
             return {
                 id: item.activityLog.id,
                 action: item.activityLog.action,

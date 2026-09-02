@@ -1,6 +1,20 @@
 import { Response } from "express";
-import { db } from "../shared/database";
-import { and, count, desc, eq, gte, inArray, lt, lte, max, min, sql, SQL, sum } from "drizzle-orm";
+import db from "../shared/database";
+import {
+    and,
+    count,
+    desc,
+    eq,
+    gte,
+    inArray,
+    lt,
+    lte,
+    max,
+    min,
+    sql,
+    SQL,
+    sum,
+} from "drizzle-orm";
 import { orderItems, orders } from "../schema/orders-schema";
 import { handleError2 } from "../service/error-handling";
 import { OrderBy } from "../types";
@@ -27,14 +41,24 @@ export const getSalesSummary = async (req: CustomRequest, res: Response) => {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return; // Error already handled
 
-        const { storeIds, finalStartDate, finalEndDate, periodUsed, storeQueryType } = validated;
+        const {
+            storeIds,
+            finalStartDate,
+            finalEndDate,
+            periodUsed,
+            storeQueryType,
+        } = validated;
 
         // Construct the base WHERE clause with the store ID
         let whereClause: SQL | undefined = inArray(orders.storeId, storeIds);
 
         // Apply date range filter first if applicable
         if (finalStartDate && finalEndDate) {
-            whereClause = and(whereClause, gte(orders.orderDate, finalStartDate), lt(orders.orderDate, finalEndDate));
+            whereClause = and(
+                whereClause,
+                gte(orders.orderDate, finalStartDate),
+                lt(orders.orderDate, finalEndDate),
+            );
         }
 
         const result = await db
@@ -51,11 +75,15 @@ export const getSalesSummary = async (req: CustomRequest, res: Response) => {
         const salesSummary = {
             storeQueryType,
             timePeriod: periodUsed,
-            startDate: finalStartDate ? finalStartDate.toISOString() : "All Time",
+            startDate: finalStartDate
+                ? finalStartDate.toISOString()
+                : "All Time",
             endDate: finalEndDate ? finalEndDate.toISOString() : "All Time",
             totalRevenue: parseFloat(summary.totalRevenue || "0").toFixed(2),
             totalOrders: parseInt(String(summary.totalOrders || "0")),
-            avgOrderValue: parseFloat(String(summary.avgOrderValue ?? "0")).toFixed(2),
+            avgOrderValue: parseFloat(
+                String(summary.avgOrderValue ?? "0"),
+            ).toFixed(2),
         };
 
         res.status(StatusCodes.OK).json(salesSummary);
@@ -86,23 +114,35 @@ export const getTopSells = async (req: CustomRequest, res: Response) => {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return; // Error already handled
 
-        const { storeIds, finalStartDate, finalEndDate, periodUsed, storeQueryType } = validated;
+        const {
+            storeIds,
+            finalStartDate,
+            finalEndDate,
+            periodUsed,
+            storeQueryType,
+        } = validated;
 
         // Construct the base WHERE clause with the store ID
         let whereClause: SQL | undefined = inArray(orders.storeId, storeIds);
 
         if (finalStartDate && finalEndDate) {
-            whereClause = and(whereClause, gte(orders.orderDate, finalStartDate), lt(orders.orderDate, finalEndDate));
+            whereClause = and(
+                whereClause,
+                gte(orders.orderDate, finalStartDate),
+                lt(orders.orderDate, finalEndDate),
+            );
         }
 
         const topItemsQuery = db
             .select({
                 itemId: orderItems.menuItemId,
                 itemName: menuItems.name,
-                totalQuantitySold: sum(orderItems.quantity).as("totalQuantitySold"),
-                totalRevenueGenerated: sum(sql`${orderItems.quantity} * ${orderItems.priceAtOrder}`).as(
-                    "totalRevenueGenerated",
+                totalQuantitySold: sum(orderItems.quantity).as(
+                    "totalQuantitySold",
                 ),
+                totalRevenueGenerated: sum(
+                    sql`${orderItems.quantity} * ${orderItems.priceAtOrder}`,
+                ).as("totalRevenueGenerated"),
             })
             .from(orderItems)
             .innerJoin(orders, eq(orderItems.orderId, orders.id))
@@ -115,10 +155,14 @@ export const getTopSells = async (req: CustomRequest, res: Response) => {
         // Determine ORDER BY clause
         if (orderBy === "revenue") {
             // Note: The sum column used in SELECT must be explicitly repeated for the ORDER BY
-            const revenueSum = sum(sql`${orderItems.quantity} * ${orderItems.priceAtOrder}`);
+            const revenueSum = sum(
+                sql`${orderItems.quantity} * ${orderItems.priceAtOrder}`,
+            );
             orderedQuery = topItemsQuery.orderBy(desc(revenueSum));
         } else {
-            orderedQuery = topItemsQuery.orderBy(desc(sum(orderItems.quantity)));
+            orderedQuery = topItemsQuery.orderBy(
+                desc(sum(orderItems.quantity)),
+            );
         }
 
         const topItems = await orderedQuery.limit(limit);
@@ -126,11 +170,15 @@ export const getTopSells = async (req: CustomRequest, res: Response) => {
         const topSells = topItems.map((topItem) => ({
             storeQueryType,
             timePeriod: periodUsed,
-            startDate: finalStartDate ? finalStartDate.toISOString() : "All Time",
+            startDate: finalStartDate
+                ? finalStartDate.toISOString()
+                : "All Time",
             endDate: finalEndDate ? finalEndDate.toISOString() : "All Time",
             ...topItem,
             totalQuantitySold: parseFloat(topItem.totalQuantitySold || "0"),
-            totalRevenueGenerated: parseFloat(topItem.totalRevenueGenerated || "0").toFixed(2),
+            totalRevenueGenerated: parseFloat(
+                topItem.totalRevenueGenerated || "0",
+            ).toFixed(2),
         }));
 
         res.status(StatusCodes.OK).json(topSells);
@@ -159,7 +207,13 @@ export const getSalesTrend = async (req: CustomRequest, res: Response) => {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return; // Error already handled
 
-        const { storeIds, finalStartDate, finalEndDate, periodUsed, storeQueryType } = validated;
+        const {
+            storeIds,
+            finalStartDate,
+            finalEndDate,
+            periodUsed,
+            storeQueryType,
+        } = validated;
 
         // Handle the 'all-time' period by grouping by month
         if (periodUsed === "all-time") {
@@ -190,7 +244,9 @@ export const getSalesTrend = async (req: CustomRequest, res: Response) => {
             }
 
             const allMonths = [];
-            const current = moment(firstOrderDate).tz(TIMEZONE).startOf("month");
+            const current = moment(firstOrderDate)
+                .tz(TIMEZONE)
+                .startOf("month");
             const end = moment(lastOrderDate).tz(TIMEZONE).startOf("month");
 
             while (current.isSameOrBefore(end, "month")) {
@@ -218,7 +274,11 @@ export const getSalesTrend = async (req: CustomRequest, res: Response) => {
         }
 
         if (!finalStartDate || !finalEndDate) {
-            return handleError2(res, `Invalid period specified for sales trend.`, StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                `Invalid period specified for sales trend.`,
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         // Construct WHERE clause with date range and storeId
@@ -289,12 +349,21 @@ export const getSalesTrend = async (req: CustomRequest, res: Response) => {
  * @route GET /api/v1/dashboard/inventory-health-valuation
  * @access Private (Admin/Manager)
  */
-export const getInventoryValuationAndHealth = async (req: CustomRequest, res: Response) => {
+export const getInventoryValuationAndHealth = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return; // Error already handled
 
-        const { storeIds, finalStartDate, finalEndDate, periodUsed, storeQueryType } = validated;
+        const {
+            storeIds,
+            finalStartDate,
+            finalEndDate,
+            periodUsed,
+            storeQueryType,
+        } = validated;
 
         // Construct the base WHERE clause with the store ID
         let whereClause: SQL | undefined = inArray(inventory.storeId, storeIds);
@@ -336,7 +405,10 @@ export const getInventoryValuationAndHealth = async (req: CustomRequest, res: Re
             totalInventoryValue += quantity * price;
 
             // Count health status
-            if (quantity > 0 && item.status !== InventoryTransactionTypeEnum.DISCONTINUED) {
+            if (
+                quantity > 0 &&
+                item.status !== InventoryTransactionTypeEnum.DISCONTINUED
+            ) {
                 inStockItemsCount++;
             }
             if (quantity <= 0) {
@@ -346,13 +418,18 @@ export const getInventoryValuationAndHealth = async (req: CustomRequest, res: Re
             // Note: 'lowStock' count can be derived from the existing getInventorySummary if needed
         }
 
-        const stockedItemsPercentage = totalTrackedItems > 0 ? (inStockItemsCount / totalTrackedItems) * 100 : 0;
+        const stockedItemsPercentage =
+            totalTrackedItems > 0
+                ? (inStockItemsCount / totalTrackedItems) * 100
+                : 0;
 
         const formattedTotalValue = totalInventoryValue.toFixed(2);
 
         res.status(StatusCodes.OK).json({
             timePeriod: periodUsed,
-            startDate: finalStartDate ? finalStartDate.toISOString() : "All Time",
+            startDate: finalStartDate
+                ? finalStartDate.toISOString()
+                : "All Time",
             endDate: finalEndDate ? finalEndDate.toISOString() : "All Time",
             totalInventoryValue: formattedTotalValue,
             totalTrackedItems,
@@ -377,7 +454,10 @@ export const getInventoryValuationAndHealth = async (req: CustomRequest, res: Re
  * Formula: (Selling Price - Ingredient Cost) / Selling Price * 100
  * @route GET /api/v1/dashboard/finished-goods-profit-margin
  */
-export const getFinishedGoodsProfitMargin = async (req: CustomRequest, res: Response) => {
+export const getFinishedGoodsProfitMargin = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return; // Error already handled
@@ -403,7 +483,10 @@ export const getFinishedGoodsProfitMargin = async (req: CustomRequest, res: Resp
                         inArray(billOfMaterials.storeId, storeIds), // Ensure BOM belongs to target store
                     ),
                 )
-                .leftJoin(rawMaterials, eq(billOfMaterials.rawMaterialId, rawMaterials.id))
+                .leftJoin(
+                    rawMaterials,
+                    eq(billOfMaterials.rawMaterialId, rawMaterials.id),
+                )
                 .where(inArray(menuItems.storeId, storeIds)); // ✅ FIX: Filter by the correct store
 
             // Group the results by Menu Item
@@ -427,7 +510,10 @@ export const getFinishedGoodsProfitMargin = async (req: CustomRequest, res: Resp
             // Calculate Final Margins
             return Array.from(itemMap.values()).map((item) => {
                 const grossProfit = item.sellingPrice - item.totalCost;
-                const marginPercentage = item.sellingPrice > 0 ? (grossProfit / item.sellingPrice) * 100 : 0;
+                const marginPercentage =
+                    item.sellingPrice > 0
+                        ? (grossProfit / item.sellingPrice) * 100
+                        : 0;
 
                 return {
                     storeQueryType,

@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import { db } from "../shared/database";
+import db from "../shared/database";
 import { users } from "../schema/users-schema";
 import { and, eq, lt, sql } from "drizzle-orm";
 import { storeSubscriptions } from "../schema/store-subscriptions-schema";
@@ -12,7 +12,10 @@ cron.schedule(DAILY_CHECK_TIME, async () => {
 
     // Get all stores whose 'nextBillingDate' is today or in the past
     const dueSubscriptions = await db.query.storeSubscriptions.findMany({
-        where: and(eq(storeSubscriptions.status, "active"), lt(storeSubscriptions.nextBillingDate, today)),
+        where: and(
+            eq(storeSubscriptions.status, "active"),
+            lt(storeSubscriptions.nextBillingDate, today),
+        ),
     });
 
     for (const sub of dueSubscriptions) {
@@ -27,7 +30,9 @@ cron.schedule(DAILY_CHECK_TIME, async () => {
         // Calculate Bill (₦9,000 per user, capped at ₦45,000)
         const amountToCharge = Math.min(activeUsers * 9000, 45000);
 
-        console.log(`Store ${sub.storeId}: ${activeUsers} users. Billing: ₦${amountToCharge}`);
+        console.log(
+            `Store ${sub.storeId}: ${activeUsers} users. Billing: ₦${amountToCharge}`,
+        );
 
         // Logic: Move to Grace Period first
         // In Nigeria, instead of auto-charging, it's safer to give 3 days

@@ -1,5 +1,3 @@
-export { default as helperUtil } from "./helper.util";
-
 import { InventoryTransactionSummaryTypeEnum } from "../../types/enums";
 import { LogParams } from "../../service/activity-service-log";
 
@@ -10,6 +8,16 @@ export const generateOrderReference = (length = 8) => {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return result;
+};
+
+export const getEnvVariable = (key: string): string => {
+    const value = process.env[key];
+
+    if (!value) {
+        throw new Error(`Environment variable is missing: ${key}`);
+    }
+
+    return value;
 };
 
 /**
@@ -58,7 +66,10 @@ export const getInventoryTransactionTypeLabel = (type: string) => {
     }
 };
 
-type FormatDetailsParams = Pick<LogParams, "action" | "actorName" | "entityType" | "targetName" | "entityId" | "meta">;
+type FormatDetailsParams = Pick<
+    LogParams,
+    "action" | "actorName" | "entityType" | "targetName" | "entityId" | "meta"
+>;
 
 export const formatActivityDetails = ({
     action,

@@ -4,9 +4,13 @@ import { CustomRequest } from "../types/express";
 import { handleError2 } from "../service/error-handling";
 import { StatusCodes } from "http-status-codes";
 import { RawMaterialProductionService } from "../service/raw-material-production-service";
-import { db } from "../shared/database";
+import db from "../shared/database";
 import { and, desc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
-import { RawMaterialTransactionSourceEnum, TransactionTypeEnum, UserRoleEnum } from "../types/enums";
+import {
+    RawMaterialTransactionSourceEnum,
+    TransactionTypeEnum,
+    UserRoleEnum,
+} from "../types/enums";
 import { menuItems } from "../schema/menu-items-schema";
 import { validateStoreAndExtractDates } from "../shared/utils/validate-store-dates";
 import { nanoid } from "nanoid";
@@ -75,7 +79,10 @@ export const getProductionLogs = async (req: CustomRequest, res: Response) => {
  * @route GET /api/v1/production/summary
  * @access Admin, Manager
  */
-export const getProductionSummary = async (req: CustomRequest, res: Response) => {
+export const getProductionSummary = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return;
@@ -83,8 +90,10 @@ export const getProductionSummary = async (req: CustomRequest, res: Response) =>
         const { storeIds, finalStartDate, finalEndDate } = validated;
 
         const conditions = [inArray(productions.storeId, storeIds)];
-        if (finalStartDate) conditions.push(gte(productions.createdAt, finalStartDate));
-        if (finalEndDate) conditions.push(lte(productions.createdAt, finalEndDate));
+        if (finalStartDate)
+            conditions.push(gte(productions.createdAt, finalStartDate));
+        if (finalEndDate)
+            conditions.push(lte(productions.createdAt, finalEndDate));
 
         // One clean query to get all aggregates
         const stats = await db
@@ -102,7 +111,8 @@ export const getProductionSummary = async (req: CustomRequest, res: Response) =>
         const totalItems = Number(stats[0]?.totalItems || 0);
 
         // Calculate Profit Margin safely
-        const profitMargin = totalValue > 0 ? ((totalValue - totalCost) / totalValue) * 100 : 0;
+        const profitMargin =
+            totalValue > 0 ? ((totalValue - totalCost) / totalValue) * 100 : 0;
 
         return res.status(StatusCodes.OK).json({
             totalCostOfIngredients: totalCost,
@@ -133,23 +143,38 @@ export const runProduction = async (req: CustomRequest, res: Response) => {
         const userId = currentUser?.id;
 
         if (!storeId || !userId) {
-            return handleError2(res, "User does not have an associated store.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "User does not have an associated store.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         const { menuItemId, quantityToProduce } = req.body;
 
         if (!menuItemId) {
-            return handleError2(res, "Menu Item is required for production.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Menu Item is required for production.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         // Default to 1 if not provided, but validate positive number
-        const productionQty = quantityToProduce && quantityToProduce > 0 ? quantityToProduce : 1;
+        const productionQty =
+            quantityToProduce && quantityToProduce > 0 ? quantityToProduce : 1;
 
         // Generate a unique, human-readable batch ID for auditing
         const productionBatchId = `PROD-${nanoid(10)}`;
 
         // Execute Production Service
-        await RawMaterialProductionService.runProduction(menuItemId, storeId, userId, productionBatchId, productionQty);
+        await RawMaterialProductionService.runProduction(
+            menuItemId,
+            storeId,
+            userId,
+            productionBatchId,
+            productionQty,
+        );
 
         // Fetch material name for the log (Optional but better for UI)
         const menuItem = await db.query.menuItems.findFirst({
@@ -177,7 +202,10 @@ export const runProduction = async (req: CustomRequest, res: Response) => {
         });
     } catch (error: any) {
         // 🟢 NEW: Catch our custom "Insufficient Stock" or "Inventory Error" messages
-        if (error.message.includes("Insufficient Stock") || error.message.includes("Inventory Error")) {
+        if (
+            error.message.includes("Insufficient Stock") ||
+            error.message.includes("Inventory Error")
+        ) {
             return handleError2(
                 res,
                 error.message, // This will now say "Insufficient Stock: You need 5000 units of Rice..."
@@ -225,7 +253,11 @@ export const recordWastage = async (req: CustomRequest, res: Response) => {
         const userId = currentUser?.id;
 
         if (!storeId) {
-            return handleError2(res, "Authentication or Store association missing.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Authentication or Store association missing.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (!userId) {
@@ -242,38 +274,59 @@ export const recordWastage = async (req: CustomRequest, res: Response) => {
         );
         if (!finalStoreId) return; // Error already handled
 
-        const { rawMaterialId, quantityPresentation, unitOfMeasurementId, reason } = req.body;
+        const {
+            rawMaterialId,
+            quantityPresentation,
+            unitOfMeasurementId,
+            reason,
+        } = req.body;
 
         if (!rawMaterialId || !quantityPresentation || !unitOfMeasurementId) {
-            return handleError2(res, "Missing required wastage data.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Missing required wastage data.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         // Resolve Inventory Record and Fetch Material Name for Logging
         const inventoryRecord = await db.query.rawMaterialInventory.findFirst({
             where: and(
                 eq(rawMaterialInventory.storeId, finalStoreId),
-                or(eq(rawMaterialInventory.id, rawMaterialId), eq(rawMaterialInventory.rawMaterialId, rawMaterialId)),
+                or(
+                    eq(rawMaterialInventory.id, rawMaterialId),
+                    eq(rawMaterialInventory.rawMaterialId, rawMaterialId),
+                ),
             ),
             with: { rawMaterial: true },
         });
 
         if (!inventoryRecord) {
-            return handleError2(res, "Material not found in this store's inventory.", StatusCodes.NOT_FOUND);
+            return handleError2(
+                res,
+                "Material not found in this store's inventory.",
+                StatusCodes.NOT_FOUND,
+            );
         }
 
         // Always use the actual RawMaterialId for the stock-out service
         const resolvedRawMaterialId = inventoryRecord.rawMaterialId;
 
-        const materialName = inventoryRecord.rawMaterial?.name || "Unknown Material";
+        const materialName =
+            inventoryRecord.rawMaterial?.name || "Unknown Material";
         const wasteBatchId = `WASTE-${nanoid(8)}`;
 
         // Executing Transaction
         await db.transaction(async (tx) => {
             // Convert to Base Units
-            const unitRecord = await UnitConversionService.fetchUnitById(unitOfMeasurementId);
+            const unitRecord =
+                await UnitConversionService.fetchUnitById(unitOfMeasurementId);
             if (!unitRecord) throw new Error("Invalid unit of measurement.");
 
-            const quantityBase = UnitConversionService.convertToBaseUnit(quantityPresentation, unitRecord);
+            const quantityBase = UnitConversionService.convertToBaseUnit(
+                quantityPresentation,
+                unitRecord,
+            );
 
             // Deduct using existing production-grade service
             await RawMaterialInventoryService.processRawMaterialStockOut(tx, {
@@ -340,11 +393,17 @@ export const getWastageSummary = async (req: CustomRequest, res: Response) => {
                 financialLoss: sql<number>`SUM(ABS(${rawMaterialTransactions.quantityBase}) * ${rawMaterials.latestUnitPrice})`,
             })
             .from(rawMaterialTransactions)
-            .innerJoin(rawMaterials, eq(rawMaterialTransactions.rawMaterialId, rawMaterials.id))
+            .innerJoin(
+                rawMaterials,
+                eq(rawMaterialTransactions.rawMaterialId, rawMaterials.id),
+            )
             .where(
                 and(
                     inArray(rawMaterialTransactions.storeId, storeIds),
-                    eq(rawMaterialTransactions.source, RawMaterialTransactionSourceEnum.WASTAGE),
+                    eq(
+                        rawMaterialTransactions.source,
+                        RawMaterialTransactionSourceEnum.WASTAGE,
+                    ),
                     gte(rawMaterialTransactions.createdAt, finalStartDate!),
                     lte(rawMaterialTransactions.createdAt, finalEndDate!),
                 ),

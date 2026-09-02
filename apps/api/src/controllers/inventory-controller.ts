@@ -1,7 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { and, desc, eq, ExtractTablesWithRelations, gte, inArray, ne, SQL } from "drizzle-orm";
+import {
+    and,
+    desc,
+    eq,
+    ExtractTablesWithRelations,
+    gte,
+    inArray,
+    ne,
+    SQL,
+} from "drizzle-orm";
 import { Response } from "express";
-import { db } from "../shared/database";
+import db from "../shared/database";
 import { inventory } from "../schema/inventory-schema";
 import { handleError2 } from "../service/error-handling";
 import { CustomRequest } from "../types/express";
@@ -15,7 +24,11 @@ import { OrderItemStockUpdate } from "../types";
 import { lte } from "drizzle-orm/sql/expressions/conditions";
 import { validateStoreAndExtractDates } from "../shared/utils/validate-store-dates";
 import { InsufficientStockError } from "../errors";
-import { INVENTORY_TRANSACTION_SUMMARY_TYPES, InventoryTransactionTypeEnum, UserRoleEnum } from "../types/enums";
+import {
+    INVENTORY_TRANSACTION_SUMMARY_TYPES,
+    InventoryTransactionTypeEnum,
+    UserRoleEnum,
+} from "../types/enums";
 import { determineFinalStoreId } from "../shared/utils/store-permission-utils";
 import { InventoryAlertService } from "../service/inventory-alert-service";
 import { users } from "../schema/users-schema";
@@ -26,7 +39,11 @@ import { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import schema from "../db/schema";
 
 // This type represents a transaction in your specific schema using postgres-js
-type Transaction = PgTransaction<PostgresJsQueryResultHKT, typeof schema, ExtractTablesWithRelations<typeof schema>>;
+type Transaction = PgTransaction<
+    PostgresJsQueryResultHKT,
+    typeof schema,
+    ExtractTablesWithRelations<typeof schema>
+>;
 
 /**
  * @desc    Get all inventory records for the user's store
@@ -77,25 +94,40 @@ export const getAllInventory = async (req: CustomRequest, res: Response) => {
  * @access  Private (Store-associated users only)
  * @query   ?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
  */
-export const getTransactionsByMenuItem = async (req: CustomRequest, res: Response) => {
+export const getTransactionsByMenuItem = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
         const userRole = currentUser?.role;
 
         if (!storeId) {
-            return handleError2(res, "You must be associated with a store.", StatusCodes.FORBIDDEN);
+            return handleError2(
+                res,
+                "You must be associated with a store.",
+                StatusCodes.FORBIDDEN,
+            );
         }
 
         const { id: menuItemId } = req.params;
         const { startDate, endDate, targetStoreId } = req.query;
 
         if (!menuItemId) {
-            return handleError2(res, "Menu item is required.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Menu item is required.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof menuItemId !== "string") {
-            return handleError2(res, "Invalid menu item.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Invalid menu item.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         const finalStoreId = await determineFinalStoreId(
@@ -116,8 +148,14 @@ export const getTransactionsByMenuItem = async (req: CustomRequest, res: Respons
         if (startDate && endDate) {
             whereClause = and(
                 whereClause,
-                gte(inventoryTransactions.transactionDate, new Date(startDate as string)),
-                lte(inventoryTransactions.transactionDate, new Date(endDate as string)),
+                gte(
+                    inventoryTransactions.transactionDate,
+                    new Date(startDate as string),
+                ),
+                lte(
+                    inventoryTransactions.transactionDate,
+                    new Date(endDate as string),
+                ),
             );
         }
 
@@ -134,7 +172,11 @@ export const getTransactionsByMenuItem = async (req: CustomRequest, res: Respons
         });
 
         if (transactions.length === 0) {
-            return handleError2(res, "No transaction history found for this item.", StatusCodes.NOT_FOUND);
+            return handleError2(
+                res,
+                "No transaction history found for this item.",
+                StatusCodes.NOT_FOUND,
+            );
         }
 
         res.status(StatusCodes.OK).json(transactions);
@@ -154,16 +196,28 @@ export const getTransactionsByMenuItem = async (req: CustomRequest, res: Respons
  * @access  Private (Store-associated users only)
  * @query   ?timePeriod=week OR ?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
  */
-export const getInventoryTransactions = async (req: CustomRequest, res: Response) => {
+export const getInventoryTransactions = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const validated = await validateStoreAndExtractDates(req, res);
         if (!validated) return;
 
-        const { storeIds, finalStartDate, finalEndDate, periodUsed, storeQueryType } = validated;
+        const {
+            storeIds,
+            finalStartDate,
+            finalEndDate,
+            periodUsed,
+            storeQueryType,
+        } = validated;
         const { menuItemId } = req.query; // Optional filter for specific product
 
         // Construct the Base WHERE clause
-        let whereClause: SQL | undefined = inArray(inventoryTransactions.storeId, storeIds);
+        let whereClause: SQL | undefined = inArray(
+            inventoryTransactions.storeId,
+            storeIds,
+        );
 
         // Date Filtering
         if (finalStartDate && finalEndDate) {
@@ -176,7 +230,10 @@ export const getInventoryTransactions = async (req: CustomRequest, res: Response
 
         // Specific Item Filter
         if (menuItemId && menuItemId !== "all") {
-            whereClause = and(whereClause, eq(inventoryTransactions.menuItemId, menuItemId as string));
+            whereClause = and(
+                whereClause,
+                eq(inventoryTransactions.menuItemId, menuItemId as string),
+            );
         }
 
         // The Detailed Select Query (Joining for "Elaboration")
@@ -205,11 +262,17 @@ export const getInventoryTransactions = async (req: CustomRequest, res: Response
                 storeName: stores.name,
             })
             .from(inventoryTransactions)
-            .innerJoin(menuItems, eq(inventoryTransactions.menuItemId, menuItems.id))
+            .innerJoin(
+                menuItems,
+                eq(inventoryTransactions.menuItemId, menuItems.id),
+            )
             .leftJoin(users, eq(inventoryTransactions.performedBy, users.id)) // Use leftJoin if performedBy can be null
             .innerJoin(stores, eq(inventoryTransactions.storeId, stores.id))
             .where(whereClause)
-            .orderBy(desc(inventoryTransactions.transactionDate), desc(inventoryTransactions.createdAt));
+            .orderBy(
+                desc(inventoryTransactions.transactionDate),
+                desc(inventoryTransactions.createdAt),
+            );
 
         // Post-Processing (Labels and formatting)
         const transactionHistory = transactionLogs.map((item) => {
@@ -227,14 +290,18 @@ export const getInventoryTransactions = async (req: CustomRequest, res: Response
                 label: getInventoryTransactionTypeLabel(item.type),
 
                 // Audit Info
-                performedBy: item.actor ? `${item.actor.firstName} ${item.actor.lastName}` : "System/Automatic",
+                performedBy: item.actor
+                    ? `${item.actor.firstName} ${item.actor.lastName}`
+                    : "System/Automatic",
                 storeName: item.storeName,
                 createdAt: item.createdAt,
             };
         });
 
         return res.status(StatusCodes.OK).json({
-            startDate: finalStartDate ? finalStartDate.toISOString() : "All Time",
+            startDate: finalStartDate
+                ? finalStartDate.toISOString()
+                : "All Time",
             endDate: finalEndDate ? finalEndDate.toISOString() : "All Time",
             timePeriod: periodUsed,
             storeQueryType,
@@ -256,25 +323,40 @@ export const getInventoryTransactions = async (req: CustomRequest, res: Response
  * @route   GET /api/v1/inventory/:menuItemId
  * @access  Private (Store-associated users only)
  */
-export const getInventoryByMenuItem = async (req: CustomRequest, res: Response) => {
+export const getInventoryByMenuItem = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
         const userRole = currentUser?.role;
 
         if (!storeId) {
-            return handleError2(res, "You must be associated with a store to view inventory.", StatusCodes.FORBIDDEN);
+            return handleError2(
+                res,
+                "You must be associated with a store to view inventory.",
+                StatusCodes.FORBIDDEN,
+            );
         }
 
         const { id: menuItemId } = req.params;
         const { targetStoreId } = req.query;
 
         if (!menuItemId) {
-            return handleError2(res, "Menu item is required.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Menu item is required.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof menuItemId !== "string") {
-            return handleError2(res, "Invalid menu item.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Invalid menu item.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         const finalStoreId = await determineFinalStoreId(
@@ -285,10 +367,17 @@ export const getInventoryByMenuItem = async (req: CustomRequest, res: Response) 
         );
         if (!finalStoreId) return; // Error already handled
 
-        const inventoryItem = await getInventoryByMenuItemId(menuItemId, finalStoreId);
+        const inventoryItem = await getInventoryByMenuItemId(
+            menuItemId,
+            finalStoreId,
+        );
 
         if (!inventoryItem) {
-            return handleError2(res, "Inventory record not found for this menu item.", StatusCodes.NOT_FOUND);
+            return handleError2(
+                res,
+                "Inventory record not found for this menu item.",
+                StatusCodes.NOT_FOUND,
+            );
         }
 
         res.status(StatusCodes.OK).json(inventoryItem);
@@ -308,14 +397,21 @@ export const getInventoryByMenuItem = async (req: CustomRequest, res: Response) 
  * @route POST /api/v1/inventory/create
  * @access Private (Store-associated users only)
  */
-export const createInventoryRecord = async (req: CustomRequest, res: Response) => {
+export const createInventoryRecord = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
         const userRole = currentUser?.role;
 
         if (!storeId) {
-            return handleError2(res, "You must be associated with a store to view inventory.", StatusCodes.FORBIDDEN);
+            return handleError2(
+                res,
+                "You must be associated with a store to view inventory.",
+                StatusCodes.FORBIDDEN,
+            );
         }
 
         const { targetStoreId } = req.query;
@@ -331,10 +427,17 @@ export const createInventoryRecord = async (req: CustomRequest, res: Response) =
 
         // Validation and Existence Checks
         if (!menuItemId || quantity === undefined) {
-            return handleError2(res, "Menu item and initial quantity are required.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Menu item and initial quantity are required.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
-        const existingInventory = await getInventoryByMenuItemId(menuItemId, finalStoreId);
+        const existingInventory = await getInventoryByMenuItemId(
+            menuItemId,
+            finalStoreId,
+        );
 
         if (existingInventory) {
             return handleError2(
@@ -345,12 +448,19 @@ export const createInventoryRecord = async (req: CustomRequest, res: Response) =
         }
 
         const existingMenuItem = await db.query.menuItems.findFirst({
-            where: and(eq(menuItems.id, menuItemId), eq(menuItems.storeId, finalStoreId)),
+            where: and(
+                eq(menuItems.id, menuItemId),
+                eq(menuItems.storeId, finalStoreId),
+            ),
             columns: { id: true, name: true }, // Only fetch what is needed
         });
 
         if (!existingMenuItem) {
-            return handleError2(res, `Menu item not found in your store.`, StatusCodes.NOT_FOUND);
+            return handleError2(
+                res,
+                `Menu item not found in your store.`,
+                StatusCodes.NOT_FOUND,
+            );
         }
 
         // Insert a new Inventory record
@@ -496,18 +606,30 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
         const userRole = currentUser?.role;
 
         if (!storeId) {
-            return handleError2(res, "You must be associated with a store to adjust inventory.", StatusCodes.FORBIDDEN);
+            return handleError2(
+                res,
+                "You must be associated with a store to adjust inventory.",
+                StatusCodes.FORBIDDEN,
+            );
         }
 
         const { id: menuItemId } = req.params;
         const { targetStoreId } = req.query;
 
         if (!menuItemId) {
-            return handleError2(res, "Menu item is required.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Menu item is required.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof menuItemId !== "string") {
-            return handleError2(res, "Invalid menu item.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Invalid menu item.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         const { quantityAdjustment, transactionType, notes } = req.body; // quantityAdjustment is the delta (+ or -)
@@ -531,7 +653,11 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
 
         const changeAmount = Number(quantityAdjustment);
         if (isNaN(changeAmount) || changeAmount === 0) {
-            return handleError2(res, "Quantity adjustment must be a non-zero number.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Quantity adjustment must be a non-zero number.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         // Types allowed for manual change via API
@@ -545,10 +671,17 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
         }
 
         // Fetch current inventory
-        const currentInventory = await getInventoryByMenuItemId(menuItemId, finalStoreId);
+        const currentInventory = await getInventoryByMenuItemId(
+            menuItemId,
+            finalStoreId,
+        );
 
         if (!currentInventory) {
-            return handleError2(res, "Inventory record not found. Create a record first.", StatusCodes.NOT_FOUND);
+            return handleError2(
+                res,
+                "Inventory record not found. Create a record first.",
+                StatusCodes.NOT_FOUND,
+            );
         }
 
         // Calculate new quantity
@@ -578,7 +711,12 @@ export const adjustStock = async (req: CustomRequest, res: Response) => {
                     // TODO: (Future) Add logic here to update 'status' based on 'newQuantity' vs 'minStockLevel'
                     status: newStatus,
                 })
-                .where(and(eq(inventory.menuItemId, menuItemId), eq(inventory.storeId, finalStoreId)))
+                .where(
+                    and(
+                        eq(inventory.menuItemId, menuItemId),
+                        eq(inventory.storeId, finalStoreId),
+                    ),
+                )
                 .returning();
 
             // Insert the Inventory Transaction record
@@ -649,9 +787,16 @@ export const decrementStockForOrder = async (
         const currentInventoryRecords = await tx
             .select()
             .from(inventory)
-            .where(and(eq(inventory.storeId, storeId), inArray(inventory.menuItemId, menuItemIds)));
+            .where(
+                and(
+                    eq(inventory.storeId, storeId),
+                    inArray(inventory.menuItemId, menuItemIds),
+                ),
+            );
 
-        const inventoryMap = new Map(currentInventoryRecords.map((item) => [item.menuItemId, item]));
+        const inventoryMap = new Map(
+            currentInventoryRecords.map((item) => [item.menuItemId, item]),
+        );
 
         // Pre-check: Ensure all items exist and have enough inventories (stocks)
         for (const item of items) {
@@ -660,7 +805,9 @@ export const decrementStockForOrder = async (
             // If the inventory record is missing, throw an error and roll back the Order.
             // Suggestion: Fetch the name from the inventory record (if joined) or pass it in so the error message is human-readable.
             if (!currentRecord) {
-                throw new InsufficientStockError(`Item not found in inventory.`);
+                throw new InsufficientStockError(
+                    `Item not found in inventory.`,
+                );
             }
 
             if (currentRecord.quantity < item.quantity) {
@@ -680,7 +827,10 @@ export const decrementStockForOrder = async (
             const minStockLevel = currentRecord.minStockLevel;
 
             // Calculate the new status (using the helper function you planned)
-            const newStatus = calculateInventoryStatus(newQuantity, minStockLevel);
+            const newStatus = calculateInventoryStatus(
+                newQuantity,
+                minStockLevel,
+            );
 
             // Update Inventory record using the transaction object (tx)
             await tx
@@ -691,7 +841,12 @@ export const decrementStockForOrder = async (
                     lastCountDate: new Date(),
                     status: newStatus,
                 })
-                .where(and(eq(inventory.menuItemId, item.menuItemId), eq(inventory.storeId, storeId)));
+                .where(
+                    and(
+                        eq(inventory.menuItemId, item.menuItemId),
+                        eq(inventory.storeId, storeId),
+                    ),
+                );
 
             // Insert Inventory Transaction record using the transaction object (tx)
             await tx.insert(inventoryTransactions).values({
@@ -720,7 +875,10 @@ export const decrementStockForOrder = async (
  * @route   PATCH /api/v1/inventory/discontinue/:menuItemId
  * @access  Private (Manager/Admin only)
  */
-export const discontinueInventory = async (req: CustomRequest, res: Response) => {
+export const discontinueInventory = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
@@ -728,18 +886,30 @@ export const discontinueInventory = async (req: CustomRequest, res: Response) =>
         const userRole = currentUser?.role;
 
         if (!storeId) {
-            return handleError2(res, "You must be associated with a store.", StatusCodes.FORBIDDEN);
+            return handleError2(
+                res,
+                "You must be associated with a store.",
+                StatusCodes.FORBIDDEN,
+            );
         }
 
         const { id: menuItemId } = req.params;
         const { targetStoreId } = req.query;
 
         if (!menuItemId) {
-            return handleError2(res, "Menu item is required.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Menu item is required.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof menuItemId !== "string") {
-            return handleError2(res, "Invalid menu item.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Invalid menu item.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         const finalStoreId = await determineFinalStoreId(
@@ -761,13 +931,20 @@ export const discontinueInventory = async (req: CustomRequest, res: Response) =>
                     eq(inventory.menuItemId, menuItemId),
                     eq(inventory.storeId, finalStoreId),
                     // Prevent discontinuing if already discontinued
-                    ne(inventory.status, InventoryTransactionTypeEnum.DISCONTINUED),
+                    ne(
+                        inventory.status,
+                        InventoryTransactionTypeEnum.DISCONTINUED,
+                    ),
                 ),
             )
             .returning();
 
         if (!updatedInventory) {
-            return handleError2(res, "Inventory record not found or already discontinued.", StatusCodes.NOT_FOUND);
+            return handleError2(
+                res,
+                "Inventory record not found or already discontinued.",
+                StatusCodes.NOT_FOUND,
+            );
         }
 
         // Log activity
@@ -796,7 +973,10 @@ export const discontinueInventory = async (req: CustomRequest, res: Response) =>
  * @route   DELETE /api/v1/inventory/:menuItemId
  * @access  Private (Admin/Highly Restricted)
  */
-export const deleteInventoryRecord = async (req: CustomRequest, res: Response) => {
+export const deleteInventoryRecord = async (
+    req: CustomRequest,
+    res: Response,
+) => {
     try {
         const currentUser = req.user?.data;
         const storeId = currentUser?.storeId;
@@ -804,18 +984,30 @@ export const deleteInventoryRecord = async (req: CustomRequest, res: Response) =
         const userRole = currentUser?.role;
 
         if (!storeId) {
-            return handleError2(res, "You must be associated with a store.", StatusCodes.FORBIDDEN);
+            return handleError2(
+                res,
+                "You must be associated with a store.",
+                StatusCodes.FORBIDDEN,
+            );
         }
 
         const { id: menuItemId } = req.params;
         const { targetStoreId } = req.query;
 
         if (!menuItemId) {
-            return handleError2(res, "Menu item is required.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Menu item is required.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof menuItemId !== "string") {
-            return handleError2(res, "Invalid menu item.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Invalid menu item.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         const finalStoreId = await determineFinalStoreId(
@@ -827,10 +1019,17 @@ export const deleteInventoryRecord = async (req: CustomRequest, res: Response) =
         if (!finalStoreId) return; // Error already handled
 
         // Fetch the record before deleting to get the Inventory ID for logging
-        const inventoryToDelete = await getInventoryByMenuItemId(menuItemId, finalStoreId);
+        const inventoryToDelete = await getInventoryByMenuItemId(
+            menuItemId,
+            finalStoreId,
+        );
 
         if (!inventoryToDelete) {
-            return handleError2(res, "Inventory record not found.", StatusCodes.NOT_FOUND);
+            return handleError2(
+                res,
+                "Inventory record not found.",
+                StatusCodes.NOT_FOUND,
+            );
         }
 
         // The 'onDelete: cascade' on `inventory.menuItemId` in the schema
@@ -856,7 +1055,12 @@ export const deleteInventoryRecord = async (req: CustomRequest, res: Response) =
             // Delete the inventory record itself
             await tx
                 .delete(inventory)
-                .where(and(eq(inventory.menuItemId, menuItemId), eq(inventory.storeId, finalStoreId)))
+                .where(
+                    and(
+                        eq(inventory.menuItemId, menuItemId),
+                        eq(inventory.storeId, finalStoreId),
+                    ),
+                )
                 .returning();
         });
 
@@ -871,7 +1075,8 @@ export const deleteInventoryRecord = async (req: CustomRequest, res: Response) =
         });
 
         res.status(StatusCodes.OK).json({
-            message: "Inventory record and all associated transactions deleted successfully.",
+            message:
+                "Inventory record and all associated transactions deleted successfully.",
         });
     } catch (error) {
         handleError2(
@@ -895,7 +1100,8 @@ export const getInventoryAlerts = async (req: CustomRequest, res: Response) => {
 
         const { storeIds, storeQueryType } = validated;
 
-        const report = await InventoryAlertService.getUnifiedAlertReport(storeIds);
+        const report =
+            await InventoryAlertService.getUnifiedAlertReport(storeIds);
 
         return res.status(StatusCodes.OK).json({
             ...report,
@@ -925,18 +1131,30 @@ export const continueInventory = async (req: CustomRequest, res: Response) => {
         const userRole = currentUser?.role;
 
         if (!storeId) {
-            return handleError2(res, "You must be associated with a store.", StatusCodes.FORBIDDEN);
+            return handleError2(
+                res,
+                "You must be associated with a store.",
+                StatusCodes.FORBIDDEN,
+            );
         }
 
         const { id: menuItemId } = req.params;
         const { targetStoreId } = req.query;
 
         if (!menuItemId) {
-            return handleError2(res, "Menu item is required.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Menu item is required.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof menuItemId !== "string") {
-            return handleError2(res, "Invalid menu item.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Invalid menu item.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         const finalStoreId = await determineFinalStoreId(
@@ -958,7 +1176,10 @@ export const continueInventory = async (req: CustomRequest, res: Response) => {
                     eq(inventory.menuItemId, menuItemId),
                     eq(inventory.storeId, finalStoreId),
                     // Only update if it is currently discontinued
-                    eq(inventory.status, InventoryTransactionTypeEnum.DISCONTINUED),
+                    eq(
+                        inventory.status,
+                        InventoryTransactionTypeEnum.DISCONTINUED,
+                    ),
                 ),
             )
             .returning();

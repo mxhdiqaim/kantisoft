@@ -1,9 +1,12 @@
-import { db } from "../shared/database";
+import db from "../shared/database";
 import { billOfMaterials } from "../schema/bill-of-materials-schema";
 import { rawMaterials } from "../schema/raw-materials-schema";
 import { and, eq } from "drizzle-orm";
 import { RawMaterialInventoryService } from "./raw-material-inventory-service";
-import { RawMaterialTransactionSourceEnum, TransactionTypeEnum } from "../types/enums";
+import {
+    RawMaterialTransactionSourceEnum,
+    TransactionTypeEnum,
+} from "../types/enums";
 import { menuItems } from "../schema/menu-items-schema";
 import { productions } from "../schema/production-schema";
 
@@ -30,20 +33,31 @@ export const RawMaterialProductionService = {
             .select({
                 rawMaterialId: rawMaterials.id,
                 latestUnitPrice: rawMaterials.latestUnitPrice,
-                consumptionQuantityBase: billOfMaterials.consumptionQuantityBase,
+                consumptionQuantityBase:
+                    billOfMaterials.consumptionQuantityBase,
                 itemName: menuItems.name,
                 itemPrice: menuItems.price,
             })
             .from(billOfMaterials)
-            .innerJoin(rawMaterials, eq(billOfMaterials.rawMaterialId, rawMaterials.id))
+            .innerJoin(
+                rawMaterials,
+                eq(billOfMaterials.rawMaterialId, rawMaterials.id),
+            )
             .innerJoin(menuItems, eq(billOfMaterials.menuItemId, menuItems.id))
-            .where(and(eq(billOfMaterials.menuItemId, menuItemId), eq(menuItems.storeId, storeId)));
+            .where(
+                and(
+                    eq(billOfMaterials.menuItemId, menuItemId),
+                    eq(menuItems.storeId, storeId),
+                ),
+            );
 
-        if (bomItems.length === 0) throw new Error(`No Bill of Materials defined for this Menu Item`);
+        if (bomItems.length === 0)
+            throw new Error(`No Bill of Materials defined for this Menu Item`);
 
         // Calculate totals for the Production record
         let totalBatchCost = 0;
-        const potentialRevenue = parseFloat(bomItems[0].itemPrice) * quantityToProduce;
+        const potentialRevenue =
+            parseFloat(bomItems[0].itemPrice) * quantityToProduce;
 
         // Starting Atomic Transaction for Deduction
         await db.transaction(async (tx) => {
@@ -62,21 +76,26 @@ export const RawMaterialProductionService = {
                 .returning();
 
             for (const item of bomItems) {
-                const totalNeededBase = item.consumptionQuantityBase * quantityToProduce;
-                const ingredientCost = (item.latestUnitPrice || 0) * totalNeededBase;
+                const totalNeededBase =
+                    item.consumptionQuantityBase * quantityToProduce;
+                const ingredientCost =
+                    (item.latestUnitPrice || 0) * totalNeededBase;
                 totalBatchCost += ingredientCost;
 
                 // Deduct Raw Materials
-                await RawMaterialInventoryService.processRawMaterialStockOut(tx, {
-                    rawMaterialId: item.rawMaterialId,
-                    storeId,
-                    userId,
-                    type: TransactionTypeEnum.GOING_OUT,
-                    source: RawMaterialTransactionSourceEnum.PRODUCTION_USAGE,
-                    quantityBase: totalNeededBase,
-                    documentRefId: productionRecord.id, // Reference the NEW production table ID
-                    notes: `Production of ${bomItems[0].itemName}`,
-                });
+                await RawMaterialInventoryService.processRawMaterialStockOut(
+                    tx,
+                    {
+                        rawMaterialId: item.rawMaterialId,
+                        storeId,
+                        userId,
+                        type: TransactionTypeEnum.GOING_OUT,
+                        source: RawMaterialTransactionSourceEnum.PRODUCTION_USAGE,
+                        quantityBase: totalNeededBase,
+                        documentRefId: productionRecord.id, // Reference the NEW production table ID
+                        notes: `Production of ${bomItems[0].itemName}`,
+                    },
+                );
             }
 
             // Update Header with the calculated total cost

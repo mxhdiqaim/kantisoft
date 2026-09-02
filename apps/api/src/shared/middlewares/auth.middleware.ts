@@ -1,90 +1,82 @@
-import { Request, Response, NextFunction } from "express";
-import { getAuth } from "@clerk/express";
-import { v4 as uuidv4 } from "uuid";
-import { eq, and } from "drizzle-orm";
-import { userLocationsSchema, userSchema } from "../../modules";
-import { db } from "../database";
-import { requestContext } from "../logger/context";
-import { UserRoleEnum } from "../../modules/iam/interface";
-import { UnauthorizedError, ForbiddenError } from "../errors/custom.error";
+import { Response, NextFunction } from "express";
+import { eq } from "drizzle-orm";
+import admin from "firebase-admin";
+import db from "../database";
+import { users } from "../../schema/users-schema";
+import { CustomRequest } from "../../types/express";
+import { UserStatusEnum } from "../../types/enums";
+import { handleError2 } from "../../service/error-handling";
 
-class AuthMiddleware {
-    // Ensures the request contains a valid Clerk session.
-    public requireAuth(req: Request, res: Response, next: NextFunction) {
-        const { isAuthenticated } = getAuth(req);
+export const authenticateToken = async (
+    req: CustomRequest,
+    res: Response,
+    next: NextFunction,
+) => {
+    try {
+        const authHeader = req.headers.authorization;
 
-        if (!isAuthenticated) {
-            return next(new UnauthorizedError("Authentication failed or missing."));
+        // Check for standard Bearer Token structure
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return handleError2(
+                res,
+                "Unauthorized: Missing or malformed token format. Use 'Bearer <TOKEN>'.",
+                401,
+            );
         }
 
-        next();
-    }
+        const token = authHeader.split(" ")[1];
 
-    /**
-     * Resolves the user's business from the DB, validates location access,
-     * and wraps the request in an AsyncLocalStorage context.
-     */
-    public async withTenantContext(req: Request, res: Response, next: NextFunction) {
-        try {
-            const { userId: clerkId } = getAuth(req);
+        // Verify the cryptographic token using Firebase Admin SDK
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const { uid, email } = decodedToken;
 
-            if (!clerkId) {
-                return next(new UnauthorizedError("Authentication failed or missing."));
-            }
+        // Fetch user data from DB matching the firebaseUid
+        let userData = await db.query.users.findFirst({
+            where: eq(users.firebaseUid, uid),
+        });
 
-            // Resolve the user from the database
-            const [user] = await db
-                .select({
-                    id: userSchema.id,
-                    tenantId: userSchema.tenantId,
-                    role: userSchema.role,
-                })
-                .from(userSchema)
-                .where(eq(userSchema.clerkId, clerkId))
-                .limit(1);
-
-            if (!user) {
-                return next(new UnauthorizedError("User profile syncing. Please wait a moment."));
-            }
-
-            // Block if they haven't created a business yet
-            if (!user.tenantId) {
-                return next(new ForbiddenError("You must create a business before accessing this resource."));
-            }
-
-            // Extract and validate target location permissions
-            const locationId = (req.headers["x-location-id"] as string) || undefined;
-
-            if (locationId && user.role !== UserRoleEnum.OWNER) {
-                const [assignment] = await db
-                    .select()
-                    .from(userLocationsSchema)
-                    .where(and(eq(userLocationsSchema.userId, user.id), eq(userLocationsSchema.locationId, locationId)))
-                    .limit(1);
-
-                if (!assignment) {
-                    return next(new ForbiddenError("You do not have permission to access this location."));
-                }
-            }
-
-            // Trace & Context binding
-            const requestId = (req.headers["x-request-id"] as string) || uuidv4();
-
-            const context = {
-                requestId,
-                tenantId: user.tenantId,
-                locationId,
-                role: user.role,
-            };
-
-            // Execute the remainder of the request lifecycle within this context
-            requestContext.run(context, () => {
-                next();
+        // 🌟 MIGRATION BRIDGE:
+        // If they are a legacy user logging in via Firebase for the first time,
+        // they won't have a firebaseUid yet. Match them by email and link their account.
+        if (!userData && email) {
+            userData = await db.query.users.findFirst({
+                where: eq(users.email, email),
             });
-        } catch (error) {
-            next(error);
-        }
-    }
-}
 
-export default new AuthMiddleware();
+            if (userData) {
+                await db
+                    .update(users)
+                    .set({ firebaseUid: uid })
+                    .where(eq(users.id, userData.id));
+            }
+        }
+
+        // Guard clauses for unregistered or restricted profiles
+        if (!userData) {
+            return handleError2(res, "Account not registered!", 403);
+        }
+
+        if (userData.status !== UserStatusEnum.ACTIVE) {
+            return handleError2(res, "Authentication Failed!", 403);
+        }
+
+        // Structure the context to perfectly mirror your old req.user type
+        req.user = {
+            data: userData,
+        };
+
+        // Optional: Keep your global helper lists if your older code utilises them
+        req.storeIds = userData.storeId ? [userData.storeId] : [];
+
+        return next();
+        // eslint-disable-next-line
+    } catch (error: any) {
+        console.error("❌ Token Verification Error:", error.message);
+
+        if (error.code === "auth/id-token-expired") {
+            return handleError2(res, "Unauthorized: Token expired.", 401);
+        }
+
+        return handleError2(res, "Unauthorized: Invalid token signature.", 401);
+    }
+};

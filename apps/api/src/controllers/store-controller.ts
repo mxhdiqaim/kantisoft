@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { db } from "../shared/database";
+import db from "../shared/database";
 import { stores } from "../schema/stores-schema";
 import { and, count, eq, inArray } from "drizzle-orm";
 import { handleError2 } from "../service/error-handling";
@@ -28,7 +28,11 @@ export const getAllStores = async (req: CustomRequest, res: Response) => {
         const offset = (pageNumber - 1) * limitNumber;
 
         if (!storeId) {
-            return handleError2(res, "Authenticated User is not associated with any store.", StatusCodes.FORBIDDEN);
+            return handleError2(
+                res,
+                "Authenticated User is not associated with any store.",
+                StatusCodes.FORBIDDEN,
+            );
         }
 
         let whereClause;
@@ -36,14 +40,21 @@ export const getAllStores = async (req: CustomRequest, res: Response) => {
         if (userRole === UserRoleEnum.MANAGER) {
             const managedStoreIds = await getStoreAndBranchIds(storeId);
             if (!managedStoreIds) {
-                return handleError2(res, "Could not find managed stores.", StatusCodes.NOT_FOUND);
+                return handleError2(
+                    res,
+                    "Could not find managed stores.",
+                    StatusCodes.NOT_FOUND,
+                );
             }
             whereClause = inArray(stores.id, managedStoreIds);
         } else {
             whereClause = eq(stores.id, storeId);
         }
 
-        const [totalItemsResult] = await db.select({ value: count() }).from(stores).where(whereClause);
+        const [totalItemsResult] = await db
+            .select({ value: count() })
+            .from(stores)
+            .where(whereClause);
         const totalItems = totalItemsResult.value;
 
         const allStores = await db.query.stores.findMany({
@@ -88,17 +99,29 @@ export const getStoreById = async (req: CustomRequest, res: Response) => {
         const userRole = currentUser?.role;
 
         if (!storeId) {
-            return handleError2(res, "Authentication required.", StatusCodes.UNAUTHORIZED);
+            return handleError2(
+                res,
+                "Authentication required.",
+                StatusCodes.UNAUTHORIZED,
+            );
         }
 
         const { id: paramStoreId } = req.params;
 
         if (!paramStoreId) {
-            return handleError2(res, "Missing store in request path.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Missing store in request path.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof paramStoreId !== "string") {
-            return handleError2(res, "Invalid request store.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Invalid request store.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         let whereClause;
@@ -106,11 +129,21 @@ export const getStoreById = async (req: CustomRequest, res: Response) => {
         if (userRole === UserRoleEnum.MANAGER) {
             const managedStoreIds = await getStoreAndBranchIds(storeId);
             if (!managedStoreIds) {
-                return handleError2(res, "Could not find managed stores.", StatusCodes.NOT_FOUND);
+                return handleError2(
+                    res,
+                    "Could not find managed stores.",
+                    StatusCodes.NOT_FOUND,
+                );
             }
-            whereClause = and(eq(stores.id, paramStoreId), inArray(stores.id, managedStoreIds));
+            whereClause = and(
+                eq(stores.id, paramStoreId),
+                inArray(stores.id, managedStoreIds),
+            );
         } else {
-            whereClause = and(eq(stores.id, paramStoreId), eq(stores.id, storeId));
+            whereClause = and(
+                eq(stores.id, paramStoreId),
+                eq(stores.id, storeId),
+            );
         }
 
         const store = await db.query.stores.findFirst({
@@ -164,22 +197,37 @@ export const createStore = async (req: CustomRequest, res: Response) => {
         const userRole = currentUser?.role;
 
         if (!storeId) {
-            return handleError2(res, "You must belong to a main store to create a branch.", StatusCodes.FORBIDDEN);
+            return handleError2(
+                res,
+                "You must belong to a main store to create a branch.",
+                StatusCodes.FORBIDDEN,
+            );
         }
 
         if (userRole !== UserRoleEnum.MANAGER) {
-            return handleError2(res, "You can complete this action.", StatusCodes.FORBIDDEN);
+            return handleError2(
+                res,
+                "You can complete this action.",
+                StatusCodes.FORBIDDEN,
+            );
         }
 
         const { name, location, storeType } = req.body;
 
         if (!name || !storeType) {
-            return handleError2(res, "Store name and type are required.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Store name and type are required.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         const storeParentId = storeId;
 
-        const [newStore] = await db.insert(stores).values({ name, location, storeType, storeParentId }).returning();
+        const [newStore] = await db
+            .insert(stores)
+            .values({ name, location, storeType, storeParentId })
+            .returning();
 
         await ActivityLogService.logSystemEvent({
             userId: currentUser.id,
@@ -221,13 +269,21 @@ export const updateStore = async (req: CustomRequest, res: Response) => {
         const storeId = currentUser?.storeId;
 
         if (!storeId) {
-            return handleError2(res, "Authentication required.", StatusCodes.UNAUTHORIZED);
+            return handleError2(
+                res,
+                "Authentication required.",
+                StatusCodes.UNAUTHORIZED,
+            );
         }
 
         const userRole = currentUser?.role;
 
         if (userRole !== UserRoleEnum.MANAGER) {
-            return handleError2(res, "Only managers can update stores.", StatusCodes.FORBIDDEN);
+            return handleError2(
+                res,
+                "Only managers can update stores.",
+                StatusCodes.FORBIDDEN,
+            );
         }
 
         const managedStoreIds = await getStoreAndBranchIds(storeId);
@@ -235,11 +291,19 @@ export const updateStore = async (req: CustomRequest, res: Response) => {
         const { id: paramStoreId } = req.params;
 
         if (!paramStoreId) {
-            return handleError2(res, "Missing store in request path.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Missing store in request path.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof paramStoreId !== "string") {
-            return handleError2(res, "Invalid request store.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Invalid request store.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (!managedStoreIds || !managedStoreIds.includes(paramStoreId)) {
@@ -256,13 +320,25 @@ export const updateStore = async (req: CustomRequest, res: Response) => {
         delete updateData.storeParentId;
 
         if (Object.keys(updateData).length === 0) {
-            return handleError2(res, "No fields provided for update.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "No fields provided for update.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
-        const [updatedStore] = await db.update(stores).set(updateData).where(eq(stores.id, paramStoreId)).returning();
+        const [updatedStore] = await db
+            .update(stores)
+            .set(updateData)
+            .where(eq(stores.id, paramStoreId))
+            .returning();
 
         if (!updatedStore) {
-            return handleError2(res, "Failed to update store or store not found.", StatusCodes.NOT_FOUND);
+            return handleError2(
+                res,
+                "Failed to update store or store not found.",
+                StatusCodes.NOT_FOUND,
+            );
         }
 
         await ActivityLogService.logSystemEvent({
@@ -303,25 +379,45 @@ export const deleteStore = async (req: CustomRequest, res: Response) => {
         const userRole = currentUser?.role;
 
         if (userRole !== UserRoleEnum.MANAGER) {
-            return handleError2(res, "Only managers can delete stores.", StatusCodes.FORBIDDEN);
+            return handleError2(
+                res,
+                "Only managers can delete stores.",
+                StatusCodes.FORBIDDEN,
+            );
         }
 
         if (!storeId) {
-            return handleError2(res, "Authentication required.", StatusCodes.UNAUTHORIZED);
+            return handleError2(
+                res,
+                "Authentication required.",
+                StatusCodes.UNAUTHORIZED,
+            );
         }
 
         const { id: targetStoreId } = req.params;
 
         if (targetStoreId === storeId) {
-            return handleError2(res, "Cannot delete your own main store.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Cannot delete your own main store.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (!targetStoreId) {
-            return handleError2(res, "Missing store in request path.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Missing store in request path.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         if (typeof targetStoreId !== "string") {
-            return handleError2(res, "Invalid request store.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Invalid request store.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
         const managedStoreIds = await getStoreAndBranchIds(storeId);
@@ -338,10 +434,17 @@ export const deleteStore = async (req: CustomRequest, res: Response) => {
         });
 
         if (hasBranches) {
-            return handleError2(res, "Cannot delete a store that has active branches.", StatusCodes.BAD_REQUEST);
+            return handleError2(
+                res,
+                "Cannot delete a store that has active branches.",
+                StatusCodes.BAD_REQUEST,
+            );
         }
 
-        const [deletedStore] = await db.delete(stores).where(eq(stores.id, targetStoreId)).returning();
+        const [deletedStore] = await db
+            .delete(stores)
+            .where(eq(stores.id, targetStoreId))
+            .returning();
 
         if (!deletedStore) {
             return handleError2(

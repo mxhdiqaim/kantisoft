@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
-import { helperUtil } from "../shared/utils";
+import { getEnvVariable } from "../shared/utils";
 
 // Simple, fast utility to escape special HTML characters
 const escapeHtml = (text: string): string => {
@@ -40,11 +40,11 @@ export class EmailService {
 
     constructor() {
         // Initialize environment variables securely inside the constructor
-        const host = helperUtil.getEnvVariable("SMTP_HOST");
-        const port = helperUtil.getEnvVariable("SMTP_PORT");
-        const user = helperUtil.getEnvVariable("SMTP_USER");
-        const pass = helperUtil.getEnvVariable("SMTP_PASSWORD");
-        const secure = helperUtil.getEnvVariable("SMTP_SECURE") === "true";
+        const host = getEnvVariable("SMTP_HOST");
+        const port = getEnvVariable("SMTP_PORT");
+        const user = getEnvVariable("SMTP_USER");
+        const pass = getEnvVariable("SMTP_PASSWORD");
+        const secure = getEnvVariable("SMTP_SECURE") === "true";
 
         this.fromSender = `"Kantisoft Team" <noreply@kantisoft.com>`;
 
@@ -60,13 +60,17 @@ export class EmailService {
 
         // Fallback safety barrier
         if (!user || !pass) {
-            throw new Error("EmailService Error: Missing critical SMTP credentials configuration.");
+            throw new Error(
+                "EmailService Error: Missing critical SMTP credentials configuration.",
+            );
         }
 
         this.transporter = nodemailer.createTransport(smtpConfig);
     }
 
-    private async sendMail(options: nodemailer.SendMailOptions): Promise<SMTPTransport.SentMessageInfo> {
+    private async sendMail(
+        options: nodemailer.SendMailOptions,
+    ): Promise<SMTPTransport.SentMessageInfo> {
         try {
             return await this.transporter.sendMail({
                 from: this.fromSender,

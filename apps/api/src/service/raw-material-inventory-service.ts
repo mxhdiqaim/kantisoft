@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { db } from "../shared/database";
+import db from "../shared/database";
 import { rawMaterialInventory } from "../schema/raw-materials-schema/raw-material-inventory-schema";
 import {
     InsertRawMaterialTransactionSchemaT,
@@ -41,10 +41,16 @@ export const RawMaterialInventoryService = {
                     storeId: data.storeId,
                     minStockLevel: data.minStockLevel,
                     quantity: data.quantity,
-                    status: calculateInventoryStatus(data.quantity, data.minStockLevel),
+                    status: calculateInventoryStatus(
+                        data.quantity,
+                        data.minStockLevel,
+                    ),
                 })
                 .onConflictDoUpdate({
-                    target: [rawMaterialInventory.rawMaterialId, rawMaterialInventory.storeId],
+                    target: [
+                        rawMaterialInventory.rawMaterialId,
+                        rawMaterialInventory.storeId,
+                    ],
                     set: {
                         minStockLevel: data.minStockLevel,
                         quantity: data.quantity,
@@ -97,7 +103,10 @@ export const RawMaterialInventoryService = {
             if (!current) throw new Error("NOT_FOUND");
 
             // Calculate new status based on current quantity vs new threshold
-            const newStatus = calculateInventoryStatus(current.quantity, data.newMinStockLevel);
+            const newStatus = calculateInventoryStatus(
+                current.quantity,
+                data.newMinStockLevel,
+            );
 
             // Update Primary Record
             const [updated] = await tx
@@ -135,23 +144,31 @@ export const RawMaterialInventoryService = {
      * @returns The updated raw material inventory record.
      */
     async processRawMaterialStockAdjustment(
-        transaction: Omit<InsertRawMaterialTransactionSchemaT, "quantityBase" | "createdAt" | "id" | "lastModified">,
+        transaction: Omit<
+            InsertRawMaterialTransactionSchemaT,
+            "quantityBase" | "createdAt" | "id" | "lastModified"
+        >,
         quantityPresentation: number,
         unitOfMeasurementId: string,
     ) {
         // Fetch Unit and Calculate Base Quantity
-        const unitRecord = await UnitConversionService.fetchUnitById(unitOfMeasurementId);
+        const unitRecord =
+            await UnitConversionService.fetchUnitById(unitOfMeasurementId);
 
         if (!unitRecord) {
             throw new Error(`Unit of measurement not found.`);
         }
 
         // Convert the user's quantity (e.g. 10 kg) into the Base Unit (e.g. 10,000 g)
-        const quantityBase = UnitConversionService.convertToBaseUnit(quantityPresentation, unitRecord);
+        const quantityBase = UnitConversionService.convertToBaseUnit(
+            quantityPresentation,
+            unitRecord,
+        );
 
         // Determine Sign for Update
         // Inventory transactions are signed: '+' for 'in', '-' for 'out'.
-        const quantityChange = transaction.type === "comingIn" ? quantityBase : -quantityBase;
+        const quantityChange =
+            transaction.type === "comingIn" ? quantityBase : -quantityBase;
 
         // Start Atomic Transaction (Drizzle Transaction)
         return db.transaction(async (tx) => {
@@ -175,7 +192,10 @@ export const RawMaterialInventoryService = {
                 })
                 .where(
                     and(
-                        eq(rawMaterialInventory.rawMaterialId, transaction.rawMaterialId),
+                        eq(
+                            rawMaterialInventory.rawMaterialId,
+                            transaction.rawMaterialId,
+                        ),
                         eq(rawMaterialInventory.storeId, transaction.storeId),
                     ),
                 )
@@ -183,7 +203,9 @@ export const RawMaterialInventoryService = {
 
             if (!updatedRecord) {
                 // Check if the inventory record exists before attempting update
-                throw new Error("Raw Material Inventory record does not exist in this store.");
+                throw new Error(
+                    "Raw Material Inventory record does not exist in this store.",
+                );
             }
 
             // Re-determine and Update Inventory Status (Low Stock/Out of Stock)
@@ -191,7 +213,10 @@ export const RawMaterialInventoryService = {
             const newQuantity = updatedRecord.quantity;
             const minStockLevel = updatedRecord.minStockLevel;
 
-            const newStatus = calculateInventoryStatus(newQuantity, minStockLevel);
+            const newStatus = calculateInventoryStatus(
+                newQuantity,
+                minStockLevel,
+            );
 
             if (newStatus !== updatedRecord.status) {
                 // Perform a final update to set the new status
@@ -250,14 +275,18 @@ export const RawMaterialInventoryService = {
 
         // Material doesn't even exist in the warehouse
         if (!updated) {
-            throw new Error(`Inventory Error: ${materialInfo?.name || "Material"} is not stocked in this store.`);
+            throw new Error(
+                `Inventory Error: ${materialInfo?.name || "Material"} is not stocked in this store.`,
+            );
         }
 
         // The "Insufficient Stock" Guard
         if (updated.quantity < 0) {
             // We calculate the deficit to be helpful
             // const missingAmount = Math.abs(updated.quantity);
-            throw new Error(`Insufficient Stock: You are short on ${materialInfo?.name || "Material"}`);
+            throw new Error(
+                `Insufficient Stock: You are short on ${materialInfo?.name || "Material"}`,
+            );
         }
 
         // Record Transaction Log only if stock was enough
@@ -273,7 +302,10 @@ export const RawMaterialInventoryService = {
         });
 
         // Update Status (Low stock check)
-        const newStatus = calculateInventoryStatus(updated.quantity, updated.minStockLevel);
+        const newStatus = calculateInventoryStatus(
+            updated.quantity,
+            updated.minStockLevel,
+        );
 
         if (newStatus !== updated.status) {
             await tx
@@ -318,15 +350,26 @@ export const RawMaterialInventoryService = {
                 ${data.quantity}`,
                 lastModified: new Date(),
             })
-            .where(and(eq(inventory.menuItemId, data.menuItemId), eq(inventory.storeId, data.storeId)))
+            .where(
+                and(
+                    eq(inventory.menuItemId, data.menuItemId),
+                    eq(inventory.storeId, data.storeId),
+                ),
+            )
             .returning();
 
         // Handle status updates (Low Stock logic)
         if (updatedRecord) {
-            const newStatus = calculateInventoryStatus(updatedRecord.quantity, updatedRecord.minStockLevel);
+            const newStatus = calculateInventoryStatus(
+                updatedRecord.quantity,
+                updatedRecord.minStockLevel,
+            );
 
             if (newStatus !== updatedRecord.status) {
-                await tx.update(inventory).set({ status: newStatus }).where(eq(inventory.id, updatedRecord.id));
+                await tx
+                    .update(inventory)
+                    .set({ status: newStatus })
+                    .where(eq(inventory.id, updatedRecord.id));
             }
         } else {
             // Optional: If no inventory record exists yet, create one

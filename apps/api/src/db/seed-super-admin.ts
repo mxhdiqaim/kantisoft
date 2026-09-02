@@ -1,7 +1,7 @@
-import { db } from "../shared/database";
+import db from "../shared/database";
 import { users } from "../schema/users-schema";
 import { UserRoleEnum, UserStatusEnum } from "../types/enums";
-import { helperUtil } from "../shared/utils";
+import { getEnvVariable } from "../shared/utils";
 
 (async () => {
     try {
@@ -9,9 +9,9 @@ import { helperUtil } from "../shared/utils";
 
         const FIRST_NAME = "System";
         const LAST_NAME = "SuperAdmin";
-        const EMAIL = helperUtil.getEnvVariable("SUPER_ADMIN_EMAIL");
-        const PHONE = helperUtil.getEnvVariable("PHONE");
-        // const PASSWORD = helperUtil.getEnvVariable("SUPER_ADMIN_PASSWORD");
+        const EMAIL = getEnvVariable("SUPER_ADMIN_EMAIL");
+        const PHONE = getEnvVariable("PHONE");
+        // const PASSWORD = getEnvVariable("SUPER_ADMIN_PASSWORD");
 
         await db
             .insert(users)
@@ -28,7 +28,9 @@ import { helperUtil } from "../shared/utils";
             // This is the magic line that prevents "Already exists" errors
             .onConflictDoNothing({ target: users.email });
 
-        console.log("✅ Seed process finished (Admin created or already exists).");
+        console.log(
+            "✅ Seed process finished (Admin created or already exists).",
+        );
     } catch (error) {
         console.error("❌ Seeding failed:", error);
     } finally {

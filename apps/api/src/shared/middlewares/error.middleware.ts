@@ -1,55 +1,34 @@
-import { Request, Response, NextFunction } from "express";
-import { helperUtil } from "../utils";
+import { Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
+import { getEnvVariable } from "../utils";
 import { AppError } from "../errors/custom.error";
 
-class ErrorMiddleware {
-    private readonly SERVER_ERROR = 500;
-    private readonly UNAUTHORIZED = 401;
-    private readonly NOT_FOUND = 404;
+export const globalErrorHandler = (err: Error, req: Request, res: Response) => {
+    const NODE_ENV = getEnvVariable("NODE_ENV") || "development";
 
-    public notFoundHandler = (req: Request, res: Response, next: NextFunction) => {
-        const error = new AppError(`Route not found: ${req.method} ${req.originalUrl}`, this.NOT_FOUND);
-        next(error);
-    };
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let message = "Something went wrong. Server Error!";
 
-    // eslint-disable-next-line
-    public globalErrorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
-        const NODE_ENV = helperUtil.getEnvVariable("NODE_ENV") || "development";
+    if (err instanceof AppError) {
+        statusCode = err.statusCode;
+        message = err.message;
+    }
 
-        let statusCode = this.SERVER_ERROR;
-        let message = "Something went wrong. Server Error!";
-
-        // Handle custom AppErrors
-        if (err instanceof AppError) {
-            statusCode = err.statusCode;
-            message = err.message;
+    if (NODE_ENV === "development") {
+        console.error(`\n🚨 [ERROR] [${req.method}] ${req.path} - Status: ${statusCode}`);
+        console.error(`Message: ${err.message}`);
+        if (err.stack) {
+            console.error(`Stack Trace:\n${err.stack}\n`);
         }
-        // Catch potential Clerk/Third-party errors that aren't instances of AppError
-        else if (err.message && err.message.includes("Authentication failed")) {
-            statusCode = this.UNAUTHORIZED;
-            message = err.message;
+    } else {
+        if (statusCode === StatusCodes.INTERNAL_SERVER_ERROR) {
+            console.error("CRITICAL UNHANDLED ERROR:", err);
         }
+    }
 
-        // Logging
-        if (NODE_ENV === "development") {
-            console.error(`\n🚨 [ERROR] [${req.method}] ${req.path} - Status: ${statusCode}`);
-            console.error(`Message: ${err.message}`);
-            if (err.stack) {
-                console.error(`Stack Trace:\n${err.stack}\n`);
-            }
-        } else {
-            if (statusCode === this.SERVER_ERROR) {
-                console.error("CRITICAL UNHANDLED ERROR:", err);
-            }
-        }
-
-        // Send JSON response
-        return res.status(statusCode).json({
-            type: statusCode,
-            message: message,
-            ...(NODE_ENV === "development" && { stack: err.stack }),
-        });
-    };
-}
-
-export default new ErrorMiddleware();
+    return res.status(statusCode).json({
+        type: statusCode,
+        message: message,
+        ...(NODE_ENV === "development" && { stack: err.stack }),
+    });
+};

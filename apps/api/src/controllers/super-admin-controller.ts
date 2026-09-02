@@ -1,8 +1,12 @@
 import { CustomRequest } from "../types/express";
 import { Response } from "express";
-import { db } from "../shared/database";
+import db from "../shared/database";
 import { stores } from "../schema/stores-schema";
-import { billingTransactions, onboardStoreSchema, storeSubscriptions } from "../schema/store-subscriptions-schema";
+import {
+    billingTransactions,
+    onboardStoreSchema,
+    storeSubscriptions,
+} from "../schema/store-subscriptions-schema";
 import { users } from "../schema/users-schema";
 import {
     BillingTypeEnum,
@@ -17,13 +21,19 @@ import { handleError2 } from "../service/error-handling";
 import { desc, eq } from "drizzle-orm";
 import { formatPhoneNumber } from "../shared/utils/format-phone-number";
 
-export const getAllStoresForSuperAdmin = async (_req: CustomRequest, res: Response) => {
+export const getAllStoresForSuperAdmin = async (
+    _req: CustomRequest,
+    res: Response,
+) => {
     try {
         const allStores = await db
             .select()
             .from(stores)
             .orderBy(desc(stores.createdAt))
-            .leftJoin(storeSubscriptions, eq(stores.id, storeSubscriptions.storeId));
+            .leftJoin(
+                storeSubscriptions,
+                eq(stores.id, storeSubscriptions.storeId),
+            );
 
         // Flatten the Drizzle result
         const formattedStores = allStores.map((row) => ({
@@ -59,7 +69,8 @@ export const onboardNewStore = async (req: CustomRequest, res: Response) => {
             );
         }
 
-        const { firstName, lastName, email, phone, storeName, location } = req.body;
+        const { firstName, lastName, email, phone, storeName, location } =
+            req.body;
         const formattedPhone = formatPhoneNumber(phone);
         // const tempPassword = "Welcome@Store123";
 
@@ -67,7 +78,12 @@ export const onboardNewStore = async (req: CustomRequest, res: Response) => {
             where: eq(users.email, email.toLowerCase()),
         });
 
-        if (existing) return handleError2(res, "Email already in use", StatusCodes.CONFLICT);
+        if (existing)
+            return handleError2(
+                res,
+                "Email already in use",
+                StatusCodes.CONFLICT,
+            );
 
         // Transaction: Ensure everything succeeds or everything fails
         const result = await db.transaction(async (tx) => {
@@ -128,8 +144,15 @@ export const onboardNewStore = async (req: CustomRequest, res: Response) => {
         });
     } catch (error) {
         // Handle Drizzle Unique Constraint errors (e.g. email already exists)
-        if (error instanceof Error && error.message.includes("unique constraint")) {
-            return handleError2(res, "Email already registered", StatusCodes.CONFLICT);
+        if (
+            error instanceof Error &&
+            error.message.includes("unique constraint")
+        ) {
+            return handleError2(
+                res,
+                "Email already registered",
+                StatusCodes.CONFLICT,
+            );
         }
 
         return handleError2(
@@ -156,7 +179,11 @@ export const createStoreManager = async (req: CustomRequest, res: Response) => {
         });
 
         if (!store) {
-            return handleError2(res, "Target store not found", StatusCodes.NOT_FOUND);
+            return handleError2(
+                res,
+                "Target store not found",
+                StatusCodes.NOT_FOUND,
+            );
         }
 
         // Check if email is already taken
@@ -165,7 +192,11 @@ export const createStoreManager = async (req: CustomRequest, res: Response) => {
         });
 
         if (existingUser) {
-            return handleError2(res, "User with this email already exists", StatusCodes.CONFLICT);
+            return handleError2(
+                res,
+                "User with this email already exists",
+                StatusCodes.CONFLICT,
+            );
         }
 
         const [newManager] = await db
@@ -242,7 +273,9 @@ export const storeSetupPayment = async (req: CustomRequest, res: Response) => {
                 .where(eq(storeSubscriptions.storeId, storeId));
         });
 
-        return res.status(StatusCodes.OK).json({ message: "Payment confirmed successfully" });
+        return res
+            .status(StatusCodes.OK)
+            .json({ message: "Payment confirmed successfully" });
     } catch (error) {
         return handleError2(
             res,

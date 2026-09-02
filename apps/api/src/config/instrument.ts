@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/bun";
-import { helperUtil } from "../shared/utils";
+import { getEnvVariable } from "../shared/utils";
 
-const SENTRY_DSN = helperUtil.getEnvVariable("SENTRY_DSN");
+const SENTRY_DSN = getEnvVariable("SENTRY_DSN");
 
 Sentry.init({
     dsn: SENTRY_DSN,

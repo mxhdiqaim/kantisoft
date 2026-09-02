@@ -1,5 +1,5 @@
 import { InferInsertModel } from "drizzle-orm";
-import { db } from "../shared/database";
+import db from "../shared/database";
 import { activityLog } from "../schema/activity-log-schema";
 
 // Use InferInsertModel for strict type safety

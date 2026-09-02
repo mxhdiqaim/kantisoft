@@ -1,6 +1,6 @@
 {
-  "id": "cec07e38-dfa0-4694-81d8-95b43e980b77",
-  "prevId": "1fb3e67f-761d-4f30-b26f-eab9509a45fd",
+  "id": "32d32fda-75ca-4b61-b77c-b090200bf441",
+  "prevId": "4d918e3b-d5de-4a98-b150-be9da63717e9",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1359,6 +1359,206 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.billingTransactions": {
+      "name": "billingTransactions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "storeId": {
+          "name": "storeId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "billingType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'setupFee'"
+        },
+        "reference": {
+          "name": "reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "billingStatus",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'pending'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "billingTransactions_storeId_stores_id_fk": {
+          "name": "billingTransactions_storeId_stores_id_fk",
+          "tableFrom": "billingTransactions",
+          "tableTo": "stores",
+          "columnsFrom": [
+            "storeId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "billingTransactions_reference_unique": {
+          "name": "billingTransactions_reference_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "reference"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.storeSubscriptions": {
+      "name": "storeSubscriptions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "storeId": {
+          "name": "storeId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "subscriptionStatus",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pendingSetup'"
+        },
+        "baseUserLimit": {
+          "name": "baseUserLimit",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "isCapped": {
+          "name": "isCapped",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "nextBillingDate": {
+          "name": "nextBillingDate",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lastBillingDate": {
+          "name": "lastBillingDate",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "setupFeePaid": {
+          "name": "setupFeePaid",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "autoRenew": {
+          "name": "autoRenew",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "storeSubscriptions_storeId_stores_id_fk": {
+          "name": "storeSubscriptions_storeId_stores_id_fk",
+          "tableFrom": "storeSubscriptions",
+          "tableTo": "stores",
+          "columnsFrom": [
+            "storeId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "storeSubscriptions_storeId_unique": {
+          "name": "storeSubscriptions_storeId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "storeId"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.stores": {
       "name": "stores",
       "schema": "",
@@ -1551,6 +1751,12 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
+        "firebaseUid": {
+          "name": "firebaseUid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "firstName": {
           "name": "firstName",
           "type": "text",
@@ -1573,7 +1779,7 @@
           "name": "password",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "phone": {
           "name": "phone",
@@ -1668,7 +1874,15 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "users_firebaseUid_unique": {
+          "name": "users_firebaseUid_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "firebaseUid"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1852,6 +2066,35 @@
         "adjustment"
       ]
     },
+    "public.billingStatus": {
+      "name": "billingStatus",
+      "schema": "public",
+      "values": [
+        "failed",
+        "pending",
+        "success"
+      ]
+    },
+    "public.billingType": {
+      "name": "billingType",
+      "schema": "public",
+      "values": [
+        "setupFee",
+        "monthlySubscription",
+        "additionalUser"
+      ]
+    },
+    "public.subscriptionStatus": {
+      "name": "subscriptionStatus",
+      "schema": "public",
+      "values": [
+        "pendingSetup",
+        "active",
+        "gracePeriod",
+        "suspended",
+        "cancelled"
+      ]
+    },
     "public.branchType": {
       "name": "branchType",
       "schema": "public",
@@ -1926,8 +2169,9 @@
       "name": "role",
       "schema": "public",
       "values": [
-        "manager",
+        "superAdmin",
         "admin",
+        "manager",
         "user",
         "guest"
       ]

@@ -4,18 +4,19 @@ import cors from "cors";
 import express, { Application, Request, Response, NextFunction } from "express";
 import morgan from "morgan";
 import path from "path";
-import routesV1 from "./routes";
-import { helperUtil } from "./shared/utils";
+import routes from "./routes";
+import { getEnvVariable } from "./shared/utils";
+import { initializeFirebase } from "./config/firebase-admin";
+import { globalErrorHandler } from "./shared/middlewares/error.middleware";
 import logger from "./shared/logger";
 import { requestContext } from "./shared/logger/context";
-import { clerkMiddleware } from "@clerk/express";
-import { errorMiddleware } from "./shared/middlewares";
+import { AppError } from "./shared/errors/custom.error";
 
 class Server {
-    private readonly ADMIN_APP = helperUtil.getEnvVariable("ADMIN_APP");
-    private readonly APP_URL = helperUtil.getEnvVariable("APP_URL");
-    private readonly LANDING_PAGE = helperUtil.getEnvVariable("LANDING_PAGE");
-    private readonly NODE_ENV = helperUtil.getEnvVariable("NODE_ENV");
+    private readonly ADMIN_APP = getEnvVariable("ADMIN_APP");
+    private readonly APP_URL = getEnvVariable("APP_URL");
+    private readonly LANDING_PAGE = getEnvVariable("LANDING_PAGE");
+    private readonly NODE_ENV = getEnvVariable("NODE_ENV");
 
     public app: Application;
 
@@ -23,10 +24,15 @@ class Server {
         this.app = express();
 
         // The order of these initializations is critical
+        this.initializeExternalServices();
         this.configureServer();
         this.setupMiddlewares();
-        this.initializeRoutes();
+        this.setupRoutes();
         this.setupErrorHandling();
+    }
+
+    private initializeExternalServices(): void {
+        initializeFirebase();
     }
 
     private configureServer(): void {
@@ -36,8 +42,16 @@ class Server {
     private getCorsOptions(): cors.CorsOptions {
         const allowedOrigins =
             this.NODE_ENV === "development"
-                ? ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"]
-                : [`https://${this.ADMIN_APP}`, `https://${this.APP_URL}`, `https://${this.LANDING_PAGE}`];
+                ? [
+                      "http://localhost:3000",
+                      "http://localhost:3001",
+                      "http://localhost:3002",
+                  ]
+                : [
+                      `https://${this.ADMIN_APP}`,
+                      `https://${this.APP_URL}`,
+                      `https://${this.LANDING_PAGE}`,
+                  ];
 
         return {
             origin: allowedOrigins,
@@ -52,7 +66,8 @@ class Server {
 
         // Initialize Request Context (AsyncLocalStorage)
         this.app.use((req: Request, res: Response, next: NextFunction) => {
-            const requestId = (req.headers["x-request-id"] as string) || crypto.randomUUID();
+            const requestId =
+                (req.headers["x-request-id"] as string) || crypto.randomUUID();
 
             // The tenantId and locationId will be added later by the Clerk auth middleware.
             requestContext.run({ requestId }, () => {
@@ -65,31 +80,29 @@ class Server {
 
         // Body Parsers
         this.app.use(express.urlencoded({ extended: false }));
-
-        this.app.use((req: Request, res: Response, next: NextFunction) => {
-            if (req.originalUrl.includes("/iam/webhooks")) {
-                return next();
-            }
-            express.json({ limit: "5mb" })(req, res, next);
-        });
-
-        this.app.use(clerkMiddleware());
+        this.app.use(express.json({ limit: "5mb" }));
     }
 
-    private initializeRoutes() {
-        this.app.use("/api/v1", routesV1);
+    private setupRoutes(): void {
+        this.app.use("/api/v1", routes);
         this.app.use(express.static(path.join(__dirname, "public")));
     }
 
     private setupErrorHandling(): void {
         // 404 Catch-All
-        this.app.use(errorMiddleware.notFoundHandler);
+        this.app.use((req: Request, res: Response, next: NextFunction) => {
+            const error = new AppError(
+                `Route not found: ${req.method} ${req.originalUrl}`,
+                404,
+            );
+            next(error);
+        });
 
         // Sentry Error Handler (Must execute before your global error handler)
         Sentry.setupExpressErrorHandler(this.app);
 
         // Global Error Handler
-        this.app.use(errorMiddleware.globalErrorHandler);
+        this.app.use(globalErrorHandler);
     }
 }
 
