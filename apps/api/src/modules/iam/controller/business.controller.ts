@@ -9,7 +9,7 @@ export default class BusinessController {
 
             const userId = req.user!.id;
 
-            const data = await businessService.getSingleSingle(id as string, userId);
+            const data = await businessService.getSingleBusiness(id as string, userId);
 
             return res.status(200).json({
                 message: "Business retrieved successfully.",

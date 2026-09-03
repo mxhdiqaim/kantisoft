@@ -27,8 +27,8 @@ export abstract class BaseService<T extends PgTable> {
             conditions.push(eq(columns.businessId, context.businessId));
         }
 
-        if (columns.locationId && context?.locationId) {
-            conditions.push(eq(columns.locationId, context.locationId));
+        if (columns.branchId && context?.branchId) {
+            conditions.push(eq(columns.branchId, context.branchId));
         }
 
         return conditions;

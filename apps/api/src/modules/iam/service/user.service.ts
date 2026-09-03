@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { BaseService } from "../../../shared/service";
 import { db } from "../../../shared/database";
 import { InviteUserDto, SyncClerkUserDTO, UserRoleEnum, UserStatusEnum } from "../interface";
-import { userLocationsSchema, userSchema } from "../schema";
+import { userSchema } from "../schema";
 import logger from "../../../shared/logger";
 
 class UserService extends BaseService<typeof userSchema> {
@@ -10,50 +10,38 @@ class UserService extends BaseService<typeof userSchema> {
         super(userSchema, "User");
     }
 
-    public async listStaff(page: number, pageSize: number) {
-        return this.getAllPaginated(page, pageSize);
-    }
-
-    public async getUserProfile(userId: string) {
-        return this.getByIdOrError(userId);
-    }
-
-    public async updateUserStatus(userId: string, status: UserStatusEnum) {
-        return this.updateByQuery(eq(userSchema.id, userId), { status });
-    }
-
-    public async inviteUser(userData: InviteUserDto) {
+    public async inviteUser(userData: InviteUserDto & { businessId: string; branchId: string }) {
         return await db.transaction(async (tx) => {
-            const { locationId, ...userInsertData } = userData;
+            const { branchId, businessId, ...userInsertData } = userData;
 
-            // Insert the pending user
+            // Insert the pending user directly with their assigned branch and business
             const [newUser] = await tx
                 .insert(userSchema)
                 .values({
                     ...userInsertData,
+                    businessId,
+                    branchId,
                     status: UserStatusEnum.INVITED,
                     clerkId: `pending-${crypto.randomUUID()}`,
                 })
                 .returning();
 
-            // Assign the user to the junction table using the single locationId
-            if (locationId) {
-                await tx.insert(userLocationsSchema).values({
-                    userId: newUser.id,
-                    locationId: locationId,
-                });
-            }
-
             return newUser;
         });
     }
 
-    public async assignLocationToUser(userId: string, locationId: string) {
+    public async assignBranchToUser(userId: string, branchId: string) {
+        // Verify the user exists first
         await this.getByIdOrError(userId);
 
-        const [assignment] = await db.insert(userLocationsSchema).values({ userId, locationId }).returning();
+        // Update the user's branchId directly
+        const [updatedUser] = await db
+            .update(userSchema)
+            .set({ branchId })
+            .where(eq(userSchema.id, userId))
+            .returning();
 
-        return assignment;
+        return updatedUser;
     }
 
     public async syncClerkUserCreated(data: SyncClerkUserDTO) {

@@ -23,7 +23,7 @@ export type InviteUserDto = {
     businessId: string;
     email: string;
     role: UserRoleEnum;
-    locationId: string;
+    branchId: string;
     phone?: string;
 };
 

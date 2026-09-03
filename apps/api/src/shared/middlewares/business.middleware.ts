@@ -18,12 +18,12 @@ class BusinessMiddleware {
                 throw new BadRequestError("No business selected.");
             }
 
-            const business = await businessService.getOrError(
-                and(eq(businessSchema.id, businessId), eq(businessSchema.userId, user!.id)),
+            const business = await businessService.get(
+                and(eq(businessSchema.id, businessId), eq(businessSchema.userId, user.id)),
             );
 
             if (!business) {
-                throw new ForbiddenError("You do not have access to this resource.");
+                throw new ForbiddenError("You do not have permission to access or modify this business.");
             }
 
             // Attach business to the request for the controller to use

@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from "express";
-import { locationService } from "../service";
+import { branchService } from "../service";
 import { requestContext } from "../../../shared/logger/context";
 import { BadRequestError, UnauthorizedError } from "../../../shared/errors/custom.error";
 
 export default class LocationController {
     public create = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { name, address } = req.body;
+            const { name, addressId } = req.body;
 
             // Extract businessId from the AsyncLocalStorage context
             const context = requestContext.getStore();
@@ -21,10 +21,10 @@ export default class LocationController {
             }
 
             // Create the location tied strictly to this business
-            const location = await locationService.create({
+            const location = await branchService.create({
                 businessId,
                 name,
-                address,
+                addressId,
             });
 
             return res.status(201).json({

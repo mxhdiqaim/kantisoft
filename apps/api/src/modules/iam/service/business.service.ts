@@ -1,14 +1,7 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { BaseService } from "../../../shared/service";
 import { db } from "../../../shared/database";
-import {
-    InsertBusinessSchemaT,
-    InsertUserSchemaT,
-    locationSchema,
-    businessSchema,
-    userLocationsSchema,
-    userSchema,
-} from "../schema";
+import { InsertBusinessSchemaT, InsertUserSchemaT, businessSchema, userSchema } from "../schema";
 import { ConflictError, ForbiddenError, NotFoundError } from "../../../shared/errors/custom.error";
 import { OnboardBusinessDTO, UserRoleEnum } from "../interface";
 import { helperUtil } from "../../../shared/utils";
@@ -47,7 +40,6 @@ export class BusinessService extends BaseService<typeof businessSchema> {
             throw new ConflictError("You already own a business account.");
         }
 
-        // Auto-generate a slug if one isn't provided
         const slug = helperUtil.getSlug(businessName);
 
         // Execute atomic transaction
@@ -68,52 +60,39 @@ export class BusinessService extends BaseService<typeof businessSchema> {
                 })
                 .returning();
 
-            // Create a default Location for the new business
-            const [defaultLocation] = await tx
-                .insert(locationSchema)
-                .values({
-                    businessId: newBusiness.id,
-                    name: "Main Location",
-                })
-                .returning();
-
-            // Elevate the user's role to OWNER
+            // Make the user role to OWNER AND attach them to the businessId
             const [updatedOwner] = await tx
                 .update(userSchema)
-                .set({ role: UserRoleEnum.OWNER })
+                .set({
+                    role: UserRoleEnum.OWNER,
+                    businessId: newBusiness.id,
+                })
                 .where(eq(userSchema.id, user.id))
                 .returning();
 
             return {
                 business: newBusiness,
-                location: defaultLocation,
                 owner: updatedOwner,
             };
         });
     }
 
-    public async getSingleSingle(businessId: string, userId: string) {
+    // Changed userId to take the full user object so we can check user.businessId natively
+    public async getSingleBusiness(businessId: string, user: InsertUserSchemaT) {
         const business = await this.getByIdOrError(businessId);
 
-        // Check if the requesting user is the owner
-        if (business.userId === userId) {
+        //  Check if the requesting user is the direct owner
+        if (business.userId === user.id) {
             return business;
         }
 
-        // Verify if the user is assigned to any location belonging to this business
-        const [assignedLocation] = await db
-            .select({ locationId: userLocationsSchema.locationId })
-            .from(userLocationsSchema)
-            .innerJoin(locationSchema, eq(userLocationsSchema.locationId, locationSchema.id))
-            .where(and(eq(locationSchema.businessId, businessId), eq(userLocationsSchema.userId, userId)))
-            .limit(1);
-
-        // If neither owner nor staff, deny access
-        if (!assignedLocation) {
-            throw new ForbiddenError("Access denied. You do not have permission to view this business's details.");
+        // Check if this user's assigned businessId matches the requested business
+        if (user.businessId === businessId) {
+            return business;
         }
 
-        return business;
+        // If neither owner nor staff, deny access
+        throw new ForbiddenError("Access denied. You do not have permission to view this business's details.");
     }
 
     public async update(businessId: string, updateData: Partial<InsertBusinessSchemaT>, user: InsertUserSchemaT) {
