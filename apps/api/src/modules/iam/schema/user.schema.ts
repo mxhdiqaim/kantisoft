@@ -2,7 +2,7 @@ import { pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import { UserRoleEnum, UserStatusEnum } from "../interface";
-import { tenantSchema } from "./tenant.schema";
+import { businessSchema } from "./business.schema";
 import { userLocationsSchema } from "./user-location.schema";
 
 export const UserRolePgEnum = pgEnum("role", [
@@ -46,6 +46,6 @@ export type InsertUserSchemaT = typeof userSchema.$inferInsert;
 
 export const userSchemaRelations = relations(userSchema, ({ one, many }) => ({
     // Defines the inverse of the 1-to-1 relationship (the user owns one tenant)
-    ownedTenant: one(tenantSchema),
+    ownedBusiness: one(businessSchema),
     userLocations: many(userLocationsSchema),
 }));

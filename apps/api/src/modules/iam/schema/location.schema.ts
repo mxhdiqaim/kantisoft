@@ -1,15 +1,15 @@
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
-import { tenantSchema } from "./tenant.schema";
+import { businessSchema } from "./business.schema";
 import { userLocationsSchema } from "./user-location.schema";
 
 export const locationSchema = pgTable("locations", {
     id: uuid("id")
         .primaryKey()
         .$defaultFn(() => uuidv7()),
-    tenantId: uuid("tenant_id")
-        .references(() => tenantSchema.id, { onDelete: "cascade" })
+    businessId: uuid("business_id")
+        .references(() => businessSchema.id, { onDelete: "cascade" })
         .notNull(),
     name: text("name").notNull(),
     address: text("address"),
@@ -23,9 +23,9 @@ export const locationSchema = pgTable("locations", {
 export type InsertLocationSchemaT = typeof locationSchema.$inferInsert;
 
 export const locationSchemaRelations = relations(locationSchema, ({ one, many }) => ({
-    tenant: one(tenantSchema, {
-        fields: [locationSchema.tenantId],
-        references: [tenantSchema.id],
+    tenant: one(businessSchema, {
+        fields: [locationSchema.businessId],
+        references: [businessSchema.id],
     }),
     userLocations: many(userLocationsSchema),
 }));

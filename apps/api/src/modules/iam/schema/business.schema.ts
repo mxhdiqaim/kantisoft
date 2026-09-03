@@ -5,7 +5,7 @@ import { userSchema } from "./user.schema";
 import { locationSchema } from "./location.schema";
 import { addressSchema, countrySchema } from "../../../shared/database/schema";
 
-export const tenantSchema = pgTable("tenants", {
+export const businessSchema = pgTable("tenants", {
     id: uuid("id")
         .primaryKey()
         .$defaultFn(() => uuidv7()),
@@ -31,12 +31,12 @@ export const tenantSchema = pgTable("tenants", {
         .$onUpdateFn(() => new Date()),
 });
 
-export type InsertTenantSchemaT = typeof tenantSchema.$inferInsert;
+export type InsertBusinessSchemaT = typeof businessSchema.$inferInsert;
 
-export const tenantSchemaRelations = relations(tenantSchema, ({ one, many }) => ({
+export const tenantSchemaRelations = relations(businessSchema, ({ one, many }) => ({
     // Defines the direct 1-to-1 relationship holding the foreign key
     owner: one(userSchema, {
-        fields: [tenantSchema.userId],
+        fields: [businessSchema.userId],
         references: [userSchema.id],
     }),
     locations: many(locationSchema),

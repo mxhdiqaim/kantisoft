@@ -1,11 +1,11 @@
 import { ReqQueryOptions } from "../../interface";
-import { InsertLocationSchemaT, InsertTenantSchemaT, InsertUserSchemaT } from "../../../modules";
+import { InsertLocationSchemaT, InsertBusinessSchemaT, InsertUserSchemaT } from "../../../modules";
 
 declare module "express" {
     export interface Request {
         queryOpts?: ReqQueryOptions;
         user?: InsertUserSchemaT;
-        tenant?: InsertTenantSchemaT;
+        tenant?: InsertBusinessSchemaT;
         location?: InsertLocationSchemaT;
     }
 }

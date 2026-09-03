@@ -5,7 +5,7 @@ import { db } from "../database";
 import { requestContext } from "../logger/context";
 import { UserRoleEnum } from "../../modules/iam/interface";
 import { UnauthorizedError, ForbiddenError, BadRequestError } from "../errors/custom.error";
-import { locationSchema, tenantSchema, userLocationsSchema, userSchema } from "../../modules";
+import { locationSchema, businessSchema, userLocationsSchema, userSchema } from "../../modules";
 import { v4 as uuidv7 } from "uuid";
 import { helperUtil } from "../utils";
 import { EnvironmentVariablesEnum } from "../interface";
@@ -72,8 +72,8 @@ class AuthMiddleware {
             if (user.role === UserRoleEnum.OWNER) {
                 const [tenant] = await db
                     .select()
-                    .from(tenantSchema)
-                    .where(and(eq(tenantSchema.id, tenantId), eq(tenantSchema.userId, user.id)))
+                    .from(businessSchema)
+                    .where(and(eq(businessSchema.id, tenantId), eq(businessSchema.userId, user.id)))
                     .limit(1);
 
                 if (tenant) {
@@ -108,11 +108,11 @@ class AuthMiddleware {
             const [staffContext] = await db
                 .select({
                     location: locationSchema,
-                    tenant: tenantSchema,
+                    tenant: businessSchema,
                 })
                 .from(userLocationsSchema)
                 .innerJoin(locationSchema, eq(userLocationsSchema.locationId, locationSchema.id))
-                .innerJoin(tenantSchema, eq(locationSchema.tenantId, tenantSchema.id))
+                .innerJoin(businessSchema, eq(locationSchema.tenantId, businessSchema.id))
                 .where(
                     and(
                         eq(userLocationsSchema.userId, user.id),

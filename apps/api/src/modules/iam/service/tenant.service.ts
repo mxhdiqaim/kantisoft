@@ -2,10 +2,10 @@ import { and, eq } from "drizzle-orm";
 import { BaseService } from "../../../shared/service";
 import { db } from "../../../shared/database";
 import {
-    InsertTenantSchemaT,
+    InsertBusinessSchemaT,
     InsertUserSchemaT,
     locationSchema,
-    tenantSchema,
+    businessSchema,
     userLocationsSchema,
     userSchema,
 } from "../schema";
@@ -13,9 +13,9 @@ import { ConflictError, ForbiddenError, NotFoundError } from "../../../shared/er
 import { OnboardBusinessDTO, UserRoleEnum } from "../interface";
 import { helperUtil } from "../../../shared/utils";
 
-export class TenantService extends BaseService<typeof tenantSchema> {
+export class TenantService extends BaseService<typeof businessSchema> {
     constructor() {
-        super(tenantSchema, "Business");
+        super(businessSchema, "Business");
     }
 
     public async onboardNewBusiness(data: OnboardBusinessDTO) {
@@ -38,9 +38,9 @@ export class TenantService extends BaseService<typeof tenantSchema> {
         }
 
         const [existingTenant] = await db
-            .select({ id: tenantSchema.id })
-            .from(tenantSchema)
-            .where(eq(tenantSchema.userId, user.id))
+            .select({ id: businessSchema.id })
+            .from(businessSchema)
+            .where(eq(businessSchema.userId, user.id))
             .limit(1);
 
         if (existingTenant) {
@@ -53,7 +53,7 @@ export class TenantService extends BaseService<typeof tenantSchema> {
         // Execute atomic transaction
         return await db.transaction(async (tx) => {
             const [newTenant] = await tx
-                .insert(tenantSchema)
+                .insert(businessSchema)
                 .values({
                     userId: user.id,
                     tenantName,
@@ -116,7 +116,7 @@ export class TenantService extends BaseService<typeof tenantSchema> {
         return tenant;
     }
 
-    public async update(tenantId: string, updateData: Partial<InsertTenantSchemaT>, user: InsertUserSchemaT) {
+    public async update(tenantId: string, updateData: Partial<InsertBusinessSchemaT>, user: InsertUserSchemaT) {
         const existingTenant = await this.getByIdOrError(tenantId);
 
         if (existingTenant.userId !== user.id) {
@@ -129,7 +129,7 @@ export class TenantService extends BaseService<typeof tenantSchema> {
             payload.slug = helperUtil.getSlug(payload.tenantName);
         }
 
-        return await this.updateByQuery(eq(tenantSchema.id, tenantId), payload);
+        return await this.updateByQuery(eq(businessSchema.id, tenantId), payload);
     }
 }
 

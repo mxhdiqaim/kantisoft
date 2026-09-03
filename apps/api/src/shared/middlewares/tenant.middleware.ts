@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { BadRequestError, ForbiddenError, UnauthorizedError } from "../errors/custom.error";
-import { tenantSchema, tenantService } from "../../modules";
+import { businessSchema, tenantService } from "../../modules";
 import { and, eq } from "drizzle-orm";
 
 class TenantMiddleware {
@@ -19,7 +19,7 @@ class TenantMiddleware {
             }
 
             const tenant = await tenantService.getOrError(
-                and(eq(tenantSchema.id, tenantId), eq(tenantSchema.userId, user!.id)),
+                and(eq(businessSchema.id, tenantId), eq(businessSchema.userId, user!.id)),
             );
 
             if (!tenant) {

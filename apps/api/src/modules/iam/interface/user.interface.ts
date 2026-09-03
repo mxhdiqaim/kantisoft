@@ -1,4 +1,4 @@
-import { InsertTenantSchemaT } from "../schema";
+import { InsertBusinessSchemaT } from "../schema";
 
 export enum UserRoleEnum {
     OWNER = "owner",
@@ -28,7 +28,7 @@ export type InviteUserDto = {
 };
 
 export interface OnboardBusinessDTO extends Omit<
-    InsertTenantSchemaT,
+    InsertBusinessSchemaT,
     "id" | "userId" | "createdAt" | "updatedAt" | "slug"
 > {
     clerkUserId: string;
