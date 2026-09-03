@@ -1,22 +1,21 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { BaseService } from "../../../shared/service";
 import { db } from "../../../shared/database";
-import { InsertTenantSchemaT, InsertUserSchemaT, locationSchema, tenantSchema, userSchema } from "../schema";
+import {
+    InsertTenantSchemaT,
+    InsertUserSchemaT,
+    locationSchema,
+    tenantSchema,
+    userLocationsSchema,
+    userSchema,
+} from "../schema";
 import { ConflictError, ForbiddenError, NotFoundError } from "../../../shared/errors/custom.error";
 import { OnboardBusinessDTO, UserRoleEnum } from "../interface";
 import { helperUtil } from "../../../shared/utils";
 
 export class TenantService extends BaseService<typeof tenantSchema> {
     constructor() {
-        super(tenantSchema);
-    }
-
-    public async getTenantDetails(tenantId: string) {
-        return this.getByIdOrError(tenantId, "Business not found.");
-    }
-
-    public async renameTenant(tenantId: string, newName: string) {
-        return this.updateByQuery(eq(tenantSchema.id, tenantId), { tenantName: newName });
+        super(tenantSchema, "Business");
     }
 
     public async onboardNewBusiness(data: OnboardBusinessDTO) {
@@ -93,8 +92,32 @@ export class TenantService extends BaseService<typeof tenantSchema> {
         });
     }
 
+    public async getSingleTenant(tenantId: string, userId: string) {
+        const tenant = await this.getByIdOrError(tenantId);
+
+        // Check if the requesting user is the owner
+        if (tenant.userId === userId) {
+            return tenant;
+        }
+
+        // Verify if the user is assigned to any location belonging to this tenant
+        const [assignedLocation] = await db
+            .select({ locationId: userLocationsSchema.locationId })
+            .from(userLocationsSchema)
+            .innerJoin(locationSchema, eq(userLocationsSchema.locationId, locationSchema.id))
+            .where(and(eq(locationSchema.tenantId, tenantId), eq(userLocationsSchema.userId, userId)))
+            .limit(1);
+
+        // If neither owner nor staff, deny access
+        if (!assignedLocation) {
+            throw new ForbiddenError("Access denied. You do not have permission to view this business's details.");
+        }
+
+        return tenant;
+    }
+
     public async update(tenantId: string, updateData: Partial<InsertTenantSchemaT>, user: InsertUserSchemaT) {
-        const existingTenant = await this.getByIdOrError(tenantId, "Business not found.");
+        const existingTenant = await this.getByIdOrError(tenantId);
 
         if (existingTenant.userId !== user.id) {
             throw new ForbiddenError("Access denied. You can only modify a business that you own.");

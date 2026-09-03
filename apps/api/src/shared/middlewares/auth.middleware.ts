@@ -7,17 +7,37 @@ import { UserRoleEnum } from "../../modules/iam/interface";
 import { UnauthorizedError, ForbiddenError, BadRequestError } from "../errors/custom.error";
 import { locationSchema, tenantSchema, userLocationsSchema, userSchema } from "../../modules";
 import { v4 as uuidv7 } from "uuid";
+import { helperUtil } from "../utils";
+import { EnvironmentVariablesEnum } from "../interface";
 
 class AuthMiddleware {
+    private readonly NODE_ENV = helperUtil.getEnvVariable("NODE_ENV");
+    private readonly CLERK_USER_ID = helperUtil.getEnvVariable("CLERK_USER_ID");
+    private readonly DEVELOPMENT_TOKEN = helperUtil.getEnvVariable("DEVELOPMENT_TOKEN");
+
     // Verifies the Clerk token, fetches the user from the database, and attaches it to req.user.
     public requireAuth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { isAuthenticated, userId: clerkId } = getAuth(req);
+            const authHeader = req.headers.authorization;
 
-            if (!isAuthenticated || !clerkId) {
-                throw new UnauthorizedError("Authentication failed or missing.");
+            let clerkId: string | null = null;
+
+            // THE DEV-MODE BACKDOOR FOR POSTMAN
+            if (
+                this.NODE_ENV === EnvironmentVariablesEnum.DEVELOPMENT &&
+                authHeader === `Bearer ${this.DEVELOPMENT_TOKEN}`
+            ) {
+                clerkId = this.CLERK_USER_ID;
+            } else {
+                // Normal Clerk Flow for Frontend / Production
+                const auth = getAuth(req);
+                if (!auth.isAuthenticated || !auth.userId) {
+                    throw new UnauthorizedError("Authentication failed or missing.");
+                }
+                clerkId = auth.userId;
             }
 
+            // Now, fetch the user from the DB regardless of whether the ID came from Clerk or the backdoor
             const [user] = await db.select().from(userSchema).where(eq(userSchema.clerkId, clerkId)).limit(1);
 
             if (!user) {

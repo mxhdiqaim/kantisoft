@@ -23,8 +23,11 @@ class TenantRoutes {
 
         this.router.use(tenantMiddleware.validateTenantOwnership);
 
+        this.router.get("/:id", this.controller.get);
+
         this.router.patch(
             "/:id",
+            // tenantMiddleware.validateTenantOwnership,
             systemMiddleware.validateRequestBody(tenantValidator.updateSchema, false),
             this.controller.update,
         );

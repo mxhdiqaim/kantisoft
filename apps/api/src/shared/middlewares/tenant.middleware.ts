@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { eq, and } from "drizzle-orm";
 import { BadRequestError, ForbiddenError, UnauthorizedError } from "../errors/custom.error";
-import { db } from "../database";
-import { tenantSchema } from "../../modules";
+import { tenantSchema, tenantService } from "../../modules";
+import { and, eq } from "drizzle-orm";
 
 class TenantMiddleware {
     public validateTenantOwnership = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -13,21 +12,18 @@ class TenantMiddleware {
                 throw new UnauthorizedError("User not found or not authorised.");
             }
 
-            const tenantId = req.params.id || (req.headers["x-tenant-id"] as string);
+            const tenantId = (req.headers["x-tenant-id"] as string)?.split(",")[0]?.trim();
 
             if (!tenantId) {
-                throw new BadRequestError("The provided ID is not valid.");
+                throw new BadRequestError("No tenant selected.");
             }
 
-            // Validate strict owner access
-            const [tenant] = await db
-                .select()
-                .from(tenantSchema)
-                .where(and(eq(tenantSchema.id, String(tenantId)), eq(tenantSchema.userId, user.id)))
-                .limit(1);
+            const tenant = await tenantService.getOrError(
+                and(eq(tenantSchema.id, tenantId), eq(tenantSchema.userId, user!.id)),
+            );
 
             if (!tenant) {
-                throw new ForbiddenError("You do not have permission to access or modify this business.");
+                throw new ForbiddenError("You do not have access to this resource.");
             }
 
             // Attach tenant to the request for the controller to use

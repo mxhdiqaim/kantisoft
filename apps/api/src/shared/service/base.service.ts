@@ -12,7 +12,10 @@ export type DbTx = typeof db;
 export type RowLock = "update" | "share" | "no key update" | "key share";
 
 export abstract class BaseService<T extends PgTable> {
-    protected constructor(private readonly table: T) {}
+    protected constructor(
+        private readonly table: T,
+        private name: string,
+    ) {}
 
     private getContextConditions(): SQL[] {
         const context = requestContext.getStore();
@@ -41,12 +44,10 @@ export abstract class BaseService<T extends PgTable> {
         return conditionsToApply.length > 0 ? and(...conditionsToApply) : undefined;
     }
 
-    protected async getAll(customWhere?: SQL, tx?: DbTx, lock?: RowLock): Promise<InferSelect<T>[]> {
+    public async getAll(customWhere?: SQL, tx?: DbTx, lock?: RowLock): Promise<InferSelect<T>[]> {
         const executor = tx || db;
         const finalCondition = this.buildWhere(customWhere);
 
-        // We use type assertion ('any') on the query builder here because Drizzle's
-        // dynamic locking method (.for) causes complex generic inference errors
         let query = (await executor
             .select()
             .from(this.table as PgTable)
@@ -61,7 +62,7 @@ export abstract class BaseService<T extends PgTable> {
         return query;
     }
 
-    protected async getAllPaginated(page = 1, pageSize = 10, customWhere?: SQL, tx?: DbTx) {
+    public async getAllPaginated(page = 1, pageSize = 10, customWhere?: SQL, tx?: DbTx) {
         const executor = tx || db;
         const sanitizedPage = Math.max(1, page);
         const sanitizedPageSize = Math.max(1, pageSize);
@@ -91,7 +92,7 @@ export abstract class BaseService<T extends PgTable> {
         };
     }
 
-    protected async count(customWhere?: SQL, tx?: DbTx): Promise<number> {
+    public async count(customWhere?: SQL, tx?: DbTx): Promise<number> {
         const executor = tx || db;
         const finalCondition = this.buildWhere(customWhere);
 
@@ -103,7 +104,7 @@ export abstract class BaseService<T extends PgTable> {
         return Number(result?.count || 0);
     }
 
-    protected async get(whereClause: SQL, tx?: DbTx, lock?: RowLock): Promise<InferSelect<T> | null> {
+    public async get(whereClause: SQL | undefined, tx?: DbTx, lock?: RowLock): Promise<InferSelect<T> | null> {
         const executor = tx || db;
         const finalCondition = this.buildWhere(whereClause);
 
@@ -123,18 +124,17 @@ export abstract class BaseService<T extends PgTable> {
         return (result as InferSelect<T>) || null;
     }
 
-    protected async getOrError(
-        whereClause: SQL,
-        errorMessage = "The requested resource could not be found.",
-        tx?: DbTx,
-        lock?: RowLock,
-    ): Promise<InferSelect<T>> {
+    public async getOrError(whereClause: SQL | undefined, tx?: DbTx, lock?: RowLock): Promise<InferSelect<T>> {
         const record = await this.get(whereClause, tx, lock);
-        if (!record) throw new NotFoundError(errorMessage);
+
+        if (!record) {
+            throw new NotFoundError(`This ${this.name.toLowerCase()} could not be found.`);
+        }
+
         return record;
     }
 
-    protected async getById(id: string, tx?: DbTx, lock?: RowLock): Promise<InferSelect<T> | null> {
+    public async getById(id: string, tx?: DbTx, lock?: RowLock): Promise<InferSelect<T> | null> {
         const columns = this.table as unknown as Record<string, AnyPgColumn>;
         if (!columns.id) {
             throw new Error(`Table ${this.table._.name} does not have an 'id' column.`);
@@ -143,26 +143,17 @@ export abstract class BaseService<T extends PgTable> {
         return this.get(eq(columns.id, id), tx, lock);
     }
 
-    protected async getByIdOrError(
-        id: string,
-        errorMessage = "The requested resource could not be found.",
-        tx?: DbTx,
-        lock?: RowLock,
-    ): Promise<InferSelect<T>> {
+    public async getByIdOrError(id: string, tx?: DbTx, lock?: RowLock): Promise<InferSelect<T>> {
         const record = await this.getById(id, tx, lock);
 
         if (!record) {
-            throw new NotFoundError(errorMessage);
+            throw new NotFoundError(`This ${this.name.toLowerCase()} could not be found.`);
         }
 
         return record;
     }
 
-    protected async updateByQuery(
-        customWhere: SQL,
-        data: Partial<InferInsert<T>>,
-        tx?: DbTx,
-    ): Promise<InferSelect<T>[]> {
+    public async updateByQuery(customWhere: SQL, data: Partial<InferInsert<T>>, tx?: DbTx): Promise<InferSelect<T>[]> {
         const executor = tx || db;
         const finalCondition = this.buildWhere(customWhere);
 
@@ -179,7 +170,7 @@ export abstract class BaseService<T extends PgTable> {
         return result as InferSelect<T>[];
     }
 
-    protected async delete(customWhere: SQL, tx?: DbTx): Promise<InferSelect<T>[]> {
+    public async delete(customWhere: SQL, tx?: DbTx): Promise<InferSelect<T>[]> {
         const executor = tx || db;
         const finalCondition = this.buildWhere(customWhere);
 
@@ -195,21 +186,17 @@ export abstract class BaseService<T extends PgTable> {
         return result as InferSelect<T>[];
     }
 
-    protected async deleteOrError(
-        customWhere: SQL,
-        errorMessage = "Failed to delete: The target resource does not exist.",
-        tx?: DbTx,
-    ): Promise<InferSelect<T>[]> {
+    public async deleteOrError(customWhere: SQL, tx?: DbTx): Promise<InferSelect<T>[]> {
         const deletedRecords = await this.delete(customWhere, tx);
 
         if (deletedRecords.length === 0) {
-            throw new NotFoundError(errorMessage);
+            throw new NotFoundError(`Failed to delete: This ${this.name.toLowerCase()} does not exist.`);
         }
 
         return deletedRecords;
     }
 
-    protected async deleteById(id: string, tx?: DbTx): Promise<InferSelect<T> | null> {
+    public async deleteById(id: string, tx?: DbTx): Promise<InferSelect<T> | null> {
         const columns = this.table as unknown as Record<string, AnyPgColumn>;
 
         if (!columns.id) {
@@ -221,11 +208,7 @@ export abstract class BaseService<T extends PgTable> {
         return deletedRecords[0] || null;
     }
 
-    /**
-     * Checks if a specific record exists based on a field value.
-     * Useful for checking if an email, phone number, or SKU already exists.
-     */
-    protected async validateField(field: string, value: unknown, tx?: DbTx): Promise<boolean> {
+    public async validateField(field: string, value: unknown, tx?: DbTx): Promise<boolean> {
         const columns = this.table as unknown as Record<string, AnyPgColumn>;
         const targetColumn = columns[field];
 

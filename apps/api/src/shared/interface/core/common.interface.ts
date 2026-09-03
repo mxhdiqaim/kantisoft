@@ -6,3 +6,10 @@ export interface ReqQueryOptions {
     sortBy?: string;
     sortOrder?: "ASC" | "DESC";
 }
+
+export enum EnvironmentVariablesEnum {
+    DEVELOPMENT = "development",
+    PRODUCTION = "production",
+    TEST = "test",
+    STAGING = "staging",
+}
