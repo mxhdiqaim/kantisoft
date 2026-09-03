@@ -15,6 +15,13 @@
       "when": 1788455802453,
       "tag": "0001_keen_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788458475519,
+      "tag": "0002_abnormal_rictor",
+      "breakpoints": true
     }
   ]
 }
