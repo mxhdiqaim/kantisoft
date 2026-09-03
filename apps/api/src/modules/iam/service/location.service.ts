@@ -5,7 +5,7 @@ import { InsertLocationSchemaT, locationSchema } from "../schema";
 
 class LocationService extends BaseService<typeof locationSchema> {
     constructor() {
-        super(locationSchema);
+        super(locationSchema, "Location");
     }
 
     public async create(data: InsertLocationSchemaT) {
@@ -24,12 +24,12 @@ class LocationService extends BaseService<typeof locationSchema> {
     }
 
     public async getLocationDetails(locationId: string) {
-        return this.getByIdOrError(locationId, "Location not found.");
+        return this.getByIdOrError(locationId);
     }
 
     public async updateLocationDetails(
         locationId: string,
-        updateData: Partial<Omit<InsertLocationSchemaT, "id" | "tenantId">>,
+        updateData: Partial<Omit<InsertLocationSchemaT, "id" | "businessId">>,
     ) {
         return this.updateByQuery(eq(locationSchema.id, locationId), updateData);
     }

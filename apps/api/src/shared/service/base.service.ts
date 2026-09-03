@@ -23,8 +23,8 @@ export abstract class BaseService<T extends PgTable> {
 
         const columns = this.table as unknown as Record<string, AnyPgColumn>;
 
-        if (columns.tenantId && context?.tenantId) {
-            conditions.push(eq(columns.tenantId, context.tenantId));
+        if (columns.businessId && context?.businessId) {
+            conditions.push(eq(columns.businessId, context.businessId));
         }
 
         if (columns.locationId && context?.locationId) {
@@ -34,7 +34,7 @@ export abstract class BaseService<T extends PgTable> {
         return conditions;
     }
 
-    // Helper to safely merge custom conditions with tenant isolation conditions.
+    // Helper to safely merge custom conditions with business isolation conditions.
     private buildWhere(customWhere?: SQL): SQL | undefined {
         const contextConditions = this.getContextConditions();
         const conditionsToApply = [...contextConditions];

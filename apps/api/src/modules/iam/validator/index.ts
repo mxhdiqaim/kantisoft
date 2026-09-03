@@ -1,1 +1,1 @@
-export { default as tenantValidator } from "./tenant.validator";
+export { default as businessValidator } from "./business.validator";

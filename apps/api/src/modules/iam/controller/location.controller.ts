@@ -8,21 +8,21 @@ export default class LocationController {
         try {
             const { name, address } = req.body;
 
-            // Extract tenantId from the AsyncLocalStorage context
+            // Extract businessId from the AsyncLocalStorage context
             const context = requestContext.getStore();
-            const tenantId = context?.tenantId;
+            const businessId = context?.businessId;
 
-            if (!tenantId) {
-                throw new UnauthorizedError("Tenant context missing. Cannot create location.");
+            if (!businessId) {
+                throw new UnauthorizedError("Business context missing. Cannot create location.");
             }
 
             if (!name) {
                 throw new BadRequestError("Location name is required.");
             }
 
-            // Create the location tied strictly to this tenant
+            // Create the location tied strictly to this business
             const location = await locationService.create({
-                tenantId,
+                businessId,
                 name,
                 address,
             });

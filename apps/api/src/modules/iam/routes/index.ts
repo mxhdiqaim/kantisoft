@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authMiddleware } from "../../../shared/middlewares";
-import tenantRoute from "./tenant.route";
+import businessRoute from "./business.route";
 import webhookRoute from "./webhook.route";
 import locationRoute from "./location.route";
 import userRoute from "./user.route";
@@ -18,7 +18,7 @@ class IamRoutes {
 
         this.router.use(authMiddleware.requireAuth);
 
-        this.router.use("/tenants", tenantRoute);
+        this.router.use("/business", businessRoute);
 
         this.router.use(authMiddleware.validateAccess);
 

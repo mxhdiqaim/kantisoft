@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from "async_hooks";
 
 export interface RequestContext {
     requestId: string;
-    tenantId?: string;
+    businessId?: string;
     locationId?: string;
 }
 

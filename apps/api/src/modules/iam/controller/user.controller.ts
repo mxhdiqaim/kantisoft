@@ -9,10 +9,10 @@ export default class UserController {
             const { firstName, lastName, email, phone, role, locationId } = req.body;
 
             const context = requestContext.getStore();
-            const tenantId = context?.tenantId;
+            const businessId = context?.businessId;
 
-            if (!tenantId) {
-                throw new UnauthorizedError("Tenant context missing.");
+            if (!businessId) {
+                throw new UnauthorizedError("Business context missing.");
             }
 
             // Validate all required fields
@@ -23,7 +23,7 @@ export default class UserController {
             const invitation = await userService.inviteUser({
                 firstName,
                 lastName,
-                tenantId,
+                businessId,
                 email,
                 role,
                 locationId,

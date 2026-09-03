@@ -20,7 +20,7 @@ export enum UserStatusEnum {
 export type InviteUserDto = {
     firstName: string;
     lastName: string;
-    tenantId: string;
+    businessId: string;
     email: string;
     role: UserRoleEnum;
     locationId: string;

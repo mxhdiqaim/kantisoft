@@ -1,21 +1,18 @@
 import { Request, Response, NextFunction } from "express";
-import { tenantService } from "../service";
+import { businessService } from "../service";
 import { getAuth } from "@clerk/express";
 
-export default class TenantController {
+export default class BusinessController {
     public get = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { id } = req.params;
 
             const userId = req.user!.id;
 
-            console.log("TenantController.get:");
-            console.log({ id, userId });
-
-            const data = await tenantService.getSingleTenant(id as string, userId);
+            const data = await businessService.getSingleSingle(id as string, userId);
 
             return res.status(200).json({
-                message: "Tenant retrieved successfully.",
+                message: "Business retrieved successfully.",
                 data,
             });
         } catch (error) {
@@ -29,13 +26,13 @@ export default class TenantController {
             const { userId: clerkId } = getAuth(req);
 
             // Construct the DTO expected by the refactored service
-            const data = await tenantService.onboardNewBusiness({
+            const data = await businessService.onboardNewBusiness({
                 clerkUserId: clerkId!,
                 ...body,
             });
 
             return res.status(201).json({
-                message: "Tenant created successfully.",
+                message: "Business created successfully.",
                 data,
             });
         } catch (error) {
@@ -51,10 +48,10 @@ export default class TenantController {
                 user,
             } = req;
 
-            const data = await tenantService.update(String(id), body, user);
+            const data = await businessService.update(String(id), body, user);
 
             return res.status(200).json({
-                message: "Tenant updated successfully.",
+                message: "Business updated successfully.",
                 data,
             });
         } catch (error) {

@@ -1,9 +1,9 @@
 import { z } from "zod";
 import BaseValidator from "../../../shared/validator/base.validator";
 
-class TenantValidator extends BaseValidator {
+class BusinessValidator extends BaseValidator {
     public createSchema = z.object({
-        tenantName: z.string().trim().min(2, "Business name must be at least 2 characters."),
+        businessName: z.string().trim().min(2, "Business name must be at least 2 characters."),
         countryId: z.uuid("Invalid country ID format."),
         description: z.string().trim().optional(),
         teamSize: z.string("Team size must be a number string.").trim().optional(),
@@ -14,7 +14,7 @@ class TenantValidator extends BaseValidator {
     });
 
     public updateSchema = z.object({
-        tenantName: z.string().trim().min(2, "Business name must be at least 2 characters.").optional(),
+        businessName: z.string().trim().min(2, "Business name must be at least 2 characters.").optional(),
         countryId: z.string().uuid("Invalid country ID format.").optional(),
         description: z.string().trim().optional(),
         teamSize: z.string().trim().optional(),
@@ -25,4 +25,4 @@ class TenantValidator extends BaseValidator {
     });
 }
 
-export default new TenantValidator();
+export default new BusinessValidator();

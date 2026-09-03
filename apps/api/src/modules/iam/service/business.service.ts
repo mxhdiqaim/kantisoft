@@ -13,14 +13,14 @@ import { ConflictError, ForbiddenError, NotFoundError } from "../../../shared/er
 import { OnboardBusinessDTO, UserRoleEnum } from "../interface";
 import { helperUtil } from "../../../shared/utils";
 
-export class TenantService extends BaseService<typeof businessSchema> {
+export class BusinessService extends BaseService<typeof businessSchema> {
     constructor() {
         super(businessSchema, "Business");
     }
 
     public async onboardNewBusiness(data: OnboardBusinessDTO) {
         const {
-            tenantName,
+            businessName,
             clerkUserId,
             countryId,
             description,
@@ -37,26 +37,26 @@ export class TenantService extends BaseService<typeof businessSchema> {
             throw new NotFoundError("User profile not found. Please try logging in again.");
         }
 
-        const [existingTenant] = await db
+        const [existingBusiness] = await db
             .select({ id: businessSchema.id })
             .from(businessSchema)
             .where(eq(businessSchema.userId, user.id))
             .limit(1);
 
-        if (existingTenant) {
+        if (existingBusiness) {
             throw new ConflictError("You already own a business account.");
         }
 
         // Auto-generate a slug if one isn't provided
-        const slug = helperUtil.getSlug(tenantName);
+        const slug = helperUtil.getSlug(businessName);
 
         // Execute atomic transaction
         return await db.transaction(async (tx) => {
-            const [newTenant] = await tx
+            const [newBusiness] = await tx
                 .insert(businessSchema)
                 .values({
                     userId: user.id,
-                    tenantName,
+                    businessName,
                     slug,
                     countryId: countryId,
                     description,
@@ -72,7 +72,7 @@ export class TenantService extends BaseService<typeof businessSchema> {
             const [defaultLocation] = await tx
                 .insert(locationSchema)
                 .values({
-                    tenantId: newTenant.id,
+                    businessId: newBusiness.id,
                     name: "Main Location",
                 })
                 .returning();
@@ -85,27 +85,27 @@ export class TenantService extends BaseService<typeof businessSchema> {
                 .returning();
 
             return {
-                tenant: newTenant,
+                business: newBusiness,
                 location: defaultLocation,
                 owner: updatedOwner,
             };
         });
     }
 
-    public async getSingleTenant(tenantId: string, userId: string) {
-        const tenant = await this.getByIdOrError(tenantId);
+    public async getSingleSingle(businessId: string, userId: string) {
+        const business = await this.getByIdOrError(businessId);
 
         // Check if the requesting user is the owner
-        if (tenant.userId === userId) {
-            return tenant;
+        if (business.userId === userId) {
+            return business;
         }
 
-        // Verify if the user is assigned to any location belonging to this tenant
+        // Verify if the user is assigned to any location belonging to this business
         const [assignedLocation] = await db
             .select({ locationId: userLocationsSchema.locationId })
             .from(userLocationsSchema)
             .innerJoin(locationSchema, eq(userLocationsSchema.locationId, locationSchema.id))
-            .where(and(eq(locationSchema.tenantId, tenantId), eq(userLocationsSchema.userId, userId)))
+            .where(and(eq(locationSchema.businessId, businessId), eq(userLocationsSchema.userId, userId)))
             .limit(1);
 
         // If neither owner nor staff, deny access
@@ -113,24 +113,24 @@ export class TenantService extends BaseService<typeof businessSchema> {
             throw new ForbiddenError("Access denied. You do not have permission to view this business's details.");
         }
 
-        return tenant;
+        return business;
     }
 
-    public async update(tenantId: string, updateData: Partial<InsertBusinessSchemaT>, user: InsertUserSchemaT) {
-        const existingTenant = await this.getByIdOrError(tenantId);
+    public async update(businessId: string, updateData: Partial<InsertBusinessSchemaT>, user: InsertUserSchemaT) {
+        const existingBusiness = await this.getByIdOrError(businessId);
 
-        if (existingTenant.userId !== user.id) {
+        if (existingBusiness.userId !== user.id) {
             throw new ForbiddenError("Access denied. You can only modify a business that you own.");
         }
 
         const payload = { ...updateData };
 
-        if (payload.tenantName) {
-            payload.slug = helperUtil.getSlug(payload.tenantName);
+        if (payload.businessName) {
+            payload.slug = helperUtil.getSlug(payload.businessName);
         }
 
-        return await this.updateByQuery(eq(businessSchema.id, tenantId), payload);
+        return await this.updateByQuery(eq(businessSchema.id, businessId), payload);
     }
 }
 
-export default new TenantService();
+export default new BusinessService();

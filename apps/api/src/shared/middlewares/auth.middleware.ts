@@ -52,7 +52,7 @@ class AuthMiddleware {
         }
     };
 
-    // Validates if the authenticated user has access to the requested tenant/location via headers.
+    // Validates if the authenticated user has access to the requested business/location via headers.
     public validateAccess = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const user = req.user;
@@ -61,29 +61,29 @@ class AuthMiddleware {
                 throw new UnauthorizedError("User not found on request. Ensure requireAuth runs first.");
             }
 
-            const tenantId = req.headers["x-tenant-id"] as string;
+            const businessId = req.headers["x-business-id"] as string;
             const locationId = req.headers["x-location-id"] as string;
 
-            if (!tenantId) {
-                throw new BadRequestError("No tenant (business) selected.");
+            if (!businessId) {
+                throw new BadRequestError("No business selected.");
             }
 
             // --- OWNER ACCESS VALIDATION ---
             if (user.role === UserRoleEnum.OWNER) {
-                const [tenant] = await db
+                const [business] = await db
                     .select()
                     .from(businessSchema)
-                    .where(and(eq(businessSchema.id, tenantId), eq(businessSchema.userId, user.id)))
+                    .where(and(eq(businessSchema.id, businessId), eq(businessSchema.userId, user.id)))
                     .limit(1);
 
-                if (tenant) {
-                    req.tenant = tenant;
+                if (business) {
+                    req.business = business;
 
                     if (locationId) {
                         const [location] = await db
                             .select()
                             .from(locationSchema)
-                            .where(and(eq(locationSchema.id, locationId), eq(locationSchema.tenantId, tenantId)))
+                            .where(and(eq(locationSchema.id, locationId), eq(locationSchema.businessId, businessId)))
                             .limit(1);
 
                         if (!location) {
@@ -100,7 +100,7 @@ class AuthMiddleware {
             }
 
             // --- STAFF ACCESS VALIDATION ---
-            // If the code reaches here, either the user is STAFF, or an OWNER trying to access a tenant they don't own.
+            // If the code reaches here, either the user is STAFF, or an OWNER trying to access a business they don't own.
             if (!locationId) {
                 throw new BadRequestError("No branch selected for staff access.");
             }
@@ -108,16 +108,16 @@ class AuthMiddleware {
             const [staffContext] = await db
                 .select({
                     location: locationSchema,
-                    tenant: businessSchema,
+                    business: businessSchema,
                 })
                 .from(userLocationsSchema)
                 .innerJoin(locationSchema, eq(userLocationsSchema.locationId, locationSchema.id))
-                .innerJoin(businessSchema, eq(locationSchema.tenantId, businessSchema.id))
+                .innerJoin(businessSchema, eq(locationSchema.businessId, businessSchema.id))
                 .where(
                     and(
                         eq(userLocationsSchema.userId, user.id),
                         eq(userLocationsSchema.locationId, locationId),
-                        eq(locationSchema.tenantId, tenantId),
+                        eq(locationSchema.businessId, businessId),
                     ),
                 )
                 .limit(1);
@@ -126,7 +126,7 @@ class AuthMiddleware {
                 throw new ForbiddenError("You do not have access to this branch or business.");
             }
 
-            req.tenant = staffContext.tenant;
+            req.business = staffContext.business;
             req.location = staffContext.location;
 
             return this.runWithContext(req, next);
@@ -135,13 +135,13 @@ class AuthMiddleware {
         }
     };
 
-    // Helper to run the logger context (since req.user/req.tenant are now resolved)
+    // Helper to run the logger context (since req.user/req.business are now resolved)
     private runWithContext = (req: Request, next: NextFunction) => {
         const requestId = (req.headers["x-request-id"] as string) || uuidv7();
 
         const context = {
             requestId,
-            tenantId: req.tenant?.id,
+            businessId: req.business?.id,
             location: req.location,
             user: req.user,
         };

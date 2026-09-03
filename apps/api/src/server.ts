@@ -54,7 +54,7 @@ class Server {
         this.app.use((req: Request, res: Response, next: NextFunction) => {
             const requestId = (req.headers["x-request-id"] as string) || crypto.randomUUID();
 
-            // The tenantId and locationId will be added later by the Clerk auth middleware.
+            // The businessId and locationId will be added later by the Clerk auth middleware.
             requestContext.run({ requestId }, () => {
                 next();
             });

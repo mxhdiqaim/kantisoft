@@ -5,7 +5,7 @@ import { userSchema } from "./user.schema";
 import { locationSchema } from "./location.schema";
 import { addressSchema, countrySchema } from "../../../shared/database/schema";
 
-export const businessSchema = pgTable("tenants", {
+export const businessSchema = pgTable("businesses", {
     id: uuid("id")
         .primaryKey()
         .$defaultFn(() => uuidv7()),
@@ -13,7 +13,7 @@ export const businessSchema = pgTable("tenants", {
         .references(() => userSchema.id, { onDelete: "cascade" })
         .notNull()
         .unique(),
-    tenantName: text("name").notNull(),
+    businessName: text("name").notNull(),
     slug: text("slug").notNull().unique(),
     countryId: uuid("country_id")
         .references(() => countrySchema.id, { onDelete: "restrict" })
@@ -33,7 +33,7 @@ export const businessSchema = pgTable("tenants", {
 
 export type InsertBusinessSchemaT = typeof businessSchema.$inferInsert;
 
-export const tenantSchemaRelations = relations(businessSchema, ({ one, many }) => ({
+export const businessSchemaRelations = relations(businessSchema, ({ one, many }) => ({
     // Defines the direct 1-to-1 relationship holding the foreign key
     owner: one(userSchema, {
         fields: [businessSchema.userId],

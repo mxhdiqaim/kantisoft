@@ -45,7 +45,7 @@ export const userSchema = pgTable("users", {
 export type InsertUserSchemaT = typeof userSchema.$inferInsert;
 
 export const userSchemaRelations = relations(userSchema, ({ one, many }) => ({
-    // Defines the inverse of the 1-to-1 relationship (the user owns one tenant)
+    // Defines the inverse of the 1-to-1 relationship (the user owns one business)
     ownedBusiness: one(businessSchema),
     userLocations: many(userLocationsSchema),
 }));

@@ -23,7 +23,7 @@ export const locationSchema = pgTable("locations", {
 export type InsertLocationSchemaT = typeof locationSchema.$inferInsert;
 
 export const locationSchemaRelations = relations(locationSchema, ({ one, many }) => ({
-    tenant: one(businessSchema, {
+    business: one(businessSchema, {
         fields: [locationSchema.businessId],
         references: [businessSchema.id],
     }),

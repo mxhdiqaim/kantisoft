@@ -5,7 +5,7 @@ declare module "express" {
     export interface Request {
         queryOpts?: ReqQueryOptions;
         user?: InsertUserSchemaT;
-        tenant?: InsertBusinessSchemaT;
+        business?: InsertBusinessSchemaT;
         location?: InsertLocationSchemaT;
     }
 }

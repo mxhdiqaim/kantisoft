@@ -7,7 +7,7 @@ import logger from "../../../shared/logger";
 
 class UserService extends BaseService<typeof userSchema> {
     constructor() {
-        super(userSchema);
+        super(userSchema, "User");
     }
 
     public async listStaff(page: number, pageSize: number) {
@@ -15,7 +15,7 @@ class UserService extends BaseService<typeof userSchema> {
     }
 
     public async getUserProfile(userId: string) {
-        return this.getByIdOrError(userId, "User not found.");
+        return this.getByIdOrError(userId);
     }
 
     public async updateUserStatus(userId: string, status: UserStatusEnum) {
@@ -49,7 +49,7 @@ class UserService extends BaseService<typeof userSchema> {
     }
 
     public async assignLocationToUser(userId: string, locationId: string) {
-        await this.getByIdOrError(userId, "User does not exist.");
+        await this.getByIdOrError(userId);
 
         const [assignment] = await db.insert(userLocationsSchema).values({ userId, locationId }).returning();
 
