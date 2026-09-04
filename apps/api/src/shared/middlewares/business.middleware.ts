@@ -1,33 +1,28 @@
 import { Request, Response, NextFunction } from "express";
 import { BadRequestError, ForbiddenError, UnauthorizedError } from "../errors/custom.error";
-import { businessSchema, businessService } from "../../modules";
-import { and, eq } from "drizzle-orm";
+import { requestContext } from "../logger/context";
+import { UserRoleEnum } from "../../modules/iam/interface";
 
 class BusinessMiddleware {
-    public validateBusinessOwnership = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public validateBusinessOwnership = (req: Request, res: Response, next: NextFunction): void => {
         try {
-            const { user } = req;
+            const context = requestContext.getStore();
 
-            if (!user) {
-                throw new UnauthorizedError("User not found or not authorised.");
+            if (!context) {
+                throw new UnauthorizedError("Request context missing.");
             }
 
-            const businessId = (req.headers["x-business-id"] as string)?.split(",")[0]?.trim();
+            const requestedBusinessId = (req.headers["x-business-id"] as string)?.split(",")[0]?.trim();
 
-            if (!businessId) {
+            if (!requestedBusinessId) {
                 throw new BadRequestError("No business selected.");
             }
 
-            const business = await businessService.get(
-                and(eq(businessSchema.id, businessId), eq(businessSchema.userId, user.id)),
-            );
-
-            if (!business) {
+            // Must be an owner AND their token must match the requested business
+            if (context.role !== UserRoleEnum.OWNER || context.businessId !== requestedBusinessId) {
                 throw new ForbiddenError("You do not have permission to access or modify this business.");
             }
 
-            // Attach business to the request for the controller to use
-            req.business = business;
             return next();
         } catch (error) {
             next(error);

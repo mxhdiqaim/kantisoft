@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authMiddleware } from "../../../shared/middlewares";
 import businessRoute from "./business.route";
 import webhookRoute from "./webhook.route";
-import locationRoute from "./location.route";
+import branchRoute from "./branch.route";
 import userRoute from "./user.route";
 
 class IamRoutes {
@@ -14,7 +14,7 @@ class IamRoutes {
     }
 
     private routes() {
-        this.router.use("/webhooks", webhookRoute);
+        this.router.use("/webhook", webhookRoute);
 
         this.router.use(authMiddleware.requireAuth);
 
@@ -22,9 +22,9 @@ class IamRoutes {
 
         this.router.use(authMiddleware.validateAccess);
 
-        this.router.use("/locations", locationRoute);
+        this.router.use("/branch", branchRoute);
 
-        this.router.use("/users", userRoute);
+        this.router.use("/user", userRoute);
     }
 }
 

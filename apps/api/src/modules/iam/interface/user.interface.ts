@@ -24,7 +24,7 @@ export type InviteUserDto = {
     email: string;
     role: UserRoleEnum;
     branchId: string;
-    phone?: string;
+    phoneNumber?: string;
 };
 
 export interface OnboardBusinessDTO extends Omit<

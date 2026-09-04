@@ -5,11 +5,18 @@ import { InsertBusinessSchemaT, InsertUserSchemaT, businessSchema, userSchema } 
 import { ConflictError, ForbiddenError, NotFoundError } from "../../../shared/errors/custom.error";
 import { OnboardBusinessDTO, UserRoleEnum } from "../interface";
 import { helperUtil } from "../../../shared/utils";
+import { createClerkClient } from "@clerk/express";
 
 export class BusinessService extends BaseService<typeof businessSchema> {
     constructor() {
         super(businessSchema, "Business");
     }
+
+    private readonly CLERK_SECRET_KEY = helperUtil.getEnvVariable("CLERK_SECRET_KEY");
+
+    private clerkClient = createClerkClient({
+        secretKey: this.CLERK_SECRET_KEY,
+    });
 
     public async onboardNewBusiness(data: OnboardBusinessDTO) {
         const {
@@ -42,8 +49,7 @@ export class BusinessService extends BaseService<typeof businessSchema> {
 
         const slug = helperUtil.getSlug(businessName);
 
-        // Execute atomic transaction
-        return await db.transaction(async (tx) => {
+        const result = await db.transaction(async (tx) => {
             const [newBusiness] = await tx
                 .insert(businessSchema)
                 .values({
@@ -75,6 +81,17 @@ export class BusinessService extends BaseService<typeof businessSchema> {
                 owner: updatedOwner,
             };
         });
+
+        // Push Authorization context to Clerk so the next JWT is secure
+        await this.clerkClient.users.updateUserMetadata(clerkUserId, {
+            publicMetadata: {
+                userId: result.owner.id,
+                role: UserRoleEnum.OWNER,
+                businessId: result.business.id,
+            },
+        });
+
+        return result;
     }
 
     // Changed userId to take the full user object so we can check user.businessId natively
@@ -108,7 +125,9 @@ export class BusinessService extends BaseService<typeof businessSchema> {
             payload.slug = helperUtil.getSlug(payload.businessName);
         }
 
-        return await this.updateByQuery(eq(businessSchema.id, businessId), payload);
+        const [updatedBusiness] = await this.updateByQuery(eq(businessSchema.id, businessId), payload);
+
+        return updatedBusiness;
     }
 }
 

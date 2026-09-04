@@ -1,32 +1,38 @@
 import { eq } from "drizzle-orm";
 import { BaseService } from "../../../shared/service";
 import { db } from "../../../shared/database";
-import { InsertBranchSchemaT, branchSchema, userSchema } from "../schema";
+import { branchSchema, InsertBranchSchemaT, userSchema } from "../schema";
 import { UserRoleEnum } from "../interface";
-import { ForbiddenError, NotFoundError } from "../../../shared/errors/custom.error";
+import { ForbiddenError } from "../../../shared/errors/custom.error";
+import { CreateBranchDTO } from "../interface";
+import { addressSchema } from "../../../shared/database/schema";
+import { addressService, userService } from "./index";
 
 class BranchService extends BaseService<typeof branchSchema> {
     constructor() {
         super(branchSchema, "Branch");
     }
 
-    public async create(userId: string, data: Omit<InsertBranchSchemaT, "businessId">) {
-        // Query userSchema directly (since 'this' points to the branches table, not users)
-        const [user] = await db.select().from(userSchema).where(eq(userSchema.id, userId)).limit(1);
+    public async create(userId: string, data: CreateBranchDTO) {
+        const { addressId, name } = data;
 
-        if (!user) {
-            throw new NotFoundError("User profile not found.");
-        }
+        // Use userService for consistency
+        const user = await userService.getOrError(eq(userSchema.id, userId));
 
-        // Must be an OWNER AND have an active businessId assigned
         if (user.role !== UserRoleEnum.OWNER || !user.businessId) {
             throw new ForbiddenError("Only business owners with an active business can create branches.");
+        }
+
+        // Only validate address if one was actually provided!
+        if (addressId) {
+            await addressService.getOrError(eq(addressSchema.id, addressId));
         }
 
         const [newBranch] = await db
             .insert(branchSchema)
             .values({
-                ...data,
+                addressId,
+                name,
                 businessId: user.businessId,
             })
             .returning();
@@ -34,20 +40,33 @@ class BranchService extends BaseService<typeof branchSchema> {
         return newBranch;
     }
 
-    public async update(
-        branchId: string,
-        userId: string,
-        updateData: Partial<Omit<InsertBranchSchemaT, "id" | "businessId">>,
-    ) {
-        const [user] = await db.select().from(userSchema).where(eq(userSchema.id, userId)).limit(1);
+    public async update(branchId: string, userId: string, data: Partial<CreateBranchDTO>) {
+        const { addressId, name } = data;
 
-        if (!user) {
-            throw new NotFoundError("User profile not found.");
-        }
+        const user = await userService.getOrError(eq(userSchema.id, userId));
 
-        // Must be an OWNER AND have an active businessId assigned
         if (user.role !== UserRoleEnum.OWNER || !user.businessId) {
             throw new ForbiddenError("Only business owners with an active business can update branches.");
+        }
+
+        const branch = await this.getByIdOrError(branchId);
+
+        if (branch.businessId !== user.businessId) {
+            throw new ForbiddenError("You do not have permission to update this branch.");
+        }
+
+        const updateData: Partial<InsertBranchSchemaT> = {};
+
+        // Only validate address if the user is actively trying to update it
+        if (addressId !== undefined) {
+            if (addressId !== null) {
+                await addressService.getOrError(eq(addressSchema.id, addressId));
+            }
+            updateData.addressId = addressId;
+        }
+
+        if (name !== undefined) {
+            updateData.name = name;
         }
 
         return this.updateByQuery(eq(branchSchema.id, branchId), updateData);

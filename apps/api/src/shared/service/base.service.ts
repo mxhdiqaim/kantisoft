@@ -217,6 +217,7 @@ export abstract class BaseService<T extends PgTable> {
         }
 
         const count = await this.count(eq(targetColumn, value), tx);
+
         return count > 0;
     }
 }

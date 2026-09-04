@@ -15,7 +15,7 @@ export const branchSchema = pgTable(
             .references(() => businessSchema.id, { onDelete: "cascade" })
             .notNull(),
         addressId: uuid("address_id").references(() => addressSchema.id, { onDelete: "set null" }),
-        name: text("name").notNull().unique(),
+        name: text("name").notNull(),
         createdAt: timestamp("created_at").defaultNow().notNull(),
         updatedAt: timestamp("updated_at")
             .defaultNow()
