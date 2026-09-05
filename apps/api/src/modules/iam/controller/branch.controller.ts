@@ -7,7 +7,9 @@ import { branchSchema } from "../schema";
 export default class BranchController {
     public index = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { search } = req.queryOpts || {};
+            const { queryOpts } = req;
+
+            const { search } = queryOpts || {};
 
             let customWhere: SQL;
             if (search) {
