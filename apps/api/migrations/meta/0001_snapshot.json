@@ -1,6 +1,6 @@
 {
-  "id": "d79bd45d-5c0a-4830-a4aa-5cc87fa0759d",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "13ecb44f-690a-4570-9165-8985038bdc6b",
+  "prevId": "d79bd45d-5c0a-4830-a4aa-5cc87fa0759d",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -228,7 +228,7 @@
           "name": "tenantId",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "createdAt": {
           "name": "createdAt",
@@ -310,7 +310,8 @@
         "active",
         "inactive",
         "deleted",
-        "banned"
+        "banned",
+        "invited"
       ]
     }
   },

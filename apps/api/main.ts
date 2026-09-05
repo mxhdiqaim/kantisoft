@@ -2,9 +2,9 @@ import "newrelic";
 import { Server } from "http";
 import { app } from "./src/server";
 import { helperUtil } from "./src/shared/utils";
+import { createRateLimiter } from "./src/shared/middlewares/rate-limiter";
 import logger from "./src/shared/logger";
 import { DBConnect, DBDisconnect } from "./src/shared/database";
-import { rateLimiterMiddleware } from "./src/shared/middlewares";
 
 interface SystemError extends Error {
     code?: string;
@@ -24,8 +24,8 @@ class Application {
             // Establish Database Connections
             await DBConnect();
 
-            // Connect to Redis for the Rate Limiter BEFORE starting the server
-            await rateLimiterMiddleware.connect();
+            // Rate Limiter Middlewares
+            app.use(createRateLimiter());
 
             // Start the Express Server
             this.server = app.listen(this.port, "0.0.0.0", () => {
@@ -79,9 +79,6 @@ class Application {
 
             // Safely close database connections
             await DBDisconnect();
-
-            // Cleanly close the Redis connection
-            await rateLimiterMiddleware.disconnect();
 
             logger.info("Shutdown completed successfully.");
             process.exit(0);

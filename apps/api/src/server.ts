@@ -1,7 +1,7 @@
 import "./config/instrument";
 import * as Sentry from "@sentry/bun";
 import cors from "cors";
-import express, { Application, NextFunction, Request, Response } from "express";
+import express, { Application, Request, Response, NextFunction } from "express";
 import morgan from "morgan";
 import path from "path";
 import routesV1 from "./routes";
@@ -9,8 +9,7 @@ import { helperUtil } from "./shared/utils";
 import logger from "./shared/logger";
 import { requestContext } from "./shared/logger/context";
 import { clerkMiddleware } from "@clerk/express";
-import { errorMiddleware, rateLimiterMiddleware } from "./shared/middlewares";
-import { UserRoleEnum } from "./modules/iam/interface";
+import { errorMiddleware } from "./shared/middlewares";
 
 class Server {
     private readonly ADMIN_APP = helperUtil.getEnvVariable("ADMIN_APP");
@@ -51,15 +50,12 @@ class Server {
     private setupMiddlewares(): void {
         this.app.use(cors(this.getCorsOptions()));
 
-        // Apply the class method
-        this.app.use(rateLimiterMiddleware.apply());
-
         // Initialize Request Context (AsyncLocalStorage)
         this.app.use((req: Request, res: Response, next: NextFunction) => {
             const requestId = (req.headers["x-request-id"] as string) || crypto.randomUUID();
 
-            // The businessId and locationId will be added later by the Clerk auth middleware.
-            requestContext.run({ requestId, role: UserRoleEnum.GUEST, userId: "" }, () => {
+            // The tenantId and locationId will be added later by the Clerk auth middleware.
+            requestContext.run({ requestId }, () => {
                 next();
             });
         });
@@ -67,17 +63,14 @@ class Server {
         // Pipe HTTP Logs to Pino
         this.app.use(morgan("dev", { stream: logger.getHttpLogStream() }));
 
-        // Webhook Bypass Logic
+        // Body Parsers
+        this.app.use(express.urlencoded({ extended: false }));
+
         this.app.use((req: Request, res: Response, next: NextFunction) => {
-            if (req.originalUrl.includes("/webhook")) {
+            if (req.originalUrl.includes("/iam/webhooks")) {
                 return next();
             }
-
-            // If it's NOT a webhook, run both JSON and URL-encoded parsers safely
-            express.json({ limit: "5mb" })(req, res, (err) => {
-                if (err) return next(err);
-                express.urlencoded({ extended: false })(req, res, next);
-            });
+            express.json({ limit: "5mb" })(req, res, next);
         });
 
         this.app.use(clerkMiddleware());

@@ -1,25 +1,25 @@
 import { Router } from "express";
-import { UserController } from "../controller";
+import { LocationController } from "../controller";
 import AuthMiddleware from "../../../shared/middlewares/auth.middleware";
 
-class UserRoutes {
+class LocationRoutes {
     public readonly router: Router;
-    private readonly controller: UserController;
+    private readonly controller: LocationController;
 
     constructor() {
         this.router = Router();
-        this.controller = new UserController();
+        this.controller = new LocationController();
         this.initializeRoutes();
     }
 
     private initializeRoutes() {
         this.router.post(
-            "/invite",
+            "/",
             AuthMiddleware.requireAuth,
-            AuthMiddleware.withTenantContext,
-            this.controller.inviteStaff,
+            AuthMiddleware.withTenantContext, // Ensures the user has a tenant
+            this.controller.create,
         );
     }
 }
 
-export default new UserRoutes().router;
+export default new LocationRoutes().router;

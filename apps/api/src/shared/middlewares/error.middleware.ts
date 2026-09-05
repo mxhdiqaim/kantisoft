@@ -18,14 +18,11 @@ class ErrorMiddleware {
 
         let statusCode = this.SERVER_ERROR;
         let message = "Something went wrong. Server Error!";
-        // eslint-disable-next-line
-        let errorsDetails: any[] | undefined = undefined;
 
         // Handle custom AppErrors
         if (err instanceof AppError) {
             statusCode = err.statusCode;
             message = err.message;
-            errorsDetails = err.errors;
         }
         // Catch potential Clerk/Third-party errors that aren't instances of AppError
         else if (err.message && err.message.includes("Authentication failed")) {
@@ -37,9 +34,6 @@ class ErrorMiddleware {
         if (NODE_ENV === "development") {
             console.error(`\n🚨 [ERROR] [${req.method}] ${req.path} - Status: ${statusCode}`);
             console.error(`Message: ${err.message}`);
-            if (errorsDetails) {
-                console.error(`Details:`, JSON.stringify(errorsDetails, null, 2));
-            }
             if (err.stack) {
                 console.error(`Stack Trace:\n${err.stack}\n`);
             }
@@ -53,7 +47,6 @@ class ErrorMiddleware {
         return res.status(statusCode).json({
             type: statusCode,
             message: message,
-            ...(errorsDetails && { errors: errorsDetails }),
             ...(NODE_ENV === "development" && { stack: err.stack }),
         });
     };
