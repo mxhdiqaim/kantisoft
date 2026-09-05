@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { BadRequestError, ForbiddenError, UnauthorizedError } from "../errors/custom.error";
+import { ForbiddenError, UnauthorizedError } from "../errors/custom.error";
 import { requestContext } from "../logger/context";
 import { UserRoleEnum } from "../../modules/iam/interface";
 
@@ -12,14 +12,18 @@ class BusinessMiddleware {
                 throw new UnauthorizedError("Request context missing.");
             }
 
-            const requestedBusinessId = (req.headers["x-business-id"] as string)?.split(",")[0]?.trim();
-
-            if (!requestedBusinessId) {
-                throw new BadRequestError("No business selected.");
+            if (context.role !== UserRoleEnum.OWNER) {
+                throw new ForbiddenError("You can not modify business settings.");
             }
 
-            // Must be an owner AND their token must match the requested business
-            if (context.role !== UserRoleEnum.OWNER || context.businessId !== requestedBusinessId) {
+            if (!context.businessId) {
+                throw new ForbiddenError("You do not have an active business.");
+            }
+
+            // Compare the business ID in the URL (e.g., PATCH /business/:id) to the one in their token
+            const targetBusinessId = req.params.id;
+
+            if (targetBusinessId && context.businessId !== targetBusinessId) {
                 throw new ForbiddenError("You do not have permission to access or modify this business.");
             }
 

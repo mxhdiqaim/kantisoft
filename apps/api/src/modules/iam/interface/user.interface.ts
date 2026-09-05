@@ -27,12 +27,7 @@ export type InviteUserDto = {
     phoneNumber?: string;
 };
 
-export interface OnboardBusinessDTO extends Omit<
-    InsertBusinessSchemaT,
-    "id" | "userId" | "createdAt" | "updatedAt" | "slug"
-> {
-    clerkUserId: string;
-}
+export type OnboardBusinessDTO = Omit<InsertBusinessSchemaT, "id" | "userId" | "createdAt" | "updatedAt" | "slug">;
 
 export type SyncClerkUserDTO = {
     clerkId: string;

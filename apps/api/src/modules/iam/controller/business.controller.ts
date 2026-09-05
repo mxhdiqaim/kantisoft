@@ -1,15 +1,19 @@
 import { Request, Response, NextFunction } from "express";
 import { businessService } from "../service";
-import { getAuth } from "@clerk/express";
+import { requestContext } from "../../../shared/logger/context";
+import { businessSchema } from "../schema";
+import { and, eq } from "drizzle-orm";
 
 export default class BusinessController {
     public get = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { id } = req.params;
+            const context = requestContext.getStore();
+            const userId = context!.userId;
 
-            const userId = req.user!.id;
-
-            const data = await businessService.getSingleBusiness(id as string, userId);
+            const data = await businessService.getOrError(
+                and(eq(businessSchema.id, String(id)), eq(businessSchema.userId, userId)),
+            );
 
             return res.status(200).json({
                 message: "Business retrieved successfully.",
@@ -23,13 +27,11 @@ export default class BusinessController {
     public async create(req: Request, res: Response, next: NextFunction) {
         try {
             const { body } = req;
-            const { userId: clerkId } = getAuth(req);
+            const context = requestContext.getStore();
 
-            // Construct the DTO expected by the refactored service
-            const data = await businessService.onboardNewBusiness({
-                clerkUserId: clerkId!,
-                ...body,
-            });
+            const userId = context!.userId;
+
+            const data = await businessService.onboardNewBusiness(userId, body);
 
             return res.status(201).json({
                 message: "Business created successfully.",
@@ -42,13 +44,12 @@ export default class BusinessController {
 
     public update = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const {
-                params: { id },
-                body,
-                user,
-            } = req;
+            const { id } = req.params;
+            const { body } = req;
+            const context = requestContext.getStore();
 
-            const data = await businessService.update(String(id), body, user);
+            // Pass the context userId instead of the old req.user object
+            const data = await businessService.update(String(id), context!.userId, body);
 
             return res.status(200).json({
                 message: "Business updated successfully.",

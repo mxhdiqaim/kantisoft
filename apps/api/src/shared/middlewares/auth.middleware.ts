@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { getAuth } from "@clerk/express";
 import { requestContext } from "../logger/context";
-import { UnauthorizedError, ForbiddenError, BadRequestError } from "../errors/custom.error";
+import { UserRoleEnum } from "../../modules/iam/interface";
+import { UnauthorizedError, ForbiddenError } from "../errors/custom.error";
 import { v4 as uuidv7 } from "uuid";
 import { helperUtil } from "../utils";
 import { EnvironmentVariablesEnum } from "../interface";
-import { UserRoleEnum } from "../../modules/iam/interface";
 
 class AuthMiddleware {
     private readonly NODE_ENV = helperUtil.getEnvVariable("NODE_ENV");
@@ -21,12 +21,10 @@ class AuthMiddleware {
             // eslint-disable-next-line
             let metadata: any = {};
 
-            // DEV-MODE
             if (
                 this.NODE_ENV === EnvironmentVariablesEnum.DEVELOPMENT &&
                 authHeader === `Bearer ${this.DEVELOPMENT_TOKEN}`
             ) {
-                // Mock the Clerk public_metadata for dev ENV
                 metadata = {
                     userId: this.DEV_USER_ID,
                     role: this.DEV_ROLE || UserRoleEnum.OWNER,
@@ -34,12 +32,10 @@ class AuthMiddleware {
                     branchId: this.DEV_BRANCH_ID,
                 };
             } else {
-                // PRODUCTION CLERK FLOW
                 const auth = getAuth(req);
                 if (!auth.isAuthenticated || !auth.userId) {
                     throw new UnauthorizedError("Authentication failed or missing.");
                 }
-
                 metadata = auth.sessionClaims?.metadata || {};
             }
 
@@ -47,7 +43,6 @@ class AuthMiddleware {
                 throw new UnauthorizedError("User profile syncing. Please wait a moment.");
             }
 
-            // Initialising the context
             const contextData = {
                 requestId: (req.headers["x-request-id"] as string) || uuidv7(),
                 userId: metadata.userId,
@@ -72,28 +67,14 @@ class AuthMiddleware {
                 throw new UnauthorizedError("Security context missing. Ensure requireAuth runs first.");
             }
 
-            const requestedBusinessId = req.headers["x-business-id"] as string;
-            const requestedBranchId = req.headers["x-branch-id"] as string;
-
-            if (!requestedBusinessId) {
-                throw new BadRequestError("No business selected.");
+            // Everyone hitting a protected route MUST have a business assigned to them.
+            if (!context.businessId) {
+                throw new ForbiddenError("You must create or join a business to access this resource.");
             }
 
-            // OWNER ACCESS VALIDATION
-            if (context.role === UserRoleEnum.OWNER) {
-                if (context.businessId !== requestedBusinessId) {
-                    throw new ForbiddenError("You do not have permission to access this business.");
-                }
-                return next();
-            }
-
-            // STAFF ACCESS VALIDATION
-            if (!requestedBranchId) {
-                throw new BadRequestError("No branch selected for staff access.");
-            }
-
-            if (context.businessId !== requestedBusinessId || context.branchId !== requestedBranchId) {
-                throw new ForbiddenError("You do not have access to this branch or business.");
+            // If the user is STAFF, they MUST have a branch assigned to them to do anything.
+            if (context.role !== UserRoleEnum.OWNER && !context.branchId) {
+                throw new ForbiddenError("You must be assigned to a branch to access this resource.");
             }
 
             return next();

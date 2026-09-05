@@ -1,11 +1,12 @@
-import { eq } from "drizzle-orm";
-import { BaseService } from "../../../shared/service";
+import { and, eq } from "drizzle-orm";
+import { addressService, BaseService, countryService } from "../../../shared/service";
 import { db } from "../../../shared/database";
-import { InsertBusinessSchemaT, InsertUserSchemaT, businessSchema, userSchema } from "../schema";
-import { ConflictError, ForbiddenError, NotFoundError } from "../../../shared/errors/custom.error";
+import { businessSchema, InsertBusinessSchemaT, userSchema } from "../schema";
+import { ConflictError, NotFoundError } from "../../../shared/errors/custom.error";
 import { OnboardBusinessDTO, UserRoleEnum } from "../interface";
 import { helperUtil } from "../../../shared/utils";
 import { createClerkClient } from "@clerk/express";
+import logger from "../../../shared/logger";
 
 export class BusinessService extends BaseService<typeof businessSchema> {
     constructor() {
@@ -18,10 +19,9 @@ export class BusinessService extends BaseService<typeof businessSchema> {
         secretKey: this.CLERK_SECRET_KEY,
     });
 
-    public async onboardNewBusiness(data: OnboardBusinessDTO) {
+    public async onboardNewBusiness(userId: string, data: OnboardBusinessDTO) {
         const {
             businessName,
-            clerkUserId,
             countryId,
             description,
             logoUrl,
@@ -31,20 +31,14 @@ export class BusinessService extends BaseService<typeof businessSchema> {
             taxOrVatId,
         } = data;
 
-        const [user] = await db.select().from(userSchema).where(eq(userSchema.clerkId, clerkUserId)).limit(1);
+        const [user] = await db.select().from(userSchema).where(eq(userSchema.id, userId)).limit(1);
 
         if (!user) {
             throw new NotFoundError("User profile not found. Please try logging in again.");
         }
 
-        const [existingBusiness] = await db
-            .select({ id: businessSchema.id })
-            .from(businessSchema)
-            .where(eq(businessSchema.userId, user.id))
-            .limit(1);
-
-        if (existingBusiness) {
-            throw new ConflictError("You already own a business account.");
+        if (user.businessId) {
+            throw new ConflictError("You are already associated with a business account.");
         }
 
         const slug = helperUtil.getSlug(businessName);
@@ -66,7 +60,6 @@ export class BusinessService extends BaseService<typeof businessSchema> {
                 })
                 .returning();
 
-            // Make the user role to OWNER AND attach them to the businessId
             const [updatedOwner] = await tx
                 .update(userSchema)
                 .set({
@@ -82,50 +75,62 @@ export class BusinessService extends BaseService<typeof businessSchema> {
             };
         });
 
-        // Push Authorization context to Clerk so the next JWT is secure
-        await this.clerkClient.users.updateUserMetadata(clerkUserId, {
-            publicMetadata: {
-                userId: result.owner.id,
-                role: UserRoleEnum.OWNER,
-                businessId: result.business.id,
-            },
-        });
+        try {
+            await this.clerkClient.users.updateUserMetadata(user.clerkId, {
+                publicMetadata: {
+                    userId: result.owner.id,
+                    role: UserRoleEnum.OWNER,
+                    businessId: result.business.id,
+                },
+            });
+        } catch (error) {
+            logger.warn(`Failed to sync metadata to Clerk for ${user.clerkId}. (Expected in Dev Mode)`, error as never);
+        }
 
         return result;
     }
 
-    // Changed userId to take the full user object so we can check user.businessId natively
-    public async getSingleBusiness(businessId: string, user: InsertUserSchemaT) {
-        const business = await this.getByIdOrError(businessId);
+    public async update(businessId: string, userId: string, data: Partial<OnboardBusinessDTO>) {
+        const { countryId, addressId } = data;
 
-        //  Check if the requesting user is the direct owner
-        if (business.userId === user.id) {
-            return business;
+        await this.getOrError(and(eq(businessSchema.id, String(businessId)), eq(businessSchema.userId, userId)));
+
+        if (countryId) {
+            await countryService.getByIdOrError(countryId);
         }
 
-        // Check if this user's assigned businessId matches the requested business
-        if (user.businessId === businessId) {
-            return business;
+        if (addressId) {
+            await addressService.getByIdOrError(addressId);
         }
 
-        // If neither owner nor staff, deny access
-        throw new ForbiddenError("Access denied. You do not have permission to view this business's details.");
-    }
+        const updatePayload: Partial<InsertBusinessSchemaT> = {};
 
-    public async update(businessId: string, updateData: Partial<InsertBusinessSchemaT>, user: InsertUserSchemaT) {
-        const existingBusiness = await this.getByIdOrError(businessId);
-
-        if (existingBusiness.userId !== user.id) {
-            throw new ForbiddenError("Access denied. You can only modify a business that you own.");
+        if (data.businessName !== undefined) {
+            updatePayload.businessName = data.businessName;
+            updatePayload.slug = helperUtil.getSlug(updatePayload.businessName);
         }
 
-        const payload = { ...updateData };
-
-        if (payload.businessName) {
-            payload.slug = helperUtil.getSlug(payload.businessName);
+        if (data.logoUrl !== undefined) {
+            updatePayload.logoUrl = data.logoUrl;
         }
 
-        const [updatedBusiness] = await this.updateByQuery(eq(businessSchema.id, businessId), payload);
+        if (data.companyRegistrationNumber !== undefined) {
+            updatePayload.companyRegistrationNumber = data.companyRegistrationNumber;
+        }
+
+        if (data.teamSize !== undefined) {
+            updatePayload.teamSize = data.teamSize;
+        }
+
+        if (data.taxOrVatId !== undefined) {
+            updatePayload.taxOrVatId = data.taxOrVatId;
+        }
+
+        if (data.description !== undefined) {
+            updatePayload.description = data.description;
+        }
+
+        const [updatedBusiness] = await this.updateByQuery(eq(businessSchema.id, businessId), updatePayload);
 
         return updatedBusiness;
     }
