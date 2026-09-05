@@ -7,16 +7,16 @@ import { branchSchema } from "../schema";
 export default class BranchController {
     public index = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { queryOpts } = req;
+            const queryOpts = req.queryOpts || {};
+            const { search } = queryOpts;
 
-            const { search } = queryOpts || {};
+            let customWhere: SQL | undefined = undefined;
 
-            let customWhere: SQL;
             if (search) {
                 customWhere = ilike(branchSchema.name, `%${search}%`);
             }
 
-            const data = await branchService.getAllPaginated(customWhere!, req.queryOpts!);
+            const data = await branchService.getAllPaginated(customWhere, queryOpts);
 
             return res.status(200).json({
                 message: "Branches retrieved successfully.",
