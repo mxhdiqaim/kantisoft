@@ -3,6 +3,8 @@ import { PgTable, AnyPgColumn } from "drizzle-orm/pg-core";
 import { db } from "../database";
 import { NotFoundError } from "../errors/custom.error";
 import { requestContext } from "../logger/context";
+import { ReqQueryOptions } from "../interface";
+import { helperUtil } from "../utils";
 
 export type InferSelect<T extends PgTable> = T["$inferSelect"];
 export type InferInsert<T extends PgTable> = T["$inferInsert"];
@@ -44,7 +46,7 @@ export abstract class BaseService<T extends PgTable> {
         return conditionsToApply.length > 0 ? and(...conditionsToApply) : undefined;
     }
 
-    public async getAll(customWhere?: SQL, tx?: DbTx, lock?: RowLock): Promise<InferSelect<T>[]> {
+    public async getAll(customWhere: SQL, tx?: DbTx, lock?: RowLock): Promise<InferSelect<T>[]> {
         const executor = tx || db;
         const finalCondition = this.buildWhere(customWhere);
 
@@ -62,11 +64,10 @@ export abstract class BaseService<T extends PgTable> {
         return query;
     }
 
-    public async getAllPaginated(page = 1, pageSize = 10, customWhere?: SQL, tx?: DbTx) {
+    public async getAllPaginated(customWhere: SQL, queryOpts: ReqQueryOptions, tx?: DbTx) {
+        const { limit, page, offset } = queryOpts;
+
         const executor = tx || db;
-        const sanitizedPage = Math.max(1, page);
-        const sanitizedPageSize = Math.max(1, pageSize);
-        const offset = (sanitizedPage - 1) * sanitizedPageSize;
 
         const finalCondition = this.buildWhere(customWhere);
 
@@ -75,20 +76,21 @@ export abstract class BaseService<T extends PgTable> {
             .from(this.table as PgTable)
             .where(finalCondition);
 
-        const total = Number(countResult?.count || 0);
+        const totalCount = Number(countResult?.count || 0);
 
         const data = await executor
             .select()
             .from(this.table as PgTable)
             .where(finalCondition)
-            .limit(sanitizedPageSize)
-            .offset(offset);
+            .limit(limit!)
+            .offset(offset!);
+
+        const paginationData = helperUtil.getPaginationData(limit!, page!, totalCount);
 
         return {
-            data: data as InferSelect<T>[],
-            total,
-            page: sanitizedPage,
-            pageSize: sanitizedPageSize,
+            result: data,
+            totalCount,
+            ...paginationData,
         };
     }
 

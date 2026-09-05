@@ -1,25 +1,29 @@
 import { Request, Response, NextFunction } from "express";
 import { branchService } from "../service";
 import { requestContext } from "../../../shared/logger/context";
+import { ilike, SQL } from "drizzle-orm";
+import { branchSchema } from "../schema";
 
 export default class BranchController {
-    // public index = async (req: Request, res: Response, next: NextFunction) => {
-    //     try {
-    //         const {
-    //             user: { id: userId, branchId },
-    //             queryOpts: { search }
-    //         } = req;
-    //
-    //         const data = await branchService.getAllPaginated();
-    //
-    //         return res.status(201).json({
-    //             message: "Branch created successfully.",
-    //             data,
-    //         });
-    //     } catch (error) {
-    //         next(error);
-    //     }
-    // };
+    public index = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { search } = req.queryOpts || {};
+
+            let customWhere: SQL;
+            if (search) {
+                customWhere = ilike(branchSchema.name, `%${search}%`);
+            }
+
+            const data = await branchService.getAllPaginated(customWhere!, req.queryOpts!);
+
+            return res.status(200).json({
+                message: "Branches retrieved successfully.",
+                data,
+            });
+        } catch (error) {
+            next(error);
+        }
+    };
 
     public create = async (req: Request, res: Response, next: NextFunction) => {
         try {

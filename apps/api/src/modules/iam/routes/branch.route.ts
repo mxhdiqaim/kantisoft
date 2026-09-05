@@ -12,6 +12,8 @@ class BranchRoutes {
     }
 
     private initializeRoutes() {
+        this.router.get("/", this.controller.index);
+
         this.router.post("/", this.controller.create);
 
         this.router.post("/:id", this.controller.update);
