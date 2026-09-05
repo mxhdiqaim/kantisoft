@@ -16,7 +16,7 @@ class BranchRoutes {
 
         this.router.post("/", this.controller.create);
 
-        this.router.post("/:id", this.controller.update);
+        this.router.patch("/:id", this.controller.update);
     }
 }
 
