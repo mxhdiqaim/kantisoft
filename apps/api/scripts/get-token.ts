@@ -1,10 +1,9 @@
 import { clerkClient } from "@clerk/express";
+import { helperUtil } from "../src/shared/utils";
 
-const USER_ID = "user_3I5jcaFAF9Ht8x4aui9FUpVdqcL";
+const USER_ID = helperUtil.getEnvVariable("CLERK_USER_ID");
 
 const TEMPLATE_NAME = "long-lived-token";
-
-// await window.Clerk.session.getToken()
 
 const generateTestToken = async (userId: string) => {
     try {
@@ -43,3 +42,5 @@ const generateTestToken = async (userId: string) => {
 };
 
 generateTestToken(USER_ID);
+
+// await window.Clerk.session.getToken()
