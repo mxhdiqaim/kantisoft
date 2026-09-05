@@ -1,15 +1,16 @@
 import { Router } from "express";
 import { iamRoutes } from "../modules/iam";
+import systemMiddleware from "../shared/middlewares/system.middleware";
 
 class AppRouter {
     public readonly router: Router;
 
     constructor() {
         this.router = Router();
-        this.initializeRoutes();
+        this.routes();
     }
 
-    private initializeRoutes() {
+    private routes() {
         this.router.get("/health", (req, res) => {
             res.status(200).json({
                 status: "ok",
@@ -18,7 +19,8 @@ class AppRouter {
             });
         });
 
-        // Mount routers to API version prefixes
+        this.router.use(systemMiddleware.formatRequestQuery);
+
         this.router.use("/iam", iamRoutes);
         // this.router.use("/catalog", catalogRoutes);
         // this.router.use("/sales", salesRoutes);

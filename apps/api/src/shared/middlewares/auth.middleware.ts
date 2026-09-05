@@ -1,90 +1,96 @@
 import { Request, Response, NextFunction } from "express";
 import { getAuth } from "@clerk/express";
-import { v4 as uuidv4 } from "uuid";
-import { eq, and } from "drizzle-orm";
-import { userLocationsSchema, userSchema } from "../../modules";
-import { db } from "../database";
 import { requestContext } from "../logger/context";
 import { UserRoleEnum } from "../../modules/iam/interface";
 import { UnauthorizedError, ForbiddenError } from "../errors/custom.error";
+import { v4 as uuidv7 } from "uuid";
+import { helperUtil } from "../utils";
+import { EnvironmentVariablesEnum } from "../interface";
 
 class AuthMiddleware {
-    // Ensures the request contains a valid Clerk session.
-    public requireAuth(req: Request, res: Response, next: NextFunction) {
-        const { isAuthenticated } = getAuth(req);
+    private readonly NODE_ENV = helperUtil.getEnvVariable("NODE_ENV");
+    private readonly DEVELOPMENT_TOKEN = helperUtil.getEnvVariable("DEVELOPMENT_TOKEN");
+    private readonly DEV_USER_ID = helperUtil.getEnvVariable("DEV_USER_ID");
+    private readonly DEV_ROLE = helperUtil.getEnvVariable("DEV_ROLE");
+    private readonly DEV_BUSINESS_ID = helperUtil.getEnvVariable("DEV_BUSINESS_ID");
+    private readonly DEV_BRANCH_ID = helperUtil.getEnvVariable("DEV_BRANCH_ID");
 
-        if (!isAuthenticated) {
-            return next(new UnauthorizedError("Authentication failed or missing."));
-        }
-
-        next();
-    }
-
-    /**
-     * Resolves the user's business from the DB, validates location access,
-     * and wraps the request in an AsyncLocalStorage context.
-     */
-    public async withTenantContext(req: Request, res: Response, next: NextFunction) {
+    public requireAuth = (req: Request, res: Response, next: NextFunction): void => {
         try {
-            const { userId: clerkId } = getAuth(req);
+            const authHeader = req.headers.authorization;
+            // eslint-disable-next-line
+            let metadata: any = {};
 
-            if (!clerkId) {
-                return next(new UnauthorizedError("Authentication failed or missing."));
-            }
+            if (
+                this.NODE_ENV === EnvironmentVariablesEnum.DEVELOPMENT &&
+                authHeader === `Bearer ${this.DEVELOPMENT_TOKEN}`
+            ) {
+                const cleanBusinessId =
+                    this.DEV_BUSINESS_ID === EnvironmentVariablesEnum.DEVELOPMENT || !this.DEV_BUSINESS_ID
+                        ? undefined
+                        : this.DEV_BUSINESS_ID;
+                const cleanBranchId =
+                    this.DEV_BRANCH_ID === EnvironmentVariablesEnum.DEVELOPMENT || !this.DEV_BRANCH_ID
+                        ? undefined
+                        : this.DEV_BRANCH_ID;
 
-            // Resolve the user from the database
-            const [user] = await db
-                .select({
-                    id: userSchema.id,
-                    tenantId: userSchema.tenantId,
-                    role: userSchema.role,
-                })
-                .from(userSchema)
-                .where(eq(userSchema.clerkId, clerkId))
-                .limit(1);
-
-            if (!user) {
-                return next(new UnauthorizedError("User profile syncing. Please wait a moment."));
-            }
-
-            // Block if they haven't created a business yet
-            if (!user.tenantId) {
-                return next(new ForbiddenError("You must create a business before accessing this resource."));
-            }
-
-            // Extract and validate target location permissions
-            const locationId = (req.headers["x-location-id"] as string) || undefined;
-
-            if (locationId && user.role !== UserRoleEnum.OWNER) {
-                const [assignment] = await db
-                    .select()
-                    .from(userLocationsSchema)
-                    .where(and(eq(userLocationsSchema.userId, user.id), eq(userLocationsSchema.locationId, locationId)))
-                    .limit(1);
-
-                if (!assignment) {
-                    return next(new ForbiddenError("You do not have permission to access this location."));
+                metadata = {
+                    userId: this.DEV_USER_ID,
+                    role: this.DEV_ROLE || UserRoleEnum.OWNER,
+                    businessId: cleanBusinessId,
+                    branchId: cleanBranchId,
+                };
+            } else {
+                const auth = getAuth(req);
+                if (!auth.isAuthenticated || !auth.userId) {
+                    throw new UnauthorizedError("Authentication failed or missing.");
                 }
+                metadata = auth.sessionClaims?.metadata || {};
             }
 
-            // Trace & Context binding
-            const requestId = (req.headers["x-request-id"] as string) || uuidv4();
+            if (!metadata.userId) {
+                throw new UnauthorizedError("User profile syncing. Please wait a moment.");
+            }
 
-            const context = {
-                requestId,
-                tenantId: user.tenantId,
-                locationId,
-                role: user.role,
+            const contextData = {
+                requestId: (req.headers["x-request-id"] as string) || uuidv7(),
+                userId: metadata.userId,
+                role: metadata.role as UserRoleEnum,
+                businessId: metadata.businessId,
+                branchId: metadata.branchId,
             };
 
-            // Execute the remainder of the request lifecycle within this context
-            requestContext.run(context, () => {
+            requestContext.run(contextData, () => {
                 next();
             });
         } catch (error) {
             next(error);
         }
-    }
+    };
+
+    public validateAccess = (req: Request, res: Response, next: NextFunction): void => {
+        try {
+            const context = requestContext.getStore();
+
+            if (!context) {
+                throw new UnauthorizedError("Security context missing. Ensure requireAuth runs first.");
+            }
+
+            // Everyone hitting a protected route MUST have a business assigned to them.
+            if (!context.businessId) {
+                throw new ForbiddenError("You must create or join a business to access this resource.");
+            }
+
+            // If the user is STAFF, they MUST have a branch assigned to them to do anything.
+            if (context.role !== UserRoleEnum.OWNER && !context.branchId) {
+                throw new ForbiddenError("You must be assigned to a branch to access this resource.");
+            }
+
+            return next();
+        } catch (error) {
+            next(error);
+        }
+    };
 }
 
 export default new AuthMiddleware();

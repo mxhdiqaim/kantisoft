@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { authMiddleware } from "../../../shared/middlewares";
-import tenantRoute from "./tenant.route";
+import businessRoute from "./business.route";
 import webhookRoute from "./webhook.route";
-import locationRoute from "./location.route";
+import branchRoute from "./branch.route";
 import userRoute from "./user.route";
 
 class IamRoutes {
@@ -14,13 +14,17 @@ class IamRoutes {
     }
 
     private routes() {
-        this.router.use("/tenants", authMiddleware.requireAuth, tenantRoute);
+        this.router.use("/webhook", webhookRoute);
 
-        this.router.use("/webhooks", webhookRoute);
+        this.router.use(authMiddleware.requireAuth);
 
-        this.router.use("/locations", locationRoute);
+        this.router.use("/business", businessRoute);
 
-        this.router.use("/users", userRoute);
+        this.router.use(authMiddleware.validateAccess);
+
+        this.router.use("/branch", branchRoute);
+
+        this.router.use("/user", userRoute);
     }
 }
 

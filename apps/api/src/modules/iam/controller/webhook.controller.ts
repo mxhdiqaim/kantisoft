@@ -5,6 +5,7 @@ import { userService } from "../service";
 import { helperUtil } from "../../../shared/utils";
 import logger from "../../../shared/logger";
 import { BadRequestError } from "../../../shared/errors/custom.error";
+import { UserRoleEnum } from "../interface";
 
 export default class WebhookController {
     public handleClerkWebhook = async (req: Request, res: Response, next: NextFunction) => {
@@ -19,7 +20,6 @@ export default class WebhookController {
                 throw new BadRequestError("Missing Svix headers");
             }
 
-            // Ensure body is a raw Buffer
             if (!Buffer.isBuffer(req.body)) {
                 throw new BadRequestError("Request body must be raw Buffer. Check middleware order.");
             }
@@ -39,20 +39,59 @@ export default class WebhookController {
                 throw new BadRequestError("Invalid webhook signature");
             }
 
-            if (evt.type === "user.created") {
-                const { id, email_addresses, first_name, last_name, phone_numbers } = evt.data;
-                const primaryEmail = email_addresses?.[0]?.email_address;
-                const primaryPhone = phone_numbers?.[0]?.phone_number;
+            switch (evt.type) {
+                case "user.created": {
+                    const { id, email_addresses, first_name, last_name, phone_numbers, image_url, public_metadata } =
+                        evt.data;
+                    const primaryEmail = email_addresses?.[0]?.email_address;
+                    const primaryPhone = phone_numbers?.[0]?.phone_number;
 
-                if (primaryEmail) {
-                    await userService.syncClerkUserCreated(
-                        id,
-                        primaryEmail,
-                        primaryPhone,
-                        first_name || "Unknown",
-                        last_name || "Unknown",
-                    );
-                    logger.info(`Processed Clerk user.created webhook for ${primaryEmail}`);
+                    // Check if an explicit role was provided in metadata (e.g., from an invitation link)
+                    const assignedRole = (public_metadata?.role as UserRoleEnum) || UserRoleEnum.OWNER;
+
+                    if (primaryEmail) {
+                        await userService.syncClerkUserCreated({
+                            clerkId: id,
+                            email: primaryEmail,
+                            firstName: first_name || "Unknown",
+                            lastName: last_name || "Unknown",
+                            phoneNumber: primaryPhone,
+                            avatarUrl: image_url,
+                            role: assignedRole,
+                        });
+                        logger.info(
+                            `Processed Clerk user.created webhook for ${primaryEmail} with role: ${assignedRole}`,
+                        );
+                    }
+                    break;
+                }
+
+                case "user.updated": {
+                    const { id, email_addresses, first_name, last_name, phone_numbers, image_url } = evt.data;
+                    const primaryEmail = email_addresses?.[0]?.email_address;
+                    const primaryPhone = phone_numbers?.[0]?.phone_number;
+
+                    if (primaryEmail) {
+                        await userService.syncClerkUserUpdated({
+                            clerkId: id,
+                            email: primaryEmail,
+                            firstName: first_name || "Unknown",
+                            lastName: last_name || "Unknown",
+                            phoneNumber: primaryPhone,
+                            avatarUrl: image_url,
+                        });
+                        logger.info(`Processed Clerk user.updated webhook for ${primaryEmail}`);
+                    }
+                    break;
+                }
+
+                case "user.deleted": {
+                    const { id } = evt.data;
+                    if (id) {
+                        await userService.syncClerkUserDeleted(id);
+                        logger.info(`Processed Clerk user.deleted webhook for clerkId: ${id}`);
+                    }
+                    break;
                 }
             }
 

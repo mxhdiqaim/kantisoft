@@ -1,3 +1,5 @@
+import { InsertBusinessSchemaT } from "../schema";
+
 export enum UserRoleEnum {
     OWNER = "owner",
     ADMIN = "admin",
@@ -18,9 +20,21 @@ export enum UserStatusEnum {
 export type InviteUserDto = {
     firstName: string;
     lastName: string;
-    tenantId: string;
+    businessId: string;
     email: string;
     role: UserRoleEnum;
-    locationId: string;
-    phone?: string;
+    branchId: string;
+    phoneNumber?: string;
+};
+
+export type OnboardBusinessDTO = Omit<InsertBusinessSchemaT, "id" | "userId" | "createdAt" | "updatedAt" | "slug">;
+
+export type SyncClerkUserDTO = {
+    clerkId: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    avatarUrl?: string;
+    role?: UserRoleEnum;
 };

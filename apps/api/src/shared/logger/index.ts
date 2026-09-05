@@ -72,8 +72,10 @@ class LoggerService {
                     return context
                         ? {
                               requestId: context.requestId,
-                              tenantId: context.tenantId,
-                              locationId: context.locationId,
+                              businessId: context.businessId,
+                              branchId: context.branchId,
+                              userId: context.userId,
+                              role: context.role,
                           }
                         : {};
                 },

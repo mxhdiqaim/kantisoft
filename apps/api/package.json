@@ -10,9 +10,8 @@
         "db:generate": "bun drizzle-kit generate",
         "db:migrate": "bun src/shared/database/migration.database.ts",
         "db:migrate:prod": "bun dist/src/shared/database/migration.database.js",
-        "seed": "bun src/db/seed.ts",
-        "seed:prod": "bun dist/src/db/seed.js",
-        "predeploy": "bun run migrate:prod"
+        "db:seed": "bun src/shared/database/seeds/seed.ts",
+        "db:seed:prod": "bun dist/src/shared/database/seeds/seed.js"
     },
     "keywords": [],
     "author": "",

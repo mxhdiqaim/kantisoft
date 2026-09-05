@@ -1,11 +1,11 @@
 {
-  "id": "d79bd45d-5c0a-4830-a4aa-5cc87fa0759d",
+  "id": "662ef962-206f-4191-8a9e-516f9fb48f63",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.locations": {
-      "name": "locations",
+    "public.addresses": {
+      "name": "addresses",
       "schema": "",
       "columns": {
         "id": {
@@ -14,10 +14,81 @@
           "primaryKey": true,
           "notNull": true
         },
-        "tenantId": {
-          "name": "tenantId",
+        "street": {
+          "name": "street",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "city": {
+          "name": "city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "postalCode": {
+          "name": "postalCode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "countryId": {
+          "name": "countryId",
           "type": "uuid",
           "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "addresses_countryId_countries_id_fk": {
+          "name": "addresses_countryId_countries_id_fk",
+          "tableFrom": "addresses",
+          "tableTo": "countries",
+          "columnsFrom": [
+            "countryId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.countries": {
+      "name": "countries",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
           "notNull": true
         },
         "name": {
@@ -26,8 +97,32 @@
           "primaryKey": false,
           "notNull": true
         },
-        "address": {
-          "name": "address",
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phoneCode": {
+          "name": "phoneCode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currencySymbol": {
+          "name": "currencySymbol",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "flagEmoji": {
+          "name": "flagEmoji",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -48,29 +143,23 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "locations_tenantId_tenants_id_fk": {
-          "name": "locations_tenantId_tenants_id_fk",
-          "tableFrom": "locations",
-          "tableTo": "tenants",
-          "columnsFrom": [
-            "tenantId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "countries_code_unique": {
+          "name": "countries_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "code"
+          ]
         }
       },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.tenants": {
-      "name": "tenants",
+    "public.branches": {
+      "name": "branches",
       "schema": "",
       "columns": {
         "id": {
@@ -79,60 +168,215 @@
           "primaryKey": true,
           "notNull": true
         },
+        "business_id": {
+          "name": "business_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address_id": {
+          "name": "address_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "name": {
           "name": "name",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "createdAt": {
-          "name": "createdAt",
+        "created_at": {
+          "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updatedAt": {
-          "name": "updatedAt",
+        "updated_at": {
+          "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         }
       },
-      "indexes": {},
-      "foreignKeys": {},
+      "indexes": {
+        "branches_business_id_idx": {
+          "name": "branches_business_id_idx",
+          "columns": [
+            {
+              "expression": "business_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "branches_business_id_businesses_id_fk": {
+          "name": "branches_business_id_businesses_id_fk",
+          "tableFrom": "branches",
+          "tableTo": "businesses",
+          "columnsFrom": [
+            "business_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "branches_address_id_addresses_id_fk": {
+          "name": "branches_address_id_addresses_id_fk",
+          "tableFrom": "branches",
+          "tableTo": "addresses",
+          "columnsFrom": [
+            "address_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.user_locations": {
-      "name": "user_locations",
+    "public.businesses": {
+      "name": "businesses",
       "schema": "",
       "columns": {
-        "userId": {
-          "name": "userId",
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "locationId": {
-          "name": "locationId",
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "country_id": {
+          "name": "country_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
+        },
+        "address_id": {
+          "name": "address_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logo_url": {
+          "name": "logo_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "team_size": {
+          "name": "team_size",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "company_registration_number": {
+          "name": "company_registration_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tax_or_vat_id": {
+          "name": "tax_or_vat_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "businesses_user_id_idx": {
+          "name": "businesses_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "businesses_slug_idx": {
+          "name": "businesses_slug_idx",
+          "columns": [
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
-        "user_locations_userId_users_id_fk": {
-          "name": "user_locations_userId_users_id_fk",
-          "tableFrom": "user_locations",
+        "businesses_user_id_users_id_fk": {
+          "name": "businesses_user_id_users_id_fk",
+          "tableFrom": "businesses",
           "tableTo": "users",
           "columnsFrom": [
-            "userId"
+            "user_id"
           ],
           "columnsTo": [
             "id"
@@ -140,29 +384,34 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "user_locations_locationId_locations_id_fk": {
-          "name": "user_locations_locationId_locations_id_fk",
-          "tableFrom": "user_locations",
-          "tableTo": "locations",
+        "businesses_country_id_countries_id_fk": {
+          "name": "businesses_country_id_countries_id_fk",
+          "tableFrom": "businesses",
+          "tableTo": "countries",
           "columnsFrom": [
-            "locationId"
+            "country_id"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "businesses_address_id_addresses_id_fk": {
+          "name": "businesses_address_id_addresses_id_fk",
+          "tableFrom": "businesses",
+          "tableTo": "addresses",
+          "columnsFrom": [
+            "address_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {
-        "user_locations_userId_locationId_pk": {
-          "name": "user_locations_userId_locationId_pk",
-          "columns": [
-            "userId",
-            "locationId"
-          ]
-        }
-      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -178,20 +427,32 @@
           "primaryKey": true,
           "notNull": true
         },
-        "clerkId": {
-          "name": "clerkId",
+        "clerk_id": {
+          "name": "clerk_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "firstName": {
-          "name": "firstName",
+        "business_id": {
+          "name": "business_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "branch_id": {
+          "name": "branch_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "first_name": {
+          "name": "first_name",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "lastName": {
-          "name": "lastName",
+        "last_name": {
+          "name": "last_name",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -202,11 +463,23 @@
           "primaryKey": false,
           "notNull": true
         },
-        "phone": {
-          "name": "phone",
+        "phone_number": {
+          "name": "phone_number",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "phone_number_verified_at": {
+          "name": "phone_number_verified_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avatar_url": {
+          "name": "avatar_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "role": {
           "name": "role",
@@ -224,67 +497,128 @@
           "notNull": true,
           "default": "'active'"
         },
-        "tenantId": {
-          "name": "tenantId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "createdAt": {
-          "name": "createdAt",
+        "created_at": {
+          "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updatedAt": {
-          "name": "updatedAt",
+        "updated_at": {
+          "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "users_clerk_id_idx": {
+          "name": "users_clerk_id_idx",
+          "columns": [
+            {
+              "expression": "clerk_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "users_email_idx": {
+          "name": "users_email_idx",
+          "columns": [
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "users_phone_number_idx": {
+          "name": "users_phone_number_idx",
+          "columns": [
+            {
+              "expression": "phone_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "users_branch_id_idx": {
+          "name": "users_branch_id_idx",
+          "columns": [
+            {
+              "expression": "branch_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "users_business_id_idx": {
+          "name": "users_business_id_idx",
+          "columns": [
+            {
+              "expression": "business_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
-        "users_tenantId_tenants_id_fk": {
-          "name": "users_tenantId_tenants_id_fk",
+        "users_business_id_businesses_id_fk": {
+          "name": "users_business_id_businesses_id_fk",
           "tableFrom": "users",
-          "tableTo": "tenants",
+          "tableTo": "businesses",
           "columnsFrom": [
-            "tenantId"
+            "business_id"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "users_branch_id_branches_id_fk": {
+          "name": "users_branch_id_branches_id_fk",
+          "tableFrom": "users",
+          "tableTo": "branches",
+          "columnsFrom": [
+            "branch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "users_clerkId_unique": {
-          "name": "users_clerkId_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "clerkId"
-          ]
-        },
-        "users_email_unique": {
-          "name": "users_email_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
-        },
-        "users_phone_unique": {
-          "name": "users_phone_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "phone"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -310,7 +644,8 @@
         "active",
         "inactive",
         "deleted",
-        "banned"
+        "banned",
+        "invited"
       ]
     }
   },
