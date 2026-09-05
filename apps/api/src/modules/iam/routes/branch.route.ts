@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { BranchController } from "../controller";
+import systemMiddleware from "../../../shared/middlewares/system.middleware";
+import { branchValidator } from "../validator";
 
 class BranchRoutes {
     public readonly router: Router;
@@ -14,9 +16,17 @@ class BranchRoutes {
     private initializeRoutes() {
         this.router.get("/", this.controller.index);
 
-        this.router.post("/", this.controller.create);
+        this.router.post(
+            "/",
+            systemMiddleware.validateRequestBody(branchValidator.createSchema),
+            this.controller.create,
+        );
 
-        this.router.patch("/:id", this.controller.update);
+        this.router.patch(
+            "/:id",
+            systemMiddleware.validateRequestBody(branchValidator.updateSchema, false),
+            this.controller.update,
+        );
     }
 }
 
