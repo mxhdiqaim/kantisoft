@@ -25,11 +25,20 @@ class AuthMiddleware {
                 this.NODE_ENV === EnvironmentVariablesEnum.DEVELOPMENT &&
                 authHeader === `Bearer ${this.DEVELOPMENT_TOKEN}`
             ) {
+                const cleanBusinessId =
+                    this.DEV_BUSINESS_ID === EnvironmentVariablesEnum.DEVELOPMENT || !this.DEV_BUSINESS_ID
+                        ? undefined
+                        : this.DEV_BUSINESS_ID;
+                const cleanBranchId =
+                    this.DEV_BRANCH_ID === EnvironmentVariablesEnum.DEVELOPMENT || !this.DEV_BRANCH_ID
+                        ? undefined
+                        : this.DEV_BRANCH_ID;
+
                 metadata = {
                     userId: this.DEV_USER_ID,
                     role: this.DEV_ROLE || UserRoleEnum.OWNER,
-                    businessId: this.DEV_BUSINESS_ID,
-                    branchId: this.DEV_BRANCH_ID,
+                    businessId: cleanBusinessId,
+                    branchId: cleanBranchId,
                 };
             } else {
                 const auth = getAuth(req);

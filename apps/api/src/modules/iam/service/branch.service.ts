@@ -1,12 +1,12 @@
-import { eq } from "drizzle-orm";
-import { BaseService } from "../../../shared/service";
+import { and, eq } from "drizzle-orm";
+import { addressService, BaseService } from "../../../shared/service";
 import { db } from "../../../shared/database";
-import { branchSchema, InsertBranchSchemaT, userSchema } from "../schema";
+import { branchSchema, InsertBranchSchemaT, userSchema, businessSchema } from "../schema";
 import { UserRoleEnum } from "../interface";
 import { ForbiddenError } from "../../../shared/errors/custom.error";
 import { CreateBranchDTO } from "../interface";
 import { addressSchema } from "../../../shared/database/schema";
-import { addressService, userService } from "./index";
+import { userService, businessService } from "./index";
 
 class BranchService extends BaseService<typeof branchSchema> {
     constructor() {
@@ -16,16 +16,19 @@ class BranchService extends BaseService<typeof branchSchema> {
     public async create(userId: string, data: CreateBranchDTO) {
         const { addressId, name } = data;
 
-        // Use userService for consistency
         const user = await userService.getOrError(eq(userSchema.id, userId));
 
         if (user.role !== UserRoleEnum.OWNER || !user.businessId) {
             throw new ForbiddenError("Only business owners with an active business can create branches.");
         }
 
+        await businessService.getOrError(
+            and(eq(businessSchema.id, user.businessId), eq(businessSchema.userId, userId)),
+        );
+
         // Only validate address if one was actually provided!
         if (addressId) {
-            await addressService.getOrError(eq(addressSchema.id, addressId));
+            await addressService.getByIdOrError(addressId);
         }
 
         const [newBranch] = await db
@@ -54,6 +57,10 @@ class BranchService extends BaseService<typeof branchSchema> {
         if (branch.businessId !== user.businessId) {
             throw new ForbiddenError("You do not have permission to update this branch.");
         }
+
+        await businessService.getOrError(
+            and(eq(businessSchema.id, branch.businessId), eq(businessSchema.userId, userId)),
+        );
 
         const updateData: Partial<InsertBranchSchemaT> = {};
 
