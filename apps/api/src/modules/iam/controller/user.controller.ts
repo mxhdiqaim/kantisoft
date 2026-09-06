@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { userService } from "../service";
 import { requestContext } from "../../../shared/logger/context";
-import { ilike, SQL } from "drizzle-orm";
+import { ilike, SQL, or } from "drizzle-orm";
 import { userSchema } from "../schema";
 
 export default class UserController {
@@ -13,9 +13,11 @@ export default class UserController {
             let customWhere: SQL | undefined = undefined;
 
             if (search) {
-                customWhere = ilike(userSchema.firstName, `%${search}%`);
-                customWhere = ilike(userSchema.lastName, `%${search}%`);
-                customWhere = ilike(userSchema.email, `%${search}%`);
+                customWhere = or(
+                    ilike(userSchema.firstName, `%${search}%`),
+                    ilike(userSchema.lastName, `%${search}%`),
+                    ilike(userSchema.email, `%${search}%`),
+                );
             }
 
             const data = await userService.getAllPaginated(customWhere, queryOpts);
