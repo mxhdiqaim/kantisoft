@@ -16,7 +16,7 @@ This backend runs as a single process but enforces strict microservice style bou
 The hierarchy is: **Tenant (Business) -> Locations (Branch) -> Users / Stock / Sales.**
 
 * **Tenant Isolation:** A tenant is the root business entity. Data is logically isolated via a `businessId` column on almost every table (Logical Sharding).
-* **Location Scoping:** A tenant can have multiple locations (e.g., Lagos, Abuja). Inventory and POS sales happen *at a branch*. Online sales happen *at a tenant level* and are routed to a branch for fulfillment.
+* **Branch Scoping:** A tenant can have multiple locations (e.g., Lagos, Abuja). Inventory and POS sales happen *at a branch*. Online sales happen *at a tenant level* and are routed to a branch for fulfillment.
 * **Request Lifecycle:** A global Express middleware (`validateAccess`) intercepts every incoming request, extracts the `businessId` and `branchId` from the headers, and injects them into the `req` object for the controllers to pass to the services.
 
 ## 3. The Bounded Modules
@@ -103,11 +103,11 @@ src/
 │   ├── database/                 # Drizzle client, migrations, generic query utils
 │   ├── events/                   # BullMQ workers, queues, Redis client
 │   ├── errors/                   # AppError, global error handler
-│   └── middleware/               # tenantResolver, requireAuth, requireRole
+│   └── middleware/               # validateBusinessOwnership, requireAuth, validateAccess
 │
 ├── modules/                      # The strict Bounded Contexts
 │   ├── iam/
-│   │   ├── controller            # Tenants, Locations, Users, Roles
+│   │   ├── controller            # Businesses, Branches, Users, Roles
 |   |   |-- interface
 │   │   ├── route
 │   │   ├── schema
