@@ -1,14 +1,12 @@
-import {type ComponentType, type ReactNode} from "react";
+import { type ComponentType, type ReactNode } from "react";
 import {
     ActivityLogScreen,
     CategoriesScreen,
     ChangePasswordScreen,
     DashboardScreen,
-    ForgetPasswordScreen,
     GoodsScreen,
     HomeScreen,
     InventoryTransactionsScreen,
-    LoginScreen,
     MenuItemScreen,
     NotFoundScreen,
     PointOfSaleScreen,
@@ -17,7 +15,6 @@ import {
     RawMaterialInventoryScreen,
     RawMaterialInventoryTransactionScreen,
     RawMaterialsScreen,
-    RegisterScreen,
     SalesHistoryScreen,
     SingleInventoryTransactionScreen,
     StoreScreen,
@@ -26,12 +23,13 @@ import {
     UsersScreen,
     ViewSalesHistoryScreen,
 } from "@/pages";
-import {type UserRole, UserRoleEnum} from "@/types/user-types";
-import {DashboardOutlined, KitchenOutlined} from "@mui/icons-material";
+import { type UserRole, UserRoleEnum } from "@/types/user-types.ts";
+import { DashboardOutlined, KitchenOutlined } from "@mui/icons-material";
 import AddAlertOutlinedIcon from "@mui/icons-material/AddAlertOutlined";
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 import RestaurantMenuOutlinedIcon from "@mui/icons-material/RestaurantMenuOutlined";
-import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
+import InventoryOutlinedIcon from "@mui/icons-material/InventoryOutlined";
+import { LoginPage, RegisterPage, ForgetPasswordPage } from "@/modules";
 
 export interface AppRouteType {
     to: string;
@@ -65,7 +63,7 @@ export const appRoutes: AppRouteType[] = [
         to: "/dashboard",
         title: "dashboard",
         element: DashboardScreen,
-        icon: <DashboardOutlined/>,
+        icon: <DashboardOutlined />,
         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
     },
 
@@ -75,7 +73,7 @@ export const appRoutes: AppRouteType[] = [
     {
         to: "/pos-sale",
         title: "posAndSales",
-        icon: <AddAlertOutlinedIcon/>,
+        icon: <AddAlertOutlinedIcon />,
         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST],
         children: [
             {
@@ -95,10 +93,10 @@ export const appRoutes: AppRouteType[] = [
                         element: ViewSalesHistoryScreen,
                         hidden: true,
                         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
-                    }
-                ]
+                    },
+                ],
             },
-        ]
+        ],
     },
 
     // ---------------------------------
@@ -107,7 +105,7 @@ export const appRoutes: AppRouteType[] = [
     {
         to: "/inventory",
         title: "Inventory",
-        icon: <RestaurantMenuOutlinedIcon/>,
+        icon: <RestaurantMenuOutlinedIcon />,
         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST],
         children: [
             {
@@ -123,7 +121,7 @@ export const appRoutes: AppRouteType[] = [
                         hidden: true,
                         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
                     },
-                ]
+                ],
             },
             {
                 to: "menu-items",
@@ -142,8 +140,8 @@ export const appRoutes: AppRouteType[] = [
                 title: "Categories",
                 element: CategoriesScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
-            }
-        ]
+            },
+        ],
     },
 
     // ---------------------------------
@@ -152,7 +150,7 @@ export const appRoutes: AppRouteType[] = [
     {
         to: "/raw-materials",
         title: "Raw Material",
-        icon: <InventoryOutlinedIcon/>,
+        icon: <InventoryOutlinedIcon />,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER, UserRoleEnum.USER],
         children: [
             {
@@ -179,7 +177,7 @@ export const appRoutes: AppRouteType[] = [
                 element: UnitOfMeasurementsScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER],
             },
-        ]
+        ],
     },
 
     // ---------------------------------
@@ -206,7 +204,7 @@ export const appRoutes: AppRouteType[] = [
     {
         to: "/production",
         title: "Production",
-        icon: <KitchenOutlined/>,
+        icon: <KitchenOutlined />,
         element: ProductionScreen,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
     },
@@ -217,7 +215,7 @@ export const appRoutes: AppRouteType[] = [
     {
         to: "/admin",
         title: "Administrator",
-        icon: <GroupOutlinedIcon/>,
+        icon: <GroupOutlinedIcon />,
         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
         children: [
             {
@@ -244,7 +242,7 @@ export const appRoutes: AppRouteType[] = [
                         useLayout: true,
                         roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST],
                     },
-                ]
+                ],
             },
             {
                 to: "stores",
@@ -264,7 +262,7 @@ export const appRoutes: AppRouteType[] = [
                 element: TrashBinScreen,
                 roles: [UserRoleEnum.MANAGER, UserRoleEnum.ADMIN],
             },
-        ]
+        ],
     },
 
     // ---------------------------------
@@ -272,24 +270,24 @@ export const appRoutes: AppRouteType[] = [
     // ---------------------------------
     {
         to: "/signin",
-        element: LoginScreen,
+        element: LoginPage,
         useLayout: false,
         authGuard: false,
         roles: [UserRoleEnum.GUEST],
     },
     {
         to: "/signup",
-        element: RegisterScreen,
+        element: RegisterPage,
         useLayout: false,
         authGuard: false,
         roles: [UserRoleEnum.GUEST],
     },
     {
         to: "/forget-password",
-        element: ForgetPasswordScreen,
+        element: ForgetPasswordPage,
         useLayout: false,
         authGuard: false,
-        roles: [UserRoleEnum.GUEST]
+        roles: [UserRoleEnum.GUEST],
     },
 
     // ---------------------------------

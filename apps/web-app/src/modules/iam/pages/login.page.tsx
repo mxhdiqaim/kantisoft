@@ -13,7 +13,7 @@ import { StyledTextField } from "@/shared/components/ui";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth } from "@/config/firebase.ts";
 
-const Login = () => {
+const LoginPage = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const notify = useNotifier();
@@ -184,4 +184,4 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default LoginPage;

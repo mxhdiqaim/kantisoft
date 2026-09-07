@@ -17,11 +17,6 @@ export { default as GoodsScreen } from "./inventory/goods.tsx";
 export { default as SingleInventoryTransactionScreen } from "./inventory/single-inventory-transaction.tsx";
 export { default as InventoryTransactionsScreen } from "./inventory/inventory-transactions.tsx";
 
-// Auth screens
-export { default as LoginScreen } from "@/modules/iam/auth/login";
-export { default as RegisterScreen } from "@/modules/iam/auth/register";
-export { default as ForgetPasswordScreen } from "@/modules/iam/auth/forget-password";
-
 // Feedback screens
 export { default as NotFoundScreen } from "./feedbacks/not-found";
 
@@ -33,9 +28,6 @@ export { default as UnitOfMeasurementsScreen } from "./raw-materials/unit-of-mea
 
 // Production screens
 export { default as ProductionScreen } from "./production";
-
-// Records
-// export {default as ProfitabilityWastageScreen} from "./records/profitability-wastage.tsx"
 
 // Administrator
 export { default as UsersScreen } from "./administrator/users";

@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import {getEnvVariable} from "@/utils";
+import { getEnvVariable } from "@/shared/utils";
 
 const VITE_FIREBASE_API_KEY = getEnvVariable("VITE_FIREBASE_API_KEY");
 const VITE_FIREBASE_AUTH_DOMAIN = getEnvVariable("VITE_FIREBASE_AUTH_DOMAIN");

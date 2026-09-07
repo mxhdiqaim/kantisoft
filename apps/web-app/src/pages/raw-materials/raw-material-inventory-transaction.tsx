@@ -3,9 +3,9 @@ import { useGetAllRawMaterialsQuery, useGetRawMaterialInventoryTransactionsQuery
 import type { GridColDef } from "@mui/x-data-grid";
 import { useEffect, useMemo, useState } from "react";
 import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
-import { camelCaseToTitleCase, formatNumber } from "@/utils";
+import { camelCaseToTitleCase, formatNumber } from "@/shared/utils";
 import { getTransactionTypeChipColor, StyledTextField } from "@/shared/components/ui";
-import { formatDateTimeCustom } from "@/utils/get-relative-time.ts";
+import { formatDateTimeCustom } from "@/shared/utils/get-relative-time.ts";
 import DataGridTable from "@/shared/components/ui/data-grid-table";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";

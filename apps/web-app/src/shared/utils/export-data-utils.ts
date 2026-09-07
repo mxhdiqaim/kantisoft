@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {saveAs} from "file-saver";
+import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 
-// Define a generic row data
+// Define generic row data
 type GenericRowData = Record<string, any>;
 
 // Define the type for the column definition array
@@ -16,7 +16,6 @@ interface ColumnDefinition {
 type FieldFormatters<T extends GenericRowData> = {
     [K in keyof T]?: (row: T) => any;
 };
-
 
 /**
  * @description Transforms raw data rows into a flat array of objects using
@@ -33,19 +32,19 @@ export function getExportFormattedData<T extends GenericRowData>(
 ): GenericRowData[] {
     // Determine which fields to export (typically excluding 'actions' or unneeded fields)
     const exportableFields = columns
-        .filter(col => col.field !== 'actions' && col.field !== 'id')
-        .map(col => col.field);
+        .filter((col) => col.field !== "actions" && col.field !== "id")
+        .map((col) => col.field);
 
     if (data.length === 0) {
         return [];
     }
 
-    return data.map(row => {
+    return data.map((row) => {
         const formattedRow: GenericRowData = {};
 
-        exportableFields.forEach(field => {
+        exportableFields.forEach((field) => {
             //  Get the corresponding column header name for the final object key
-            const column = columns.find(col => col.field === field);
+            const column = columns.find((col) => col.field === field);
             const key = column?.headerName || field; // Use headerName if available, otherwise use field
 
             // Apply a custom formatter if one exists
@@ -74,17 +73,16 @@ export const exportToCsv = (dataToExport: GenericRowData[], filename: string) =>
         ),
     ].join("\n");
 
-    const blob = new Blob([csvContent], {type: "text/csv;charset=utf-8;"});
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     saveAs(blob, filename);
-}
-
+};
 
 // Helper function to handle XLSX export
 export const exportToXlsx = (
     dataToExport: GenericRowData[],
     filename: string,
     sheetName: string,
-    columns: ColumnDefinition[] // Need columns for calculating width
+    columns: ColumnDefinition[], // Need columns for calculating width
 ) => {
     if (dataToExport.length === 0) return;
 
@@ -95,7 +93,7 @@ export const exportToXlsx = (
     // Calculate column widths based on header name length (optional but nice)
     worksheet["!cols"] = columns
         .filter((col) => col.field !== "actions" && col.headerName)
-        .map((col) => ({wch: (col.headerName?.toString().length || 15) + 5}));
+        .map((col) => ({ wch: (col.headerName?.toString().length || 15) + 5 }));
 
     XLSX.writeFile(workbook, filename);
-}
+};

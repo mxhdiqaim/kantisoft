@@ -4,7 +4,7 @@ import DataGridTable from "@/shared/components/ui/data-grid-table";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
 import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
-import { formatCurrency, snakeCaseToTitleCase } from "@/utils";
+import { formatCurrency, snakeCaseToTitleCase } from "@/shared/utils";
 import { useSearch } from "@/use-search.ts";
 import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
 import { getTextColor } from "@/shared/components/ui";

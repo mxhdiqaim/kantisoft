@@ -1,5 +1,5 @@
 import type { CartItem } from "@/types/cart-item-type";
-import { formatCurrency } from "@/utils";
+import { formatCurrency } from "@/shared/utils";
 import { Add, Delete, Remove } from "@mui/icons-material";
 import { Box, Divider, IconButton, List, ListItem, ListItemText, Typography, useTheme } from "@mui/material";
 import CustomButton from "@/shared/components/ui/button.tsx";

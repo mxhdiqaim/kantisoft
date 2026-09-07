@@ -5,7 +5,7 @@ import { useGetAllInventoryQuery, useGetTransactionsByMenuItemQuery } from "@/st
 import DataGridTable from "@/shared/components/ui/data-grid-table";
 import type { GridColDef } from "@mui/x-data-grid";
 import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
-import { relativeTime } from "@/utils/get-relative-time.ts";
+import { relativeTime } from "@/shared/utils/get-relative-time.ts";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import { ArrowBackIosNewOutlined } from "@mui/icons-material";
 import { getTransactionChipColor } from "@/shared/components/ui";

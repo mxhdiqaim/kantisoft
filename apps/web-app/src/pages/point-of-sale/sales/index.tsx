@@ -2,7 +2,7 @@ import SalesHistoryOverviewCard from "@/components/point-of-sale/sales-history-o
 import SalesHistoryTable from "@/components/point-of-sale/sales-history-table.tsx";
 import { useGetOrdersByPeriodQuery } from "@/store/slice";
 import { filterSchema, type FilterSchemaType } from "@/types";
-import { formatCurrency } from "@/utils";
+import { formatCurrency } from "@/shared/utils";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DinnerDiningOutlined, DomainVerificationOutlined, MonetizationOn, Person2Outlined } from "@mui/icons-material";
 import { Box, Grid, Typography } from "@mui/material";

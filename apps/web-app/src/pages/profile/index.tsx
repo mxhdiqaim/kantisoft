@@ -2,7 +2,7 @@ import { useAppSelector } from "@/store";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
 import { Avatar, Box, Chip, Divider, Grid, Stack, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { getRoleChipColor } from "@/utils";
+import { getRoleChipColor } from "@/shared/utils";
 import { useGetUserByIdQuery } from "@/store/slice";
 import ViewUserSkeleton from "@/components/profile/loading";
 import ApiErrorDisplay from "@/components/feedback/api-error-display";

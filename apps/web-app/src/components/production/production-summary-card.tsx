@@ -1,9 +1,9 @@
-import {Avatar, Box, Grow, Typography} from "@mui/material";
-import {useTheme} from "@mui/material/styles";
-import type {ReactElement} from "react";
+import { Avatar, Box, Grow, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import type { ReactElement } from "react";
 import CountUp from "react-countup";
-import {formatCurrency} from "@/utils";
-import {CustomCardRef} from "../customs/custom-card";
+import { formatCurrency } from "@/shared/utils";
+import { CustomCardRef } from "../customs/custom-card";
 
 interface Props {
     title: string;
@@ -15,12 +15,12 @@ interface Props {
 }
 
 const ProductionSummaryCard = (props: Props) => {
-    const {title, value, icon, color, index, loading} = props;
+    const { title, value, icon, color, index, loading } = props;
     const theme = useTheme();
     const cardColor = color || theme.palette.primary.main;
 
     const renderValue = () => {
-        if (typeof value === 'number') {
+        if (typeof value === "number") {
             return (
                 <CountUp
                     key={value} // Add key to re-trigger animation on value change
@@ -32,19 +32,19 @@ const ProductionSummaryCard = (props: Props) => {
                 />
             );
         }
-        if (typeof value === 'string' && value.includes('%')) {
+        if (typeof value === "string" && value.includes("%")) {
             return <>{value}</>;
         }
         // Assuming this is for currency which might be a string from the API
-        const numericValue = Number(String(value).replace(/,/g, ''));
+        const numericValue = Number(String(value).replace(/,/g, ""));
         if (isNaN(numericValue)) {
-            return <>{value}</>
+            return <>{value}</>;
         }
         return <>{formatCurrency(numericValue)}</>;
     };
 
     return (
-        <Grow in={true} style={{transformOrigin: "0 0 0"}} timeout={500 + index * 150}>
+        <Grow in={true} style={{ transformOrigin: "0 0 0" }} timeout={500 + index * 150}>
             <CustomCardRef
                 sx={{
                     boxShadow: theme.customShadows.card,
@@ -56,7 +56,7 @@ const ProductionSummaryCard = (props: Props) => {
                 }}
             >
                 <Box>
-                    <Box sx={{display: "flex", alignItems: "center", mb: 2}}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                         <Avatar
                             sx={{
                                 bgcolor: cardColor,
@@ -70,7 +70,7 @@ const ProductionSummaryCard = (props: Props) => {
                             {title}
                         </Typography>
                     </Box>
-                    <Typography variant="h4" component="div" sx={{fontWeight: "bold"}}>
+                    <Typography variant="h4" component="div" sx={{ fontWeight: "bold" }}>
                         {loading ? "..." : renderValue()}
                     </Typography>
                 </Box>

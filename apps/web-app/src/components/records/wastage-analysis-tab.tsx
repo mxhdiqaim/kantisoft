@@ -1,6 +1,6 @@
 import { Grid, Typography, useTheme } from "@mui/material";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import { formatCurrency } from "@/utils";
+import { formatCurrency } from "@/shared/utils";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import DataGridTable from "@/shared/components/ui/data-grid-table";
 import { useMemo } from "react";

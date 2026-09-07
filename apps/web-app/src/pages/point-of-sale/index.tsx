@@ -2,7 +2,7 @@ import EachMenuItem from "@/components/point-of-sale/each-menu-item.tsx";
 import MenuIteFormModal from "@/components/menu-items/menu-item-form-modal.tsx";
 import OrderCart from "@/components/point-of-sale/order-cart";
 import PaymentModal from "@/components/point-of-sale/payment-modal";
-import MenuItemSkeleton from "@/shared/components/spinners/manu-item-skeleton";
+import { MenuItemSkeleton } from "@/shared";
 import { getApiError } from "@/helpers/get-api-error";
 import useNotifier from "@/hooks/useNotifier";
 import { useCreateOrderMutation, useGetMenuItemsQuery } from "@/store/slice";

@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import DataGridTable from "@/shared/components/ui/data-grid-table";
 import type { GridColDef } from "@mui/x-data-grid";
-import { formatCurrency, formatDateCustom } from "@/utils";
+import { formatCurrency, formatDateCustom } from "@/shared/utils";
 import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
 import ProductionModal from "@/components/menu-items/production-modal.tsx";
 import CustomButton from "@/shared/components/ui/button.tsx";

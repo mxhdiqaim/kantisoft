@@ -3,7 +3,7 @@ import { useSearch } from "@/use-search.ts";
 import type { GridColDef } from "@mui/x-data-grid";
 import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
 import { Box, Grid, Tooltip, Typography, useTheme } from "@mui/material";
-import { formatDateCustom, snakeCaseToTitleCase } from "@/utils";
+import { formatDateCustom, snakeCaseToTitleCase } from "@/shared/utils";
 import { getTextColor } from "@/shared/components/ui";
 import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
 import DataGridTable from "@/shared/components/ui/data-grid-table";

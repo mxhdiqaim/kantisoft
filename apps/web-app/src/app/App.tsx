@@ -1,23 +1,22 @@
 import AuthGuard from "@/components/auth/auth-guard.tsx";
 import Layout from "@/components/layout";
-import ErrorFallback from "@/pages/feedbacks/fallback";
-import {appRoutes, type AppRouteType} from "@/routes";
-import GuardedRoute from "@/routes/guarded-route";
+import ErrorFallback from "@/pages/feedbacks/fallback.tsx";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { logOut, selectCurrentUser } from "@/store/slice/auth-slice";
-import {ThemeProvider} from "../../../packages/ui/src/theme";
-import {ScrollToTop} from "@/utils";
+import { logOut, selectCurrentUser } from "@/store/slice/auth-slice.ts";
+import { ThemeProvider } from "../../../../packages/ui/src/theme";
+import { ScrollToTop } from "@/shared/utils";
 import { type JSX, useEffect, useState } from "react";
-import {ErrorBoundary} from "react-error-boundary";
-import {useTranslation} from "react-i18next";
-import {useSelector} from "react-redux";
-import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
-import {FullscreenProvider} from "./context/fullscreen-context";
-import {selectActiveStore} from "./store/slice/store-slice";
+import { ErrorBoundary } from "react-error-boundary";
+import { useTranslation } from "react-i18next";
+import { useSelector } from "react-redux";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { FullscreenProvider } from "../context/fullscreen-context.tsx";
+import { selectActiveStore } from "../store/slice/store-slice.ts";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/config/firebase";
-import "@/config/i18next-config";
+import { auth } from "@/config/firebase.ts";
+import "@/config/i18next-config.ts";
 import Spinner from "@/components/feedback/spinner.tsx";
+import { appRoutes, GuardedRoute, type AppRouteType } from "@/app/router";
 
 // Recursive function to render routes and their nested children
 const renderRoutes = (routes: AppRouteType[], parentPath = ""): JSX.Element[] => {
@@ -30,7 +29,7 @@ const renderRoutes = (routes: AppRouteType[], parentPath = ""): JSX.Element[] =>
         const authGuard = route.authGuard ?? true;
 
         // Prepare the element with layout and guards if needed
-        let element: JSX.Element = <route.element/>;
+        let element: JSX.Element = <route.element />;
 
         // Wrap with Layout if useLayout is true
         if (useLayout) {
@@ -42,7 +41,7 @@ const renderRoutes = (routes: AppRouteType[], parentPath = ""): JSX.Element[] =>
             element = <GuardedRoute authGuard={authGuard}>{element}</GuardedRoute>;
         }
 
-        const currentRoute = <Route key={`${fullPath}-${index}`} path={fullPath} element={element}/>;
+        const currentRoute = <Route key={`${fullPath}-${index}`} path={fullPath} element={element} />;
 
         // If the route has children, recursively render them
         if (route.children && route.children.length > 0) {
@@ -110,7 +109,7 @@ function App() {
         <ThemeProvider>
             <FullscreenProvider>
                 <Router>
-                    <AppContent/>
+                    <AppContent />
                 </Router>
             </FullscreenProvider>
         </ThemeProvider>

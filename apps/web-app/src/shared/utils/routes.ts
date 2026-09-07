@@ -1,5 +1,5 @@
 // This function finds the highest-level parent route for a given pathname.
-import type {AppRouteType} from "@/routes";
+import type { AppRouteType } from "@/app/router";
 
 export const findRouteByPath = (routes: AppRouteType[], pathname: string): AppRouteType | undefined => {
     // Iterate through the main routes

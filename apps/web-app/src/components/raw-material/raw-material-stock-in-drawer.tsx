@@ -16,7 +16,7 @@ import {
     type StockInRawMaterialType,
 } from "@/types/raw-material-types.ts";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import { camelCaseToTitleCase } from "@/utils";
+import { camelCaseToTitleCase } from "@/shared/utils";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { useUnitFilter } from "@/hooks/use-unit-filter.ts";
 
