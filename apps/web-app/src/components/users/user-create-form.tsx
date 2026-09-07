@@ -1,21 +1,21 @@
-import {getApiError} from "@/helpers/get-api-error";
+import { getApiError } from "@/helpers/get-api-error";
 import useNotifier from "@/hooks/useNotifier";
-import {useCreateUserMutation, useGetAllStoresQuery} from "@/store/slice";
-import {selectCurrentUser} from "@/store/slice/auth-slice";
-import type {StoreType} from "@/types/store-types";
-import {createUserSchema, type CreateUserType, UserRoleEnum} from "@/types/user-types";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {Visibility, VisibilityOff} from "@mui/icons-material";
-import {Box, FormControl, Grid, IconButton, InputAdornment, MenuItem, TextField} from "@mui/material";
-import {useEffect, useState} from "react";
-import {Controller, useForm} from "react-hook-form";
-import {useSelector} from "react-redux";
-import CustomButton from "@/components/ui/button.tsx";
-import {StyledTextField} from "@/components/ui";
+import { useCreateUserMutation, useGetAllStoresQuery } from "@/store/slice";
+import { selectCurrentUser } from "@/store/slice/auth-slice";
+import type { StoreType } from "@/types/store-types";
+import { createUserSchema, type CreateUserType, UserRoleEnum } from "@/types/user-types";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Box, FormControl, Grid, IconButton, InputAdornment, MenuItem, TextField } from "@mui/material";
+import { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { useSelector } from "react-redux";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import { StyledTextField } from "@/shared/components/ui";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import {getRolePermissions} from "@/utils";
+import { getRolePermissions } from "@/utils";
 
-import Icon from "@/components/ui/icon.tsx";
+import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -23,21 +23,21 @@ interface Props {
     onClose: () => void;
 }
 
-const UserCreateForm = ({open, onClose}: Props) => {
+const UserCreateForm = ({ open, onClose }: Props) => {
     const notify = useNotifier();
     const currentUser = useSelector(selectCurrentUser);
     const [showPassword, setShowPassword] = useState(false);
 
-    const {data: stores} = useGetAllStoresQuery();
+    const { data: stores } = useGetAllStoresQuery();
 
-    const [createUser, {isLoading: isCreating, isSuccess: isCreated}] = useCreateUserMutation();
+    const [createUser, { isLoading: isCreating, isSuccess: isCreated }] = useCreateUserMutation();
     const isLoading = isCreating;
 
     const {
         control,
         handleSubmit,
         reset,
-        formState: {errors},
+        formState: { errors },
     } = useForm({
         mode: "onChange",
         defaultValues: {},
@@ -81,7 +81,7 @@ const UserCreateForm = ({open, onClose}: Props) => {
     };
 
     // Getting permissions
-    const {availableRoles, canEditRole} = getRolePermissions(currentUser?.role);
+    const { availableRoles, canEditRole } = getRolePermissions(currentUser?.role);
 
     return (
         <CustomModal
@@ -89,16 +89,16 @@ const UserCreateForm = ({open, onClose}: Props) => {
             onClose={onClose}
             title={"Create New User"}
             modalStyles={{
-                width: {xs: "90vw", sm: "60vw"},
+                width: { xs: "90vw", sm: "60vw" },
             }}
         >
-            <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{mt: 2}}>
+            <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 2 }}>
                 <Grid container spacing={3}>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="firstName"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -111,11 +111,11 @@ const UserCreateForm = ({open, onClose}: Props) => {
                             )}
                         />
                     </Grid>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="lastName"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -128,11 +128,11 @@ const UserCreateForm = ({open, onClose}: Props) => {
                             )}
                         />
                     </Grid>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="email"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -146,11 +146,11 @@ const UserCreateForm = ({open, onClose}: Props) => {
                             )}
                         />
                     </Grid>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="phone"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -163,11 +163,11 @@ const UserCreateForm = ({open, onClose}: Props) => {
                             )}
                         />
                     </Grid>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="password"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -184,22 +184,22 @@ const UserCreateForm = ({open, onClose}: Props) => {
                                                             onClick={() => setShowPassword(!showPassword)}
                                                             edge="end"
                                                         >
-                                                            {showPassword ? <VisibilityOff/> : <Visibility/>}
+                                                            {showPassword ? <VisibilityOff /> : <Visibility />}
                                                         </IconButton>
                                                     </InputAdornment>
-                                                )
-                                            }
+                                                ),
+                                            },
                                         }}
                                     />
                                 </FormControl>
                             )}
                         />
                     </Grid>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="confirmPassword"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -214,13 +214,13 @@ const UserCreateForm = ({open, onClose}: Props) => {
                         />
                     </Grid>
                     {canEditRole && (
-                        <Grid size={{xs: 12, sm: 6}}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                             {canEditRole ? (
                                 <FormControl fullWidth error={!!errors.role}>
                                     <Controller
                                         name="role"
                                         control={control}
-                                        render={({field}) => (
+                                        render={({ field }) => (
                                             <FormControl fullWidth>
                                                 <StyledTextField
                                                     {...field}
@@ -233,7 +233,7 @@ const UserCreateForm = ({open, onClose}: Props) => {
                                                                 <Icon
                                                                     src={ArrowDownIconSvg}
                                                                     alt={"Dropdown Arrow"}
-                                                                    sx={{width: 15, height: 15}}
+                                                                    sx={{ width: 15, height: 15 }}
                                                                 />
                                                             </InputAdornment>
                                                         ),
@@ -248,7 +248,7 @@ const UserCreateForm = ({open, onClose}: Props) => {
                                                         <MenuItem
                                                             key={role}
                                                             value={role}
-                                                            sx={{textTransform: "capitalize"}}
+                                                            sx={{ textTransform: "capitalize" }}
                                                         >
                                                             {role}
                                                         </MenuItem>
@@ -266,8 +266,8 @@ const UserCreateForm = ({open, onClose}: Props) => {
                                         fullWidth
                                         slotProps={{
                                             input: {
-                                                readOnly: true
-                                            }
+                                                readOnly: true,
+                                            },
                                         }}
                                         disabled
                                     />
@@ -276,12 +276,12 @@ const UserCreateForm = ({open, onClose}: Props) => {
                         </Grid>
                     )}
                     {currentUser?.role === UserRoleEnum.MANAGER && (
-                        <Grid size={{xs: 12, sm: 6}}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                             <FormControl fullWidth error={!!errors.storeId}>
                                 <Controller
                                     name="storeId"
                                     control={control}
-                                    render={({field}) => (
+                                    render={({ field }) => (
                                         <FormControl fullWidth>
                                             <StyledTextField
                                                 {...field}
@@ -294,7 +294,7 @@ const UserCreateForm = ({open, onClose}: Props) => {
                                                             <Icon
                                                                 src={ArrowDownIconSvg}
                                                                 alt={"Dropdown Arrow"}
-                                                                sx={{width: 15, height: 15}}
+                                                                sx={{ width: 15, height: 15 }}
                                                             />
                                                         </InputAdornment>
                                                     ),
@@ -318,8 +318,8 @@ const UserCreateForm = ({open, onClose}: Props) => {
                         </Grid>
                     )}
                 </Grid>
-                <Box sx={{display: "flex", justifyContent: "flex-end", gap: 2, mt: 2}}>
-                    <CustomButton title={"Cancel"} onClick={onClose} variant="outlined"/>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
+                    <CustomButton title={"Cancel"} onClick={onClose} variant="outlined" />
                     <CustomButton
                         title={isLoading ? "Creating..." : "Create User"}
                         variant="contained"

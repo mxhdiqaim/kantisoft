@@ -1,12 +1,12 @@
-import type {ReactNode} from "react";
-import {Box, Grid, IconButton, type SxProps, type Theme, Typography} from "@mui/material";
-import CustomDrawer from "@/components/ui/custom-drawer";
-import type {DrawerAnchor} from "@/types";
+import type { ReactNode } from "react";
+import { Box, Grid, IconButton, type SxProps, type Theme, Typography } from "@mui/material";
+import CustomDrawer from "@/shared/components/ui/custom-drawer.tsx";
+import type { DrawerAnchor } from "@/types";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import {type ApiError, getApiError} from "@/helpers/get-api-error.ts";
+import { type ApiError, getApiError } from "@/helpers/get-api-error.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
 
-import Icon from "@/components/ui/icon.tsx";
+import Icon from "@/shared/components/ui/icon.tsx";
 import CancelSvgIcon from "@/assets/icons/cancel.svg";
 
 interface Props {
@@ -23,17 +23,17 @@ interface Props {
 }
 
 const DataDrawer = ({
-                        title,
-                        onClose,
-                        children,
-                        open,
-                        onOpen,
-                        anchor = "right",
-                        sx,
-                        PaperProps,
-                        error,
-                        apiError
-                    }: Props) => {
+    title,
+    onClose,
+    children,
+    open,
+    onOpen,
+    anchor = "right",
+    sx,
+    PaperProps,
+    error,
+    apiError,
+}: Props) => {
     const notify = useNotifier();
 
     if (error) {
@@ -43,7 +43,7 @@ const DataDrawer = ({
 
     return (
         <CustomDrawer
-            {...{open, onClose, onOpen, anchor}}
+            {...{ open, onClose, onOpen, anchor }}
             PaperProps={{
                 sx: {
                     transition: (theme) =>
@@ -62,14 +62,14 @@ const DataDrawer = ({
                         {title}
                     </Typography>
                 </Grid>
-                <Grid size={3} sx={{display: "flex", justifyContent: "flex-end"}}>
+                <Grid size={3} sx={{ display: "flex", justifyContent: "flex-end" }}>
                     <IconButton onClick={onClose}>
-                        <Icon src={CancelSvgIcon} alt={"Cancel Icon"} sx={{width: 24, height: 24}}/>
+                        <Icon src={CancelSvgIcon} alt={"Cancel Icon"} sx={{ width: 24, height: 24 }} />
                     </IconButton>
                 </Grid>
             </Grid>
             {error ? (
-                <ApiErrorDisplay statusCode={apiError?.type} message={apiError?.message}/>
+                <ApiErrorDisplay statusCode={apiError?.type} message={apiError?.message} />
             ) : (
                 <Box>{children}</Box>
             )}

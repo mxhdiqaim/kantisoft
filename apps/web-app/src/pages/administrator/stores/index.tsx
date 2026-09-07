@@ -1,36 +1,36 @@
-import {useDeleteStoreMutation, useGetAllStoresQuery} from "@/store/slice";
-import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
-import {useTranslation} from "react-i18next";
-import type {GridColDef, GridRenderCellParams} from "@mui/x-data-grid";
-import type {StoreType} from "@/types/store-types.ts";
-import {type MouseEvent, useCallback, useMemo, useState} from "react";
-import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
+import { useDeleteStoreMutation, useGetAllStoresQuery } from "@/store/slice";
+import { Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/material";
+import { useTranslation } from "react-i18next";
+import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+import type { StoreType } from "@/types/store-types.ts";
+import { type MouseEvent, useCallback, useMemo, useState } from "react";
+import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
 import useNotifier from "@/hooks/useNotifier.ts";
-import {getApiError} from "@/helpers/get-api-error.ts";
-import DataGridTable from "@/components/ui/data-grid-table";
-import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
-import {useSearch} from "@/use-search.ts";
-import CustomButton from "@/components/ui/button.tsx";
-import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
+import { getApiError } from "@/helpers/get-api-error.ts";
+import DataGridTable from "@/shared/components/ui/data-grid-table";
+import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import { useSearch } from "@/use-search.ts";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import DeleteConfirmationModal from "@/components/ui/delete-confimation-modal.tsx";
+import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
 import StoreForm from "@/components/administrator/store-form.tsx";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import ViewStoreDrawer from "@/components/administrator/view-store-drawer.tsx";
 
-import {AddOutlined, DeleteOutline, EditOutlined, MoreVert, VisibilityOutlined} from "@mui/icons-material";
+import { AddOutlined, DeleteOutline, EditOutlined, MoreVert, VisibilityOutlined } from "@mui/icons-material";
 
 const StoresScreen = () => {
     const theme = useTheme();
-    const {t} = useTranslation();
+    const { t } = useTranslation();
     const notify = useNotifier();
 
-    const {data: storesData, isLoading, isFetching, isError, error} = useGetAllStoresQuery();
+    const { data: storesData, isLoading, isFetching, isError, error } = useGetAllStoresQuery();
     const memoizedStores = useMemoizedArray(storesData);
 
-    const [deleteStore, {isLoading: isDeleting}] = useDeleteStoreMutation();
+    const [deleteStore, { isLoading: isDeleting }] = useDeleteStoreMutation();
 
-    const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
+    const { searchControl, searchSubmit, handleSearch, filteredData } = useSearch({
         initialData: memoizedStores,
         searchKeys: ["name", "storeType", "location"],
     });
@@ -73,9 +73,9 @@ const StoresScreen = () => {
     };
 
     const handleCloseStoreForm = () => {
-        setOpenStoreForm(false)
+        setOpenStoreForm(false);
         setSelectedRow(null);
-    }
+    };
 
     const columns: GridColDef<StoreType>[] = useMemo(
         () => [
@@ -109,7 +109,7 @@ const StoresScreen = () => {
                                 label={label}
                                 size="medium"
                                 color={color}
-                                sx={{textTransform: "capitalize", borderRadius: theme.borderRadius.small}}
+                                sx={{ textTransform: "capitalize", borderRadius: theme.borderRadius.small }}
                             />
                         </TableStyledBox>
                     );
@@ -140,7 +140,7 @@ const StoresScreen = () => {
                         <Chip
                             label={params.value}
                             size="medium"
-                            sx={{textTransform: "capitalize", borderRadius: theme.borderRadius.small}}
+                            sx={{ textTransform: "capitalize", borderRadius: theme.borderRadius.small }}
                         />
                     </TableStyledBox>
                 ),
@@ -189,23 +189,23 @@ const StoresScreen = () => {
                             onClick={(e) => handleMenuClick(e, params.row)}
                             startIcon={
                                 <Tooltip title="More Actions" placement={"top"}>
-                                    <MoreVert/>
+                                    <MoreVert />
                                 </Tooltip>
                             }
                         >
                             <TableStyledMenuItem onClick={handleDrawerOpen}>
-                                <VisibilityOutlined sx={{mr: 1}}/>
+                                <VisibilityOutlined sx={{ mr: 1 }} />
                                 View
                             </TableStyledMenuItem>
                             <TableStyledMenuItem onClick={() => setOpenStoreForm(true)}>
-                                <EditOutlined sx={{mr: 1}}/>
+                                <EditOutlined sx={{ mr: 1 }} />
                                 Edit
                             </TableStyledMenuItem>
                             <TableStyledMenuItem
                                 onClick={() => setDeleteModalOpen(true)}
                                 disabled={isDeleteDisabled || params.row.branchType === "main"}
                             >
-                                <DeleteOutline sx={{mr: 1}}/>
+                                <DeleteOutline sx={{ mr: 1 }} />
                                 Delete
                             </TableStyledMenuItem>
                         </CustomButton>
@@ -219,17 +219,17 @@ const StoresScreen = () => {
     if (isError) {
         notify(`Failed to load ${t("store")}. Please try again later.`, "error");
         const apiError = getApiError(error, `Failed to load ${t("store")}.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
     }
 
     return (
         <Box>
-            <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                 <Typography variant="h4">{t("store")}</Typography>
                 <CustomButton
                     title={`New Branch`}
                     variant="contained"
-                    startIcon={<AddOutlined/>}
+                    startIcon={<AddOutlined />}
                     onClick={() => setOpenStoreForm(true)}
                 />
             </Box>
@@ -241,7 +241,7 @@ const StoresScreen = () => {
             />
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching} />
                 </Grid>
             </Grid>
 
@@ -253,11 +253,7 @@ const StoresScreen = () => {
                 title="Delete Store?"
                 message="You won't be able to revert this action."
             />
-            <StoreForm
-                open={openStoreForm}
-                onClose={handleCloseStoreForm}
-                currentData={selectedRow}
-            />
+            <StoreForm open={openStoreForm} onClose={handleCloseStoreForm} currentData={selectedRow} />
 
             {selectedRow && (
                 <ViewStoreDrawer
@@ -267,7 +263,6 @@ const StoresScreen = () => {
                     storeId={selectedRow.id}
                 />
             )}
-
         </Box>
     );
 };

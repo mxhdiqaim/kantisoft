@@ -1,6 +1,6 @@
-import TablePagination from "./table-pagination";
-import {DataGrid, type DataGridProps, type GridColDef, type GridValidRowModel} from "@mui/x-data-grid";
-import {useTheme} from "@mui/material";
+import TablePagination from "./table-pagination.tsx";
+import { DataGrid, type DataGridProps, type GridColDef, type GridValidRowModel } from "@mui/x-data-grid";
+import { useTheme } from "@mui/material";
 
 interface Props<T extends GridValidRowModel> extends DataGridProps<T> {
     columns: GridColDef<T>[];
@@ -8,7 +8,7 @@ interface Props<T extends GridValidRowModel> extends DataGridProps<T> {
     loading?: boolean;
 }
 
-const DataGridTable = <T extends GridValidRowModel>({columns, data, loading, ...restProps}: Props<T>) => {
+const DataGridTable = <T extends GridValidRowModel>({ columns, data, loading, ...restProps }: Props<T>) => {
     const theme = useTheme();
 
     return (

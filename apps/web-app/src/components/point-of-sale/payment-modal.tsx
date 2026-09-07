@@ -1,15 +1,15 @@
 import CustomModal from "@/components/customs/custom-modal";
-import {selectCurrentUser} from "@/store/slice/auth-slice";
-import {selectActiveStore} from "@/store/slice/store-slice";
-import type {CartItem} from "@/types/cart-item-type";
-import {createOrderSchema, type CreateOrderType, OrderPaymentMethod, OrderStatus} from "@/types/order-types.ts";
-import {formatCurrency} from "@/utils";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {DialogActions, FormControl, FormControlLabel, FormHelperText, Radio, RadioGroup,} from "@mui/material";
-import {useEffect} from "react";
-import {Controller, useForm} from "react-hook-form";
-import {useSelector} from "react-redux";
-import CustomButton from "@/components/ui/button.tsx";
+import { selectCurrentUser } from "@/store/slice/auth-slice";
+import { selectActiveStore } from "@/store/slice/store-slice";
+import type { CartItem } from "@/types/cart-item-type";
+import { createOrderSchema, type CreateOrderType, OrderPaymentMethod, OrderStatus } from "@/types/order-types.ts";
+import { formatCurrency } from "@/utils";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { DialogActions, FormControl, FormControlLabel, FormHelperText, Radio, RadioGroup } from "@mui/material";
+import { useEffect } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { useSelector } from "react-redux";
+import CustomButton from "@/shared/components/ui/button.tsx";
 
 interface Props {
     open: boolean;
@@ -19,7 +19,7 @@ interface Props {
     isLoading?: boolean;
 }
 
-const PaymentModal = ({open, onClose, onCompleteSale, cartItems, isLoading}: Props) => {
+const PaymentModal = ({ open, onClose, onCompleteSale, cartItems, isLoading }: Props) => {
     const currentUser = useSelector(selectCurrentUser);
     const activeStore = useSelector(selectActiveStore);
 
@@ -29,7 +29,7 @@ const PaymentModal = ({open, onClose, onCompleteSale, cartItems, isLoading}: Pro
         control,
         handleSubmit,
         reset,
-        formState: {errors, isValid},
+        formState: { errors, isValid },
     } = useForm({
         mode: "onChange",
         defaultValues: {
@@ -46,7 +46,7 @@ const PaymentModal = ({open, onClose, onCompleteSale, cartItems, isLoading}: Pro
 
     const onSubmit = (data: CreateOrderType) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {amountReceived, ...orderData} = data;
+        const { amountReceived, ...orderData } = data;
         onCompleteSale(orderData);
     };
 
@@ -80,18 +80,18 @@ const PaymentModal = ({open, onClose, onCompleteSale, cartItems, isLoading}: Pro
                     <Controller
                         name="paymentMethod"
                         control={control}
-                        render={({field}) => (
+                        render={({ field }) => (
                             <RadioGroup {...field} row>
-                                <FormControlLabel value="cash" control={<Radio/>} label="Cash"/>
-                                <FormControlLabel value="card" control={<Radio/>} label="Card"/>
-                                <FormControlLabel value="transfer" control={<Radio/>} label="Transfer"/>
+                                <FormControlLabel value="cash" control={<Radio />} label="Cash" />
+                                <FormControlLabel value="card" control={<Radio />} label="Card" />
+                                <FormControlLabel value="transfer" control={<Radio />} label="Transfer" />
                             </RadioGroup>
                         )}
                     />
                     {errors.paymentMethod && <FormHelperText>{errors.paymentMethod.message}</FormHelperText>}
                 </FormControl>
-                <DialogActions sx={{mt: 2, px: 0}}>
-                    <CustomButton title={"Cancel"} onClick={onClose}/>
+                <DialogActions sx={{ mt: 2, px: 0 }}>
+                    <CustomButton title={"Cancel"} onClick={onClose} />
                     <CustomButton
                         title={isLoading ? "Processing..." : "Complete Order"}
                         type="submit"

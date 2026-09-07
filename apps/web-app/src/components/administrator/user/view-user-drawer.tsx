@@ -1,23 +1,23 @@
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import ViewUserSkeleton from "@/components/users/loading/view-user-skeleton.tsx";
-import {getApiError} from "@/helpers/get-api-error.ts";
+import { getApiError } from "@/helpers/get-api-error.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
-import {useAppSelector} from "@/store";
-import {useDeleteUserMutation, useGetUserByIdQuery, useUpdateUserMutation} from "@/store/slice";
-import {selectCurrentUser} from "@/store/slice/auth-slice.ts";
-import {roleHierarchy, type UserRoleType, UserStatusEnum, type UserType} from "@/types/user-types.ts";
-import {Avatar, Box, Chip, Divider, Grid, Typography} from "@mui/material";
-import {format} from "date-fns";
-import {type FC, useEffect, useState} from "react";
-import {useNavigate} from "react-router-dom";
-import {getUserRoleChipColor, getUserStatusChipColor} from "@/components/ui";
-import {drawerPaperProps} from "@/components/styles";
-import DataDrawer from "@/components/ui/data-drawer.tsx";
+import { useAppSelector } from "@/store";
+import { useDeleteUserMutation, useGetUserByIdQuery, useUpdateUserMutation } from "@/store/slice";
+import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
+import { roleHierarchy, type UserRoleType, UserStatusEnum, type UserType } from "@/types/user-types.ts";
+import { Avatar, Box, Chip, Divider, Grid, Typography } from "@mui/material";
+import { format } from "date-fns";
+import { type FC, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getUserRoleChipColor, getUserStatusChipColor } from "@/shared/components/ui";
+import { drawerPaperProps } from "@/components/styles";
+import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import {getInitials} from "@/utils";
-import CustomButton from "@/components/ui/button.tsx";
+import { getInitials } from "@/utils";
+import CustomButton from "@/shared/components/ui/button.tsx";
 
-import {BlockOutlined, DeleteOutline, EditOutlined} from "@mui/icons-material";
+import { BlockOutlined, DeleteOutline, EditOutlined } from "@mui/icons-material";
 
 interface Props {
     open: boolean;
@@ -27,7 +27,7 @@ interface Props {
     handleEdit: () => void;
 }
 
-const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose, handleEdit}) => {
+const ViewUserDrawer: FC<Props> = ({ userId, open, onOpen, onClose, handleEdit }) => {
     const navigate = useNavigate();
     const notify = useNotifier();
     const currentUser = useAppSelector(selectCurrentUser);
@@ -41,8 +41,8 @@ const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose, handleEdit}) 
     } = useGetUserByIdQuery(userId as string, {
         skip: !userId || !open,
     });
-    const [deleteUser, {isLoading: isDeleting}] = useDeleteUserMutation();
-    const [updateUser, {isLoading: isUpdatingStatus}] = useUpdateUserMutation();
+    const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+    const [updateUser, { isLoading: isUpdatingStatus }] = useUpdateUserMutation();
 
     const isSelf = currentUser?.id === (user as UserType)?.id;
 
@@ -50,7 +50,7 @@ const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose, handleEdit}) 
         if (!user) return;
         const newStatus = user.status === UserStatusEnum.ACTIVE ? UserStatusEnum.INACTIVE : UserStatusEnum.ACTIVE;
         try {
-            await updateUser({id: user.id, status: newStatus}).unwrap();
+            await updateUser({ id: user.id, status: newStatus }).unwrap();
             notify(`User has been ${newStatus}.`, "success");
         } catch (err) {
             const apiError = getApiError(err, "Failed to update user status.");
@@ -93,7 +93,7 @@ const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose, handleEdit}) 
     if (error) {
         const apiError = getApiError(error, "Failed to load user data.");
         notify(apiError.message, "error");
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
     }
 
     return (
@@ -105,12 +105,14 @@ const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose, handleEdit}) 
             onClose={onClose}
             PaperProps={drawerPaperProps}
         >
-            {isLoading ? <ViewUserSkeleton/> : (
+            {isLoading ? (
+                <ViewUserSkeleton />
+            ) : (
                 <Grid container spacing={3}>
                     {/* User Profile Card */}
                     <Grid size={12}>
                         <CustomCard>
-                            <Box sx={{textAlign: "center", p: 1}}>
+                            <Box sx={{ textAlign: "center", p: 1 }}>
                                 <Avatar
                                     sx={{
                                         width: 60,
@@ -126,80 +128,80 @@ const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose, handleEdit}) 
                                 <Typography variant="h5">
                                     {user?.firstName} {user?.lastName}
                                 </Typography>
-                                <Typography sx={{mb: 1.5}} color="text.secondary">
+                                <Typography sx={{ mb: 1.5 }} color="text.secondary">
                                     {user?.email}
                                 </Typography>
                                 <Chip
                                     label={user?.role}
                                     color={getUserRoleChipColor(user?.role)}
                                     size="medium"
-                                    sx={{textTransform: "capitalize"}}
+                                    sx={{ textTransform: "capitalize" }}
                                 />
                             </Box>
-                            <Divider/>
-                            <Box sx={{p: 2, display: "flex", flexDirection: "column", gap: 1}}>
+                            <Divider />
+                            <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1 }}>
                                 {isSelf && (
                                     <CustomButton
                                         title={"Edit Profile"}
                                         variant="contained"
-                                        startIcon={<EditOutlined/>}
+                                        startIcon={<EditOutlined />}
                                         onClick={handleEdit}
                                     />
                                 )}
-                                {currentUser && user &&
-                                    roleHierarchy[currentUser.role] <
-                                    roleHierarchy[user.role as UserRoleType] && (
+                                {currentUser &&
+                                    user &&
+                                    roleHierarchy[currentUser.role] < roleHierarchy[user.role as UserRoleType] && (
                                         <>
                                             {deleteTimer ? (
-                                                    // If the delete timer is active, show the "Undo" button
+                                                // If the delete timer is active, show the "Undo" button
+                                                <CustomButton
+                                                    title={"Undo Delete"}
+                                                    variant="outlined"
+                                                    color="secondary"
+                                                    onClick={handleUndoDelete}
+                                                />
+                                            ) : user?.status === "deleted" ? (
+                                                <>
+                                                    <Typography color="error" align="center">
+                                                        User has been deleted.
+                                                    </Typography>
                                                     <CustomButton
-                                                        title={"Undo Delete"}
+                                                        title={"Recover Account"}
                                                         variant="outlined"
-                                                        color="secondary"
-                                                        onClick={handleUndoDelete}
+                                                        onClick={handleStatusChange}
+                                                        disabled={isUpdatingStatus}
+                                                        color="success"
                                                     />
-                                                ) :
-                                                user?.status === "deleted" ? (
-                                                    <>
-                                                        <Typography color="error" align="center">
-                                                            User has been deleted.
-                                                        </Typography>
-                                                        <CustomButton
-                                                            title={"Recover Account"}
-                                                            variant="outlined"
-                                                            onClick={handleStatusChange}
-                                                            disabled={isUpdatingStatus}
-                                                            color="success"
-                                                        />
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <CustomButton
-                                                            title={isUpdatingStatus
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CustomButton
+                                                        title={
+                                                            isUpdatingStatus
                                                                 ? "Updating..."
                                                                 : user?.status === "active"
-                                                                    ? "Deactivate"
-                                                                    : "Activate"}
-                                                            variant="outlined"
-                                                            color={user?.status === "active" ? "warning" : "success"}
-                                                            startIcon={<BlockOutlined/>}
-                                                            onClick={handleStatusChange}
-                                                            disabled={isUpdatingStatus}
-                                                        />
+                                                                  ? "Deactivate"
+                                                                  : "Activate"
+                                                        }
+                                                        variant="outlined"
+                                                        color={user?.status === "active" ? "warning" : "success"}
+                                                        startIcon={<BlockOutlined />}
+                                                        onClick={handleStatusChange}
+                                                        disabled={isUpdatingStatus}
+                                                    />
 
-                                                        <CustomButton
-                                                            title={isDeleting ? "Deleting..." : "Delete"}
-                                                            variant="outlined"
-                                                            color="error"
-                                                            startIcon={<DeleteOutline/>}
-                                                            onClick={handleDelete}
-                                                            disabled={isDeleting}
-                                                        />
-                                                    </>
-                                                )}
+                                                    <CustomButton
+                                                        title={isDeleting ? "Deleting..." : "Delete"}
+                                                        variant="outlined"
+                                                        color="error"
+                                                        startIcon={<DeleteOutline />}
+                                                        onClick={handleDelete}
+                                                        disabled={isDeleting}
+                                                    />
+                                                </>
+                                            )}
                                         </>
                                     )}
-
                             </Box>
                         </CustomCard>
                     </Grid>
@@ -207,12 +209,12 @@ const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose, handleEdit}) 
                     {/* User Information Details */}
                     <Grid size={12}>
                         <CustomCard>
-                            <Box sx={{p: 1}}>
+                            <Box sx={{ p: 1 }}>
                                 <Typography variant="h6" gutterBottom>
                                     Personal Information
                                 </Typography>
-                                <Grid container spacing={2} sx={{mt: 1}}>
-                                    <Grid size={{xs: 12, sm: 6}}>
+                                <Grid container spacing={2} sx={{ mt: 1 }}>
+                                    <Grid size={{ xs: 12, sm: 6 }}>
                                         <Typography variant="body2" color="text.secondary">
                                             Full Name
                                         </Typography>
@@ -220,7 +222,7 @@ const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose, handleEdit}) 
                                             {user?.firstName} {user?.lastName}
                                         </Typography>
                                     </Grid>
-                                    <Grid size={{xs: 12, sm: 6}}>
+                                    <Grid size={{ xs: 12, sm: 6 }}>
                                         <Typography variant="body2" color="text.secondary">
                                             Email Address
                                         </Typography>
@@ -228,7 +230,7 @@ const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose, handleEdit}) 
                                             {user?.email}
                                         </Typography>
                                     </Grid>
-                                    <Grid size={{xs: 12, sm: 6}}>
+                                    <Grid size={{ xs: 12, sm: 6 }}>
                                         <Typography variant="body2" color="text.secondary">
                                             Phone Number
                                         </Typography>
@@ -236,7 +238,7 @@ const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose, handleEdit}) 
                                             {user?.phone || "N/A"}
                                         </Typography>
                                     </Grid>
-                                    <Grid size={{xs: 12, sm: 6}}>
+                                    <Grid size={{ xs: 12, sm: 6 }}>
                                         <Typography variant="body2" color="text.secondary">
                                             Status
                                         </Typography>
@@ -244,24 +246,29 @@ const ViewUserDrawer: FC<Props> = ({userId, open, onOpen, onClose, handleEdit}) 
                                             label={user?.status}
                                             color={getUserStatusChipColor(user?.status)}
                                             size="medium"
-                                            sx={{textTransform: "capitalize"}}
+                                            sx={{ textTransform: "capitalize" }}
                                         />
                                     </Grid>
-                                    <Grid size={{xs: 12, sm: 6}}>
+                                    <Grid size={{ xs: 12, sm: 6 }}>
                                         <Typography variant="body2" color="text.secondary">
                                             Role
                                         </Typography>
-                                        <Typography variant="body1" fontWeight={500}
-                                                    sx={{textTransform: "capitalize"}}>
+                                        <Typography
+                                            variant="body1"
+                                            fontWeight={500}
+                                            sx={{ textTransform: "capitalize" }}
+                                        >
                                             {user?.role}
                                         </Typography>
                                     </Grid>
-                                    <Grid size={{xs: 12, sm: 6}}>
+                                    <Grid size={{ xs: 12, sm: 6 }}>
                                         <Typography variant="body2" color="text.secondary">
                                             Date Joined
                                         </Typography>
                                         <Typography variant="body1" fontWeight={500}>
-                                            {user?.createdAt ? format(new Date(user?.createdAt), "MMMM dd, yyyy") : 'N/A'}
+                                            {user?.createdAt
+                                                ? format(new Date(user?.createdAt), "MMMM dd, yyyy")
+                                                : "N/A"}
                                         </Typography>
                                     </Grid>
                                 </Grid>

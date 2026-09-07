@@ -1,10 +1,10 @@
 import CustomCard from "@/components/customs/custom-card";
 import BlankLayout from "@/components/layout/blank-layout";
-import {Box, styled, Typography, useTheme} from "@mui/material";
-import {useNavigate} from "react-router-dom";
-import CustomButton from "@/components/ui/button.tsx";
+import { Box, styled, Typography, useTheme } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import CustomButton from "@/shared/components/ui/button.tsx";
 
-const BoxWrapper = styled(Box)(({theme}) => ({
+const BoxWrapper = styled(Box)(({ theme }) => ({
     [theme.breakpoints.down("md")]: {
         width: "90vw",
     },
@@ -82,7 +82,7 @@ const ServerDown = () => {
                         variant="contained"
                         color="primary"
                         onClick={() => {
-                            navigate("/")
+                            navigate("/");
 
                             window.location.reload();
                         }}

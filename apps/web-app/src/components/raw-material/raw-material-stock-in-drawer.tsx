@@ -1,14 +1,14 @@
-import {type FC, useEffect} from "react";
-import {Box, FormControl, Grid, InputAdornment, MenuItem, Stack} from "@mui/material";
-import DataDrawer from "@/components/ui/data-drawer.tsx";
-import {drawerPaperProps} from "@/components/styles";
-import {useGetAllUnitOfMeasurementsQuery, useStockInRawMaterialInventoryMutation} from "@/store/slice";
-import {getApiError} from "@/helpers/get-api-error.ts";
+import { type FC, useEffect } from "react";
+import { Box, FormControl, Grid, InputAdornment, MenuItem, Stack } from "@mui/material";
+import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
+import { drawerPaperProps } from "@/components/styles";
+import { useGetAllUnitOfMeasurementsQuery, useStockInRawMaterialInventoryMutation } from "@/store/slice";
+import { getApiError } from "@/helpers/get-api-error.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
-import {StyledTextField} from "@/components/ui";
-import CustomButton from "@/components/ui/button.tsx";
-import {Controller, useForm} from "react-hook-form";
-import {yupResolver} from "@hookform/resolvers/yup";
+import { StyledTextField } from "@/shared/components/ui";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import { Controller, useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import {
     type MultipleRawMaterialInventoryResponseType,
     RAW_MATERIAL_TRANSACTION_SOURCE,
@@ -16,11 +16,11 @@ import {
     type StockInRawMaterialType,
 } from "@/types/raw-material-types.ts";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import {camelCaseToTitleCase} from "@/utils";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
-import {useUnitFilter} from "@/hooks/use-unit-filter.ts";
+import { camelCaseToTitleCase } from "@/utils";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import { useUnitFilter } from "@/hooks/use-unit-filter.ts";
 
-import Icon from "@/components/ui/icon.tsx";
+import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -30,27 +30,27 @@ interface Props {
     rawMaterialInventory: MultipleRawMaterialInventoryResponseType;
 }
 
-const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterialInventory}) => {
+const RawMaterialStockInDrawer: FC<Props> = ({ open, onOpen, onClose, rawMaterialInventory }) => {
     const notify = useNotifier();
 
-    const {data: measurementUnit, isLoading: isMeasurementLoading} = useGetAllUnitOfMeasurementsQuery();
+    const { data: measurementUnit, isLoading: isMeasurementLoading } = useGetAllUnitOfMeasurementsQuery();
     const memoizedMeasurement = useMemoizedArray(measurementUnit);
 
-    const [stockInRawMaterialInventory, {isLoading}] = useStockInRawMaterialInventoryMutation();
+    const [stockInRawMaterialInventory, { isLoading }] = useStockInRawMaterialInventoryMutation();
 
     const {
         control,
         handleSubmit,
         reset,
         setValue,
-        formState: {errors},
+        formState: { errors },
     } = useForm({
         defaultValues: {},
         resolver: yupResolver(stockInRawMaterialSchema),
     });
 
     // USE THE CUSTOM HOOK HERE
-    const {filteredUnits, selectedUnitSymbol} = useUnitFilter({
+    const { filteredUnits, selectedUnitSymbol } = useUnitFilter({
         control,
         allUnits: memoizedMeasurement,
         selectedMaterialFamily: rawMaterialInventory?.unitOfMeasurement?.unitOfMeasurementFamily,
@@ -58,7 +58,7 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
 
     const onSubmit = async (data: StockInRawMaterialType) => {
         try {
-            await stockInRawMaterialInventory({...data, id: rawMaterialInventory.rawMaterialId});
+            await stockInRawMaterialInventory({ ...data, id: rawMaterialInventory.rawMaterialId });
             notify("Stock in Successfully!", "success");
             onClose();
             reset();
@@ -92,7 +92,7 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
                             <Controller
                                 name="source"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <FormControl fullWidth>
                                         <StyledTextField
                                             {...field}
@@ -107,7 +107,7 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
                                                         <Icon
                                                             src={ArrowDownIconSvg}
                                                             alt={"Dropdown Arrow"}
-                                                            sx={{width: 15, height: 15}}
+                                                            sx={{ width: 15, height: 15 }}
                                                         />
                                                     </InputAdornment>
                                                 ),
@@ -117,8 +117,11 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
                                                 Select Source
                                             </MenuItem>
                                             {RAW_MATERIAL_TRANSACTION_SOURCE.map((source) => (
-                                                <MenuItem key={source} value={source}
-                                                          sx={{textTransform: "capitalize"}}>
+                                                <MenuItem
+                                                    key={source}
+                                                    value={source}
+                                                    sx={{ textTransform: "capitalize" }}
+                                                >
                                                     {camelCaseToTitleCase(source)}
                                                 </MenuItem>
                                             ))}
@@ -127,18 +130,13 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
                                 )}
                             />
                         </Grid>
-                        <Grid size={{xs: 12, md: 6}}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Controller
                                 name="unitOfMeasurementId"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <FormControl fullWidth>
-                                        <StyledTextField
-                                            {...field}
-                                            select
-                                            label="Unit"
-                                            disabled={isMeasurementLoading}
-                                        >
+                                        <StyledTextField {...field} select label="Unit" disabled={isMeasurementLoading}>
                                             {filteredUnits.map((unit) => (
                                                 <MenuItem key={unit.id} value={unit.id}>
                                                     {unit.name} ({unit.symbol})
@@ -149,11 +147,11 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
                                 )}
                             />
                         </Grid>
-                        <Grid size={{sm: 12, md: 6}}>
+                        <Grid size={{ sm: 12, md: 6 }}>
                             <Controller
                                 name="quantity"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <FormControl fullWidth>
                                         <StyledTextField
                                             {...field}
@@ -171,11 +169,11 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
                                 )}
                             />
                         </Grid>
-                        <Grid size={{sm: 12, md: 6}}>
+                        <Grid size={{ sm: 12, md: 6 }}>
                             <Controller
                                 name="documentRefId"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <FormControl fullWidth>
                                         <StyledTextField
                                             {...field}
@@ -191,7 +189,7 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
                             <Controller
                                 name="notes"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <FormControl fullWidth>
                                         <StyledTextField
                                             {...field}
@@ -207,7 +205,7 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
                 </CustomCard>
                 <Grid size={12}>
                     <Stack
-                        direction={{xs: "column", sm: "row"}}
+                        direction={{ xs: "column", sm: "row" }}
                         spacing={2}
                         position={"absolute"}
                         bottom={0}
@@ -220,7 +218,7 @@ const RawMaterialStockInDrawer: FC<Props> = ({open, onOpen, onClose, rawMaterial
                             variant="contained"
                             type="submit"
                             disabled={isLoading}
-                            sx={{width: "100%"}}
+                            sx={{ width: "100%" }}
                         />
                     </Stack>
                 </Grid>

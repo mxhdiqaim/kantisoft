@@ -7,8 +7,8 @@ import { Box, FormControl, FormHelperText, Grid, Link as MuiLink, Typography, us
 
 import { Controller, useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
-import CustomButton from "@/components/ui/button.tsx";
-import { StyledTextField } from "@/components/ui";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import { StyledTextField } from "@/shared/components/ui";
 
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth } from "@/config/firebase";

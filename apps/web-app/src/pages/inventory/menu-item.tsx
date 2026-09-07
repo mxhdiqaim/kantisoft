@@ -1,45 +1,45 @@
-import {type MouseEvent, useCallback, useMemo, useState} from "react";
-import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
-import {useDeleteMenuItemMutation, useGetMenuItemsQuery} from "@/store/slice";
+import { type MouseEvent, useCallback, useMemo, useState } from "react";
+import { Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/material";
+import { useDeleteMenuItemMutation, useGetMenuItemsQuery } from "@/store/slice";
 import useNotifier from "@/hooks/useNotifier.ts";
 import MenuItemFormModal from "@/components/menu-items/menu-item-form-modal.tsx";
-import type {MenuItemType} from "@/types/menu-item-type.ts";
-import {useTranslation} from "react-i18next";
-import {getApiError} from "@/helpers/get-api-error.ts";
+import type { MenuItemType } from "@/types/menu-item-type.ts";
+import { useTranslation } from "react-i18next";
+import { getApiError } from "@/helpers/get-api-error.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import {selectCurrentUser} from "@/store/slice/auth-slice.ts";
-import {useAppSelector} from "@/store";
-import DataGridTable from "@/components/ui/data-grid-table";
-import type {GridColDef} from "@mui/x-data-grid";
-import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
-import {camelCaseToTitleCase, formatCurrency} from "@/utils";
-import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
-import {useSearch} from "@/use-search.ts";
-import CustomButton from "@/components/ui/button.tsx";
-import {UserRoleEnum} from "@/types/user-types.ts";
-import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
-import {getMenuItemsInventoryStatusChip} from "@/components/ui";
+import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
+import { useAppSelector } from "@/store";
+import DataGridTable from "@/shared/components/ui/data-grid-table";
+import type { GridColDef } from "@mui/x-data-grid";
+import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
+import { camelCaseToTitleCase, formatCurrency } from "@/utils";
+import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import { useSearch } from "@/use-search.ts";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import { UserRoleEnum } from "@/types/user-types.ts";
+import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import { getMenuItemsInventoryStatusChip } from "@/shared/components/ui";
 import BillOfMaterialsDrawer from "@/components/menu-items/bom-drawer.tsx";
 // import {useOfflineMenuItems} from "@/hooks/use-offline-menuitems.ts";
-import {DeleteOutline, EditOutlined, MoreVert, RestaurantMenuOutlined} from "@mui/icons-material";
-import {localSyncStatusEnum} from "@/types";
+import { DeleteOutline, EditOutlined, MoreVert, RestaurantMenuOutlined } from "@mui/icons-material";
+import { localSyncStatusEnum } from "@/types";
 
 const MenuItems = () => {
     const theme = useTheme();
     const notify = useNotifier();
-    const {t} = useTranslation();
+    const { t } = useTranslation();
 
     const currentUser = useAppSelector(selectCurrentUser);
 
     // const {items: menuItems, isLoading, isError, error} = useOfflineMenuItems({});
-    const {data: menuItems, isLoading, isFetching, isError, error} = useGetMenuItemsQuery({});
+    const { data: menuItems, isLoading, isFetching, isError, error } = useGetMenuItemsQuery({});
 
-    const [deleteMenuItem, {isLoading: isDeleting}] = useDeleteMenuItemMutation();
+    const [deleteMenuItem, { isLoading: isDeleting }] = useDeleteMenuItemMutation();
 
     const flattenedMenuItems = useMemo(() => {
         if (!menuItems) return [];
-        return menuItems.map(item => ({
+        return menuItems.map((item) => ({
             ...item,
             inventoryQuantity: item.inventory?.quantity,
             inventoryStockStatus: item.inventory?.status,
@@ -50,7 +50,7 @@ const MenuItems = () => {
 
     const memoizedMenuItems = useMemoizedArray(flattenedMenuItems);
 
-    const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
+    const { searchControl, searchSubmit, handleSearch, filteredData } = useSearch({
         initialData: memoizedMenuItems,
         searchKeys: ["name", "itemCode", "sku"],
     });
@@ -165,7 +165,7 @@ const MenuItems = () => {
                                         color="error"
                                         size="small"
                                         variant="filled"
-                                        sx={{height: 20, fontSize: '0.6rem'}}
+                                        sx={{ height: 20, fontSize: "0.6rem" }}
                                     />
                                 </Tooltip>
                             )}
@@ -173,8 +173,12 @@ const MenuItems = () => {
                             {/* Pending Chip */}
                             {params.row.syncStatus === localSyncStatusEnum.PENDING && (
                                 <Tooltip title="Waiting for internet...">
-                                    <Chip label="Offline" size="small" variant="outlined"
-                                          sx={{height: 20, fontSize: '0.65rem'}}/>
+                                    <Chip
+                                        label="Offline"
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{ height: 20, fontSize: "0.65rem" }}
+                                    />
                                 </Tooltip>
                             )}
                         </Typography>
@@ -190,7 +194,7 @@ const MenuItems = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox sx={{justifyContent: "left"}}>
+                    <TableStyledBox sx={{ justifyContent: "left" }}>
                         <Typography variant="body2" fontWeight="medium">
                             {formatCurrency(params.value)}
                         </Typography>
@@ -206,12 +210,16 @@ const MenuItems = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        {params.value ? <Chip
-                            label={camelCaseToTitleCase(params.value)}
-                            color={getMenuItemsInventoryStatusChip(params.value)}
-                            size="small"
-                            sx={{textTransform: "capitalize"}}
-                        /> : ""}
+                        {params.value ? (
+                            <Chip
+                                label={camelCaseToTitleCase(params.value)}
+                                color={getMenuItemsInventoryStatusChip(params.value)}
+                                size="small"
+                                sx={{ textTransform: "capitalize" }}
+                            />
+                        ) : (
+                            ""
+                        )}
                     </TableStyledBox>
                 ),
             },
@@ -224,9 +232,7 @@ const MenuItems = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography variant="body2">
-                            {params.value ?? ""}
-                        </Typography>
+                        <Typography variant="body2">{params.value ?? ""}</Typography>
                     </TableStyledBox>
                 ),
             },
@@ -239,9 +245,7 @@ const MenuItems = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography variant="body2">
-                            {params.value ?? ""}
-                        </Typography>
+                        <Typography variant="body2">{params.value ?? ""}</Typography>
                     </TableStyledBox>
                 ),
             },
@@ -267,9 +271,7 @@ const MenuItems = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography variant="body2">
-                            {params?.value}
-                        </Typography>
+                        <Typography variant="body2">{params?.value}</Typography>
                     </TableStyledBox>
                 ),
             },
@@ -282,9 +284,7 @@ const MenuItems = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography>
-                            {params.value?.name}
-                        </Typography>
+                        <Typography>{params.value?.name}</Typography>
                     </TableStyledBox>
                 ),
             },
@@ -296,7 +296,6 @@ const MenuItems = () => {
                 align: "center",
                 headerAlign: "center",
                 renderCell: (params) => {
-
                     const handleEdit = () => {
                         handleOpenFormModal(params.row);
                         handleMenuClose();
@@ -316,29 +315,27 @@ const MenuItems = () => {
                                     borderRadius: "10px",
                                     color: theme.palette.text.primary,
                                 }}
-
                                 onClick={(e) => handleMenuClick(e, params.row)}
                                 startIcon={
                                     <Tooltip title="More Actions" placement={"top"}>
-                                        <MoreVert/>
+                                        <MoreVert />
                                     </Tooltip>
                                 }
                             >
                                 <TableStyledMenuItem onClick={handleEdit}>
-                                    <EditOutlined sx={{mr: 1}}/>
+                                    <EditOutlined sx={{ mr: 1 }} />
                                     Edit
                                 </TableStyledMenuItem>
-                                <TableStyledMenuItem
-                                    onClick={() => setOpenRecipeDrawer(true)}>
-                                    <RestaurantMenuOutlined sx={{mr: 1}}/>
+                                <TableStyledMenuItem onClick={() => setOpenRecipeDrawer(true)}>
+                                    <RestaurantMenuOutlined sx={{ mr: 1 }} />
                                     Recipe
                                 </TableStyledMenuItem>
                                 <TableStyledMenuItem
                                     onClick={() => handleDelete(params.row.id)}
-                                    sx={{color: "error.main"}}
+                                    sx={{ color: "error.main" }}
                                     disabled={isDeleting && selectedRow.id === params.row.id}
                                 >
-                                    <DeleteOutline sx={{mr: 1}}/>
+                                    <DeleteOutline sx={{ mr: 1 }} />
                                     Delete
                                 </TableStyledMenuItem>
                             </CustomButton>
@@ -352,20 +349,20 @@ const MenuItems = () => {
 
     if (isError && (!menuItems || menuItems.length === 0)) {
         const apiError = getApiError(error, `Failed to load ${t("menuItem")}.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
     }
 
     return (
         <Box>
             <Grid container spacing={2} mb={2}>
-                <Grid size={{xs: 12, md: 6}}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="h4">{t("menuItems")}</Typography>
                     <Typography variant="subtitle1">
                         Total {t("menuItem")}: {totalMenuItems}
                     </Typography>
                 </Grid>
                 {currentUser && (currentUser.role === "manager" || currentUser.role === "admin") && (
-                    <Grid size={{xs: 12, md: 6}}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <Box display="flex" justifyContent="flex-end">
                             <CustomButton
                                 title={`Add ${t("item")}`}
@@ -386,13 +383,13 @@ const MenuItems = () => {
                 placeholder={`Search ${t("menuItem")} by name, sku or item code`}
             />
 
-            <Grid container spacing={2} sx={{mt: 2}}>
+            <Grid container spacing={2} sx={{ mt: 2 }}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching} />
                 </Grid>
             </Grid>
 
-            <MenuItemFormModal open={formModalOpen} onClose={handleCloseFormModal} menuItemToEdit={selectedMenuItem}/>
+            <MenuItemFormModal open={formModalOpen} onClose={handleCloseFormModal} menuItemToEdit={selectedMenuItem} />
 
             {selectedRow?.id && (
                 <BillOfMaterialsDrawer

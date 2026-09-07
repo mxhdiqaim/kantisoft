@@ -18,10 +18,10 @@ import {
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import CustomButton from "@/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.tsx";
 import { signInWithCustomToken } from "firebase/auth";
 import { auth } from "@/config/firebase";
-import { StyledTextField } from "@/components/ui";
+import { StyledTextField } from "@/shared/components/ui";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "@/store/slice/auth-slice.ts";
 

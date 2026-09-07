@@ -1,24 +1,24 @@
-import {useGetActivitiesQuery} from "@/store/slice";
-import {Box, Chip, Grid, Typography} from "@mui/material";
-import {useAppSelector} from "@/store";
-import {selectCurrentUser} from "@/store/slice/auth-slice.ts";
-import {UserRoleEnum} from "@/types/user-types.ts";
-import {useMemo, useState} from "react";
-import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
-import {type GridColDef} from "@mui/x-data-grid";
+import { useGetActivitiesQuery } from "@/store/slice";
+import { Box, Chip, Grid, Typography } from "@mui/material";
+import { useAppSelector } from "@/store";
+import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
+import { UserRoleEnum } from "@/types/user-types.ts";
+import { useMemo, useState } from "react";
+import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
+import { type GridColDef } from "@mui/x-data-grid";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import {getApiError} from "@/helpers/get-api-error.ts";
+import { getApiError } from "@/helpers/get-api-error.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
-import DataGridTable from "@/components/ui/data-grid-table";
-import {getActionColor} from "@/utils";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
-import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
-import {useSearch} from "@/use-search.ts";
-import {formatDateTimeCustom} from "@/utils/get-relative-time.ts";
-import {useTranslation} from "react-i18next";
+import DataGridTable from "@/shared/components/ui/data-grid-table";
+import { getActionColor } from "@/utils";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import { useSearch } from "@/use-search.ts";
+import { formatDateTimeCustom } from "@/utils/get-relative-time.ts";
+import { useTranslation } from "react-i18next";
 
 const ActivityLogPage = () => {
-    const {t} = useTranslation();
+    const { t } = useTranslation();
     const notify = useNotifier();
     const currentUser = useAppSelector(selectCurrentUser);
 
@@ -26,14 +26,14 @@ const ActivityLogPage = () => {
     const [page] = useState(0);
     const [rowsPerPage] = useState(20);
 
-    const {data, isLoading, isError, error} = useGetActivitiesQuery({
+    const { data, isLoading, isError, error } = useGetActivitiesQuery({
         limit: rowsPerPage,
         offset: page * rowsPerPage,
     });
 
     const memoizedData = useMemoizedArray(data);
 
-    const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
+    const { searchControl, searchSubmit, handleSearch, filteredData } = useSearch({
         initialData: memoizedData,
         searchKeys: ["details", "userName", "userRole", "storeName", "action"],
     });
@@ -73,9 +73,7 @@ const ActivityLogPage = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography variant="body2">
-                            {params.row.userName}
-                        </Typography>
+                        <Typography variant="body2">{params.row.userName}</Typography>
                     </TableStyledBox>
                 ),
             },
@@ -91,10 +89,10 @@ const ActivityLogPage = () => {
                         <Chip
                             label={params.row.userRole}
                             size="medium"
-                            sx={{textTransform: "capitalize", textAlign: "left"}}
+                            sx={{ textTransform: "capitalize", textAlign: "left" }}
                         />
                     </TableStyledBox>
-                )
+                ),
             },
             {
                 field: "storeName",
@@ -132,7 +130,7 @@ const ActivityLogPage = () => {
                             label={params.row.action.replace(/_/g, " ")}
                             color={getActionColor(params.row.action)}
                             size="medium"
-                            sx={{fontWeight: 600, textTransform: "capitalize"}}
+                            sx={{ fontWeight: 600, textTransform: "capitalize" }}
                         />
                     </TableStyledBox>
                 ),
@@ -143,7 +141,7 @@ const ActivityLogPage = () => {
 
     if (!currentUser || ![UserRoleEnum.MANAGER, UserRoleEnum.ADMIN].includes(currentUser.role)) {
         return (
-            <Box sx={{p: 4}}>
+            <Box sx={{ p: 4 }}>
                 <Typography color="error">You do not have permission to view activity logs.</Typography>
             </Box>
         );
@@ -152,7 +150,7 @@ const ActivityLogPage = () => {
     if (isError && !data) {
         const apiError = getApiError(error, "Failed to load users. Please try again later.");
         notify(apiError.message, "error");
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
     }
 
     return (
@@ -168,7 +166,7 @@ const ActivityLogPage = () => {
             />
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading} />
                 </Grid>
             </Grid>
         </Box>

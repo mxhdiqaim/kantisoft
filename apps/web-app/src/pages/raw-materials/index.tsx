@@ -1,31 +1,31 @@
-import {Box, Grid, Tooltip, Typography, useTheme} from "@mui/material";
-import {useDeleteRawMaterialMutation, useGetAllRawMaterialsQuery} from "@/store/slice";
-import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
-import {useSearch} from "@/use-search.ts";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
-import DataGridTable from "@/components/ui/data-grid-table";
-import type {GridColDef} from "@mui/x-data-grid";
-import {type MouseEvent, useCallback, useMemo, useState} from "react";
-import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
-import {formatCurrency} from "@/utils";
-import {formatDateCustom, formatRelativeDateTime} from "@/utils/get-relative-time.ts";
+import { Box, Grid, Tooltip, Typography, useTheme } from "@mui/material";
+import { useDeleteRawMaterialMutation, useGetAllRawMaterialsQuery } from "@/store/slice";
+import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import { useSearch } from "@/use-search.ts";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import DataGridTable from "@/shared/components/ui/data-grid-table";
+import type { GridColDef } from "@mui/x-data-grid";
+import { type MouseEvent, useCallback, useMemo, useState } from "react";
+import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
+import { formatCurrency } from "@/utils";
+import { formatDateCustom, formatRelativeDateTime } from "@/utils/get-relative-time.ts";
 import RawMaterialForm from "@/components/raw-material/raw-material-form.tsx";
-import CustomButton from "@/components/ui/button.tsx";
-import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
-import type {RawMaterialType} from "@/types/raw-material-types.ts";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import type { RawMaterialType } from "@/types/raw-material-types.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
 import ViewRawMaterialDrawer from "@/components/raw-material/view-raw-material-drawer.tsx";
-import {getApiError} from "@/helpers/get-api-error.ts";
+import { getApiError } from "@/helpers/get-api-error.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import {useTranslation} from "react-i18next";
-import DeleteConfirmationModal from "@/components/ui/delete-confimation-modal.tsx";
+import { useTranslation } from "react-i18next";
+import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
 
 import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 const RawMaterials = () => {
     const theme = useTheme();
-    const {t} = useTranslation();
+    const { t } = useTranslation();
     const notify = useNotifier();
     const [formModalOpen, setFormModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -37,16 +37,16 @@ const RawMaterials = () => {
         isLoading: isLoadingRawMaterial,
         isFetching,
         isError,
-        error
+        error,
     } = useGetAllRawMaterialsQuery();
     const memoizedRawMaterialData = useMemoizedArray(rawMaterialData);
 
-    const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
+    const { searchControl, searchSubmit, handleSearch, filteredData } = useSearch({
         initialData: memoizedRawMaterialData,
         searchKeys: ["name", "description"],
     });
 
-    const [deleteRawMaterial, {isLoading: isDeleting}] = useDeleteRawMaterialMutation();
+    const [deleteRawMaterial, { isLoading: isDeleting }] = useDeleteRawMaterialMutation();
 
     const handleMenuClick = (_event: MouseEvent<HTMLElement>, row: RawMaterialType) => {
         setSelectedRow(row);
@@ -66,7 +66,7 @@ const RawMaterials = () => {
         // Ensure the selectedRow is null for creation
         setSelectedRow(null);
         setFormModalOpen(true);
-    }
+    };
 
     const handleCloseDeleteModal = () => {
         setDeleteModalOpen(false);
@@ -106,10 +106,7 @@ const RawMaterials = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography
-                            variant="body2"
-                            fontWeight="500"
-                        >
+                        <Typography variant="body2" fontWeight="500">
                             {params.value}
                         </Typography>
                     </TableStyledBox>
@@ -128,10 +125,12 @@ const RawMaterials = () => {
                     const symbol = params.value.symbol;
                     return (
                         <TableStyledBox>
-                            <Typography variant="body2" textTransform={"capitalize"}>{name}</Typography>
+                            <Typography variant="body2" textTransform={"capitalize"}>
+                                {name}
+                            </Typography>
                             <Typography variant="body2">({symbol})</Typography>
                         </TableStyledBox>
-                    )
+                    );
                 },
             },
             {
@@ -157,9 +156,7 @@ const RawMaterials = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography variant="body2">
-                            {formatDateCustom(params.value)}
-                        </Typography>
+                        <Typography variant="body2">{formatDateCustom(params.value)}</Typography>
                     </TableStyledBox>
                 ),
             },
@@ -172,9 +169,7 @@ const RawMaterials = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography variant="body2">
-                            {formatRelativeDateTime(params.value)}
-                        </Typography>
+                        <Typography variant="body2">{formatRelativeDateTime(params.value)}</Typography>
                     </TableStyledBox>
                 ),
             },
@@ -208,19 +203,19 @@ const RawMaterials = () => {
                         onClick={(e) => handleMenuClick(e, params.row)}
                         startIcon={
                             <Tooltip title="More Actions" placement={"top"}>
-                                <MoreVertIcon/>
+                                <MoreVertIcon />
                             </Tooltip>
                         }
                     >
                         <TableStyledMenuItem
-                            sx={{borderRadius: theme.borderRadius.small, mx: 1}}
+                            sx={{ borderRadius: theme.borderRadius.small, mx: 1 }}
                             onClick={handleDrawerOpen}
                         >
                             View
                         </TableStyledMenuItem>
                         <TableStyledMenuItem
                             onClick={handleOpenFormModal}
-                            sx={{borderRadius: theme.borderRadius.small, mx: 1}}
+                            sx={{ borderRadius: theme.borderRadius.small, mx: 1 }}
                         >
                             Edit
                         </TableStyledMenuItem>
@@ -248,19 +243,19 @@ const RawMaterials = () => {
     if (isError) {
         notify(`Failed to load ${t("rawMaterial")}.`, "error");
         const apiError = getApiError(error, `Failed to load ${t("rawMaterial")}.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
     }
 
     return (
         <Box>
-            <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                 <Typography variant="h4" component="h1">
                     List
                 </Typography>
                 <CustomButton
                     title={"Raw Material"}
                     variant="contained"
-                    startIcon={<AddIcon/>}
+                    startIcon={<AddIcon />}
                     onClick={handleOpenCreateModal}
                 />
             </Box>
@@ -274,11 +269,11 @@ const RawMaterials = () => {
 
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoadingRawMaterial || isFetching}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoadingRawMaterial || isFetching} />
                 </Grid>
             </Grid>
 
-            <RawMaterialForm open={formModalOpen} onClose={handleCloseFormModal} rawMaterial={selectedRow}/>
+            <RawMaterialForm open={formModalOpen} onClose={handleCloseFormModal} rawMaterial={selectedRow} />
 
             {selectedRow?.id && (
                 <ViewRawMaterialDrawer
