@@ -64,8 +64,10 @@ export abstract class BaseService<T extends PgTable> {
         return query;
     }
 
-    public async getAllPaginated(customWhere: SQL, queryOpts: ReqQueryOptions, tx?: DbTx) {
-        const { limit, page, offset } = queryOpts;
+    public async getAllPaginated(customWhere: SQL | undefined, queryOpts: ReqQueryOptions, tx?: DbTx) {
+        const limit = queryOpts.limit || 10;
+        const page = queryOpts.page || 1;
+        const offset = queryOpts.offset !== undefined ? queryOpts.offset : (page - 1) * limit;
 
         const executor = tx || db;
 
@@ -82,10 +84,10 @@ export abstract class BaseService<T extends PgTable> {
             .select()
             .from(this.table as PgTable)
             .where(finalCondition)
-            .limit(limit!)
-            .offset(offset!);
+            .limit(limit)
+            .offset(offset);
 
-        const paginationData = helperUtil.getPaginationData(limit!, page!, totalCount);
+        const paginationData = helperUtil.getPaginationData(limit, page, totalCount);
 
         return {
             result: data,

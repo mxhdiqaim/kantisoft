@@ -66,7 +66,7 @@ class UserService extends BaseService<typeof userSchema> {
         });
     }
 
-    public async assignBranchToUser(userId: string, branchId: string) {
+    public async assignUserToBranch(userId: string, branchId: string) {
         const user = await this.getByIdOrError(userId);
         const branch = await branchService.getByIdOrError(branchId);
 

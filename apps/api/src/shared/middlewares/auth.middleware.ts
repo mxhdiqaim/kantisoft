@@ -4,49 +4,18 @@ import { requestContext } from "../logger/context";
 import { UserRoleEnum } from "../../modules/iam/interface";
 import { UnauthorizedError, ForbiddenError } from "../errors/custom.error";
 import { v4 as uuidv7 } from "uuid";
-import { helperUtil } from "../utils";
-import { EnvironmentVariablesEnum } from "../interface";
 
 class AuthMiddleware {
-    private readonly NODE_ENV = helperUtil.getEnvVariable("NODE_ENV");
-    private readonly DEVELOPMENT_TOKEN = helperUtil.getEnvVariable("DEVELOPMENT_TOKEN");
-    private readonly DEV_USER_ID = helperUtil.getEnvVariable("DEV_USER_ID");
-    private readonly DEV_ROLE = helperUtil.getEnvVariable("DEV_ROLE");
-    private readonly DEV_BUSINESS_ID = helperUtil.getEnvVariable("DEV_BUSINESS_ID");
-    private readonly DEV_BRANCH_ID = helperUtil.getEnvVariable("DEV_BRANCH_ID");
-
     public requireAuth = (req: Request, res: Response, next: NextFunction): void => {
         try {
-            const authHeader = req.headers.authorization;
-            // eslint-disable-next-line
-            let metadata: any = {};
+            const auth = getAuth(req);
 
-            if (
-                this.NODE_ENV === EnvironmentVariablesEnum.DEVELOPMENT &&
-                authHeader === `Bearer ${this.DEVELOPMENT_TOKEN}`
-            ) {
-                const cleanBusinessId =
-                    this.DEV_BUSINESS_ID === EnvironmentVariablesEnum.DEVELOPMENT || !this.DEV_BUSINESS_ID
-                        ? undefined
-                        : this.DEV_BUSINESS_ID;
-                const cleanBranchId =
-                    this.DEV_BRANCH_ID === EnvironmentVariablesEnum.DEVELOPMENT || !this.DEV_BRANCH_ID
-                        ? undefined
-                        : this.DEV_BRANCH_ID;
-
-                metadata = {
-                    userId: this.DEV_USER_ID,
-                    role: this.DEV_ROLE || UserRoleEnum.OWNER,
-                    businessId: cleanBusinessId,
-                    branchId: cleanBranchId,
-                };
-            } else {
-                const auth = getAuth(req);
-                if (!auth.isAuthenticated || !auth.userId) {
-                    throw new UnauthorizedError("Authentication failed or missing.");
-                }
-                metadata = auth.sessionClaims?.metadata || {};
+            if (!auth.isAuthenticated || !auth.userId) {
+                throw new UnauthorizedError("Authentication failed or missing.");
             }
+
+            // eslint-disable-next-line
+            const metadata: any = auth.sessionClaims?.metadata || {};
 
             if (!metadata.userId) {
                 throw new UnauthorizedError("User profile syncing. Please wait a moment.");

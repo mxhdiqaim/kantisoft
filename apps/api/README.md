@@ -97,7 +97,7 @@ Clerk requires an active browser session to generate a backend token.
 We have a dedicated script to fetch a long-lived token for your active session. From the `apps/api` directory, update the script with your `USER_ID` and run:
 
 ```bash
-bun run get-token.ts
+bun run scripts/get-token.script.ts
 
 ```
 

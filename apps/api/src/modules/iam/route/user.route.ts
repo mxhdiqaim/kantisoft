@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { UserController } from "../controller";
+import systemMiddleware from "../../../shared/middlewares/system.middleware";
+import { userValidator } from "../validator";
 
 class UserRoutes {
     public readonly router: Router;
@@ -12,7 +14,13 @@ class UserRoutes {
     }
 
     private initializeRoutes() {
-        this.router.post("/invite", this.controller.inviteStaff);
+        this.router.get("/", this.controller.index);
+
+        this.router.post(
+            "/invite",
+            systemMiddleware.validateRequestBody(userValidator.inviteSchema),
+            this.controller.inviteStaff,
+        );
     }
 }
 

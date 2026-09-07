@@ -2,4 +2,4 @@ export * from "./controller";
 export * from "./schema";
 export * from "./service";
 
-export { default as iamRoutes } from "./routes";
+export { default as iamRoutes } from "./route";
