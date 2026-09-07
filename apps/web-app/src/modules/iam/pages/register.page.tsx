@@ -25,7 +25,7 @@ import { StyledTextField } from "@/shared/components/ui";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "@/store/slice/auth-slice.ts";
 
-const Register = () => {
+const RegisterPage = () => {
     const navigate = useNavigate();
     const notify = useNotifier();
     const dispatch = useDispatch();
@@ -273,4 +273,4 @@ const Register = () => {
     );
 };
 
-export default Register;
+export default RegisterPage;

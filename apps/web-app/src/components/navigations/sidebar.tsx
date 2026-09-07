@@ -1,4 +1,4 @@
-import { appRoutes, type AppRouteType } from "@/routes";
+import { appRoutes, type AppRouteType } from "@/app/router";
 import { useAppSelector } from "@/store";
 import { apiSlice, useGetAllStoresQuery, useSignoutMutation } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice";

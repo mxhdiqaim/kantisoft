@@ -7,7 +7,7 @@ import useNotifier from "@/hooks/useNotifier.ts";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import { StyledTextField } from "@/shared/components/ui";
 
-const ForgetPassword = () => {
+const ForgetPasswordPage = () => {
     const navigate = useNavigate();
     const notify = useNotifier();
 
@@ -98,4 +98,4 @@ const ForgetPassword = () => {
     );
 };
 
-export default ForgetPassword;
+export default ForgetPasswordPage;

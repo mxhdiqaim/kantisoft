@@ -1,8 +1,8 @@
-import ServerDown from "@/pages/feedbacks/server-down";
+import ServerDown from "@/pages/feedbacks/server-down.tsx";
 
-import Spinner from "@/components/feedback/spinner";
-import { useAuthStatus } from "@/hooks/use-auth-status";
-import type { UserRole } from "@/types/user-types";
+import Spinner from "@/components/feedback/spinner.tsx";
+import { useAuthStatus } from "@/hooks/use-auth-status.ts";
+import type { UserRole } from "@/types/user-types.ts";
 import { memo, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 

@@ -27,7 +27,7 @@ import { useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import { findRouteByPath } from "@/utils/routes.ts";
-import { appRoutes } from "@/routes";
+import { appRoutes } from "@/app/router";
 import { useTranslation } from "react-i18next";
 
 export interface Props {

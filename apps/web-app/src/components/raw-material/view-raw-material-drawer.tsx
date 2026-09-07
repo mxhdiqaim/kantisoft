@@ -4,7 +4,6 @@ import { getApiError } from "@/helpers/get-api-error.ts";
 // import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { Box, Divider, Grid, Stack, Typography } from "@mui/material";
 import { EditOutlined } from "@mui/icons-material";
-import ViewRawMaterialSkeleton from "@/shared/components/spinners/view-raw-material-skeleton.tsx";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
 import { formatCurrency } from "@/utils";
@@ -13,6 +12,7 @@ import { type FC, useState } from "react";
 import { drawerPaperProps } from "@/components/styles";
 import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
 import { formatDateCustom, formatRelativeDateTime } from "@/utils/get-relative-time.ts";
+import { ViewRawMaterialSkeleton } from "@/shared";
 
 interface Props {
     open: boolean;

@@ -1,5 +1,5 @@
-import AppSkeleton from "@/shared/components/spinners/app-skeleton-loading";
-import { appRoutes } from "@/routes";
+import { AppSkeleton } from "@/shared";
+import { appRoutes } from "@/app/router";
 import { useAppSelector } from "@/store";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
 import { useEffect } from "react";
