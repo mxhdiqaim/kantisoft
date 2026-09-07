@@ -3,7 +3,7 @@ import { selectCurrentUser } from "@/store/slice/auth-slice";
 import { selectActiveStore } from "@/store/slice/store-slice";
 import type { CartItem } from "@/types/cart-item-type";
 import { createOrderSchema, type CreateOrderType, OrderPaymentMethod, OrderStatus } from "@/types/order-types.ts";
-import { formatCurrency } from "@/utils";
+import { formatCurrency } from "@/shared/utils";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DialogActions, FormControl, FormControlLabel, FormHelperText, Radio, RadioGroup } from "@mui/material";
 import { useEffect } from "react";

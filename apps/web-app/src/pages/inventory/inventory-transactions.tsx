@@ -4,7 +4,7 @@ import type { GridColDef } from "@mui/x-data-grid";
 import { useEffect, useMemo, useState } from "react";
 import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
 import DataGridTable from "@/shared/components/ui/data-grid-table";
-import { camelCaseToTitleCase } from "@/utils";
+import { camelCaseToTitleCase } from "@/shared/utils";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { filterSchema, type FilterSchemaType } from "@/types";
@@ -16,7 +16,7 @@ import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
 import { getApiError } from "@/helpers/get-api-error.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import useNotifier from "@/hooks/useNotifier.ts";
-import { formatRelativeDateTime } from "@/utils/get-relative-time.ts";
+import { formatRelativeDateTime } from "@/shared/utils/get-relative-time.ts";
 
 const InventoryTransactions = () => {
     const notify = useNotifier();

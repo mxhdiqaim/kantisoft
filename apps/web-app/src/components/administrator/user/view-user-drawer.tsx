@@ -14,7 +14,7 @@ import { getUserRoleChipColor, getUserStatusChipColor } from "@/shared/component
 import { drawerPaperProps } from "@/components/styles";
 import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import { getInitials } from "@/utils";
+import { getInitials } from "@/shared/utils";
 import CustomButton from "@/shared/components/ui/button.tsx";
 
 import { BlockOutlined, DeleteOutline, EditOutlined } from "@mui/icons-material";

@@ -29,9 +29,6 @@ export { default as UnitOfMeasurementsScreen } from "./raw-materials/unit-of-mea
 // Production screens
 export { default as ProductionScreen } from "./production";
 
-// Records
-// export {default as ProfitabilityWastageScreen} from "./records/profitability-wastage.tsx"
-
 // Administrator
 export { default as UsersScreen } from "./administrator/users";
 export { default as StoreScreen } from "./administrator/stores";

@@ -12,7 +12,7 @@ import { useAppSelector } from "@/store";
 import DataGridTable from "@/shared/components/ui/data-grid-table";
 import type { GridColDef } from "@mui/x-data-grid";
 import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
-import { camelCaseToTitleCase, formatCurrency } from "@/utils";
+import { camelCaseToTitleCase, formatCurrency } from "@/shared/utils";
 import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
 import { useSearch } from "@/use-search.ts";
 import CustomButton from "@/shared/components/ui/button.tsx";
@@ -21,7 +21,6 @@ import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-st
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { getMenuItemsInventoryStatusChip } from "@/shared/components/ui";
 import BillOfMaterialsDrawer from "@/components/menu-items/bom-drawer.tsx";
-// import {useOfflineMenuItems} from "@/hooks/use-offline-menuitems.ts";
 import { DeleteOutline, EditOutlined, MoreVert, RestaurantMenuOutlined } from "@mui/icons-material";
 import { localSyncStatusEnum } from "@/types";
 

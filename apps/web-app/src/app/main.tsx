@@ -6,7 +6,7 @@ import App from "./App.tsx";
 import "../index.css";
 import { SnackbarProvider } from "notistack";
 import * as Sentry from "@sentry/react";
-import { getEnvVariable } from "@/utils";
+import { getEnvVariable } from "@/shared/utils";
 import { SyncProvider } from "@/context/sync-context.tsx";
 
 const VITE_APP_SENTRY_DSN = getEnvVariable("VITE_APP_SENTRY_DSN");

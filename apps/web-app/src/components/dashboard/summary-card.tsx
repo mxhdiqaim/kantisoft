@@ -1,9 +1,9 @@
-import {Avatar, Box, Grow, Typography} from "@mui/material";
-import {useTheme} from "@mui/material/styles";
-import type {ReactElement} from "react";
+import { Avatar, Box, Grow, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import type { ReactElement } from "react";
 import CountUp from "react-countup";
-import {formatCurrency} from "@/utils";
-import {CustomCardRef} from "../customs/custom-card";
+import { formatCurrency } from "@/shared/utils";
+import { CustomCardRef } from "../customs/custom-card";
 
 interface Props {
     title: string;
@@ -14,7 +14,7 @@ interface Props {
 }
 
 const SummaryCard = (props: Props) => {
-    const {title, value, icon, color, index} = props;
+    const { title, value, icon, color, index } = props;
     const theme = useTheme();
     const cardColor = color || theme.palette.primary.main;
 
@@ -22,10 +22,10 @@ const SummaryCard = (props: Props) => {
     const numericValue = isNumeric ? value : parseFloat(String(value).replace(/,/g, ""));
 
     return (
-        <Grow in={true} style={{transformOrigin: "0 0 0"}} timeout={500 + index * 150}>
+        <Grow in={true} style={{ transformOrigin: "0 0 0" }} timeout={500 + index * 150}>
             <CustomCardRef variant={"outlined"}>
                 <Box>
-                    <Box sx={{display: "flex", alignItems: "center", mb: 2}}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                         <Avatar
                             sx={{
                                 bgcolor: cardColor,
@@ -39,7 +39,7 @@ const SummaryCard = (props: Props) => {
                             {title}
                         </Typography>
                     </Box>
-                    <Typography variant="h4" component="div" sx={{fontWeight: "bold"}}>
+                    <Typography variant="h4" component="div" sx={{ fontWeight: "bold" }}>
                         {isNumeric ? (
                             <CountUp
                                 start={0}

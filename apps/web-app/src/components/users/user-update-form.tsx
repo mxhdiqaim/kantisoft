@@ -11,7 +11,7 @@ import { useSelector } from "react-redux";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import { StyledTextField } from "@/shared/components/ui";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { getRolePermissions } from "@/utils";
+import { getRolePermissions } from "@/shared/utils";
 
 import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";

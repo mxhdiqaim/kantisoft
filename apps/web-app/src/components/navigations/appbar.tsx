@@ -26,7 +26,7 @@ import { type FC } from "react";
 import { useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import CustomButton from "@/shared/components/ui/button.tsx";
-import { findRouteByPath } from "@/utils/routes.ts";
+import { findRouteByPath } from "@/shared/utils/routes.ts";
 import { appRoutes } from "@/app/router";
 import { useTranslation } from "react-i18next";
 

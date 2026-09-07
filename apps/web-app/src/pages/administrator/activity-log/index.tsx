@@ -10,11 +10,11 @@ import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { getApiError } from "@/helpers/get-api-error.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
 import DataGridTable from "@/shared/components/ui/data-grid-table";
-import { getActionColor } from "@/utils";
+import { getActionColor } from "@/shared/utils";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
 import { useSearch } from "@/use-search.ts";
-import { formatDateTimeCustom } from "@/utils/get-relative-time.ts";
+import { formatDateTimeCustom } from "@/shared/utils/get-relative-time.ts";
 import { useTranslation } from "react-i18next";
 
 const ActivityLogPage = () => {

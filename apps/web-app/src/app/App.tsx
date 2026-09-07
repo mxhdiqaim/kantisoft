@@ -4,7 +4,7 @@ import ErrorFallback from "@/pages/feedbacks/fallback.tsx";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { logOut, selectCurrentUser } from "@/store/slice/auth-slice.ts";
 import { ThemeProvider } from "../../../../packages/ui/src/theme";
-import { ScrollToTop } from "@/utils";
+import { ScrollToTop } from "@/shared/utils";
 import { type JSX, useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";

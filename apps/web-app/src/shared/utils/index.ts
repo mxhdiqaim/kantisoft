@@ -1,13 +1,13 @@
-import type {Period} from "@/types/order-types.ts";
-import {UserRoleEnum, type UserRoleType, type UserType} from "@/types/user-types";
-import type {ChipProps} from "@mui/material";
-import {useEffect} from "react";
-import {useLocation} from "react-router-dom";
-import {format} from "date-fns";
+import type { Period } from "@/types/order-types.ts";
+import { UserRoleEnum, type UserRoleType, type UserType } from "@/types/user-types.ts";
+import type { ChipProps } from "@mui/material";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { format } from "date-fns";
 
 // fixes scroll behaviour on route change
 export const ScrollToTop = () => {
-    const {pathname} = useLocation();
+    const { pathname } = useLocation();
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -15,12 +15,6 @@ export const ScrollToTop = () => {
 
     return null;
 };
-
-export const ngnFormatter = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "NGN",
-});
-
 
 /**
  * Formats a number as a currency string.
@@ -94,7 +88,6 @@ export const getActionColor = (action: string) => {
     if (lowerAction.includes("failed") || lowerAction.includes("error")) return "error";
     return "default";
 };
-
 
 // Function to safely parse user data from localStorage
 export const getUserDataFromStorage = (): UserType | null => {
@@ -185,7 +178,6 @@ export const formatNumber = (value: number): string => {
     return new Intl.NumberFormat().format(value);
 };
 
-
 interface RolePermissions {
     availableRoles: UserRoleType[];
     canEditRole: boolean;
@@ -195,7 +187,8 @@ export const getRolePermissions = (currentUserRole?: UserRoleType, isTargetSelf:
     let availableRoles: UserRoleType[] = [];
 
     // You can edit roles if you are Manager/Admin AND you are not editing yourself
-    const canEditRole = (currentUserRole === UserRoleEnum.MANAGER || currentUserRole === UserRoleEnum.ADMIN) && !isTargetSelf;
+    const canEditRole =
+        (currentUserRole === UserRoleEnum.MANAGER || currentUserRole === UserRoleEnum.ADMIN) && !isTargetSelf;
 
     if (currentUserRole === UserRoleEnum.MANAGER) {
         // Manager can assign ADMIN, USER & GUEST
@@ -205,11 +198,9 @@ export const getRolePermissions = (currentUserRole?: UserRoleType, isTargetSelf:
         availableRoles = [UserRoleEnum.USER, UserRoleEnum.GUEST];
     }
 
-    return {availableRoles, canEditRole};
+    return { availableRoles, canEditRole };
 };
 
 export const getInitials = (firstName: string = "", lastName: string = "") => {
     return `${(firstName || "")[0] || ""}${(lastName || "")[0] || ""}`.toUpperCase();
 };
-
-
