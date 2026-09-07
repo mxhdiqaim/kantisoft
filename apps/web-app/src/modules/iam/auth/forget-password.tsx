@@ -2,10 +2,10 @@ import { type FormEvent, useState } from "react";
 import { Box, Typography, Grid } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "@/config/firebase";
-import useNotifier from "@/hooks/useNotifier";
-import CustomButton from "@/components/ui/button.tsx";
-import { StyledTextField } from "@/components/ui";
+import { auth } from "@/config/firebase.ts";
+import useNotifier from "@/hooks/useNotifier.ts";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import { StyledTextField } from "@/shared/components/ui";
 
 const ForgetPassword = () => {
     const navigate = useNavigate();

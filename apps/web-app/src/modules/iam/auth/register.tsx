@@ -1,8 +1,8 @@
-import { getApiError } from "@/helpers/get-api-error";
-import useNotifier from "@/hooks/useNotifier";
+import { getApiError } from "@/helpers/get-api-error.ts";
+import useNotifier from "@/hooks/useNotifier.ts";
 import { useSignupMutation } from "@/store/slice";
-import { STORE_TYPES } from "@/types/store-types";
-import { registerUserSchema, type RegisterUserType } from "@/types/user-types";
+import { STORE_TYPES } from "@/types/store-types.ts";
+import { registerUserSchema, type RegisterUserType } from "@/types/user-types.ts";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import {
@@ -18,10 +18,10 @@ import {
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import CustomButton from "@/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.tsx";
 import { signInWithCustomToken } from "firebase/auth";
-import { auth } from "@/config/firebase";
-import { StyledTextField } from "@/components/ui";
+import { auth } from "@/config/firebase.ts";
+import { StyledTextField } from "@/shared/components/ui";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "@/store/slice/auth-slice.ts";
 

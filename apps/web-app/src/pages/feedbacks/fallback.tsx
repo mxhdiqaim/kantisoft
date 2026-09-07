@@ -1,21 +1,21 @@
-import {styled, useTheme} from "@mui/material/styles";
+import { styled, useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import Box, {type BoxProps} from "@mui/material/Box";
+import Box, { type BoxProps } from "@mui/material/Box";
 import CardContent from "@mui/material/CardContent";
-import type {FallbackProps} from "react-error-boundary";
-import {useEffect, useRef} from "react";
-import {Link, useLocation, useNavigate} from "react-router-dom";
+import type { FallbackProps } from "react-error-boundary";
+import { useEffect, useRef } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import BlankLayout from "@/components/layout/blank-layout";
 import CustomCard from "@/components/customs/custom-card";
-import CustomButton from "@/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.tsx";
 
-const BoxWrapper = styled(Box)<BoxProps>(({theme}) => ({
+const BoxWrapper = styled(Box)<BoxProps>(({ theme }) => ({
     [theme.breakpoints.down("md")]: {
         width: "90vw",
     },
 }));
 
-const Img = styled("img")(({theme}) => ({
+const Img = styled("img")(({ theme }) => ({
     marginTop: theme.spacing(6),
     marginBottom: theme.spacing(6),
     height: 320,
@@ -30,7 +30,7 @@ const Img = styled("img")(({theme}) => ({
 }));
 
 const ErrorFallback = (props: FallbackProps) => {
-    const {error, resetErrorBoundary} = props;
+    const { error, resetErrorBoundary } = props;
     const theme = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
@@ -71,7 +71,7 @@ const ErrorFallback = (props: FallbackProps) => {
                 >
                     <CardContent>
                         <BoxWrapper>
-                            <Typography variant="h1" sx={{mb: 1.5, color: theme.palette.error.main, fontWeight: 700}}>
+                            <Typography variant="h1" sx={{ mb: 1.5, color: theme.palette.error.main, fontWeight: 700 }}>
                                 ⚠️
                             </Typography>
                             <Typography
@@ -86,12 +86,12 @@ const ErrorFallback = (props: FallbackProps) => {
                             >
                                 Something went wrong
                             </Typography>
-                            <Typography variant="body2" sx={{color: theme.palette.text.secondary, mb: 2}}>
+                            <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 2 }}>
                                 We could not display the page. Check Console or Contact Support.
                             </Typography>
                         </BoxWrapper>
-                        <Img alt="error-illustration" src="/images/under_maintenance.svg"/>
-                        <Box sx={{display: "flex", gap: 2, justifyContent: "center", mt: 2}}>
+                        <Img alt="error-illustration" src="/images/under_maintenance.svg" />
+                        <Box sx={{ display: "flex", gap: 2, justifyContent: "center", mt: 2 }}>
                             <CustomButton
                                 title={"Go back"}
                                 variant="contained"

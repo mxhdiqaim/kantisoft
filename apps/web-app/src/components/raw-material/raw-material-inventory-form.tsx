@@ -1,27 +1,27 @@
-import {type FC, useEffect, useMemo} from "react";
-import {Box, FormControl, Grid, InputAdornment, MenuItem} from "@mui/material";
+import { type FC, useEffect, useMemo } from "react";
+import { Box, FormControl, Grid, InputAdornment, MenuItem } from "@mui/material";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import {Controller, useForm, useWatch} from "react-hook-form";
-import {yupResolver} from "@hookform/resolvers/yup";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import {
     createRawMaterialInventorySchema,
     type CreateRawMaterialInventoryType,
     type GetRawMaterialInventoryStockType,
     type UpdateRawMaterialInventoryType,
 } from "@/types/raw-material-types.ts";
-import {StyledTextField} from "@/components/ui";
-import Icon from "@/components/ui/icon.tsx";
+import { StyledTextField } from "@/shared/components/ui";
+import Icon from "@/shared/components/ui/icon.tsx";
 import {
     useCreateRawMaterialInventoryMutation,
     useGetAllRawMaterialsQuery,
     useGetAllUnitOfMeasurementsQuery,
-    useUpdateRawMaterialInventoryMutation
+    useUpdateRawMaterialInventoryMutation,
 } from "@/store/slice";
-import CustomButton from "@/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.tsx";
 import useNotifier from "@/hooks/useNotifier.ts";
-import {getApiError} from "@/helpers/get-api-error.ts";
+import { getApiError } from "@/helpers/get-api-error.ts";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
 interface Props {
     open: boolean;
@@ -29,40 +29,38 @@ interface Props {
     rawMaterialInventory?: GetRawMaterialInventoryStockType | null;
 }
 
-const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventory}) => {
+const RawMaterialInventoryForm: FC<Props> = ({ open, onClose, rawMaterialInventory }) => {
     const notify = useNotifier();
     const isEditMode = !!rawMaterialInventory;
 
-    const {data: rawMaterialData, isLoading: isFetchingRawMaterial} = useGetAllRawMaterialsQuery(undefined, {
+    const { data: rawMaterialData, isLoading: isFetchingRawMaterial } = useGetAllRawMaterialsQuery(undefined, {
         skip: !open,
     });
 
     const memoizedRawMaterial = useMemoizedArray(rawMaterialData);
 
-    const {data: unitOfMeasurements, isLoading: fetchingMeasurements} = useGetAllUnitOfMeasurementsQuery(undefined, {
+    const { data: unitOfMeasurements, isLoading: fetchingMeasurements } = useGetAllUnitOfMeasurementsQuery(undefined, {
         skip: !open,
     });
 
     const memoizedUnitOfMeasurements = useMemoizedArray(unitOfMeasurements);
 
-    const [createRawMaterialInventory, {
-        isLoading: isCreating,
-        isSuccess: isCreateSuccess,
-        reset: resetCreateMutation
-    }] = useCreateRawMaterialInventoryMutation();
+    const [
+        createRawMaterialInventory,
+        { isLoading: isCreating, isSuccess: isCreateSuccess, reset: resetCreateMutation },
+    ] = useCreateRawMaterialInventoryMutation();
 
-    const [updateRawMaterialInventory, {
-        isLoading: isUpdating,
-        isSuccess: isUpdateSuccess,
-        reset: resetUpdateMutation
-    }] = useUpdateRawMaterialInventoryMutation();
+    const [
+        updateRawMaterialInventory,
+        { isLoading: isUpdating, isSuccess: isUpdateSuccess, reset: resetUpdateMutation },
+    ] = useUpdateRawMaterialInventoryMutation();
 
     const {
         control,
         handleSubmit,
         reset: resetForm,
         setValue,
-        formState: {errors},
+        formState: { errors },
     } = useForm({
         defaultValues: {
             rawMaterialId: "",
@@ -74,12 +72,12 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
     });
 
     // Move all useWatch calls to the top level
-    const currentUnitId = useWatch({control, name: "unitOfMeasurementId"});
-    const selectedMaterialId = useWatch({control, name: "rawMaterialId"});
+    const currentUnitId = useWatch({ control, name: "unitOfMeasurementId" });
+    const selectedMaterialId = useWatch({ control, name: "rawMaterialId" });
 
     // Use the values in useMemo (no hooks inside here any more)
     const selectedUnitSymbol = useMemo(() => {
-        return memoizedUnitOfMeasurements?.find(u => u.id === currentUnitId)?.symbol || "";
+        return memoizedUnitOfMeasurements?.find((u) => u.id === currentUnitId)?.symbol || "";
     }, [currentUnitId, memoizedUnitOfMeasurements]);
 
     const selectedMaterial = useMemo(() => {
@@ -96,7 +94,7 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
         if (!requiredFamily) return [];
 
         return memoizedUnitOfMeasurements?.filter(
-            (unit) => unit.unitOfMeasurementFamily?.toLowerCase() === requiredFamily
+            (unit) => unit.unitOfMeasurementFamily?.toLowerCase() === requiredFamily,
         );
     }, [requiredFamily, memoizedUnitOfMeasurements]);
 
@@ -106,7 +104,7 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
             rawMaterialId: "",
             quantity: 0,
             minStockLevel: 0,
-            unitOfMeasurementId: ""
+            unitOfMeasurementId: "",
         });
         resetCreateMutation();
         resetUpdateMutation();
@@ -147,7 +145,7 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                 const payload = {
                     id: rawMaterialInventory.id,
                     minStockLevel: data.minStockLevel,
-                }
+                };
                 await updateRawMaterialInventory(payload as UpdateRawMaterialInventoryType).unwrap();
                 notify("Raw Material Inventory Updated Successfully!", "success");
             } else {
@@ -169,14 +167,14 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
             onClose={handleClose} // Use handleClose instead of onClose directly
             title={isEditMode ? "Edit Minimum Stock" : "Create Inventory"}
         >
-            <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{mt: 3}}>
+            <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 3 }}>
                 <Grid container spacing={2}>
                     {!isEditMode && (
                         <Grid size={12}>
                             <Controller
                                 name="rawMaterialId"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <FormControl fullWidth>
                                         <StyledTextField
                                             {...field}
@@ -191,7 +189,7 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                                                         <Icon
                                                             src={ArrowDownIconSvg}
                                                             alt={"Dropdown Arrow"}
-                                                            sx={{width: 15, height: 15}}
+                                                            sx={{ width: 15, height: 15 }}
                                                         />
                                                     </InputAdornment>
                                                 ),
@@ -203,8 +201,11 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                                                 Select Raw Material
                                             </MenuItem>
                                             {memoizedRawMaterial?.map((rawMaterial) => (
-                                                <MenuItem key={rawMaterial.id} value={rawMaterial.id}
-                                                          sx={{textTransform: "capitalize"}}>
+                                                <MenuItem
+                                                    key={rawMaterial.id}
+                                                    value={rawMaterial.id}
+                                                    sx={{ textTransform: "capitalize" }}
+                                                >
                                                     {rawMaterial.name}
                                                 </MenuItem>
                                             ))}
@@ -219,7 +220,7 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                             <Controller
                                 name="unitOfMeasurementId"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <FormControl fullWidth>
                                         <StyledTextField
                                             {...field}
@@ -229,12 +230,14 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                                             error={Boolean(errors.unitOfMeasurementId)}
                                             helperText={errors.unitOfMeasurementId?.message}
                                         >
-                                            <MenuItem value="" disabled>Select Unit</MenuItem>
+                                            <MenuItem value="" disabled>
+                                                Select Unit
+                                            </MenuItem>
                                             {filteredUnits?.map((unit) => (
                                                 <MenuItem
                                                     key={unit.id}
                                                     value={unit.id}
-                                                    sx={{textTransform: "capitalize"}}
+                                                    sx={{ textTransform: "capitalize" }}
                                                 >
                                                     {unit.name} ({unit.symbol})
                                                 </MenuItem>
@@ -246,11 +249,11 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                         </Grid>
                     )}
                     {!isEditMode && (
-                        <Grid size={{sm: 12, md: 6}}>
+                        <Grid size={{ sm: 12, md: 6 }}>
                             <Controller
                                 name="quantity"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <StyledTextField
                                         {...field}
                                         label="Quantity"
@@ -268,11 +271,11 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                             />
                         </Grid>
                     )}
-                    <Grid size={isEditMode ? 12 : {sm: 12, md: 6}}>
+                    <Grid size={isEditMode ? 12 : { sm: 12, md: 6 }}>
                         <Controller
                             name="minStockLevel"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <StyledTextField
                                     {...field}
                                     fullWidth
@@ -290,10 +293,10 @@ const RawMaterialInventoryForm: FC<Props> = ({open, onClose, rawMaterialInventor
                         />
                     </Grid>
                 </Grid>
-                <Box sx={{display: "flex", justifyContent: "flex-end", gap: 2, mt: 2}}>
-                    <CustomButton title={"Close"} onClick={handleClose} variant="outlined"/>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
+                    <CustomButton title={"Close"} onClick={handleClose} variant="outlined" />
                     <CustomButton
-                        title={isLoading ? (isEditMode ? "Saving..." : "Creating...") : (isEditMode ? "Save" : "Create")}
+                        title={isLoading ? (isEditMode ? "Saving..." : "Creating...") : isEditMode ? "Save" : "Create"}
                         type="submit"
                         variant={"contained"}
                         disabled={isLoading}

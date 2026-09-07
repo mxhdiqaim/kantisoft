@@ -1,18 +1,18 @@
-import {useGetSingleRawMaterialQuery} from "@/store/slice";
+import { useGetSingleRawMaterialQuery } from "@/store/slice";
 // import useNotifier from "@/hooks/useNotifier.ts";
-import {getApiError} from "@/helpers/get-api-error.ts";
+import { getApiError } from "@/helpers/get-api-error.ts";
 // import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import {Box, Divider, Grid, Stack, Typography} from "@mui/material";
-import {EditOutlined} from "@mui/icons-material";
-import ViewRawMaterialSkeleton from "@/components/spinners/view-raw-material-skeleton.tsx";
-import CustomButton from "@/components/ui/button.tsx";
+import { Box, Divider, Grid, Stack, Typography } from "@mui/material";
+import { EditOutlined } from "@mui/icons-material";
+import ViewRawMaterialSkeleton from "@/shared/components/spinners/view-raw-material-skeleton.tsx";
+import CustomButton from "@/shared/components/ui/button.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import {formatCurrency} from "@/utils";
+import { formatCurrency } from "@/utils";
 import RawMaterialForm from "@/components/raw-material/raw-material-form.tsx";
-import {type FC, useState} from "react";
-import {drawerPaperProps} from "@/components/styles";
-import DataDrawer from "@/components/ui/data-drawer.tsx";
-import {formatDateCustom, formatRelativeDateTime} from "@/utils/get-relative-time.ts";
+import { type FC, useState } from "react";
+import { drawerPaperProps } from "@/components/styles";
+import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
+import { formatDateCustom, formatRelativeDateTime } from "@/utils/get-relative-time.ts";
 
 interface Props {
     open: boolean;
@@ -21,7 +21,7 @@ interface Props {
     rawMaterialId: string;
 }
 
-const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}) => {
+const ViewRawMaterialDrawer: FC<Props> = ({ rawMaterialId, open, onOpen, onClose }) => {
     // const notify = useNotifier();
 
     const [formModalOpen, setFormModalOpen] = useState(false);
@@ -29,7 +29,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}
     const {
         data: rawMaterial,
         error,
-        isLoading
+        isLoading,
     } = useGetSingleRawMaterialQuery(rawMaterialId!, {
         skip: !rawMaterialId,
     });
@@ -55,15 +55,17 @@ const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}
             error={error}
             apiError={apiError}
         >
-            {isLoading ? <ViewRawMaterialSkeleton/> : (
+            {isLoading ? (
+                <ViewRawMaterialSkeleton />
+            ) : (
                 <Grid container spacing={3}>
                     <Grid size={12}>
                         <CustomCard>
                             <Typography variant="h6" gutterBottom>
                                 Basic Information
                             </Typography>
-                            <Grid container spacing={2} sx={{mt: 1}}>
-                                <Grid size={{xs: 12, sm: 6}}>
+                            <Grid container spacing={2} sx={{ mt: 1 }}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Typography variant="body2" color="text.secondary">
                                         Name
                                     </Typography>
@@ -71,7 +73,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}
                                         {rawMaterial.name}
                                     </Typography>
                                 </Grid>
-                                <Grid size={{xs: 12, sm: 6}}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Typography variant="body2" color="text.secondary">
                                         Description
                                     </Typography>
@@ -79,7 +81,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}
                                         {rawMaterial.description || ""}
                                     </Typography>
                                 </Grid>
-                                <Grid size={{xs: 12, sm: 6}}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Typography variant="body2" color="text.secondary">
                                         Price per Unit
                                     </Typography>
@@ -87,7 +89,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}
                                         {formatCurrency(rawMaterial.latestUnitPricePresentation)}
                                     </Typography>
                                 </Grid>
-                                <Grid size={{xs: 12, sm: 6}}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Typography variant="body2" color="text.secondary">
                                         Modified on
                                     </Typography>
@@ -95,7 +97,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}
                                         {formatRelativeDateTime(rawMaterial.lastModified)}
                                     </Typography>
                                 </Grid>
-                                <Grid size={{xs: 12, sm: 6}}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Typography variant="body2" color="text.secondary">
                                         Date Added
                                     </Typography>
@@ -104,7 +106,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}
                                     </Typography>
                                 </Grid>
                             </Grid>
-                            <Divider sx={{my: 2}}/>
+                            <Divider sx={{ my: 2 }} />
                             <Typography variant="h6" gutterBottom>
                                 Measurement Information
                             </Typography>
@@ -113,8 +115,8 @@ const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}
                                     p: 1.5,
                                     mb: 1,
                                     borderRadius: 1,
-                                    border: '1px solid',
-                                    borderColor: 'divider'
+                                    border: "1px solid",
+                                    borderColor: "divider",
                                 }}
                             >
                                 <Typography variant="body1" fontWeight={500}>
@@ -128,7 +130,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}
                     </Grid>
                     <Grid size={12}>
                         <Stack
-                            direction={{xs: "column", sm: "row"}}
+                            direction={{ xs: "column", sm: "row" }}
                             spacing={2}
                             position={"absolute"}
                             bottom={0}
@@ -139,10 +141,10 @@ const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}
                             <CustomButton
                                 title={"Edit Raw Material"}
                                 variant="contained"
-                                startIcon={<EditOutlined/>}
+                                startIcon={<EditOutlined />}
                                 onClick={handleOpenFormModal}
                                 disabled={isLoading}
-                                sx={{width: "100%"}}
+                                sx={{ width: "100%" }}
                             />
                             {/*// TODO: Add Deactivate and Delete functionality */}
                         </Stack>
@@ -150,7 +152,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({rawMaterialId, open, onOpen, onClose}
                 </Grid>
             )}
 
-            <RawMaterialForm open={formModalOpen} onClose={handleCloseFormModal} rawMaterial={rawMaterial}/>
+            <RawMaterialForm open={formModalOpen} onClose={handleCloseFormModal} rawMaterial={rawMaterial} />
         </DataDrawer>
     );
 };

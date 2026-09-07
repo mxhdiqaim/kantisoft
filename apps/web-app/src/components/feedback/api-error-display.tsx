@@ -1,14 +1,14 @@
-import {Box, Typography, useTheme} from "@mui/material";
-import {ErrorOutline} from "@mui/icons-material";
+import { Box, Typography, useTheme } from "@mui/material";
+import { ErrorOutline } from "@mui/icons-material";
 import CustomCard from "../customs/custom-card";
-import CustomButton from "@/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.tsx";
 
 interface Props {
     statusCode?: number | string;
     message?: string;
 }
 
-const ApiErrorDisplay = ({statusCode = "Error", message = "An unexpected error occurred."}: Props) => {
+const ApiErrorDisplay = ({ statusCode = "Error", message = "An unexpected error occurred." }: Props) => {
     const theme = useTheme();
 
     return (
@@ -52,17 +52,15 @@ const ApiErrorDisplay = ({statusCode = "Error", message = "An unexpected error o
                     >
                         {statusCode}
                     </Typography>
-                    <Typography variant="h5" sx={{mt: 1, mb: 3}}>
+                    <Typography variant="h5" sx={{ mt: 1, mb: 3 }}>
                         {message}
                     </Typography>
-                    <Typography color="text.secondary">
-                        Please try again!.
-                    </Typography>
+                    <Typography color="text.secondary">Please try again!.</Typography>
                     <CustomButton
                         title={"Refresh"}
                         variant="contained"
                         onClick={() => window.location.reload()}
-                        sx={{mt: 4}}
+                        sx={{ mt: 4 }}
                     />
                 </Box>
             </CustomCard>

@@ -1,6 +1,6 @@
-import type {ReactElement, SyntheticEvent} from "react";
-import {Box, Tabs} from "@mui/material";
-import CustomTab from "@/components/ui/tab.tsx";
+import type { ReactElement, SyntheticEvent } from "react";
+import { Box, Tabs } from "@mui/material";
+import CustomTab from "@/shared/components/ui/tab.tsx";
 
 interface TabConfig {
     label: string;
@@ -14,9 +14,9 @@ interface Props {
     tabs: TabConfig[];
 }
 
-const GenericTabs = ({value, onChange, tabs}: Props) => {
+const GenericTabs = ({ value, onChange, tabs }: Props) => {
     return (
-        <Box sx={{borderBottom: 1, borderColor: "divider"}}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
             <Tabs
                 value={value}
                 onChange={onChange}

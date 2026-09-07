@@ -1,4 +1,4 @@
-import {type FC, useEffect} from 'react';
+import { type FC, useEffect } from "react";
 import {
     Box,
     Card,
@@ -16,27 +16,31 @@ import {
     TableHead,
     TableRow,
     Typography,
-    useTheme
-} from '@mui/material';
+    useTheme,
+} from "@mui/material";
 import {
     useDefineBOMMutation,
     useGetAllRawMaterialsQuery,
     useGetAllUnitOfMeasurementsQuery,
-    useGetBOMQuery
-} from '@/store/slice';
-import useNotifier from '@/hooks/useNotifier.ts';
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
-import CustomButton from "@/components/ui/button.tsx";
-import {defineBomSchema, type DefineBomSchemaType} from "@/types/bom-types.ts";
-import {Controller, useFieldArray, useForm, useWatch} from "react-hook-form";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {getApiError} from "@/helpers/get-api-error.ts";
-import {StyledTextField} from "@/components/ui";
-import {bigDrawerPaperProps} from "@/components/styles";
-import DataDrawer from "@/components/ui/data-drawer.tsx";
+    useGetBOMQuery,
+} from "@/store/slice";
+import useNotifier from "@/hooks/useNotifier.ts";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import { defineBomSchema, type DefineBomSchemaType } from "@/types/bom-types.ts";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { getApiError } from "@/helpers/get-api-error.ts";
+import { StyledTextField } from "@/shared/components/ui";
+import { bigDrawerPaperProps } from "@/components/styles";
+import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
 
-import {AddCircleOutline as AddIcon, DeleteOutline as DeleteIcon, SaveOutlined as SaveIcon} from '@mui/icons-material';
-import Icon from "@/components/ui/icon.tsx";
+import {
+    AddCircleOutline as AddIcon,
+    DeleteOutline as DeleteIcon,
+    SaveOutlined as SaveIcon,
+} from "@mui/icons-material";
+import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -46,51 +50,51 @@ interface Props {
     menuItemId: string;
 }
 
-const BillOfMaterialsDrawer: FC<Props> = ({open, onOpen, onClose, menuItemId}) => {
+const BillOfMaterialsDrawer: FC<Props> = ({ open, onOpen, onClose, menuItemId }) => {
     const theme = useTheme();
     const notify = useNotifier();
 
-    const {data: bomData, isLoading: isLoadingBom} = useGetBOMQuery(menuItemId!, {skip: !menuItemId});
+    const { data: bomData, isLoading: isLoadingBom } = useGetBOMQuery(menuItemId!, { skip: !menuItemId });
     const memoizedBom = useMemoizedArray(bomData);
 
-    const {data: rawMaterials, isLoading: isLoadingRawMaterial} = useGetAllRawMaterialsQuery();
+    const { data: rawMaterials, isLoading: isLoadingRawMaterial } = useGetAllRawMaterialsQuery();
     const memoizedMaterial = useMemoizedArray(rawMaterials);
 
-    const {data: unitData, isLoading: isUnitLoading} = useGetAllUnitOfMeasurementsQuery();
+    const { data: unitData, isLoading: isUnitLoading } = useGetAllUnitOfMeasurementsQuery();
     const memoizedMeasurements = useMemoizedArray(unitData);
 
-    const [defineBom, {isLoading: isSaving}] = useDefineBOMMutation();
+    const [defineBom, { isLoading: isSaving }] = useDefineBOMMutation();
 
     const {
         control,
         handleSubmit,
         reset,
-        formState: {errors},
+        formState: { errors },
     } = useForm({
         defaultValues: {
-            bomItems: [{rawMaterialId: '', consumptionQuantityPresentation: 0, unitOfMeasurementId: ''}]
+            bomItems: [{ rawMaterialId: "", consumptionQuantityPresentation: 0, unitOfMeasurementId: "" }],
         },
         resolver: yupResolver(defineBomSchema),
     });
 
-    const {fields, append, remove} = useFieldArray({
+    const { fields, append, remove } = useFieldArray({
         control,
         name: "bomItems",
     });
 
     const watchedBomItems = useWatch({
         control,
-        name: 'bomItems',
+        name: "bomItems",
     });
 
     useEffect(() => {
         if (memoizedBom && memoizedBom.length > 0) {
             reset({
-                bomItems: memoizedBom.map(item => ({
+                bomItems: memoizedBom.map((item) => ({
                     rawMaterialId: item.rawMaterialId,
                     consumptionQuantityPresentation: item.consumptionQuantity,
-                    unitOfMeasurementId: item.unitOfMeasurement.id
-                }))
+                    unitOfMeasurementId: item.unitOfMeasurement.id,
+                })),
             });
         }
     }, [memoizedBom, reset]);
@@ -99,7 +103,7 @@ const BillOfMaterialsDrawer: FC<Props> = ({open, onOpen, onClose, menuItemId}) =
         if (!menuItemId) return;
 
         try {
-            await defineBom({menuItemId: menuItemId!, bomItems: data.bomItems}).unwrap();
+            await defineBom({ menuItemId: menuItemId!, bomItems: data.bomItems }).unwrap();
             notify("Recipe updated successfully!", "success");
             onClose();
         } catch (error) {
@@ -119,38 +123,47 @@ const BillOfMaterialsDrawer: FC<Props> = ({open, onOpen, onClose, menuItemId}) =
             PaperProps={bigDrawerPaperProps}
         >
             {isLoadingBom ? (
-                <Box sx={{display: 'flex', justifyContent: 'center', p: 5}}>
-                    <CircularProgress/>
+                <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
+                    <CircularProgress />
                 </Box>
             ) : (
                 <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-                    <Card sx={{
-                        border: `1px solid ${theme.palette.customColors.border}`,
-                        overflowY: 'scroll',
-                        maxHeight: `calc(100vh - 150px)`,
-                    }}>
+                    <Card
+                        sx={{
+                            border: `1px solid ${theme.palette.customColors.border}`,
+                            overflowY: "scroll",
+                            maxHeight: `calc(100vh - 150px)`,
+                        }}
+                    >
                         <TableContainer>
                             <Table>
-                                <TableHead sx={{backgroundColor: theme.palette.customColors.tableHeader}}>
+                                <TableHead sx={{ backgroundColor: theme.palette.customColors.tableHeader }}>
                                     <TableRow>
-                                        <TableCell sx={{width: '40%'}}>Raw Material</TableCell>
-                                        <TableCell sx={{width: '25%'}}>Quantity</TableCell>
-                                        <TableCell sx={{width: '25%'}}>Unit of Measure</TableCell>
-                                        <TableCell sx={{width: '10%', textAlign: 'center'}}>Action</TableCell>
+                                        <TableCell sx={{ width: "40%" }}>Raw Material</TableCell>
+                                        <TableCell sx={{ width: "25%" }}>Quantity</TableCell>
+                                        <TableCell sx={{ width: "25%" }}>Unit of Measure</TableCell>
+                                        <TableCell sx={{ width: "10%", textAlign: "center" }}>Action</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {fields.map((field, index) => {
                                         const selectedRawMaterialId = watchedBomItems?.[index]?.rawMaterialId;
-                                        const selectedRawMaterial = memoizedMaterial.find(material => material.id === selectedRawMaterialId);
-                                        const materialFamily = selectedRawMaterial?.unitOfMeasurement?.unitOfMeasurementFamily?.toLowerCase();
+                                        const selectedRawMaterial = memoizedMaterial.find(
+                                            (material) => material.id === selectedRawMaterialId,
+                                        );
+                                        const materialFamily =
+                                            selectedRawMaterial?.unitOfMeasurement?.unitOfMeasurementFamily?.toLowerCase();
 
                                         const filteredUnits = materialFamily
-                                            ? memoizedMeasurements.filter(unit => unit.unitOfMeasurementFamily?.toLowerCase() === materialFamily)
+                                            ? memoizedMeasurements.filter(
+                                                  (unit) =>
+                                                      unit.unitOfMeasurementFamily?.toLowerCase() === materialFamily,
+                                              )
                                             : [];
 
                                         const selectedUnitId = watchedBomItems?.[index]?.unitOfMeasurementId;
-                                        const selectedUnitSymbol = memoizedMeasurements.find(u => u.id === selectedUnitId)?.symbol || '';
+                                        const selectedUnitSymbol =
+                                            memoizedMeasurements.find((u) => u.id === selectedUnitId)?.symbol || "";
 
                                         // const {filteredUnits, selectedUnitSymbol} = useUnitFilter({
                                         //     control,
@@ -159,12 +172,12 @@ const BillOfMaterialsDrawer: FC<Props> = ({open, onOpen, onClose, menuItemId}) =
                                         // });
 
                                         return (
-                                            <TableRow key={field.id} sx={{'&:hover': {backgroundColor: '#F9F9F9'}}}>
+                                            <TableRow key={field.id} sx={{ "&:hover": { backgroundColor: "#F9F9F9" } }}>
                                                 <TableCell>
                                                     <Controller
                                                         name={`bomItems.${index}.rawMaterialId`}
                                                         control={control}
-                                                        render={({field, fieldState}) => (
+                                                        render={({ field, fieldState }) => (
                                                             <FormControl fullWidth>
                                                                 <StyledTextField
                                                                     {...field}
@@ -181,7 +194,7 @@ const BillOfMaterialsDrawer: FC<Props> = ({open, onOpen, onClose, menuItemId}) =
                                                                                 <Icon
                                                                                     src={ArrowDownIconSvg}
                                                                                     alt={"Dropdown Arrow"}
-                                                                                    sx={{width: 15, height: 15}}
+                                                                                    sx={{ width: 15, height: 15 }}
                                                                                 />
                                                                             </InputAdornment>
                                                                         ),
@@ -191,8 +204,11 @@ const BillOfMaterialsDrawer: FC<Props> = ({open, onOpen, onClose, menuItemId}) =
                                                                         Select Material
                                                                     </MenuItem>
                                                                     {memoizedMaterial.map((material) => (
-                                                                        <MenuItem key={material.id} value={material.id}
-                                                                                  sx={{textTransform: "capitalize"}}>
+                                                                        <MenuItem
+                                                                            key={material.id}
+                                                                            value={material.id}
+                                                                            sx={{ textTransform: "capitalize" }}
+                                                                        >
                                                                             {material.name}
                                                                         </MenuItem>
                                                                     ))}
@@ -205,7 +221,7 @@ const BillOfMaterialsDrawer: FC<Props> = ({open, onOpen, onClose, menuItemId}) =
                                                     <Controller
                                                         name={`bomItems.${index}.consumptionQuantityPresentation`}
                                                         control={control}
-                                                        render={({field, fieldState}) => (
+                                                        render={({ field, fieldState }) => (
                                                             <FormControl fullWidth>
                                                                 <StyledTextField
                                                                     {...field}
@@ -217,8 +233,9 @@ const BillOfMaterialsDrawer: FC<Props> = ({open, onOpen, onClose, menuItemId}) =
                                                                     helperText={fieldState.error?.message}
                                                                     InputProps={{
                                                                         endAdornment: selectedUnitSymbol && (
-                                                                            <InputAdornment
-                                                                                position="end">{selectedUnitSymbol}</InputAdornment>
+                                                                            <InputAdornment position="end">
+                                                                                {selectedUnitSymbol}
+                                                                            </InputAdornment>
                                                                         ),
                                                                     }}
                                                                 />
@@ -230,14 +247,18 @@ const BillOfMaterialsDrawer: FC<Props> = ({open, onOpen, onClose, menuItemId}) =
                                                     <Controller
                                                         name={`bomItems.${index}.unitOfMeasurementId`}
                                                         control={control}
-                                                        render={({field, fieldState}) => (
+                                                        render={({ field, fieldState }) => (
                                                             <FormControl fullWidth>
                                                                 <StyledTextField
                                                                     {...field}
                                                                     select
                                                                     placeholder="Select Unit"
                                                                     size="small"
-                                                                    disabled={isSaving || isUnitLoading || !selectedRawMaterialId}
+                                                                    disabled={
+                                                                        isSaving ||
+                                                                        isUnitLoading ||
+                                                                        !selectedRawMaterialId
+                                                                    }
                                                                     error={!!fieldState.error}
                                                                     helperText={fieldState.error?.message}
                                                                 >
@@ -251,47 +272,49 @@ const BillOfMaterialsDrawer: FC<Props> = ({open, onOpen, onClose, menuItemId}) =
                                                         )}
                                                     />
                                                 </TableCell>
-                                                <TableCell sx={{textAlign: 'center'}}>
+                                                <TableCell sx={{ textAlign: "center" }}>
                                                     <IconButton
                                                         color="error"
                                                         onClick={() => remove(index)}
                                                         disabled={fields.length === 1 || isSaving}
                                                     >
-                                                        <DeleteIcon/>
+                                                        <DeleteIcon />
                                                     </IconButton>
                                                 </TableCell>
                                             </TableRow>
-                                        )
+                                        );
                                     })}
                                 </TableBody>
                             </Table>
                         </TableContainer>
 
-                        <Divider/>
+                        <Divider />
 
-                        <Box sx={{p: 2, display: 'flex', justifyContent: 'center'}}>
+                        <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
                             <CustomButton
                                 title={"Add Ingredient"}
                                 variant="outlined"
-                                startIcon={<AddIcon/>}
-                                onClick={() => append({
-                                    rawMaterialId: '',
-                                    consumptionQuantityPresentation: 0,
-                                    unitOfMeasurementId: ''
-                                })}
-                                sx={{borderRadius: 2}}
+                                startIcon={<AddIcon />}
+                                onClick={() =>
+                                    append({
+                                        rawMaterialId: "",
+                                        consumptionQuantityPresentation: 0,
+                                        unitOfMeasurementId: "",
+                                    })
+                                }
+                                sx={{ borderRadius: 2 }}
                                 disabled={isSaving}
                             />
                         </Box>
                     </Card>
                     {errors.bomItems?.message && (
-                        <Typography color="error" sx={{mt: 2, textAlign: 'center'}}>
+                        <Typography color="error" sx={{ mt: 2, textAlign: "center" }}>
                             {errors.bomItems.message}
                         </Typography>
                     )}
 
                     <Stack
-                        direction={{xs: "column", sm: "row"}}
+                        direction={{ xs: "column", sm: "row" }}
                         spacing={2}
                         position={"absolute"}
                         bottom={0}
@@ -302,16 +325,16 @@ const BillOfMaterialsDrawer: FC<Props> = ({open, onOpen, onClose, menuItemId}) =
                         <CustomButton
                             title={"Cancel"}
                             onClick={onClose}
-                            sx={{color: theme.palette.text.secondary, mr: 1, width: "100%"}}
+                            sx={{ color: theme.palette.text.secondary, mr: 1, width: "100%" }}
                         />
 
                         <CustomButton
                             type="submit"
                             title={"Save Recipe"}
                             variant="contained"
-                            startIcon={isSaving ? <CircularProgress size={20} color="inherit"/> : <SaveIcon/>}
+                            startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
                             disabled={isSaving}
-                            sx={{width: "100%"}}
+                            sx={{ width: "100%" }}
                         />
                     </Stack>
                 </Box>

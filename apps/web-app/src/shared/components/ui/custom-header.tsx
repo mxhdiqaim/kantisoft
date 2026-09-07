@@ -1,8 +1,8 @@
-import {type Control, Controller, type FieldValues, type Path} from "react-hook-form";
-import {Box, FormControl, InputAdornment, MenuItem, Typography} from "@mui/material";
-import {StyledTextField} from "@/components/ui/index.tsx";
+import { type Control, Controller, type FieldValues, type Path } from "react-hook-form";
+import { Box, FormControl, InputAdornment, MenuItem, Typography } from "@mui/material";
+import { StyledTextField } from "@/shared/components/ui/index.tsx";
 
-import Icon from "@/components/ui/icon.tsx";
+import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 type Props<T extends FieldValues> = {
@@ -11,11 +11,7 @@ type Props<T extends FieldValues> = {
     name: Path<T>;
 };
 
-const OverviewHeader = <T extends FieldValues>({
-                                                   title,
-                                                   control,
-                                                   name,
-                                               }: Props<T>) => (
+const OverviewHeader = <T extends FieldValues>({ title, control, name }: Props<T>) => (
     <Box
         sx={{
             display: "flex",
@@ -32,11 +28,11 @@ const OverviewHeader = <T extends FieldValues>({
                 alignItems: "right",
             }}
         >
-            <Box sx={{display: "flex", alignItems: "center", gap: 2}}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <Controller
                     name={name}
                     control={control}
-                    render={({field}) => (
+                    render={({ field }) => (
                         <FormControl>
                             <StyledTextField
                                 {...field}
@@ -50,7 +46,7 @@ const OverviewHeader = <T extends FieldValues>({
                                             <Icon
                                                 src={ArrowDownIconSvg}
                                                 alt={"Dropdown Arrow"}
-                                                sx={{width: 15, height: 15}}
+                                                sx={{ width: 15, height: 15 }}
                                             />
                                         </InputAdornment>
                                     ),

@@ -1,24 +1,24 @@
-import {useMemo} from "react";
-import {Box, Grid, Typography} from "@mui/material";
-import {useGetAllUnitOfMeasurementsQuery} from "@/store/slice";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
-import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
-import {useSearch} from "@/use-search.ts";
-import DataGridTable from "@/components/ui/data-grid-table";
-import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
-import type {GridColDef} from "@mui/x-data-grid";
-import {getApiError} from "@/helpers/get-api-error.ts";
+import { useMemo } from "react";
+import { Box, Grid, Typography } from "@mui/material";
+import { useGetAllUnitOfMeasurementsQuery } from "@/store/slice";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import { useSearch } from "@/use-search.ts";
+import DataGridTable from "@/shared/components/ui/data-grid-table";
+import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
+import type { GridColDef } from "@mui/x-data-grid";
+import { getApiError } from "@/helpers/get-api-error.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import useNotifier from "@/hooks/useNotifier.ts";
-import {useTranslation} from "react-i18next";
+import { useTranslation } from "react-i18next";
 
 const UnitOfMeasurements = () => {
-    const {t} = useTranslation();
+    const { t } = useTranslation();
     const notify = useNotifier();
-    const {data, isLoading, isFetching, isError, error} = useGetAllUnitOfMeasurementsQuery();
+    const { data, isLoading, isFetching, isError, error } = useGetAllUnitOfMeasurementsQuery();
     const memoizedData = useMemoizedArray(data);
 
-    const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
+    const { searchControl, searchSubmit, handleSearch, filteredData } = useSearch({
         initialData: memoizedData,
         searchKeys: ["name", "symbol", "unitOfMeasurementFamily", "isBaseUnit", "conversionFactorToBase"],
     });
@@ -50,7 +50,9 @@ const UnitOfMeasurements = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography variant="body2" textTransform={"capitalize"}>{params.value}</Typography>
+                        <Typography variant="body2" textTransform={"capitalize"}>
+                            {params.value}
+                        </Typography>
                     </TableStyledBox>
                 ),
             },
@@ -89,9 +91,7 @@ const UnitOfMeasurements = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography variant="body2">
-                            {params.value}
-                        </Typography>
+                        <Typography variant="body2">{params.value}</Typography>
                     </TableStyledBox>
                 ),
             },
@@ -104,12 +104,10 @@ const UnitOfMeasurements = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography variant="body2">
-                            {params.value}
-                        </Typography>
+                        <Typography variant="body2">{params.value}</Typography>
                     </TableStyledBox>
                 ),
-            }
+            },
         ],
         [],
     );
@@ -117,7 +115,7 @@ const UnitOfMeasurements = () => {
     if (isError) {
         notify(`Failed to load ${t("measurement")}.`, "error");
         const apiError = getApiError(error, `Failed to load ${t("measurement")}.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
     }
 
     return (
@@ -130,7 +128,7 @@ const UnitOfMeasurements = () => {
             />
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching} />
                 </Grid>
             </Grid>
         </Box>

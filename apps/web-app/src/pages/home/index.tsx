@@ -1,10 +1,10 @@
-import AppSkeleton from "@/components/spinners/app-skeleton-loading";
-import {appRoutes} from "@/routes";
-import {useAppSelector} from "@/store";
-import {selectCurrentUser} from "@/store/slice/auth-slice";
-import {useEffect} from "react";
-import {useNavigate} from "react-router-dom";
-import {UserRoleEnum} from "@/types/user-types.ts";
+import AppSkeleton from "@/shared/components/spinners/app-skeleton-loading";
+import { appRoutes } from "@/routes";
+import { useAppSelector } from "@/store";
+import { selectCurrentUser } from "@/store/slice/auth-slice";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { UserRoleEnum } from "@/types/user-types.ts";
 
 const HomeScreen = () => {
     const navigate = useNavigate();
@@ -14,7 +14,7 @@ const HomeScreen = () => {
         if (currentUser) {
             // Specifically, handle the 'guest' role to prevent redirection to a data-heavy dashboard.
             if (currentUser.role === UserRoleEnum.GUEST) {
-                navigate("/pos-sale/pos", {replace: true});
+                navigate("/pos-sale/pos", { replace: true });
                 return;
             }
 
@@ -29,20 +29,20 @@ const HomeScreen = () => {
 
             if (destinationRoute) {
                 // If a suitable page is found, redirect the user there.
-                navigate(destinationRoute.to, {replace: true});
+                navigate(destinationRoute.to, { replace: true });
             } else {
                 // As a fallback, if no specific page is found for the user's role,
                 // send them to the login page.
-                navigate("/admin/profile", {replace: true});
+                navigate("/admin/profile", { replace: true });
             }
         } else {
             // If there's no authenticated user, they must log in.
-            navigate("/signin", {replace: true});
+            navigate("/signin", { replace: true });
         }
     }, [currentUser, navigate]);
 
     // Render a loading spinner to provide feedback while the redirection logic runs.
-    return <AppSkeleton/>;
+    return <AppSkeleton />;
 };
 
 export default HomeScreen;

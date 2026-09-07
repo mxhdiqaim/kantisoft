@@ -1,6 +1,6 @@
-import {Stack, Typography} from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import CustomButton from "@/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.tsx";
 
 interface Props {
     open: boolean;
@@ -11,7 +11,7 @@ interface Props {
     message?: string;
 }
 
-const DeleteConfirmationModal = ({open, onClose, onConfirm, isLoading, title, message}: Props) => {
+const DeleteConfirmationModal = ({ open, onClose, onConfirm, isLoading, title, message }: Props) => {
     return (
         <CustomModal
             open={open}
@@ -21,34 +21,29 @@ const DeleteConfirmationModal = ({open, onClose, onConfirm, isLoading, title, me
                 flexDirection: "column",
                 alignItems: "center",
                 textAlign: "center",
-                maxWidth: {xs: "90vw", sm: 500},
+                maxWidth: { xs: "90vw", sm: 500 },
             }}
         >
             <Typography variant="h6" fontWeight="600">
                 {title}
             </Typography>
-            
+
             {message && (
-                <Typography sx={{mt: 1, fontSize: ".8rem"}} variant={"body1"}>
+                <Typography sx={{ mt: 1, fontSize: ".8rem" }} variant={"body1"}>
                     {message}
                 </Typography>
             )}
 
-            <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{mt: 3}}>
+            <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 3 }}>
                 <CustomButton
                     title="Yes, Delete"
                     variant="contained"
                     onClick={onConfirm}
                     disabled={isLoading}
                     // color="error"
-                    sx={{width: "fit-content"}}
+                    sx={{ width: "fit-content" }}
                 />
-                <CustomButton
-                    title="Cancel"
-                    onClick={onClose}
-                    disabled={isLoading}
-                    sx={{width: "fit-content"}}
-                />
+                <CustomButton title="Cancel" onClick={onClose} disabled={isLoading} sx={{ width: "fit-content" }} />
             </Stack>
         </CustomModal>
     );

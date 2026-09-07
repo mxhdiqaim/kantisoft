@@ -1,22 +1,22 @@
-import {type FC, useEffect, useMemo} from 'react';
-import {Controller, useForm, useWatch} from 'react-hook-form';
-import {Box, FormControl, Grid, InputAdornment, MenuItem} from '@mui/material';
+import { type FC, useEffect, useMemo } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { Box, FormControl, Grid, InputAdornment, MenuItem } from "@mui/material";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {createWastageScheme, type CreateWastageType} from "@/types/production-types.ts";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { createWastageScheme, type CreateWastageType } from "@/types/production-types.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
-import {getApiError} from "@/helpers/get-api-error.ts";
+import { getApiError } from "@/helpers/get-api-error.ts";
 import {
     useGetAllRawMaterialInventoryQuery,
     useGetAllUnitOfMeasurementsQuery,
-    useRecordWastageMutation
+    useRecordWastageMutation,
 } from "@/store/slice";
-import {StyledTextField} from "@/components/ui";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
-import CustomButton from "@/components/ui/button.tsx";
-import {useUnitFilter} from "@/hooks/use-unit-filter.ts";
+import { StyledTextField } from "@/shared/components/ui";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import { useUnitFilter } from "@/hooks/use-unit-filter.ts";
 
-import Icon from "@/components/ui/icon.tsx";
+import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -24,41 +24,42 @@ interface Props {
     onClose: () => void;
 }
 
-const WastageFormModal: FC<Props> = ({open, onClose}) => {
+const WastageFormModal: FC<Props> = ({ open, onClose }) => {
     const notify = useNotifier();
 
     // Fetch Data
-    const {data: rawMaterialInventory, isLoading: fetchingRawMaterialInventory} = useGetAllRawMaterialInventoryQuery();
+    const { data: rawMaterialInventory, isLoading: fetchingRawMaterialInventory } =
+        useGetAllRawMaterialInventoryQuery();
     const memoizedRawMaterialInventory = useMemoizedArray(rawMaterialInventory);
 
-    const {data: unitData, isLoading: isMeasurementLoading} = useGetAllUnitOfMeasurementsQuery();
+    const { data: unitData, isLoading: isMeasurementLoading } = useGetAllUnitOfMeasurementsQuery();
     const memoizedMeasurement = useMemoizedArray(unitData);
 
-    const [recordWastage, {isLoading: isSubmitting}] = useRecordWastageMutation();
+    const [recordWastage, { isLoading: isSubmitting }] = useRecordWastageMutation();
 
     // Initialise Form (must be before useUnitFilter)
-    const {control, handleSubmit, reset, setValue} = useForm({
+    const { control, handleSubmit, reset, setValue } = useForm({
         defaultValues: {
-            rawMaterialId: '',
+            rawMaterialId: "",
             quantityPresentation: 0,
-            unitOfMeasurementId: '',
-            reason: ''
+            unitOfMeasurementId: "",
+            reason: "",
         },
         resolver: yupResolver(createWastageScheme),
     });
 
     // Watch for the selected material ID
-    const selectedRawMaterialId = useWatch({control, name: "rawMaterialId"});
+    const selectedRawMaterialId = useWatch({ control, name: "rawMaterialId" });
 
     // Determine the family based on the selected material
     const selectedMaterialFamily = useMemo(() => {
         if (!memoizedRawMaterialInventory || !selectedRawMaterialId) return undefined;
-        const selectedMaterial = memoizedRawMaterialInventory.find(rm => rm.id === selectedRawMaterialId);
+        const selectedMaterial = memoizedRawMaterialInventory.find((rm) => rm.id === selectedRawMaterialId);
         return selectedMaterial?.unitOfMeasurement?.unitOfMeasurementFamily;
     }, [memoizedRawMaterialInventory, selectedRawMaterialId]);
 
     // Initialise Unit Filter Hook
-    const {filteredUnits, selectedUnitSymbol} = useUnitFilter({
+    const { filteredUnits, selectedUnitSymbol } = useUnitFilter({
         control,
         allUnits: memoizedMeasurement,
         selectedMaterialFamily: selectedMaterialFamily,
@@ -96,14 +97,14 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
             title="Record Material Wastage"
             description="Deduct spoiled, spilled, or burnt materials from stock."
         >
-            <Box component={"form"} noValidate autoComplete="off" onSubmit={handleSubmit(onSubmit)} sx={{mt: 2}}>
+            <Box component={"form"} noValidate autoComplete="off" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 2 }}>
                 <Grid container spacing={3}>
                     {/* Material Selection */}
                     <Grid size={12}>
                         <Controller
                             name="rawMaterialId"
                             control={control}
-                            render={({field, fieldState}) => (
+                            render={({ field, fieldState }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -117,7 +118,7 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
                                                     <Icon
                                                         src={ArrowDownIconSvg}
                                                         alt={"Dropdown Arrow"}
-                                                        sx={{width: 15, height: 15}}
+                                                        sx={{ width: 15, height: 15 }}
                                                     />
                                                 </InputAdornment>
                                             ),
@@ -132,10 +133,10 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
                                             <MenuItem
                                                 key={rawMaterialInventory.id}
                                                 value={rawMaterialInventory.id}
-                                                sx={{textTransform: "capitalize"}}
+                                                sx={{ textTransform: "capitalize" }}
                                             >
-                                                {rawMaterialInventory.rawMaterialName} (In
-                                                Stock: {rawMaterialInventory.quantity})
+                                                {rawMaterialInventory.rawMaterialName} (In Stock:{" "}
+                                                {rawMaterialInventory.quantity})
                                             </MenuItem>
                                         ))}
                                     </StyledTextField>
@@ -145,11 +146,11 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
                     </Grid>
 
                     {/* Quantity */}
-                    <Grid size={{xs: 12, md: 6}}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <Controller
                             name="quantityPresentation"
                             control={control}
-                            render={({field, fieldState}) => (
+                            render={({ field, fieldState }) => (
                                 <StyledTextField
                                     {...field}
                                     fullWidth
@@ -167,11 +168,11 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
                         />
                     </Grid>
 
-                    <Grid size={{xs: 12, md: 6}}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <Controller
                             name="unitOfMeasurementId"
                             control={control}
-                            render={({field, fieldState}) => (
+                            render={({ field, fieldState }) => (
                                 <StyledTextField
                                     {...field}
                                     select
@@ -185,7 +186,7 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
                                                 <Icon
                                                     src={ArrowDownIconSvg}
                                                     alt={"Dropdown Arrow"}
-                                                    sx={{width: 15, height: 15}}
+                                                    sx={{ width: 15, height: 15 }}
                                                 />
                                             </InputAdornment>
                                         ),
@@ -197,8 +198,11 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
                                         Select Measurement Unit
                                     </MenuItem>
                                     {filteredUnits.map((measurement) => (
-                                        <MenuItem key={measurement.id} value={measurement.id}
-                                                  sx={{textTransform: "capitalize"}}>
+                                        <MenuItem
+                                            key={measurement.id}
+                                            value={measurement.id}
+                                            sx={{ textTransform: "capitalize" }}
+                                        >
                                             {measurement.name}
                                         </MenuItem>
                                     ))}
@@ -210,7 +214,7 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
                         <Controller
                             name="reason"
                             control={control}
-                            render={({field, fieldState}) => (
+                            render={({ field, fieldState }) => (
                                 <StyledTextField
                                     {...field}
                                     fullWidth
@@ -224,15 +228,14 @@ const WastageFormModal: FC<Props> = ({open, onClose}) => {
 
                     {/* Action Buttons */}
                     <Grid size={12}>
-                        <Box sx={{display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2}}>
-                            <CustomButton title={"Cancel"} onClick={onClose} variant="outlined" color="inherit"/>
+                        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
+                            <CustomButton title={"Cancel"} onClick={onClose} variant="outlined" color="inherit" />
                             <CustomButton
                                 title={isSubmitting ? "Processing..." : "Confirm Wastage"}
                                 type="submit"
                                 variant="contained"
                                 disabled={isSubmitting}
                             />
-
                         </Box>
                     </Grid>
                 </Grid>

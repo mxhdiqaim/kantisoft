@@ -1,28 +1,28 @@
 import useNotifier from "@/hooks/useNotifier.ts";
-import {useAppSelector} from "@/store";
-import {selectCurrentUser} from "@/store/slice/auth-slice.ts";
-import type {OrderType} from "@/types/order-types.ts";
-import {UserRoleEnum} from "@/types/user-types.ts";
-import {formatCurrency} from "@/utils";
-import {relativeTime} from "@/utils/get-relative-time.ts";
-import {EditOutlined, MoreVert, PrintOutlined, VisibilityOutlined,} from "@mui/icons-material";
-import {Box, Grid, Tooltip, Typography, useTheme} from "@mui/material";
-import {type GridColDef} from "@mui/x-data-grid";
-import {type MouseEvent, useEffect, useMemo, useRef, useState} from "react";
-import {useNavigate} from "react-router-dom";
-import {useReactToPrint} from "react-to-print";
-import TableStyledBox from "../ui/data-grid-table/table-styled-box.tsx";
+import { useAppSelector } from "@/store";
+import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
+import type { OrderType } from "@/types/order-types.ts";
+import { UserRoleEnum } from "@/types/user-types.ts";
+import { formatCurrency } from "@/utils";
+import { relativeTime } from "@/utils/get-relative-time.ts";
+import { EditOutlined, MoreVert, PrintOutlined, VisibilityOutlined } from "@mui/icons-material";
+import { Box, Grid, Tooltip, Typography, useTheme } from "@mui/material";
+import { type GridColDef } from "@mui/x-data-grid";
+import { type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useReactToPrint } from "react-to-print";
+import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
 import Receipt from "./receipt.tsx";
-import {useGetAllStoresQuery} from "@/store/slice";
-import {useDispatch, useSelector} from "react-redux";
-import {selectActiveStore, setActiveStore} from "@/store/slice/store-slice.ts";
-import DataGridTable from "@/components/ui/data-grid-table";
-import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
-import {useSearch} from "@/use-search.ts";
-import {exportToCsv, exportToXlsx, getExportFormattedData} from "@/utils/export-data-utils.ts";
-import CustomButton from "@/components/ui/button.tsx";
-import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+import { useGetAllStoresQuery } from "@/store/slice";
+import { useDispatch, useSelector } from "react-redux";
+import { selectActiveStore, setActiveStore } from "@/store/slice/store-slice.ts";
+import DataGridTable from "@/shared/components/ui/data-grid-table";
+import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import { useSearch } from "@/use-search.ts";
+import { exportToCsv, exportToXlsx, getExportFormattedData } from "@/utils/export-data-utils.ts";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
 export interface Props {
     orders: OrderType[];
@@ -30,7 +30,7 @@ export interface Props {
     period: string;
 }
 
-const SalesHistoryTable = ({orders, loading: isLoadingOrders = true, period}: Props) => {
+const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: Props) => {
     const theme = useTheme();
     const navigate = useNavigate();
     const notify = useNotifier();
@@ -41,7 +41,7 @@ const SalesHistoryTable = ({orders, loading: isLoadingOrders = true, period}: Pr
 
     const memoizedOrders = useMemoizedArray(orders);
 
-    const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
+    const { searchControl, searchSubmit, handleSearch, filteredData } = useSearch({
         initialData: memoizedOrders,
         searchKeys: ["reference", "seller.firstName", "seller.lastName", "paymentMethod", "orderStatus"],
     });
@@ -49,7 +49,7 @@ const SalesHistoryTable = ({orders, loading: isLoadingOrders = true, period}: Pr
     const [orderToPrint, setOrderToPrint] = useState<OrderType | null>(null);
     const componentRef = useRef<HTMLDivElement>(null);
 
-    const {data: stores, isLoading: isLoadingStores} = useGetAllStoresQuery();
+    const { data: stores, isLoading: isLoadingStores } = useGetAllStoresQuery();
     const activeStore = useSelector(selectActiveStore);
 
     const loading = isLoadingOrders || isLoadingStores;
@@ -95,8 +95,8 @@ const SalesHistoryTable = ({orders, loading: isLoadingOrders = true, period}: Pr
     const prepareExportData = () => {
         return getExportFormattedData(
             filteredData, // Your data source
-            columns,      // Your column definitions
-            salesHistoryFieldFormatters // Your specific formatters
+            columns, // Your column definitions
+            salesHistoryFieldFormatters, // Your specific formatters
         );
     };
 
@@ -195,11 +195,9 @@ const SalesHistoryTable = ({orders, loading: isLoadingOrders = true, period}: Pr
                 // cellClassName: "capitalize-cell",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography>
-                            {params.value.charAt(0).toUpperCase() + params.value.slice(1)}
-                        </Typography>
+                        <Typography>{params.value.charAt(0).toUpperCase() + params.value.slice(1)}</Typography>
                     </TableStyledBox>
-                )
+                ),
             },
             {
                 flex: 1,
@@ -226,8 +224,8 @@ const SalesHistoryTable = ({orders, loading: isLoadingOrders = true, period}: Pr
                                     params.value === "completed"
                                         ? theme.palette.success.light
                                         : params.value === "pending"
-                                            ? theme.palette.warning.light
-                                            : theme.palette.error.light,
+                                          ? theme.palette.warning.light
+                                          : theme.palette.error.light,
                             }}
                         >
                             {params.value}
@@ -243,7 +241,6 @@ const SalesHistoryTable = ({orders, loading: isLoadingOrders = true, period}: Pr
                 align: "center",
                 headerAlign: "center",
                 renderCell: (params) => {
-
                     const handleView = () => {
                         navigate(`/pos-sale/history/${params.row.id}/view`);
                         handleMenuClose();
@@ -277,22 +274,22 @@ const SalesHistoryTable = ({orders, loading: isLoadingOrders = true, period}: Pr
                             onClick={(e) => handleMenuClick(e, params.row.id)}
                             startIcon={
                                 <Tooltip title="More Actions" placement={"top"}>
-                                    <MoreVert/>
+                                    <MoreVert />
                                 </Tooltip>
                             }
                         >
                             <TableStyledMenuItem onClick={handleView}>
-                                <VisibilityOutlined sx={{mr: 1}}/>
+                                <VisibilityOutlined sx={{ mr: 1 }} />
                                 View
                             </TableStyledMenuItem>
                             {canEdit && (
                                 <TableStyledMenuItem onClick={handleEdit}>
-                                    <EditOutlined sx={{mr: 1}}/>
+                                    <EditOutlined sx={{ mr: 1 }} />
                                     Edit
                                 </TableStyledMenuItem>
                             )}
                             <TableStyledMenuItem onClick={handlePrintReceipt}>
-                                <PrintOutlined sx={{mr: 1}}/>
+                                <PrintOutlined sx={{ mr: 1 }} />
                                 Print
                             </TableStyledMenuItem>
                         </CustomButton>
@@ -317,10 +314,10 @@ const SalesHistoryTable = ({orders, loading: isLoadingOrders = true, period}: Pr
 
     return (
         <Box>
-            <div style={{display: "none"}}>
+            <div style={{ display: "none" }}>
                 {orderToPrint && (
                     <div ref={componentRef}>
-                        <Receipt order={orderToPrint} storeData={activeStore}/>
+                        <Receipt order={orderToPrint} storeData={activeStore} />
                     </div>
                 )}
             </div>
@@ -333,9 +330,9 @@ const SalesHistoryTable = ({orders, loading: isLoadingOrders = true, period}: Pr
                 onExportXlsx={handleExportXlsx}
                 placeholder={"Search by Reference, Seller, Order Status..."}
             />
-            <Grid container spacing={2} sx={{mt: 2}}>
+            <Grid container spacing={2} sx={{ mt: 2 }}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={loading}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={loading} />
                 </Grid>
             </Grid>
         </Box>

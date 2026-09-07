@@ -1,6 +1,6 @@
-import {Children, cloneElement, isValidElement, type MouseEvent, type ReactNode, useState} from "react";
-import {Box, Button, type ButtonProps, Menu, type SxProps, type Theme, useTheme} from "@mui/material";
-import {Link} from "react-router-dom";
+import { Children, cloneElement, isValidElement, type MouseEvent, type ReactNode, useState } from "react";
+import { Box, Button, type ButtonProps, Menu, type SxProps, type Theme, useTheme } from "@mui/material";
+import { Link } from "react-router-dom";
 
 export interface Props extends ButtonProps {
     startIcon?: ReactNode;
@@ -12,18 +12,17 @@ export interface Props extends ButtonProps {
 }
 
 const CustomButton = ({
-                          startIcon,
-                          endIcon,
-                          title,
-                          sx,
-                          titleStyle,
-                          variant = "outlined",
-                          children,
-                          onClick,
-                          to,
-                          ...rest
-                      }: Props) => {
-
+    startIcon,
+    endIcon,
+    title,
+    sx,
+    titleStyle,
+    variant = "outlined",
+    children,
+    onClick,
+    to,
+    ...rest
+}: Props) => {
     const theme = useTheme();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -46,12 +45,12 @@ const CustomButton = ({
     const buttonStyle: SxProps<Theme> = {
         // borderRadius: theme.borderRadius.small,
         height: 40,
-        width: {xs: 100, md: "auto"},
+        width: { xs: 100, md: "auto" },
         ...sx,
     };
 
     const renderButton = (props: ButtonProps) => {
-        const linkProps = to ? {component: Link, to} : {};
+        const linkProps = to ? { component: Link, to } : {};
 
         // Icon-only buttons
         if ((startIcon && !title && !endIcon) || (endIcon && !title && !startIcon)) {
@@ -78,11 +77,11 @@ const CustomButton = ({
                 variant={variant}
                 startIcon={startIcon}
                 endIcon={endIcon}
-                sx={{...buttonStyle}}
+                sx={{ ...buttonStyle }}
                 {...props}
                 {...linkProps}
             >
-                <Box component={"span"} sx={{...titleStyle}}>
+                <Box component={"span"} sx={{ ...titleStyle }}>
                     {title}
                 </Box>
             </Button>
@@ -90,12 +89,12 @@ const CustomButton = ({
     };
 
     if (!children) {
-        return renderButton({onClick, ...rest});
+        return renderButton({ onClick, ...rest });
     }
 
     return (
         <>
-            {renderButton({onClick: handleMenuClick, ...rest})}
+            {renderButton({ onClick: handleMenuClick, ...rest })}
             <Menu
                 anchorEl={anchorEl}
                 open={open}

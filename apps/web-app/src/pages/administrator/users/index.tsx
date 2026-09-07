@@ -1,64 +1,64 @@
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import {getApiError} from "@/helpers/get-api-error.ts";
+import { getApiError } from "@/helpers/get-api-error.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
-import {useAppSelector} from "@/store";
-import {useChangeUserStoreMutation, useGetAllStoresQuery, useGetAllUsersQuery} from "@/store/slice";
-import {selectCurrentUser} from "@/store/slice/auth-slice.ts";
-import {roleHierarchy, UserRoleEnum, UserStatusEnum, type UserType} from "@/types/user-types.ts";
-import {Avatar, Box, Chip, Grid, Tooltip, Typography, useTheme,} from "@mui/material";
-import type {GridColDef, GridRenderCellParams} from "@mui/x-data-grid";
-import {type MouseEvent, useCallback, useMemo, useState} from "react";
-import {useNavigate} from "react-router-dom";
-import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
-import DataGridTable from "@/components/ui/data-grid-table";
+import { useAppSelector } from "@/store";
+import { useChangeUserStoreMutation, useGetAllStoresQuery, useGetAllUsersQuery } from "@/store/slice";
+import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
+import { roleHierarchy, UserRoleEnum, UserStatusEnum, type UserType } from "@/types/user-types.ts";
+import { Avatar, Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/material";
+import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+import { type MouseEvent, useCallback, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
+import DataGridTable from "@/shared/components/ui/data-grid-table";
 import ChangeStoreModal from "@/components/users/change-store-modal.tsx";
-import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
-import {useSearch} from "@/use-search.ts";
-import CustomButton from "@/components/ui/button.tsx";
-import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
-import {getUserStatusChipColor} from "@/components/ui";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
-import {useTranslation} from "react-i18next";
+import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import { useSearch } from "@/use-search.ts";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import { getUserStatusChipColor } from "@/shared/components/ui";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import { useTranslation } from "react-i18next";
 import UserCreateForm from "@/components/users/user-create-form.tsx";
 import UserUpdateForm from "@/components/users/user-update-form.tsx";
 import ViewUserDrawer from "@/components/administrator/user/view-user-drawer.tsx";
 
-import {AddOutlined, EditOutlined, MoreVert, StorefrontOutlined, VisibilityOutlined} from "@mui/icons-material";
+import { AddOutlined, EditOutlined, MoreVert, StorefrontOutlined, VisibilityOutlined } from "@mui/icons-material";
 
 const UsersPage = () => {
     const notify = useNotifier();
     const navigate = useNavigate();
     const theme = useTheme();
-    const {t} = useTranslation();
+    const { t } = useTranslation();
 
     const [openCreateUserModal, setOpenCreateUserModal] = useState(false);
     const [openUpdateUserModal, setOpenUpdateUserModal] = useState(false);
     const [isChangeStoreDialogOpen, setChangeStoreDialogOpen] = useState(false);
 
     const currentUser = useAppSelector(selectCurrentUser);
-    const {data: usersData, isLoading, isError, error} = useGetAllUsersQuery();
+    const { data: usersData, isLoading, isError, error } = useGetAllUsersQuery();
 
-    const {data: storesData} = useGetAllStoresQuery();
+    const { data: storesData } = useGetAllStoresQuery();
     const memoizedStoresData = useMemoizedArray(storesData);
 
-    const [changeUserStore, {isLoading: isChangingStore}] = useChangeUserStoreMutation();
+    const [changeUserStore, { isLoading: isChangingStore }] = useChangeUserStoreMutation();
 
     const flattenedUsers = useMemo(() => {
         if (!usersData) return [];
 
-        return usersData.map(user => ({
+        return usersData.map((user) => ({
             ...user,
             storeName: user.store?.name,
             storeLocation: user.store?.location,
         }));
     }, [usersData]);
 
-    const memoizedUsers: UserType[] = useMemoizedArray(flattenedUsers)
+    const memoizedUsers: UserType[] = useMemoizedArray(flattenedUsers);
 
     const [selectedRow, setSelectedRow] = useState<UserType | null>(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
 
-    const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
+    const { searchControl, searchSubmit, handleSearch, filteredData } = useSearch({
         initialData: memoizedUsers,
         searchKeys: ["firstName", "lastName", "email", "storeName"],
     });
@@ -101,7 +101,7 @@ const UsersPage = () => {
 
     const handleChangeStore = async (userId: string, newStoreId: string) => {
         try {
-            await changeUserStore({id: userId, newStoreId}).unwrap();
+            await changeUserStore({ id: userId, newStoreId }).unwrap();
             notify("User store changed successfully", "success");
             handleCloseChangeStoreDialog();
         } catch (err) {
@@ -172,7 +172,9 @@ const UsersPage = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography variant="body2" sx={{textTransform: "capitalize"}}>{params.value}</Typography>
+                        <Typography variant="body2" sx={{ textTransform: "capitalize" }}>
+                            {params.value}
+                        </Typography>
                     </TableStyledBox>
                 ),
             },
@@ -189,7 +191,7 @@ const UsersPage = () => {
                             label={params.value}
                             color={getUserStatusChipColor(params.value)}
                             size="medium"
-                            sx={{textTransform: "capitalize", fontWeight: "bold"}}
+                            sx={{ textTransform: "capitalize", fontWeight: "bold" }}
                         />
                     </TableStyledBox>
                 ),
@@ -258,7 +260,9 @@ const UsersPage = () => {
                     };
 
                     const isEditDisabled =
-                        params.row.status === UserStatusEnum.DELETED || params.row.status === UserStatusEnum.INACTIVE || !canEdit();
+                        params.row.status === UserStatusEnum.DELETED ||
+                        params.row.status === UserStatusEnum.INACTIVE ||
+                        !canEdit();
 
                     const isViewDisabled = !canEdit();
 
@@ -266,7 +270,6 @@ const UsersPage = () => {
                         currentUser?.role === UserRoleEnum.MANAGER &&
                         params.row.id !== currentUser.id &&
                         [UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST].includes(params.row.role);
-
 
                     return (
                         <CustomButton
@@ -278,24 +281,21 @@ const UsersPage = () => {
                             onClick={(e) => handleMenuClick(e, params.row)}
                             startIcon={
                                 <Tooltip title="More Actions" placement={"top"}>
-                                    <MoreVert/>
+                                    <MoreVert />
                                 </Tooltip>
                             }
                         >
                             <TableStyledMenuItem onClick={handleDrawerOpen} disabled={isViewDisabled}>
-                                <VisibilityOutlined sx={{mr: 1}}/>
+                                <VisibilityOutlined sx={{ mr: 1 }} />
                                 View
                             </TableStyledMenuItem>
                             <TableStyledMenuItem onClick={handleOpenUpdateUserModal} disabled={isEditDisabled}>
-                                <EditOutlined sx={{mr: 1}}/>
+                                <EditOutlined sx={{ mr: 1 }} />
                                 Edit
                             </TableStyledMenuItem>
                             {currentUser?.role === UserRoleEnum.MANAGER && (
-                                <TableStyledMenuItem
-                                    onClick={handleOpenChangeStoreDialog}
-                                    disabled={!canChangeStore}
-                                >
-                                    <StorefrontOutlined sx={{mr: 1}}/>
+                                <TableStyledMenuItem onClick={handleOpenChangeStoreDialog} disabled={!canChangeStore}>
+                                    <StorefrontOutlined sx={{ mr: 1 }} />
                                     Change Store
                                 </TableStyledMenuItem>
                             )}
@@ -310,21 +310,22 @@ const UsersPage = () => {
     if (isError) {
         const apiError = getApiError(error, "Failed to load users. Please try again later.");
         notify(apiError.message, "error");
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
     }
 
     return (
         <Box>
-            <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                 <Typography variant="h4">Users</Typography>
-                {currentUser && (currentUser.role === UserRoleEnum.MANAGER || currentUser.role === UserRoleEnum.ADMIN) && (
-                    <CustomButton
-                        title={"New User"}
-                        variant="contained"
-                        startIcon={<AddOutlined/>}
-                        onClick={handleOpenCreateUserModal}
-                    />
-                )}
+                {currentUser &&
+                    (currentUser.role === UserRoleEnum.MANAGER || currentUser.role === UserRoleEnum.ADMIN) && (
+                        <CustomButton
+                            title={"New User"}
+                            variant="contained"
+                            startIcon={<AddOutlined />}
+                            onClick={handleOpenCreateUserModal}
+                        />
+                    )}
             </Box>
             <TableSearchActions
                 searchControl={searchControl}
@@ -334,7 +335,7 @@ const UsersPage = () => {
             />
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading} />
                 </Grid>
             </Grid>
             <ChangeStoreModal
@@ -346,7 +347,7 @@ const UsersPage = () => {
                 isLoading={isChangingStore}
             />
 
-            <UserCreateForm open={openCreateUserModal} onClose={handleCloseCreateUserModal}/>
+            <UserCreateForm open={openCreateUserModal} onClose={handleCloseCreateUserModal} />
             {selectedRow && (
                 <UserUpdateForm
                     open={openUpdateUserModal}

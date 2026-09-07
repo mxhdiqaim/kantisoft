@@ -1,8 +1,8 @@
-import type {CartItem} from "@/types/cart-item-type";
-import {formatCurrency} from "@/utils";
-import {Add, Delete, Remove} from "@mui/icons-material";
-import {Box, Divider, IconButton, List, ListItem, ListItemText, Typography, useTheme} from "@mui/material";
-import CustomButton from "@/components/ui/button.tsx";
+import type { CartItem } from "@/types/cart-item-type";
+import { formatCurrency } from "@/utils";
+import { Add, Delete, Remove } from "@mui/icons-material";
+import { Box, Divider, IconButton, List, ListItem, ListItemText, Typography, useTheme } from "@mui/material";
+import CustomButton from "@/shared/components/ui/button.tsx";
 
 interface Props {
     cartItems: CartItem[];
@@ -11,7 +11,7 @@ interface Props {
     onOpenPaymentDialog: () => void;
 }
 
-const OrderCart = ({cartItems, onUpdateQuantity, onRemoveItem, onOpenPaymentDialog}: Props) => {
+const OrderCart = ({ cartItems, onUpdateQuantity, onRemoveItem, onOpenPaymentDialog }: Props) => {
     const theme = useTheme();
     const total = cartItems.reduce((acc, item) => acc + Number(item.price) * item.quantity, 0);
 
@@ -28,13 +28,13 @@ const OrderCart = ({cartItems, onUpdateQuantity, onRemoveItem, onOpenPaymentDial
                 Order Cart
             </Typography>
             {cartItems.length === 0 ? (
-                <Typography sx={{my: 2}}>Cart is empty</Typography>
+                <Typography sx={{ my: 2 }}>Cart is empty</Typography>
             ) : (
                 <>
                     <List>
                         {cartItems.map((item) => (
                             <Box component={"span"} key={item.id}>
-                                <Divider/>
+                                <Divider />
                                 <ListItem
                                     key={item.id}
                                     secondaryAction={
@@ -43,7 +43,7 @@ const OrderCart = ({cartItems, onUpdateQuantity, onRemoveItem, onOpenPaymentDial
                                             aria-label="delete"
                                             onClick={() => onRemoveItem(item.id)}
                                         >
-                                            <Delete/>
+                                            <Delete />
                                         </IconButton>
                                     }
                                 >
@@ -67,22 +67,24 @@ const OrderCart = ({cartItems, onUpdateQuantity, onRemoveItem, onOpenPaymentDial
                                     />
                                     {item.quantity > 1 && (
                                         <IconButton onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}>
-                                            <Remove/>
+                                            <Remove />
                                         </IconButton>
                                     )}
-                                    <Typography sx={{mx: 1}}>{item.quantity}</Typography>
+                                    <Typography sx={{ mx: 1 }}>{item.quantity}</Typography>
                                     <IconButton
                                         onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                                        disabled={item.inventory?.quantity != null && item.quantity >= item.inventory.quantity}
+                                        disabled={
+                                            item.inventory?.quantity != null && item.quantity >= item.inventory.quantity
+                                        }
                                     >
-                                        <Add/>
+                                        <Add />
                                     </IconButton>
                                 </ListItem>
                             </Box>
                         ))}
                     </List>
-                    <Divider/>
-                    <Box sx={{mt: 2}}>
+                    <Divider />
+                    <Box sx={{ mt: 2 }}>
                         <Typography variant="h3" color={theme.palette.success.main} mt={1}>
                             Total: {formatCurrency(total)}{" "}
                         </Typography>
@@ -96,7 +98,7 @@ const OrderCart = ({cartItems, onUpdateQuantity, onRemoveItem, onOpenPaymentDial
                 fullWidth
                 disabled={cartItems.length === 0}
                 onClick={onOpenPaymentDialog}
-                sx={{mt: 1, width: "100%"}}
+                sx={{ mt: 1, width: "100%" }}
             />
         </Box>
     );

@@ -1,18 +1,18 @@
-import type {FC} from "react";
-import {useEffect} from "react";
-import {Box, FormControl, Grid, InputAdornment, MenuItem} from "@mui/material";
+import type { FC } from "react";
+import { useEffect } from "react";
+import { Box, FormControl, Grid, InputAdornment, MenuItem } from "@mui/material";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import {Controller, useForm} from "react-hook-form";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {createInventorySchema, type CreateInventoryType} from "@/types/inventory-types.ts";
-import {useCreateInventoryRecordMutation, useGetMenuItemsQuery} from "@/store/slice";
+import { Controller, useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { createInventorySchema, type CreateInventoryType } from "@/types/inventory-types.ts";
+import { useCreateInventoryRecordMutation, useGetMenuItemsQuery } from "@/store/slice";
 import useNotifier from "@/hooks/useNotifier.ts";
-import {getApiError} from "@/helpers/get-api-error.ts";
-import CustomButton from "@/components/ui/button.tsx";
-import {StyledTextField} from "@/components/ui";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+import { getApiError } from "@/helpers/get-api-error.ts";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import { StyledTextField } from "@/shared/components/ui";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
-import Icon from "@/components/ui/icon.tsx";
+import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -20,19 +20,19 @@ interface Props {
     onClose: () => void;
 }
 
-const CreateInventoryForm: FC<Props> = ({open, onClose}) => {
+const CreateInventoryForm: FC<Props> = ({ open, onClose }) => {
     const notify = useNotifier();
 
-    const {data: menuItemsData, isLoading: isLoadingMenuItems} = useGetMenuItemsQuery({});
+    const { data: menuItemsData, isLoading: isLoadingMenuItems } = useGetMenuItemsQuery({});
     const memoizedMenuItems = useMemoizedArray(menuItemsData);
 
-    const [createInventory, {isLoading, isSuccess, reset: resetMutation}] = useCreateInventoryRecordMutation();
+    const [createInventory, { isLoading, isSuccess, reset: resetMutation }] = useCreateInventoryRecordMutation();
 
     const {
         control,
         handleSubmit,
         reset: resetForm,
-        formState: {errors},
+        formState: { errors },
     } = useForm({
         resolver: yupResolver(createInventorySchema),
         defaultValues: {
@@ -46,13 +46,13 @@ const CreateInventoryForm: FC<Props> = ({open, onClose}) => {
         onClose();
         resetForm();
         resetMutation();
-    }
+    };
 
     useEffect(() => {
         if (isSuccess) {
             handleClose();
         }
-    }, [isSuccess])
+    }, [isSuccess]);
 
     const onSubmit = async (data: CreateInventoryType) => {
         try {
@@ -67,18 +67,14 @@ const CreateInventoryForm: FC<Props> = ({open, onClose}) => {
     };
 
     return (
-        <CustomModal
-            open={open}
-            onClose={onClose}
-            title="New Inventory"
-        >
-            <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{mt: 3}}>
+        <CustomModal open={open} onClose={onClose} title="New Inventory">
+            <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 3 }}>
                 <Grid container spacing={3}>
                     <Grid size={12}>
                         <Controller
                             name="menuItemId"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -92,7 +88,7 @@ const CreateInventoryForm: FC<Props> = ({open, onClose}) => {
                                                     <Icon
                                                         src={ArrowDownIconSvg}
                                                         alt={"Dropdown Arrow"}
-                                                        sx={{width: 15, height: 15}}
+                                                        sx={{ width: 15, height: 15 }}
                                                     />
                                                 </InputAdornment>
                                             ),
@@ -104,8 +100,11 @@ const CreateInventoryForm: FC<Props> = ({open, onClose}) => {
                                             Select Menu Item
                                         </MenuItem>
                                         {memoizedMenuItems?.map((menuItem) => (
-                                            <MenuItem key={menuItem.id} value={menuItem.id}
-                                                      sx={{textTransform: "capitalize"}}>
+                                            <MenuItem
+                                                key={menuItem.id}
+                                                value={menuItem.id}
+                                                sx={{ textTransform: "capitalize" }}
+                                            >
                                                 {menuItem.name}
                                             </MenuItem>
                                         ))}
@@ -114,11 +113,11 @@ const CreateInventoryForm: FC<Props> = ({open, onClose}) => {
                             )}
                         />
                     </Grid>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="quantity"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <StyledTextField
                                     {...field}
                                     fullWidth
@@ -130,11 +129,11 @@ const CreateInventoryForm: FC<Props> = ({open, onClose}) => {
                             )}
                         />
                     </Grid>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="minStockLevel"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <StyledTextField
                                     {...field}
                                     fullWidth
@@ -147,8 +146,8 @@ const CreateInventoryForm: FC<Props> = ({open, onClose}) => {
                         />
                     </Grid>
                 </Grid>
-                <Box sx={{display: "flex", justifyContent: "flex-end", gap: 2, mt: 2}}>
-                    <CustomButton title={"Close"} onClick={onClose}/>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
+                    <CustomButton title={"Close"} onClick={onClose} />
                     <CustomButton
                         title={isLoading ? "Creating..." : "Create"}
                         type="submit"

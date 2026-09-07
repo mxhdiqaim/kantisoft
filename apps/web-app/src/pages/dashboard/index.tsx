@@ -3,19 +3,19 @@ import DashboardLoading from "@/components/dashboard/loading";
 import SalesTrendChart from "@/components/dashboard/sales-trend-chart";
 import SummaryCard from "@/components/dashboard/summary-card";
 import TopSells from "@/components/dashboard/top-sells";
-import {useGetSalesSummaryQuery} from "@/store/slice";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {AttachMoney, PointOfSale, ShoppingCart} from "@mui/icons-material";
-import {Box, CircularProgress, Grid, Typography, useTheme} from "@mui/material";
-import {useEffect, useMemo, useState} from "react";
-import {useForm} from "react-hook-form";
-import PeriodSelector from "@/components/ui/period-selector.tsx";
-import {filterSchema, type FilterSchemaType} from "@/types";
+import { useGetSalesSummaryQuery } from "@/store/slice";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { AttachMoney, PointOfSale, ShoppingCart } from "@mui/icons-material";
+import { Box, CircularProgress, Grid, Typography, useTheme } from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
+import { filterSchema, type FilterSchemaType } from "@/types";
 
 const Index = () => {
     const theme = useTheme();
 
-    const {control, watch} = useForm<FilterSchemaType>({
+    const { control, watch } = useForm<FilterSchemaType>({
         mode: "onChange",
         defaultValues: {
             timePeriod: "today",
@@ -28,30 +28,30 @@ const Index = () => {
 
     const period = watch("timePeriod");
 
-    const {data: salesSummary, isLoading, isFetching, isError, fulfilledTimeStamp} = useGetSalesSummaryQuery(period);
+    const { data: salesSummary, isLoading, isFetching, isError, fulfilledTimeStamp } = useGetSalesSummaryQuery(period);
 
     const summaryCards = useMemo(() => {
         if (!salesSummary) return [];
 
-        const {totalRevenue, totalOrders, avgOrderValue} = salesSummary;
+        const { totalRevenue, totalOrders, avgOrderValue } = salesSummary;
 
         return [
             {
                 title: `Revenue`,
                 value: totalRevenue,
-                icon: <AttachMoney/>,
+                icon: <AttachMoney />,
                 color: theme.palette.success.main,
             },
             {
                 title: `Orders`,
                 value: totalOrders,
-                icon: <ShoppingCart/>,
+                icon: <ShoppingCart />,
                 color: theme.palette.info.main,
             },
             {
                 title: `Avg. Order Value`,
                 value: avgOrderValue,
-                icon: <PointOfSale/>,
+                icon: <PointOfSale />,
                 color: theme.palette.warning.main,
             },
         ];
@@ -65,32 +65,28 @@ const Index = () => {
         }
     }, [fulfilledTimeStamp]);
 
-    if (isLoading) return <DashboardLoading/>;
+    if (isLoading) return <DashboardLoading />;
 
     if (isError) {
         return (
-            <Typography color="error" align="center" sx={{mt: 4}}>
+            <Typography color="error" align="center" sx={{ mt: 4 }}>
                 Failed to load sales history. Please try again later.
             </Typography>
         );
     }
 
     return (
-        <Box sx={{mx: "auto"}}>
-            <Box sx={{display: "flex", justifyContent: "space-between"}}>
-                <Box sx={{display: 'flex', alignItems: 'center', gap: 2, mt: -5}}>
+        <Box sx={{ mx: "auto" }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: -5 }}>
                     <Typography variant={"h4"}>Dashboard</Typography>
-                    {isFetching && <CircularProgress size={24}/>}
+                    {isFetching && <CircularProgress size={24} />}
                 </Box>
-                <PeriodSelector
-                    control={control}
-                    name={"timePeriod"}
-                    lastFetched={lastFetched}
-                />
+                <PeriodSelector control={control} name={"timePeriod"} lastFetched={lastFetched} />
             </Box>
             <Grid container spacing={3} mb={3}>
                 {summaryCards.map((card, index) => (
-                    <Grid size={{xs: 12, sm: 6, md: 4}} key={card.title}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={card.title}>
                         <SummaryCard
                             index={index}
                             title={card.title}
@@ -103,14 +99,14 @@ const Index = () => {
             </Grid>
 
             <Grid container spacing={3}>
-                <Grid size={{xs: 12, lg: 8}}>
-                    <SalesTrendChart period={period}/>
+                <Grid size={{ xs: 12, lg: 8 }}>
+                    <SalesTrendChart period={period} />
                 </Grid>
-                <Grid size={{xs: 12, lg: 4}}>
-                    <TopSells timePeriod={period}/>
+                <Grid size={{ xs: 12, lg: 4 }}>
+                    <TopSells timePeriod={period} />
                 </Grid>
-                <Grid size={{xs: 12}}>
-                    <InventorySummary/>
+                <Grid size={{ xs: 12 }}>
+                    <InventorySummary />
                 </Grid>
             </Grid>
         </Box>

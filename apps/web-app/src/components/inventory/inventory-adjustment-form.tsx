@@ -1,23 +1,23 @@
-import type {FC} from "react";
-import {useEffect} from "react";
-import {Box, FormControl, Grid, InputAdornment, MenuItem} from "@mui/material";
+import type { FC } from "react";
+import { useEffect } from "react";
+import { Box, FormControl, Grid, InputAdornment, MenuItem } from "@mui/material";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import {Controller, useForm} from "react-hook-form";
-import {yupResolver} from "@hookform/resolvers/yup";
+import { Controller, useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import {
     adjustStockSchema,
     type AdjustStockType,
     type InventoryType,
     TRANSACTION_TYPE,
-    TransactionTypeEnum
+    TransactionTypeEnum,
 } from "@/types/inventory-types.ts";
-import {useAdjustStockMutation} from "@/store/slice";
+import { useAdjustStockMutation } from "@/store/slice";
 import useNotifier from "@/hooks/useNotifier.ts";
-import {getApiError} from "@/helpers/get-api-error.ts";
-import CustomButton from "@/components/ui/button.tsx";
-import {StyledTextField} from "@/components/ui";
+import { getApiError } from "@/helpers/get-api-error.ts";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import { StyledTextField } from "@/shared/components/ui";
 
-import Icon from "@/components/ui/icon.tsx";
+import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -26,15 +26,15 @@ interface Props {
     inventoryItem: InventoryType | null;
 }
 
-const InventoryAdjustmentForm: FC<Props> = ({open, onClose, inventoryItem}) => {
+const InventoryAdjustmentForm: FC<Props> = ({ open, onClose, inventoryItem }) => {
     const notify = useNotifier();
-    const [adjustStock, {isLoading, isSuccess}] = useAdjustStockMutation();
+    const [adjustStock, { isLoading, isSuccess }] = useAdjustStockMutation();
 
     const {
         control,
         handleSubmit,
         reset,
-        formState: {errors},
+        formState: { errors },
     } = useForm({
         defaultValues: {
             menuItemId: inventoryItem?.menuItemId ?? "",
@@ -80,15 +80,15 @@ const InventoryAdjustmentForm: FC<Props> = ({open, onClose, inventoryItem}) => {
         <CustomModal
             open={open}
             onClose={onClose}
-            title={`Inventory adjustment for ${inventoryItem?.menuItem?.name ?? 'Item'}`}
+            title={`Inventory adjustment for ${inventoryItem?.menuItem?.name ?? "Item"}`}
         >
-            <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{mt: 3}}>
+            <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 3 }}>
                 <Grid container spacing={3}>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="transactionType"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -101,7 +101,7 @@ const InventoryAdjustmentForm: FC<Props> = ({open, onClose, inventoryItem}) => {
                                                     <Icon
                                                         src={ArrowDownIconSvg}
                                                         alt={"Dropdown Arrow"}
-                                                        sx={{width: 15, height: 15}}
+                                                        sx={{ width: 15, height: 15 }}
                                                     />
                                                 </InputAdornment>
                                             ),
@@ -113,8 +113,8 @@ const InventoryAdjustmentForm: FC<Props> = ({open, onClose, inventoryItem}) => {
                                             Select Adjustment Type
                                         </MenuItem>
                                         {TRANSACTION_TYPE.map((type) => (
-                                            <MenuItem key={type} value={type} sx={{textTransform: "capitalize"}}>
-                                                {type.replace(/([A-Z])/g, ' $1').trim()}
+                                            <MenuItem key={type} value={type} sx={{ textTransform: "capitalize" }}>
+                                                {type.replace(/([A-Z])/g, " $1").trim()}
                                             </MenuItem>
                                         ))}
                                     </StyledTextField>
@@ -122,11 +122,11 @@ const InventoryAdjustmentForm: FC<Props> = ({open, onClose, inventoryItem}) => {
                             )}
                         />
                     </Grid>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="quantityAdjustment"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <StyledTextField
                                     {...field}
                                     fullWidth
@@ -142,7 +142,7 @@ const InventoryAdjustmentForm: FC<Props> = ({open, onClose, inventoryItem}) => {
                         <Controller
                             name="notes"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <StyledTextField
                                     {...field}
                                     fullWidth
@@ -154,8 +154,8 @@ const InventoryAdjustmentForm: FC<Props> = ({open, onClose, inventoryItem}) => {
                         />
                     </Grid>
                 </Grid>
-                <Box sx={{display: "flex", justifyContent: "flex-end", gap: 2, mt: 4}}>
-                    <CustomButton title={"Cancel"} onClick={onClose} variant="outlined"/>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 4 }}>
+                    <CustomButton title={"Cancel"} onClick={onClose} variant="outlined" />
                     <CustomButton
                         type="submit"
                         variant="contained"

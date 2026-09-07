@@ -1,23 +1,27 @@
-import type {FC} from "react";
-import {useEffect} from "react";
-import {Box, FormControl, Grid, InputAdornment, MenuItem} from "@mui/material";
+import type { FC } from "react";
+import { useEffect } from "react";
+import { Box, FormControl, Grid, InputAdornment, MenuItem } from "@mui/material";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import {Controller, useForm} from "react-hook-form";
-import {yupResolver} from "@hookform/resolvers/yup";
+import { Controller, useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import {
     useCreateRawMaterialMutation,
     useGetAllUnitOfMeasurementsQuery,
-    useUpdateRawMaterialMutation
+    useUpdateRawMaterialMutation,
 } from "@/store/slice";
 import useNotifier from "@/hooks/useNotifier.ts";
-import {getApiError} from "@/helpers/get-api-error.ts";
-import CustomButton from "@/components/ui/button.tsx";
-import {createRawMaterialSchema, type CreateRawMaterialType, type RawMaterialType} from "@/types/raw-material-types.ts";
-import {StyledTextField} from "@/components/ui";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
-import {useMeasurementSymbol} from "@/hooks/use-measurement-symbol.ts";
+import { getApiError } from "@/helpers/get-api-error.ts";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import {
+    createRawMaterialSchema,
+    type CreateRawMaterialType,
+    type RawMaterialType,
+} from "@/types/raw-material-types.ts";
+import { StyledTextField } from "@/shared/components/ui";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import { useMeasurementSymbol } from "@/hooks/use-measurement-symbol.ts";
 
-import Icon from "@/components/ui/icon.tsx";
+import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -26,33 +30,27 @@ interface Props {
     rawMaterial?: RawMaterialType | null;
 }
 
-const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
+const RawMaterialForm: FC<Props> = ({ open, onClose, rawMaterial }) => {
     const notify = useNotifier();
     const isEditMode = !!rawMaterial;
 
-    const {data: measurementUnit, isLoading: isMeasurementLoading} = useGetAllUnitOfMeasurementsQuery(undefined, {
+    const { data: measurementUnit, isLoading: isMeasurementLoading } = useGetAllUnitOfMeasurementsQuery(undefined, {
         skip: !open,
     });
 
     const memoizedMeasurement = useMemoizedArray(measurementUnit);
 
-    const [createRawMaterial, {
-        isLoading: isCreating,
-        isSuccess: isCreateSuccess,
-        reset: resetCreateMutation
-    }] = useCreateRawMaterialMutation();
+    const [createRawMaterial, { isLoading: isCreating, isSuccess: isCreateSuccess, reset: resetCreateMutation }] =
+        useCreateRawMaterialMutation();
 
-    const [updateRawMaterial, {
-        isLoading: isUpdating,
-        isSuccess: isUpdateSuccess,
-        reset: resetUpdateMutation
-    }] = useUpdateRawMaterialMutation();
+    const [updateRawMaterial, { isLoading: isUpdating, isSuccess: isUpdateSuccess, reset: resetUpdateMutation }] =
+        useUpdateRawMaterialMutation();
 
     const {
         control,
         handleSubmit,
         reset: resetForm,
-        formState: {errors},
+        formState: { errors },
     } = useForm({
         defaultValues: {
             name: "",
@@ -97,17 +95,16 @@ const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
     }, [rawMaterial, open, resetForm]);
 
     const onSubmit = async (data: CreateRawMaterialType) => {
-
         try {
             if (isEditMode && rawMaterial) {
-                await updateRawMaterial({id: rawMaterial.id, ...data}).unwrap();
+                await updateRawMaterial({ id: rawMaterial.id, ...data }).unwrap();
                 notify("Raw Material Updated Successfully!", "success");
             } else {
                 await createRawMaterial(data).unwrap();
                 notify("Raw Material Added Successfully!", "success");
             }
         } catch (error) {
-            const defaultMessage = `Failed to ${isEditMode ? 'update' : 'create'} Raw Material. Please try again.`;
+            const defaultMessage = `Failed to ${isEditMode ? "update" : "create"} Raw Material. Please try again.`;
             const apiError = getApiError(error, defaultMessage);
             notify(apiError.message, "error");
         }
@@ -116,18 +113,14 @@ const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
     const isLoading = isCreating || isUpdating;
 
     return (
-        <CustomModal
-            open={open}
-            onClose={onClose}
-            title={isEditMode ? "Edit Raw Material" : "Create Raw Material"}
-        >
-            <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{mt: 3}}>
+        <CustomModal open={open} onClose={onClose} title={isEditMode ? "Edit Raw Material" : "Create Raw Material"}>
+            <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 3 }}>
                 <Grid container spacing={3}>
                     <Grid size={12}>
                         <Controller
                             name="name"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -139,11 +132,11 @@ const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
                             )}
                         />
                     </Grid>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="unitOfMeasurementId"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -157,7 +150,7 @@ const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
                                                     <Icon
                                                         src={ArrowDownIconSvg}
                                                         alt={"Dropdown Arrow"}
-                                                        sx={{width: 15, height: 15}}
+                                                        sx={{ width: 15, height: 15 }}
                                                     />
                                                 </InputAdornment>
                                             ),
@@ -169,18 +162,21 @@ const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
                                             Select Measurement Unit
                                         </MenuItem>
                                         {memoizedMeasurement.map((measurement) => (
-                                            <MenuItem key={measurement.id} value={measurement.id}
-                                                      sx={{display: "flex"}}>
+                                            <MenuItem
+                                                key={measurement.id}
+                                                value={measurement.id}
+                                                sx={{ display: "flex" }}
+                                            >
                                                 <Box
                                                     component={"span"}
                                                     sx={{
                                                         textTransform: "capitalize",
-                                                        display: "inline"
+                                                        display: "inline",
                                                     }}
                                                 >
                                                     {measurement.name}
                                                 </Box>
-                                                {(measurement.symbol) ? `(${measurement.symbol})` : ''}
+                                                {measurement.symbol ? `(${measurement.symbol})` : ""}
                                             </MenuItem>
                                         ))}
                                     </StyledTextField>
@@ -188,23 +184,21 @@ const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
                             )}
                         />
                     </Grid>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="latestUnitPricePresentation"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
-                                        label={`Price per ${measurementSymbol || 'unit'}`}
+                                        label={`Price per ${measurementSymbol || "unit"}`}
                                         type="number"
                                         error={Boolean(errors.latestUnitPricePresentation)}
                                         helperText={errors.latestUnitPricePresentation?.message}
                                         InputProps={{
                                             endAdornment: measurementSymbol ? (
-                                                <InputAdornment position="end">
-                                                    /{measurementSymbol}
-                                                </InputAdornment>
+                                                <InputAdornment position="end">/{measurementSymbol}</InputAdornment>
                                             ) : null,
                                         }}
                                     />
@@ -216,7 +210,7 @@ const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
                         <Controller
                             name="description"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -229,10 +223,10 @@ const RawMaterialForm: FC<Props> = ({open, onClose, rawMaterial}) => {
                         />
                     </Grid>
                 </Grid>
-                <Box sx={{display: "flex", justifyContent: "flex-end", gap: 2, mt: 2}}>
-                    <CustomButton title={"Close"} onClick={onClose}/>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
+                    <CustomButton title={"Close"} onClick={onClose} />
                     <CustomButton
-                        title={isLoading ? (isEditMode ? "Saving..." : "Creating...") : (isEditMode ? "Save" : "Create")}
+                        title={isLoading ? (isEditMode ? "Saving..." : "Creating...") : isEditMode ? "Save" : "Create"}
                         type="submit"
                         variant={"contained"}
                         disabled={isLoading}

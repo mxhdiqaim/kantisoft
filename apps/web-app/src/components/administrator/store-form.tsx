@@ -1,17 +1,17 @@
-import {getApiError} from "@/helpers/get-api-error.ts";
+import { getApiError } from "@/helpers/get-api-error.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
-import {useCreateStoreMutation, useUpdateStoreMutation} from "@/store/slice";
-import {createStoreSchema, type CreateStoreType, STORE_TYPES, type StoreType} from "@/types/store-types.ts";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {FormControl, Grid, InputAdornment, MenuItem} from "@mui/material";
-import {useEffect} from "react";
-import {Controller, useForm} from "react-hook-form";
-import {useParams} from "react-router-dom";
+import { useCreateStoreMutation, useUpdateStoreMutation } from "@/store/slice";
+import { createStoreSchema, type CreateStoreType, STORE_TYPES, type StoreType } from "@/types/store-types.ts";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { FormControl, Grid, InputAdornment, MenuItem } from "@mui/material";
+import { useEffect } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { useParams } from "react-router-dom";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import {StyledTextField} from "@/components/ui";
-import CustomButton from "@/components/ui/button.tsx";
+import { StyledTextField } from "@/shared/components/ui";
+import CustomButton from "@/shared/components/ui/button.tsx";
 
-import Icon from "@/components/ui/icon.tsx";
+import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -20,25 +20,25 @@ interface Props {
     currentData: StoreType | null;
 }
 
-const StoreForm = ({open, onClose, currentData}: Props) => {
-    const {id} = useParams<{ id: string }>();
+const StoreForm = ({ open, onClose, currentData }: Props) => {
+    const { id } = useParams<{ id: string }>();
     const isEditMode = !!currentData;
 
     const notify = useNotifier();
 
-    const [createStore, {isLoading: isCreating}] = useCreateStoreMutation();
-    const [updateStore, {isLoading: isUpdating}] = useUpdateStoreMutation();
+    const [createStore, { isLoading: isCreating }] = useCreateStoreMutation();
+    const [updateStore, { isLoading: isUpdating }] = useUpdateStoreMutation();
 
     const {
         control,
         handleSubmit,
-        formState: {errors},
+        formState: { errors },
         reset,
     } = useForm({
         defaultValues: {
             name: "",
             location: "",
-            storeType: "restaurant"
+            storeType: "restaurant",
         },
 
         resolver: yupResolver(createStoreSchema),
@@ -56,7 +56,7 @@ const StoreForm = ({open, onClose, currentData}: Props) => {
             reset({
                 name: "",
                 location: "",
-                storeType: "restaurant"
+                storeType: "restaurant",
             });
         }
     }, [open, currentData, reset]);
@@ -64,7 +64,7 @@ const StoreForm = ({open, onClose, currentData}: Props) => {
     const onSubmit = async (formData: CreateStoreType) => {
         try {
             if (isEditMode) {
-                await updateStore({id: id!, ...formData}).unwrap();
+                await updateStore({ id: id!, ...formData }).unwrap();
                 notify("Store updated successfully!", "success");
             } else {
                 await createStore(formData).unwrap();
@@ -82,17 +82,13 @@ const StoreForm = ({open, onClose, currentData}: Props) => {
     const isLoading = isCreating || isUpdating;
 
     return (
-        <CustomModal
-            open={open}
-            onClose={onClose}
-            title={isEditMode ? "Edit Store" : "Create New Store"}
-        >
+        <CustomModal open={open} onClose={onClose} title={isEditMode ? "Edit Store" : "Create New Store"}>
             <Grid container spacing={2} component="form" onSubmit={handleSubmit(onSubmit)}>
                 <Grid size={12}>
                     <Controller
                         name="name"
                         control={control}
-                        render={({field}) => (
+                        render={({ field }) => (
                             <FormControl fullWidth>
                                 <StyledTextField
                                     {...field}
@@ -109,7 +105,7 @@ const StoreForm = ({open, onClose, currentData}: Props) => {
                     <Controller
                         name="location"
                         control={control}
-                        render={({field}) => (
+                        render={({ field }) => (
                             <FormControl fullWidth>
                                 <StyledTextField
                                     {...field}
@@ -126,7 +122,7 @@ const StoreForm = ({open, onClose, currentData}: Props) => {
                     <Controller
                         name="storeType"
                         control={control}
-                        render={({field}) => (
+                        render={({ field }) => (
                             <FormControl fullWidth>
                                 <StyledTextField
                                     {...field}
@@ -139,7 +135,7 @@ const StoreForm = ({open, onClose, currentData}: Props) => {
                                                 <Icon
                                                     src={ArrowDownIconSvg}
                                                     alt={"Dropdown Arrow"}
-                                                    sx={{width: 15, height: 15}}
+                                                    sx={{ width: 15, height: 15 }}
                                                 />
                                             </InputAdornment>
                                         ),
@@ -151,11 +147,7 @@ const StoreForm = ({open, onClose, currentData}: Props) => {
                                         Select Branch Type
                                     </MenuItem>
                                     {STORE_TYPES.map((type) => (
-                                        <MenuItem
-                                            key={type}
-                                            value={type}
-                                            sx={{textTransform: "capitalize"}}
-                                        >
+                                        <MenuItem key={type} value={type} sx={{ textTransform: "capitalize" }}>
                                             {type}
                                         </MenuItem>
                                     ))}
@@ -166,13 +158,15 @@ const StoreForm = ({open, onClose, currentData}: Props) => {
                 </Grid>
                 <Grid size={12}>
                     <CustomButton
-                        title={isLoading
-                            ? isEditMode
-                                ? "Updating..."
-                                : "Creating..."
-                            : isEditMode
-                                ? "Update Store"
-                                : "Create Store"}
+                        title={
+                            isLoading
+                                ? isEditMode
+                                    ? "Updating..."
+                                    : "Creating..."
+                                : isEditMode
+                                  ? "Update Store"
+                                  : "Create Store"
+                        }
                         variant="contained"
                         type="submit"
                         disabled={isLoading}

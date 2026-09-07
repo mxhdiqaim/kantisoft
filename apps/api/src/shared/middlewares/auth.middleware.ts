@@ -60,6 +60,27 @@ class AuthMiddleware {
             next(error);
         }
     };
+
+    // public isAuthorized = (req: Request, res: Response, next: NextFunction, allowedRoles: UserRoleEnum[]) => {
+    //     const auth = getAuth(req);
+    //
+    //     if (!auth.isAuthenticated || !auth.userId) {
+    //         throw new UnauthorizedError("Authentication failed or missing.");
+    //     }
+    //
+    //     // eslint-disable-next-line
+    //     const metadata: any = auth.sessionClaims?.metadata || {};
+    //
+    //     if (!metadata.userId) {
+    //         throw new UnauthorizedError("User profile syncing. Please wait a moment.");
+    //     }
+    //
+    //     const userRole = metadata.role;
+    //
+    //     if (userRole && allowedRoles.includes(userRole as UserRoleEnum)) {
+    //         return next();
+    //     }
+    // };
 }
 
 export default new AuthMiddleware();

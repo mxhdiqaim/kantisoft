@@ -2,33 +2,33 @@ import EachMenuItem from "@/components/point-of-sale/each-menu-item.tsx";
 import MenuIteFormModal from "@/components/menu-items/menu-item-form-modal.tsx";
 import OrderCart from "@/components/point-of-sale/order-cart";
 import PaymentModal from "@/components/point-of-sale/payment-modal";
-import MenuItemSkeleton from "@/components/spinners/manu-item-skeleton";
-import {getApiError} from "@/helpers/get-api-error";
+import MenuItemSkeleton from "@/shared/components/spinners/manu-item-skeleton";
+import { getApiError } from "@/helpers/get-api-error";
 import useNotifier from "@/hooks/useNotifier";
-import {useCreateOrderMutation, useGetMenuItemsQuery} from "@/store/slice";
-import type {CartItem} from "@/types/cart-item-type";
-import type {MenuItemType} from "@/types/menu-item-type";
-import type {CreateOrderType} from "@/types/order-types";
-import {Box, Grid, Typography} from "@mui/material";
-import {useState} from "react";
-import {useTranslation} from "react-i18next";
-import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
-import {useSearch} from "@/use-search.ts";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
+import { useCreateOrderMutation, useGetMenuItemsQuery } from "@/store/slice";
+import type { CartItem } from "@/types/cart-item-type";
+import type { MenuItemType } from "@/types/menu-item-type";
+import type { CreateOrderType } from "@/types/order-types";
+import { Box, Grid, Typography } from "@mui/material";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import { useSearch } from "@/use-search.ts";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
 const PointOfSale = () => {
     const notify = useNotifier();
-    const {t} = useTranslation();
+    const { t } = useTranslation();
 
-    const {data: menuItems, isLoading: isLoadingMenuItems, isError} = useGetMenuItemsQuery({});
+    const { data: menuItems, isLoading: isLoadingMenuItems, isError } = useGetMenuItemsQuery({});
     const memoizedMenuItems = useMemoizedArray(menuItems);
 
-    const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
+    const { searchControl, searchSubmit, handleSearch, filteredData } = useSearch({
         initialData: memoizedMenuItems,
         searchKeys: ["name", "itemCode", "price"],
     });
 
-    const [createOrder, {isLoading: isCreatingOrder}] = useCreateOrderMutation();
+    const [createOrder, { isLoading: isCreatingOrder }] = useCreateOrderMutation();
 
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
@@ -39,10 +39,10 @@ const PointOfSale = () => {
             const existingItem = prev.find((cartItem) => cartItem.id === item.id);
             if (existingItem) {
                 return prev.map((cartItem) =>
-                    cartItem.id === item.id ? {...cartItem, quantity: cartItem.quantity + 1} : cartItem,
+                    cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem,
                 );
             }
-            return [...prev, {...item, quantity: 1}];
+            return [...prev, { ...item, quantity: 1 }];
         });
     };
 
@@ -50,7 +50,7 @@ const PointOfSale = () => {
         if (quantity === 0) {
             handleRemoveItem(itemId);
         } else {
-            setCartItems((prev) => prev.map((item) => (item.id === itemId ? {...item, quantity} : item)));
+            setCartItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, quantity } : item)));
         }
     };
 
@@ -91,8 +91,8 @@ const PointOfSale = () => {
     return (
         <Box>
             <Grid container spacing={3} mb={2}>
-                <Grid size={{xs: 12, md: 8}}>
-                    <Grid size={{xs: 12}}>
+                <Grid size={{ xs: 12, md: 8 }}>
+                    <Grid size={{ xs: 12 }}>
                         <TableSearchActions
                             searchControl={searchControl}
                             searchSubmit={searchSubmit}
@@ -104,8 +104,8 @@ const PointOfSale = () => {
                     {isLoadingMenuItems ? (
                         <Grid container spacing={2}>
                             {Array.from(new Array(9)).map((_, index) => (
-                                <Grid size={{xs: 12, sm: 6, md: 4}} key={index}>
-                                    <MenuItemSkeleton/>
+                                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+                                    <MenuItemSkeleton />
                                 </Grid>
                             ))}
                         </Grid>
@@ -113,8 +113,8 @@ const PointOfSale = () => {
                         <Grid container spacing={2} mt={2}>
                             {filteredData.length > 0 ? (
                                 filteredData.map((item) => (
-                                    <Grid size={{xs: 12, sm: 6, md: 4}} key={item.id}>
-                                        <EachMenuItem item={item} cartItems={cartItems} onAddToCart={handleAddToCart}/>
+                                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
+                                        <EachMenuItem item={item} cartItems={cartItems} onAddToCart={handleAddToCart} />
                                     </Grid>
                                 ))
                             ) : (
@@ -135,7 +135,7 @@ const PointOfSale = () => {
                         </Grid>
                     )}
                 </Grid>
-                <Grid size={{xs: 12, md: 4}}>
+                <Grid size={{ xs: 12, md: 4 }}>
                     <OrderCart
                         cartItems={cartItems}
                         onRemoveItem={handleRemoveItem}
@@ -151,7 +151,7 @@ const PointOfSale = () => {
                 cartItems={cartItems}
                 isLoading={isCreatingOrder}
             />
-            <MenuIteFormModal open={addMenuItemOpen} onClose={() => setAddMenuItemOpen(false)}/>
+            <MenuIteFormModal open={addMenuItemOpen} onClose={() => setAddMenuItemOpen(false)} />
         </Box>
     );
 };

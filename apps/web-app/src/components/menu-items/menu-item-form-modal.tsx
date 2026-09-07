@@ -1,22 +1,21 @@
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import {getApiError} from "@/helpers/get-api-error.ts";
+import { getApiError } from "@/helpers/get-api-error.ts";
 import useNotifier from "@/hooks/useNotifier.ts";
-import {useCreateMenuItemMutation, useGetAllCategoriesQuery, useUpdateMenuItemMutation} from "@/store/slice";
+import { useCreateMenuItemMutation, useGetAllCategoriesQuery, useUpdateMenuItemMutation } from "@/store/slice";
 import {
     createMenuItemSchema,
     type CreateMenuItemType,
     type EditMenuItemType,
     type MenuItemType,
 } from "@/types/menu-item-type.ts";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {Box, FormControl, Grid, InputAdornment, MenuItem, Typography} from "@mui/material";
-import {useEffect} from "react";
-import {Controller, useForm} from "react-hook-form";
-import CustomButton from "@/components/ui/button.tsx";
-import {StyledTextField} from "@/components/ui";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
-// import {useOfflineCategories} from "@/hooks/use-offline-categories.ts";
-import Icon from "@/components/ui/icon.tsx";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { Box, FormControl, Grid, InputAdornment, MenuItem, Typography } from "@mui/material";
+import { useEffect } from "react";
+import { Controller, useForm } from "react-hook-form";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import { StyledTextField } from "@/shared/components/ui";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -25,16 +24,16 @@ interface Props {
     menuItemToEdit?: MenuItemType | null;
 }
 
-const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
+const MenuItemFormModal = ({ open, onClose, menuItemToEdit }: Props) => {
     const notify = useNotifier();
 
-    const [createMenuItem, {isLoading: isCreating}] = useCreateMenuItemMutation();
-    const [updateMenuItem, {isLoading: isUpdating}] = useUpdateMenuItemMutation();
+    const [createMenuItem, { isLoading: isCreating }] = useCreateMenuItemMutation();
+    const [updateMenuItem, { isLoading: isUpdating }] = useUpdateMenuItemMutation();
 
     const isEditMode = !!menuItemToEdit;
 
     // const {data: categoriesData, isLoading: fetchingCategory} = useOfflineCategories();
-    const {data: categoriesData, isLoading: fetchingCategory} = useGetAllCategoriesQuery();
+    const { data: categoriesData, isLoading: fetchingCategory } = useGetAllCategoriesQuery();
 
     const memoizedCategories = useMemoizedArray(categoriesData);
 
@@ -42,7 +41,7 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
         control,
         handleSubmit,
         reset,
-        formState: {errors},
+        formState: { errors },
     } = useForm({
         mode: "onBlur",
         defaultValues: {
@@ -74,7 +73,7 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
 
     const onSubmit = async (data: CreateMenuItemType | EditMenuItemType) => {
         const isOffline = !navigator.onLine;
-        const payload = {...data, itemCode: data.itemCode || undefined};
+        const payload = { ...data, itemCode: data.itemCode || undefined };
 
         try {
             if (isEditMode && menuItemToEdit) {
@@ -90,7 +89,7 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
             onClose();
         } catch (error) {
             // Handle Offline Case: Close modal and notify
-            if (isOffline || error?.status === 'FETCH_ERROR') {
+            if (isOffline || error?.status === "FETCH_ERROR") {
                 notify("Working offline: Item saved locally and will sync later.", "warning");
                 onClose(); // Close the modal because onQueryStarted already saved it to Dexie!
                 return;
@@ -109,16 +108,16 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
     return (
         <CustomModal open={open} onClose={onClose}>
             <Box>
-                <Typography variant="h6" sx={{mb: 2}}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
                     {isEditMode ? "Edit Menu Item" : "Add Menu Item"}
                 </Typography>
                 <Box component={"form"} onSubmit={handleSubmit(onSubmit)}>
                     <Grid container spacing={2}>
-                        <Grid size={{xs: 12, md: 6}}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Controller
                                 name="name"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <StyledTextField
                                         {...field}
                                         fullWidth
@@ -129,11 +128,11 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
                                 )}
                             />
                         </Grid>
-                        <Grid size={{xs: 12, md: 6}}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Controller
                                 name="price"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <StyledTextField
                                         {...field}
                                         fullWidth
@@ -145,11 +144,11 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
                                 )}
                             />
                         </Grid>
-                        <Grid size={{xs: 12, sm: 6}}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                             <Controller
                                 name="categoryId"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <FormControl fullWidth>
                                         <StyledTextField
                                             {...field}
@@ -163,7 +162,7 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
                                                         <Icon
                                                             src={ArrowDownIconSvg}
                                                             alt={"Dropdown Arrow"}
-                                                            sx={{width: 15, height: 15}}
+                                                            sx={{ width: 15, height: 15 }}
                                                         />
                                                     </InputAdornment>
                                                 ),
@@ -175,8 +174,11 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
                                                 Select Category
                                             </MenuItem>
                                             {memoizedCategories.map((category) => (
-                                                <MenuItem key={category.id} value={category.id}
-                                                          sx={{textTransform: "capitalize"}}>
+                                                <MenuItem
+                                                    key={category.id}
+                                                    value={category.id}
+                                                    sx={{ textTransform: "capitalize" }}
+                                                >
                                                     {category.name}
                                                 </MenuItem>
                                             ))}
@@ -185,11 +187,11 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
                                 )}
                             />
                         </Grid>
-                        <Grid size={{xs: 12, md: 6}}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Controller
                                 name="itemCode"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <StyledTextField
                                         {...field}
                                         fullWidth
@@ -201,11 +203,11 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
                                 )}
                             />
                         </Grid>
-                        <Grid size={{xs: 12, md: 6}}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Controller
                                 name="sku"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <StyledTextField
                                         {...field}
                                         fullWidth
@@ -219,19 +221,20 @@ const MenuItemFormModal = ({open, onClose, menuItemToEdit}: Props) => {
                         </Grid>
                     </Grid>
                     <CustomButton
-                        title={isLoading
-                            ? isEditMode
-                                ? "Saving..."
-                                : "Adding..."
-                            : isEditMode
-                                ? "Save Changes"
-                                : "Add Menu"}
-                        sx={{mt: 2}}
+                        title={
+                            isLoading
+                                ? isEditMode
+                                    ? "Saving..."
+                                    : "Adding..."
+                                : isEditMode
+                                  ? "Save Changes"
+                                  : "Add Menu"
+                        }
+                        sx={{ mt: 2 }}
                         variant="contained"
                         type="submit"
                         disabled={isLoading}
                     />
-
                 </Box>
             </Box>
         </CustomModal>

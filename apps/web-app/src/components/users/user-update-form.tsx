@@ -1,19 +1,19 @@
-import {getApiError} from "@/helpers/get-api-error";
+import { getApiError } from "@/helpers/get-api-error";
 import useNotifier from "@/hooks/useNotifier";
-import {useUpdateUserMutation} from "@/store/slice";
-import {selectCurrentUser} from "@/store/slice/auth-slice";
-import {updateUserSchema, type UpdateUserType, UserRoleEnum, type UserType,} from "@/types/user-types";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {Box, FormControl, Grid, InputAdornment, MenuItem} from "@mui/material";
-import {useEffect} from "react";
-import {Controller, useForm} from "react-hook-form";
-import {useSelector} from "react-redux";
-import CustomButton from "@/components/ui/button.tsx";
-import {StyledTextField} from "@/components/ui";
+import { useUpdateUserMutation } from "@/store/slice";
+import { selectCurrentUser } from "@/store/slice/auth-slice";
+import { updateUserSchema, type UpdateUserType, UserRoleEnum, type UserType } from "@/types/user-types";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { Box, FormControl, Grid, InputAdornment, MenuItem } from "@mui/material";
+import { useEffect } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { useSelector } from "react-redux";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import { StyledTextField } from "@/shared/components/ui";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import {getRolePermissions} from "@/utils";
+import { getRolePermissions } from "@/utils";
 
-import Icon from "@/components/ui/icon.tsx";
+import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -22,18 +22,18 @@ interface Props {
     currentData: UserType;
 }
 
-const UserUpdateForm = ({open, onClose, currentData}: Props) => {
+const UserUpdateForm = ({ open, onClose, currentData }: Props) => {
     const notify = useNotifier();
     const currentUser = useSelector(selectCurrentUser);
 
-    const [updateUser, {isLoading: isUpdating, isSuccess: isUpdated}] = useUpdateUserMutation();
+    const [updateUser, { isLoading: isUpdating, isSuccess: isUpdated }] = useUpdateUserMutation();
     const isLoading = isUpdating;
 
     const {
         control,
         handleSubmit,
         reset,
-        formState: {errors},
+        formState: { errors },
     } = useForm({
         mode: "onChange",
         defaultValues: {},
@@ -75,9 +75,9 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
 
     const onSubmit = async (data: Partial<UpdateUserType>) => {
         try {
-            const payload = {...data};
+            const payload = { ...data };
 
-            await updateUser({id: currentData.id, ...payload}).unwrap();
+            await updateUser({ id: currentData.id, ...payload }).unwrap();
             notify("User updated successfully!", "success");
 
             onClose();
@@ -90,7 +90,7 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
 
     // Getting permissions
     const isTargetSelf = currentUser?.id === currentData?.id;
-    const {availableRoles, canEditRole} = getRolePermissions(currentUser?.role, isTargetSelf);
+    const { availableRoles, canEditRole } = getRolePermissions(currentUser?.role, isTargetSelf);
 
     return (
         <CustomModal
@@ -98,16 +98,16 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
             onClose={onClose}
             title={"Edit User"}
             modalStyles={{
-                width: {xs: "90vw", sm: "60vw"},
+                width: { xs: "90vw", sm: "60vw" },
             }}
         >
-            <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{mt: 2}}>
+            <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 2 }}>
                 <Grid container spacing={3}>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="firstName"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -120,11 +120,11 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
                             )}
                         />
                     </Grid>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="lastName"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -137,11 +137,11 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
                             )}
                         />
                     </Grid>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="email"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -155,11 +155,11 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
                             )}
                         />
                     </Grid>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Controller
                             name="phone"
                             control={control}
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormControl fullWidth>
                                     <StyledTextField
                                         {...field}
@@ -172,13 +172,13 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
                             )}
                         />
                     </Grid>
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         {canEditRole ? (
                             <FormControl fullWidth error={!!errors.role}>
                                 <Controller
                                     name="role"
                                     control={control}
-                                    render={({field}) => (
+                                    render={({ field }) => (
                                         <FormControl fullWidth>
                                             <StyledTextField
                                                 {...field}
@@ -191,7 +191,7 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
                                                             <Icon
                                                                 src={ArrowDownIconSvg}
                                                                 alt={"Dropdown Arrow"}
-                                                                sx={{width: 15, height: 15}}
+                                                                sx={{ width: 15, height: 15 }}
                                                             />
                                                         </InputAdornment>
                                                     ),
@@ -206,7 +206,7 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
                                                     <MenuItem
                                                         key={role}
                                                         value={role}
-                                                        sx={{textTransform: "capitalize"}}
+                                                        sx={{ textTransform: "capitalize" }}
                                                     >
                                                         {role}
                                                     </MenuItem>
@@ -220,12 +220,12 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
                             <FormControl fullWidth>
                                 <StyledTextField
                                     label="Role"
-                                    value={currentData?.role || ''}
+                                    value={currentData?.role || ""}
                                     fullWidth
                                     slotProps={{
                                         input: {
-                                            readOnly: true
-                                        }
+                                            readOnly: true,
+                                        },
                                     }}
                                     disabled
                                 />
@@ -233,24 +233,24 @@ const UserUpdateForm = ({open, onClose, currentData}: Props) => {
                         )}
                     </Grid>
 
-                    <Grid size={{xs: 12, sm: 6}}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <FormControl fullWidth>
                             <StyledTextField
                                 label="Store"
-                                value={currentData?.store?.name || ''}
+                                value={currentData?.store?.name || ""}
                                 fullWidth
                                 slotProps={{
                                     input: {
-                                        readOnly: true
-                                    }
+                                        readOnly: true,
+                                    },
                                 }}
                                 disabled
                             />
                         </FormControl>
                     </Grid>
                 </Grid>
-                <Box sx={{display: "flex", justifyContent: "flex-end", gap: 2, mt: 2}}>
-                    <CustomButton title={"Cancel"} onClick={onClose} variant="outlined"/>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
+                    <CustomButton title={"Cancel"} onClick={onClose} variant="outlined" />
                     <CustomButton
                         title={isLoading ? "Saving..." : "Save Changes"}
                         variant="contained"

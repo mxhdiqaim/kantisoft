@@ -1,12 +1,12 @@
-import {type FC, useState} from "react";
-import {Box, FormControl, InputAdornment, MenuItem} from "@mui/material";
-import type {UserType} from "@/types/user-types.ts";
-import type {StoreType} from "@/types/store-types.ts";
+import { type FC, useState } from "react";
+import { Box, FormControl, InputAdornment, MenuItem } from "@mui/material";
+import type { UserType } from "@/types/user-types.ts";
+import type { StoreType } from "@/types/store-types.ts";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import {StyledTextField} from "@/components/ui";
-import CustomButton from "@/components/ui/button.tsx";
+import { StyledTextField } from "@/shared/components/ui";
+import CustomButton from "@/shared/components/ui/button.tsx";
 
-import Icon from "@/components/ui/icon.tsx";
+import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -18,7 +18,7 @@ interface Props {
     isLoading: boolean;
 }
 
-const ChangeStoreModal: FC<Props> = ({open, onClose, user, stores, onConfirm, isLoading}) => {
+const ChangeStoreModal: FC<Props> = ({ open, onClose, user, stores, onConfirm, isLoading }) => {
     const [newStoreId, setNewStoreId] = useState("");
 
     if (!user) return null;
@@ -30,8 +30,8 @@ const ChangeStoreModal: FC<Props> = ({open, onClose, user, stores, onConfirm, is
     const title = `Change Store for ${user.firstName} ${user.lastName}`;
 
     return (
-        <CustomModal open={open} onClose={onClose} title={title} modalStyles={{width: {xs: "90vw", md: 600}}}>
-            <FormControl fullWidth sx={{mt: 2}}>
+        <CustomModal open={open} onClose={onClose} title={title} modalStyles={{ width: { xs: "90vw", md: 600 } }}>
+            <FormControl fullWidth sx={{ mt: 2 }}>
                 {/*<InputLabel id="store-select-label">New Store</InputLabel>*/}
                 <StyledTextField
                     select
@@ -43,29 +43,20 @@ const ChangeStoreModal: FC<Props> = ({open, onClose, user, stores, onConfirm, is
                         IconComponent: () => null,
                         endAdornment: (
                             <InputAdornment position="end">
-                                <Icon
-                                    src={ArrowDownIconSvg}
-                                    alt={"Dropdown Arrow"}
-                                    sx={{width: 15, height: 15}}
-                                />
+                                <Icon src={ArrowDownIconSvg} alt={"Dropdown Arrow"} sx={{ width: 15, height: 15 }} />
                             </InputAdornment>
                         ),
                     }}
                 >
                     {stores.map((store) => (
                         <MenuItem key={store.id} value={store.id}>
-                            {store.name} ({store.storeParentId === null ? 'Main' : 'Branch'})
+                            {store.name} ({store.storeParentId === null ? "Main" : "Branch"})
                         </MenuItem>
                     ))}
-
                 </StyledTextField>
             </FormControl>
-            <Box sx={{display: 'flex', justifyContent: 'flex-end', mt: 3}}>
-                <CustomButton
-                    title={"Cancel"}
-                    onClick={onClose}
-                    sx={{mr: 1}}
-                />
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+                <CustomButton title={"Cancel"} onClick={onClose} sx={{ mr: 1 }} />
                 <CustomButton
                     title={isLoading ? "Changing..." : "Confirm"}
                     onClick={handleConfirm}

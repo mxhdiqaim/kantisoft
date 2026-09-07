@@ -1,17 +1,17 @@
-import { getApiError } from "@/helpers/get-api-error";
-import useNotifier from "@/hooks/useNotifier";
+import { getApiError } from "@/helpers/get-api-error.ts";
+import useNotifier from "@/hooks/useNotifier.ts";
 import { useSigninMutation } from "@/store/slice";
-import { loginUserType, type LoginUserType } from "@/types/user-types";
+import { loginUserType, type LoginUserType } from "@/types/user-types.ts";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Box, FormControl, FormHelperText, Grid, Link as MuiLink, Typography, useTheme } from "@mui/material";
 
 import { Controller, useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
-import CustomButton from "@/components/ui/button.tsx";
-import { StyledTextField } from "@/components/ui";
+import CustomButton from "@/shared/components/ui/button.tsx";
+import { StyledTextField } from "@/shared/components/ui";
 
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { auth } from "@/config/firebase";
+import { auth } from "@/config/firebase.ts";
 
 const Login = () => {
     const theme = useTheme();

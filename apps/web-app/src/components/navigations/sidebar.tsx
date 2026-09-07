@@ -31,9 +31,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { Props as AppBarProps } from "./appbar";
 import { UserRoleEnum } from "@/types/user-types.ts";
 import type { StoreType } from "@/types/store-types.ts";
-import CustomButton from "@/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.tsx";
 
-import Icon from "@/components/ui/icon.tsx";
+import Icon from "@/shared/components/ui/icon.tsx";
 import CancelSvgIcon from "@/assets/icons/cancel.svg";
 import CollapseSvgIcon from "@/assets/icons/collapse.svg";
 

@@ -1,10 +1,10 @@
-import {type Control, Controller, type FieldValues, type Path} from "react-hook-form";
-import {Box, FormControl, InputAdornment, Typography} from "@mui/material";
-import {StyledTextField} from "@/components/ui/index.tsx";
-import {relativeTime} from "@/utils/get-relative-time.ts";
-import StyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
+import { type Control, Controller, type FieldValues, type Path } from "react-hook-form";
+import { Box, FormControl, InputAdornment, Typography } from "@mui/material";
+import { StyledTextField } from "@/shared/components/ui/index.tsx";
+import { relativeTime } from "@/utils/get-relative-time.ts";
+import StyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
 
-import Icon from "@/components/ui/icon.tsx";
+import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 type Props<T extends FieldValues> = {
@@ -13,12 +13,12 @@ type Props<T extends FieldValues> = {
     lastFetched?: Date | null;
 };
 
-const PeriodSelector = <T extends FieldValues>({control, name, lastFetched}: Props<T>) => (
+const PeriodSelector = <T extends FieldValues>({ control, name, lastFetched }: Props<T>) => (
     <Box>
         <Controller
             name={name}
             control={control}
-            render={({field}) => (
+            render={({ field }) => (
                 <FormControl>
                     <StyledTextField
                         {...field}
@@ -32,21 +32,29 @@ const PeriodSelector = <T extends FieldValues>({control, name, lastFetched}: Pro
                                     <Icon
                                         src={ArrowDownIconSvg}
                                         alt={"Dropdown Arrow"}
-                                        sx={{width: 15, height: 15}}
+                                        sx={{ width: 15, height: 15 }}
                                     />
                                 </InputAdornment>
                             ),
                         }}
                     >
-                        <StyledMenuItem value={"today"} sx={{my: 0.5}}>Today</StyledMenuItem>
-                        <StyledMenuItem value={"week"} sx={{my: 0.5}}>This Week</StyledMenuItem>
-                        <StyledMenuItem value={"month"} sx={{my: 0.5}}>This Month</StyledMenuItem>
-                        <StyledMenuItem value={"all-time"} sx={{my: 0.5}}>All Time</StyledMenuItem>
+                        <StyledMenuItem value={"today"} sx={{ my: 0.5 }}>
+                            Today
+                        </StyledMenuItem>
+                        <StyledMenuItem value={"week"} sx={{ my: 0.5 }}>
+                            This Week
+                        </StyledMenuItem>
+                        <StyledMenuItem value={"month"} sx={{ my: 0.5 }}>
+                            This Month
+                        </StyledMenuItem>
+                        <StyledMenuItem value={"all-time"} sx={{ my: 0.5 }}>
+                            All Time
+                        </StyledMenuItem>
                     </StyledTextField>
                 </FormControl>
             )}
         />
-        <Box sx={{display: "flex", justifyContent: "flex-end"}}>
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
             <Typography
                 variant="h6"
                 component="span"

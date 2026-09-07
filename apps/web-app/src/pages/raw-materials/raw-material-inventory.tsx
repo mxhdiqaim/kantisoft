@@ -1,23 +1,23 @@
-import {Box, Chip, Grid, Tooltip, Typography, useTheme} from "@mui/material";
-import {useGetAllRawMaterialInventoryQuery} from "@/store/slice";
-import CustomButton from "@/components/ui/button.tsx";
+import { Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/material";
+import { useGetAllRawMaterialInventoryQuery } from "@/store/slice";
+import CustomButton from "@/shared/components/ui/button.tsx";
 import RawMaterialInventoryForm from "@/components/raw-material/raw-material-inventory-form.tsx";
-import {type MouseEvent, useCallback, useMemo, useState} from "react";
-import DataGridTable from "@/components/ui/data-grid-table";
-import {useSearch} from "@/use-search.ts";
-import {useMemoizedArray} from "@/hooks/use-memoized-array.ts";
-import TableSearchActions from "@/components/ui/data-grid-table/table-search-action.tsx";
-import type {GridColDef} from "@mui/x-data-grid";
-import TableStyledBox from "@/components/ui/data-grid-table/table-styled-box.tsx";
+import { type MouseEvent, useCallback, useMemo, useState } from "react";
+import DataGridTable from "@/shared/components/ui/data-grid-table";
+import { useSearch } from "@/use-search.ts";
+import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import type { GridColDef } from "@mui/x-data-grid";
+import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import TableStyledMenuItem from "@/components/ui/data-grid-table/table-style-menuitem.tsx";
-import {formatRelativeDateTime} from "@/utils/get-relative-time.ts";
-import {camelCaseToTitleCase, formatNumber} from "@/utils";
-import {getInventoryStatusChipColor} from "@/components/ui";
-import type {GetRawMaterialInventoryStockType,} from "@/types/raw-material-types.ts";
+import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import { formatRelativeDateTime } from "@/utils/get-relative-time.ts";
+import { camelCaseToTitleCase, formatNumber } from "@/utils";
+import { getInventoryStatusChipColor } from "@/shared/components/ui";
+import type { GetRawMaterialInventoryStockType } from "@/types/raw-material-types.ts";
 import InventoryDetailsDrawer from "@/components/raw-material/inventory-details-drawer.tsx";
 import RawMaterialStockInDrawer from "@/components/raw-material/raw-material-stock-in-drawer.tsx";
-import {getApiError} from "@/helpers/get-api-error.ts";
+import { getApiError } from "@/helpers/get-api-error.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -25,7 +25,7 @@ import AddIcon from "@mui/icons-material/Add";
 const RawMaterialInventory = () => {
     const theme = useTheme();
 
-    const {data, isLoading, isFetching, isError, error} = useGetAllRawMaterialInventoryQuery();
+    const { data, isLoading, isFetching, isError, error } = useGetAllRawMaterialInventoryQuery();
     const memoizedInventoryData = useMemoizedArray(data);
 
     const [formModalOpen, setFormModalOpen] = useState(false);
@@ -33,7 +33,7 @@ const RawMaterialInventory = () => {
     const [openStockInDrawer, setOpenStockInDrawer] = useState(false);
     const [selectedRow, setSelectedRow] = useState<GetRawMaterialInventoryStockType | null>(null);
 
-    const {searchControl, searchSubmit, handleSearch, filteredData} = useSearch({
+    const { searchControl, searchSubmit, handleSearch, filteredData } = useSearch({
         initialData: memoizedInventoryData,
         searchKeys: ["rawMaterialName", "status", "latestUnitPrice", "storeName"],
     });
@@ -87,7 +87,7 @@ const RawMaterialInventory = () => {
                             <Typography variant="body2">{formatNumber(params.value)}</Typography>
                             <Typography variant="body2">({symbol})</Typography>
                         </TableStyledBox>
-                    )
+                    );
                 },
             },
             // {
@@ -125,7 +125,7 @@ const RawMaterialInventory = () => {
                             <Typography variant="body2">{formatNumber(params.value)}</Typography>
                             <Typography variant="body2">({symbol})</Typography>
                         </TableStyledBox>
-                    )
+                    );
                 },
             },
             {
@@ -141,7 +141,7 @@ const RawMaterialInventory = () => {
                             label={camelCaseToTitleCase(params.value)}
                             color={getInventoryStatusChipColor(params.value ?? "")}
                             size="small"
-                            sx={{textTransform: "capitalize"}}
+                            sx={{ textTransform: "capitalize" }}
                         />
                     </TableStyledBox>
                 ),
@@ -155,9 +155,7 @@ const RawMaterialInventory = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography variant="body2">
-                            {params.value}
-                        </Typography>
+                        <Typography variant="body2">{params.value}</Typography>
                     </TableStyledBox>
                 ),
             },
@@ -170,9 +168,7 @@ const RawMaterialInventory = () => {
                 headerAlign: "left",
                 renderCell: (params) => (
                     <TableStyledBox>
-                        <Typography variant="body2">
-                            {formatRelativeDateTime(params.value)}
-                        </Typography>
+                        <Typography variant="body2">{formatRelativeDateTime(params.value)}</Typography>
                     </TableStyledBox>
                 ),
             },
@@ -193,25 +189,25 @@ const RawMaterialInventory = () => {
                         onClick={(e) => handleMenuClick(e, params.row)}
                         startIcon={
                             <Tooltip title="More Actions" placement={"top"}>
-                                <MoreVertIcon/>
+                                <MoreVertIcon />
                             </Tooltip>
                         }
                     >
                         <TableStyledMenuItem
                             onClick={() => setOpenInventoryDetailDrawer(true)}
-                            sx={{borderRadius: theme.borderRadius.small, mx: 1}}
+                            sx={{ borderRadius: theme.borderRadius.small, mx: 1 }}
                         >
                             View
                         </TableStyledMenuItem>
                         <TableStyledMenuItem
                             onClick={handleOpenFormModal}
-                            sx={{borderRadius: theme.borderRadius.small, mx: 1}}
+                            sx={{ borderRadius: theme.borderRadius.small, mx: 1 }}
                         >
                             Edit Min Stock
                         </TableStyledMenuItem>
                         <TableStyledMenuItem
                             onClick={() => setOpenStockInDrawer(true)}
-                            sx={{borderRadius: theme.borderRadius.small, mx: 1}}
+                            sx={{ borderRadius: theme.borderRadius.small, mx: 1 }}
                         >
                             Stock In
                         </TableStyledMenuItem>
@@ -238,19 +234,19 @@ const RawMaterialInventory = () => {
 
     if (isError) {
         const apiError = getApiError(error, `Failed to Inventory.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message}/>;
+        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
     }
 
     return (
         <Box>
-            <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                 <Typography variant="h4" component="h1">
                     Inventory
                 </Typography>
                 <CustomButton
                     title={"Inventory"}
                     variant="contained"
-                    startIcon={<AddIcon/>}
+                    startIcon={<AddIcon />}
                     onClick={handleOpenFormModal}
                 />
             </Box>
@@ -264,7 +260,7 @@ const RawMaterialInventory = () => {
 
             <Grid container spacing={2}>
                 <Grid size={12}>
-                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching}/>
+                    <DataGridTable data={filteredData} columns={columns} loading={isLoading || isFetching} />
                 </Grid>
             </Grid>
 
