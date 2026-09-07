@@ -1,4 +1,4 @@
-# Migrating to a Modular Monolith: Fixing a Messy Codebase
+# Migrating the API to a Modular Monolith: Fixing a Messy Codebase
 
 We are moving our API from a messy, unstructured codebase where naming conventions and directories were misaligned to a well-structured, class based, modular monolith.
 

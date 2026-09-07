@@ -4,7 +4,7 @@
 
 We document our major architectural decisions, system design choices, and engineering shifts directly in this repository.
 
-* [001: Migrating to a Modular Monolith: Fixing a Messy Codebase](./docs/architecture/001-migrating-modular-monolith.md)
+* [001: Migrating the API to Modular Monolith: Fixing a Messy Codebase](docs/architecture/001-migrating-the-api-to-modular-monolith.md)
   *Details our shift to a domain-driven design, Zero-DB stateless auth via Clerk, global request context, and loosely coupled database modules.*
 
 ## API Tech Stack
