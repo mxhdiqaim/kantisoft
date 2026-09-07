@@ -4,7 +4,7 @@ import { getApiError } from "@/helpers/get-api-error.ts";
 // import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { Box, Divider, Grid, Stack, Typography } from "@mui/material";
 import { EditOutlined } from "@mui/icons-material";
-import ViewRawMaterialSkeleton from "@/components/spinners/view-raw-material-skeleton.tsx";
+import ViewRawMaterialSkeleton from "@/shared/components/spinners/view-raw-material-skeleton.tsx";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
 import { formatCurrency } from "@/utils";

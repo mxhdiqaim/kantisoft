@@ -1,5 +1,5 @@
 import { Skeleton } from "@mui/material";
-import CustomCard from "../customs/custom-card";
+import CustomCard from "../../../components/customs/custom-card.tsx";
 
 const MenuItemSkeleton = () => {
     return (

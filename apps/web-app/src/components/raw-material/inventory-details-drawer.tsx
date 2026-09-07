@@ -4,7 +4,7 @@ import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
 import { drawerPaperProps } from "@/components/styles";
 import { useGetRawMaterialInventoryStockQuery } from "@/store/slice";
 import { getApiError } from "@/helpers/get-api-error.ts";
-import ViewRawMaterialSkeleton from "@/components/spinners/view-raw-material-skeleton.tsx";
+import ViewRawMaterialSkeleton from "@/shared/components/spinners/view-raw-material-skeleton.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
 import { camelCaseToTitleCase, formatCurrency, formatNumber } from "@/utils";
 import { getInventoryStatusChipColor } from "@/shared/components/ui";
