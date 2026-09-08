@@ -44,7 +44,7 @@ class LogReaderService {
         } catch (error: unknown) {
             const sysError = error as NodeJS.ErrnoException;
             if (sysError.code === "ENOENT") {
-                throw new AppError("This log file does not exist", 404);
+                throw new AppError("This log file does not exist.", 404);
             }
             logger.error(`Error reading log file: ${filePath}`, sysError);
             throw new AppError("Failed to read log file content.", 500);
