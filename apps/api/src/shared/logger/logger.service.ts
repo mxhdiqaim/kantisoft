@@ -32,7 +32,7 @@ class LogReaderService {
                 return [];
             }
             logger.error(`Failed to read log directory: ${folderPath}`, sysError);
-            throw new AppError("Log directory could not be accessed.", 500);
+            throw new AppError("Log directory could not be accessed", 500);
         }
     }
 
