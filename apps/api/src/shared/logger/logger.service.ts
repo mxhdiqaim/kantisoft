@@ -47,7 +47,7 @@ class LogReaderService {
                 throw new AppError("This log file does not exist.", 404);
             }
             logger.error(`Error reading log file: ${filePath}`, sysError);
-            throw new AppError("Failed to read log file content", 500);
+            throw new AppError("Failed to read log file content.", 500);
         }
     }
 }
