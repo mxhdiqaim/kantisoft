@@ -1,22 +1,15 @@
-import AuthGuard from "@/components/auth/auth-guard.tsx";
 import Layout from "@/components/layout";
 import ErrorFallback from "@/pages/feedbacks/fallback.tsx";
-import { useAppDispatch, useAppSelector } from "@/store";
-import { logOut, selectCurrentUser } from "@/store/slice/auth-slice.ts";
 import { ThemeProvider } from "../../../../packages/ui/src/theme";
 import { ScrollToTop } from "@/shared/utils";
-import { type JSX, useEffect, useState } from "react";
+import { type JSX } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { useTranslation } from "react-i18next";
-import { useSelector } from "react-redux";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { FullscreenProvider } from "../context/fullscreen-context.tsx";
-import { selectActiveStore } from "../store/slice/store-slice.ts";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/config/firebase.ts";
-import "@/config/i18next-config.ts";
+import "@/config/i18next.config.ts";
 import Spinner from "@/components/feedback/spinner.tsx";
 import { appRoutes, GuardedRoute, type AppRouteType } from "@/app/router";
+import { useAuth } from "@clerk/react";
 
 // Recursive function to render routes and their nested children
 const renderRoutes = (routes: AppRouteType[], parentPath = ""): JSX.Element[] => {
@@ -54,42 +47,11 @@ const renderRoutes = (routes: AppRouteType[], parentPath = ""): JSX.Element[] =>
 
 // Component with router-dependent logic
 const AppContent = () => {
-    const { i18n } = useTranslation();
-    const dispatch = useAppDispatch();
-    const activeStore = useSelector(selectActiveStore);
-    const currentUser = useAppSelector(selectCurrentUser);
+    // Clerk initialization status
+    const { isLoaded } = useAuth();
 
-    const [isFirebaseReady, setIsFirebaseReady] = useState(false);
-
-    useEffect(() => {
-        // Listen for Firebase to read IndexedDB and determine session status
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-            if (!firebaseUser) {
-                // If Firebase says no session exists, force clear Redux state
-                dispatch(logOut());
-            }
-            // Firebase has completed its boot cycle!
-            setIsFirebaseReady(true);
-        });
-
-        // Cleanup listener on unmounting
-        return () => unsubscribe();
-    }, [dispatch]);
-
-    // Effect of language change
-    useEffect(() => {
-        if (activeStore?.storeType) {
-            const currentLanguage = i18n.language;
-            const targetLanguage = activeStore.storeType;
-
-            if (currentLanguage !== targetLanguage) {
-                i18n.changeLanguage(targetLanguage);
-            }
-        }
-    }, [activeStore, i18n]);
-
-    // Block the rest of the app from rendering or making queries until Firebase is ready
-    if (!isFirebaseReady) {
+    // Block rendering until Clerk is fully initialized
+    if (!isLoaded) {
         return <Spinner />;
     }
 
@@ -97,7 +59,6 @@ const AppContent = () => {
         <>
             <ScrollToTop />
             <ErrorBoundary FallbackComponent={ErrorFallback}>
-                <AuthGuard currentUser={currentUser} />
                 <Routes>{renderRoutes(appRoutes)}</Routes>
             </ErrorBoundary>
         </>

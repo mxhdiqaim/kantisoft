@@ -46,16 +46,12 @@ export const useSignoutMutation = () => {
             await api.post("/auth/signout");
         },
         onSettled: () => {
-            // Whether the server call succeeds or fails (e.g. offline),
-            // force the local logout anyway.
+            // Whether the server call succeeds or fails (e.g. offline), force the local logout anyway.
 
-            // 1. Clear Zustand state (localStorage is automatically cleared!)
             logOut();
 
-            // 2. Clear all TanStack Query cache (equivalent to resetApiState)
             queryClient.clear();
 
-            // 3. Redirect
             window.location.href = "/signin";
         },
     });
@@ -68,7 +64,7 @@ export const useSyncProfileMutation = () => {
         // Assuming your backend has a /users/me endpoint that returns the profile
         // based on the Clerk JWT token in the header.
         mutationFn: async () => {
-            const response = await api.get<{ data: UserType }>("/users/me");
+            const response = await api.get<{ data: UserType }>("/user/me");
             return response.data.data;
         },
         onSuccess: (user) => {

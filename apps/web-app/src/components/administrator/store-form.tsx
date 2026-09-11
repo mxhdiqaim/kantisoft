@@ -1,7 +1,12 @@
-import { getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { useNotification } from "@/shared";
 import { useCreateStoreMutation, useUpdateStoreMutation } from "@/store/slice";
-import { createStoreSchema, type CreateStoreType, STORE_TYPES, type StoreType } from "@/types/store-types.ts";
+import {
+    createBusinessSchema,
+    type CreateBusinessType,
+    STORE_TYPES,
+    type BusinessType,
+} from "@/modules/iam/types/business.type.ts";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { FormControl, Grid, InputAdornment, MenuItem } from "@mui/material";
 import { useEffect } from "react";
@@ -17,14 +22,14 @@ import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 interface Props {
     open: boolean;
     onClose: () => void;
-    currentData: StoreType | null;
+    currentData: BusinessType | null;
 }
 
 const StoreForm = ({ open, onClose, currentData }: Props) => {
     const { id } = useParams<{ id: string }>();
     const isEditMode = !!currentData;
 
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
 
     const [createStore, { isLoading: isCreating }] = useCreateStoreMutation();
     const [updateStore, { isLoading: isUpdating }] = useUpdateStoreMutation();
@@ -41,7 +46,7 @@ const StoreForm = ({ open, onClose, currentData }: Props) => {
             storeType: "restaurant",
         },
 
-        resolver: yupResolver(createStoreSchema),
+        resolver: yupResolver(createBusinessSchema),
     });
 
     useEffect(() => {
@@ -61,22 +66,22 @@ const StoreForm = ({ open, onClose, currentData }: Props) => {
         }
     }, [open, currentData, reset]);
 
-    const onSubmit = async (formData: CreateStoreType) => {
+    const onSubmit = async (formData: CreateBusinessType) => {
         try {
             if (isEditMode) {
                 await updateStore({ id: id!, ...formData }).unwrap();
-                notify("Store updated successfully!", "success");
+                successMessage("Store updated successfully!");
             } else {
                 await createStore(formData).unwrap();
-                notify("Store created successfully!", "success");
+                successMessage("Store created successfully!");
             }
 
             onClose();
             reset();
         } catch (error) {
             const defaultMessage = isEditMode ? "Failed to update store" : "Failed to create store";
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiErrorUtil(error, defaultMessage);
+            errorMessage(apiError.message);
         }
     };
     const isLoading = isCreating || isUpdating;

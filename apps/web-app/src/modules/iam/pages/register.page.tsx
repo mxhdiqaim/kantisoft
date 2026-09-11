@@ -20,7 +20,7 @@ import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import { signInWithCustomToken } from "firebase/auth";
-import { auth } from "@/config/firebase.ts";
+import { firebaseAuth } from "@/config";
 import { StyledTextField } from "@/shared/components/ui";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "@/store/slice/auth-slice.ts";
@@ -56,7 +56,7 @@ const RegisterPage = () => {
             const response = await signup(rest).unwrap();
 
             if (response.token) {
-                await signInWithCustomToken(auth, response.token);
+                await signInWithCustomToken(firebaseAuth, response.token);
             }
 
             dispatch(setCredentials({ user: response.user }));

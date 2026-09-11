@@ -9,7 +9,7 @@ import { StyledTextField } from "@/shared/components/ui";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { updatePasswordSchema, type UpdatePasswordType } from "@/types/user-types.ts";
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
-import { auth } from "@/config/firebase";
+import { firebaseAuth } from "@/config";
 
 import { ArrowBackIosNewOutlined, Visibility, VisibilityOff } from "@mui/icons-material";
 
@@ -40,7 +40,7 @@ const ChangePasswordScreen = () => {
     const isLoading = isFirebaseLoading || isSubmitting;
 
     const onSubmit = async (data: UpdatePasswordType) => {
-        const user = auth.currentUser;
+        const user = firebaseAuth.currentUser;
 
         if (!user || !user.email) {
             errorMessage("You must be logged in to change your password.");

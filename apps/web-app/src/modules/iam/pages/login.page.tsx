@@ -1,23 +1,25 @@
-import { getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { useSigninMutation } from "@/store/slice";
-import { loginUserType, type LoginUserType } from "@/types/user-types.ts";
+import { loginUserType, type LoginUserType } from "@/types/user-types";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Box, FormControl, FormHelperText, Grid, Link as MuiLink, Typography, useTheme } from "@mui/material";
-
 import { Controller, useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button";
 import { StyledTextField } from "@/shared/components/ui";
-
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { auth } from "@/config/firebase.ts";
+import { useSignIn } from "@clerk/react";
+import { useSyncProfileMutation } from "@/modules/iam/api/auth.api";
+import { useNotification } from "@/shared";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 
 const LoginPage = () => {
     const theme = useTheme();
     const navigate = useNavigate();
-    const notify = useNotifier();
-    const [login, { isLoading: isBackendLoading }] = useSigninMutation();
+
+    const { warning: notifyWarning, error: notifyError } = useNotification();
+
+    const { signIn, fetchStatus } = useSignIn();
+
+    // TanStack Query hook
+    const { mutateAsync: syncProfile, isPending: isSyncing } = useSyncProfileMutation();
 
     const {
         control,
@@ -33,41 +35,35 @@ const LoginPage = () => {
         resolver: yupResolver(loginUserType),
     });
 
-    const isLoading = isSubmitting || isBackendLoading;
+    const isLoading = isSubmitting || isSyncing || fetchStatus === "fetching";
 
     const onSubmit = async (data: LoginUserType) => {
         try {
-            // Authenticate with Firebase
-            const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+            const result = await signIn.password({
+                identifier: data.email,
+                password: data.password,
+            });
 
-            // Get the ID Token
-            const token = await userCredential.user.getIdToken();
-
-            // Send the token to your Kantisoft Backend
-            await login({ token }).unwrap();
-
-            navigate("/", { replace: true });
-        } catch (err) {
-            if (auth.currentUser) {
-                await signOut(auth);
-            }
-
-            const defaultMessage = "Something went wrong. Please try again.";
-            let errorMessage: string;
-
-            if (err && typeof err === "object" && "code" in err) {
-                const firebaseError = err as { code: string; message: string };
-
-                if (firebaseError.code === "auth/invalid-credential") {
-                    errorMessage = "Invalid email or password.";
-                } else {
-                    errorMessage = firebaseError.message;
-                }
+            if (result.error) {
+                console.warn("Clerk sign in requires further action:", result);
+                notifyWarning("Further verification required (e.g., MFA).");
             } else {
-                errorMessage = getApiError(err, defaultMessage).message;
-            }
+                // Finalize sets the active session in the browser
+                await signIn.finalize();
 
-            notify(errorMessage, "error");
+                // Fetch user profile from Kantisoft backend and save to Zustand
+                await syncProfile();
+
+                // Redirect home
+                navigate("/", { replace: true });
+            }
+            // eslint-disable-next-line
+        } catch (error: any) {
+            console.error("Login failed:", error);
+
+            const apiError = parseApiErrorUtil(error, "Invalid email or password.");
+
+            notifyError(apiError.message);
 
             setError("email", { type: "manual" });
             setError("password", { type: "manual" });
@@ -86,15 +82,7 @@ const LoginPage = () => {
                     m: { xs: 3, md: 0 },
                 }}
             >
-                <Box
-                    sx={{
-                        width: "100%",
-                        maxWidth: {
-                            xs: "100%",
-                            sm: "400px",
-                        },
-                    }}
-                >
+                <Box sx={{ width: "100%", maxWidth: { xs: "100%", sm: "400px" } }}>
                     <Box sx={{ textAlign: "center", mb: 5 }}>
                         <Typography variant={"h5"} sx={{ fontWeight: 500 }}>
                             Welcome Back! Login to your account
@@ -105,7 +93,6 @@ const LoginPage = () => {
                             <Controller
                                 name="email"
                                 control={control}
-                                rules={{ required: true }}
                                 render={({ field: { value, onChange, onBlur } }) => (
                                     <StyledTextField
                                         autoFocus
@@ -127,16 +114,14 @@ const LoginPage = () => {
                             <Controller
                                 name="password"
                                 control={control}
-                                rules={{ required: true }}
                                 render={({ field: { value, onChange, onBlur } }) => (
                                     <StyledTextField
                                         value={value}
                                         onBlur={onBlur}
                                         label="Password"
                                         onChange={onChange}
-                                        id="auth-login-v2-password"
-                                        error={Boolean(errors.password)}
                                         type={"password"}
+                                        error={Boolean(errors.password)}
                                         sx={{ borderRadius: theme.borderRadius.small }}
                                     />
                                 )}
@@ -145,29 +130,17 @@ const LoginPage = () => {
                                 <FormHelperText sx={{ color: "error.main" }}>{errors.password.message}</FormHelperText>
                             )}
                         </FormControl>
-                        <Box
-                            sx={{
-                                display: "flex",
-                                justifyContent: "flex-end",
-                                my: 3,
-                            }}
-                        >
+                        <Box sx={{ display: "flex", justifyContent: "flex-end", my: 3 }}>
                             <MuiLink component={Link} to="/forget-password" sx={{ textDecoration: "none" }}>
                                 Forgot Password?
                             </MuiLink>
                         </Box>
                         <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-                            {/* 3. Update title and disabled state to use the combined isLoading flag */}
                             <CustomButton
                                 title={isLoading ? "Signing in..." : "Sign in"}
                                 type="submit"
                                 variant="contained"
-                                sx={{
-                                    width: "100%",
-                                    color: "#fff",
-                                    p: 2,
-                                    mb: 2,
-                                }}
+                                sx={{ width: "100%", color: "#fff", p: 2, mb: 2 }}
                                 disabled={isLoading}
                             />
                         </Box>

@@ -63,7 +63,7 @@ import type {
     ProductionWastageSummaryType,
 } from "@/types/production-types.ts";
 import type { CategoryType, CreateCategoryType } from "@/types/categories-types.ts";
-import { auth } from "@/config/firebase";
+import { firebaseAuth } from "@/config";
 
 const baseUrl = getEnvVariable("VITE_APP_API_URL");
 
@@ -72,10 +72,10 @@ const baseQuery = fetchBaseQuery({
     baseUrl,
     prepareHeaders: async (headers) => {
         // Try to get the absolute freshest token from Firebase natively
-        if (auth.currentUser) {
+        if (firebaseAuth.currentUser) {
             try {
                 // getIdToken() automatically refreshes if expired!
-                const freshToken = await auth.currentUser.getIdToken();
+                const freshToken = await firebaseAuth.currentUser.getIdToken();
                 headers.set("authorization", `Bearer ${freshToken}`);
             } catch (error) {
                 console.error("Failed to get Firebase token", error);

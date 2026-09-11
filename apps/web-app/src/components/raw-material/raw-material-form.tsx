@@ -9,8 +9,8 @@ import {
     useGetAllUnitOfMeasurementsQuery,
     useUpdateRawMaterialMutation,
 } from "@/store/slice";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { useNotification } from "@/shared";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import {
     createRawMaterialSchema,
@@ -31,7 +31,7 @@ interface Props {
 }
 
 const RawMaterialForm: FC<Props> = ({ open, onClose, rawMaterial }) => {
-    const notify = useNotifier();
+    const notification = useNotification();
     const isEditMode = !!rawMaterial;
 
     const { data: measurementUnit, isLoading: isMeasurementLoading } = useGetAllUnitOfMeasurementsQuery(undefined, {
@@ -98,15 +98,15 @@ const RawMaterialForm: FC<Props> = ({ open, onClose, rawMaterial }) => {
         try {
             if (isEditMode && rawMaterial) {
                 await updateRawMaterial({ id: rawMaterial.id, ...data }).unwrap();
-                notify("Raw Material Updated Successfully!", "success");
+                notification.success("Raw Material Updated Successfully!");
             } else {
                 await createRawMaterial(data).unwrap();
-                notify("Raw Material Added Successfully!", "success");
+                notification.success("Raw Material Added Successfully!");
             }
         } catch (error) {
             const defaultMessage = `Failed to ${isEditMode ? "update" : "create"} Raw Material. Please try again.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiErrorUtil(error, defaultMessage);
+            notification.error(apiError.message);
         }
     };
 

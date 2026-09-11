@@ -16,6 +16,8 @@ class UserRoutes {
     private initializeRoutes() {
         this.router.get("/", this.controller.index);
 
+        this.router.get("/me", this.controller.getMe);
+
         this.router.post(
             "/invite",
             systemMiddleware.validateRequestBody(userValidator.inviteSchema),

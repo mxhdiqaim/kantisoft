@@ -2,7 +2,7 @@ import { type FormEvent, useState } from "react";
 import { Box, Typography, Grid } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "@/config/firebase.ts";
+import { firebaseAuth } from "@/config";
 import { useNotification } from "@/shared";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import { StyledTextField } from "@/shared/components/ui";
@@ -25,7 +25,7 @@ const ForgetPasswordPage = () => {
         setIsLoading(true);
         try {
             // Firebase handles everything: generates the token, sends the email
-            await sendPasswordResetEmail(auth, email);
+            await sendPasswordResetEmail(firebaseAuth, email);
             successMessage("Password reset email sent! Check your inbox.");
             setEmail("");
         } catch (error) {
