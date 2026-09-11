@@ -12,8 +12,8 @@ import {
     TransactionTypeEnum,
 } from "@/types/inventory-types.ts";
 import { useAdjustStockMutation } from "@/store/slice";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { useNotification } from "@/shared";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import { StyledTextField } from "@/shared/components/ui";
 
@@ -27,7 +27,7 @@ interface Props {
 }
 
 const InventoryAdjustmentForm: FC<Props> = ({ open, onClose, inventoryItem }) => {
-    const notify = useNotifier();
+    const { success: notifySuccess, error: notifyError } = useNotification();
     const [adjustStock, { isLoading, isSuccess }] = useAdjustStockMutation();
 
     const {
@@ -68,11 +68,11 @@ const InventoryAdjustmentForm: FC<Props> = ({ open, onClose, inventoryItem }) =>
         if (!inventoryItem) return;
         try {
             await adjustStock(data).unwrap();
-            notify("Stock adjusted successfully!", "success");
+            notifySuccess("Stock adjusted successfully!");
         } catch (error) {
             const defaultMessage = `Failed to adjust stock. Please try again.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiErrorUtil(error, defaultMessage);
+            notifyError(apiError.message);
         }
     };
 

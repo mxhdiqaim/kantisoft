@@ -1,6 +1,6 @@
 import { useGetSingleRawMaterialQuery } from "@/store/slice";
 // import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 // import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { Box, Divider, Grid, Stack, Typography } from "@mui/material";
 import { EditOutlined } from "@mui/icons-material";
@@ -42,7 +42,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({ rawMaterialId, open, onOpen, onClose
         setFormModalOpen(true);
     };
 
-    const apiError = getApiError(error, "Failed to load raw material data.");
+    const apiError = parseApiErrorUtil(error, "Failed to load raw material data.");
 
     return (
         <DataDrawer
@@ -94,7 +94,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({ rawMaterialId, open, onOpen, onClose
                                         Modified on
                                     </Typography>
                                     <Typography variant="body1" fontWeight={500}>
-                                        {formatRelativeDateTime(rawMaterial.lastModified)}
+                                        {formatRelativeDateTime(rawMaterial.updatedAt)}
                                     </Typography>
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 6 }}>

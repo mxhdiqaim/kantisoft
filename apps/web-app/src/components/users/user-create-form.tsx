@@ -1,8 +1,8 @@
-import { getApiError } from "@/helpers/get-api-error";
-import useNotifier from "@/hooks/useNotifier";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { useNotification } from "@/shared";
 import { useCreateUserMutation, useGetAllStoresQuery } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
-import type { StoreType } from "@/types/store-types";
+import type { BusinessType } from "@/modules/iam/types/business.type.ts";
 import { createUserSchema, type CreateUserType, UserRoleEnum } from "@/types/user-types";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
@@ -24,7 +24,7 @@ interface Props {
 }
 
 const UserCreateForm = ({ open, onClose }: Props) => {
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
     const currentUser = useSelector(selectCurrentUser);
     const [showPassword, setShowPassword] = useState(false);
 
@@ -70,13 +70,13 @@ const UserCreateForm = ({ open, onClose }: Props) => {
     const onSubmit = async (data: CreateUserType) => {
         try {
             await createUser(data as CreateUserType).unwrap();
-            notify("User created successfully!", "success");
+            successMessage("User created successfully!");
 
             onClose();
         } catch (error) {
             const defaultMessage = `Failed to create user.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiErrorUtil(error, defaultMessage);
+            errorMessage(apiError.message);
         }
     };
 
@@ -305,7 +305,7 @@ const UserCreateForm = ({ open, onClose }: Props) => {
                                                 <MenuItem value={""} disabled>
                                                     Select Store
                                                 </MenuItem>
-                                                {stores?.map((store: StoreType) => (
+                                                {stores?.map((store: BusinessType) => (
                                                     <MenuItem key={store.id} value={store.id}>
                                                         {store.name}
                                                     </MenuItem>

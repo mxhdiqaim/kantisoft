@@ -13,8 +13,8 @@ import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-
 import CreateInventoryForm from "@/components/inventory/create-inventory-form.tsx";
 import { useTranslation } from "react-i18next";
 import CustomButton from "@/shared/components/ui/button.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { useNotification } from "@/shared";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import InventoryAdjustmentForm from "@/components/inventory/inventory-adjustment-form.tsx";
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "@/use-search.ts";
@@ -38,7 +38,7 @@ const Goods = () => {
     const { t } = useTranslation();
     const theme = useTheme();
     const currentUser = useSelector(selectCurrentUser);
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
     const navigate = useNavigate();
 
     const { data: inventoryData, isLoading, isFetching, isError, error } = useGetAllInventoryQuery();
@@ -96,11 +96,11 @@ const Goods = () => {
 
         try {
             await continueInventory(selectedRow.menuItemId).unwrap();
-            notify("Item has been restored.", "success");
+            successMessage("Item has been restored.");
         } catch (err) {
             const defaultMessage = "Failed to continue item.";
-            const apiError = getApiError(err, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiErrorUtil(err, defaultMessage);
+            errorMessage(apiError.message);
         }
     };
     const handleDiscontinue = async () => {
@@ -108,11 +108,11 @@ const Goods = () => {
 
         try {
             await discontinueInventory(selectedRow.menuItemId).unwrap();
-            notify("Item has been discontinued.", "success");
+            successMessage("Item has been discontinued.");
         } catch (err) {
             const defaultMessage = "Failed to discontinue item.";
-            const apiError = getApiError(err, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiErrorUtil(err, defaultMessage);
+            errorMessage(apiError.message);
         }
     };
 
@@ -120,12 +120,12 @@ const Goods = () => {
         if (selectedRow) {
             try {
                 await deleteInventoryRecord(selectedRow.menuItemId).unwrap();
-                notify("Item has been deleted.", "success");
+                successMessage("Item has been deleted.");
                 handleCloseDeleteModal();
             } catch (err) {
                 const defaultMessage = "Failed to delete item.";
-                const apiError = getApiError(err, defaultMessage);
-                notify(apiError.message, "error");
+                const apiError = parseApiErrorUtil(err, defaultMessage);
+                errorMessage(apiError.message);
             }
         }
     };
@@ -297,8 +297,8 @@ const Goods = () => {
     );
 
     if (isError) {
-        const apiError = getApiError(error, `Failed to load Goods.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        const apiError = parseApiErrorUtil(error, `Failed to load Goods.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

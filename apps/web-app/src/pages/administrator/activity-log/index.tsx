@@ -7,8 +7,8 @@ import { useMemo, useState } from "react";
 import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
 import { type GridColDef } from "@mui/x-data-grid";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { useNotification } from "@/shared";
 import DataGridTable from "@/shared/components/ui/data-grid-table";
 import { getActionColor } from "@/shared/utils";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
@@ -19,7 +19,7 @@ import { useTranslation } from "react-i18next";
 
 const ActivityLogPage = () => {
     const { t } = useTranslation();
-    const notify = useNotifier();
+    const { error: errorMessage } = useNotification();
     const currentUser = useAppSelector(selectCurrentUser);
 
     // Pagination state
@@ -148,9 +148,9 @@ const ActivityLogPage = () => {
     }
 
     if (isError && !data) {
-        const apiError = getApiError(error, "Failed to load users. Please try again later.");
-        notify(apiError.message, "error");
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        const apiError = parseApiErrorUtil(error, "Failed to load users. Please try again later.");
+        errorMessage(apiError.message);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

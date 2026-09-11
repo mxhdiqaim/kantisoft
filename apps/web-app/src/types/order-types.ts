@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {extendBaseSchema, ORDER_PERIODS} from "@/types";
+import { extendBaseSchema, ORDER_PERIODS } from "@/shared/types";
 import * as yup from "yup";
-import {type MenuItemType} from "./menu-item-type";
+import { type MenuItemType } from "./menu-item-type";
 
 export const OrderStatus = {
     CANCELED: "canceled",
@@ -16,7 +16,6 @@ export const OrderPaymentMethod = {
     TRANSFER: "transfer",
 } as const;
 const PAYMENT_METHODS = Object.values(OrderPaymentMethod);
-
 
 // Core schema for creating and validating an order
 const coreOrderSchema = yup.object({
@@ -82,7 +81,11 @@ export const orderItemSchema = extendBaseSchema(coreOrderItemSchema);
 export const createOrderSchema = yup.object({
     sellerId: yup.string().required(),
     storeId: yup.string().required(),
-    paymentMethod: yup.string().oneOf(PAYMENT_METHODS, "Invalid payment method").default(OrderPaymentMethod.CASH).required("Payment method is required"),
+    paymentMethod: yup
+        .string()
+        .oneOf(PAYMENT_METHODS, "Invalid payment method")
+        .default(OrderPaymentMethod.CASH)
+        .required("Payment method is required"),
     orderStatus: yup
         .string()
         .oneOf(ORDER_STATUSES, "Invalid order status")

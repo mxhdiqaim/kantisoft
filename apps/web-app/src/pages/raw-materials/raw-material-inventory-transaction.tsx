@@ -17,16 +17,16 @@ import {
     type FetchRawMaterialAndFilterByPeriodType,
 } from "@/types/raw-material-types.ts";
 import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { useNotification } from "@/shared";
 
 import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 const RawMaterialInventoryTransaction = () => {
     const theme = useTheme();
-    const notify = useNotifier();
+    const { error: errorMessage } = useNotification();
 
     const {
         control,
@@ -220,9 +220,9 @@ const RawMaterialInventoryTransaction = () => {
     }, [fulfilledTimeStamp]);
 
     if (isError) {
-        notify(`Failed to load Transactions. Please try again later.`, "error");
-        const apiError = getApiError(error, `Failed to load Transactions.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        errorMessage(`Failed to load Transactions. Please try again later.`);
+        const apiError = parseApiErrorUtil(error, `Failed to load Transactions.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

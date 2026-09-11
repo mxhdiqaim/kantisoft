@@ -6,8 +6,8 @@ import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { createInventorySchema, type CreateInventoryType } from "@/types/inventory-types.ts";
 import { useCreateInventoryRecordMutation, useGetMenuItemsQuery } from "@/store/slice";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { useNotification } from "@/shared";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import { StyledTextField } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
@@ -21,7 +21,7 @@ interface Props {
 }
 
 const CreateInventoryForm: FC<Props> = ({ open, onClose }) => {
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
 
     const { data: menuItemsData, isLoading: isLoadingMenuItems } = useGetMenuItemsQuery({});
     const memoizedMenuItems = useMemoizedArray(menuItemsData);
@@ -57,12 +57,12 @@ const CreateInventoryForm: FC<Props> = ({ open, onClose }) => {
     const onSubmit = async (data: CreateInventoryType) => {
         try {
             await createInventory(data).unwrap();
-            notify("Inventory Record Added Successfully!", "success");
+            successMessage("Inventory Record Added Successfully!");
         } catch (error) {
             const defaultMessage = `Failed to create inventory record. Please try again.`;
-            const apiError = getApiError(error, defaultMessage);
+            const apiError = parseApiErrorUtil(error, defaultMessage);
 
-            notify(apiError.message, "error");
+            errorMessage(apiError.message);
         }
     };
 

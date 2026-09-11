@@ -7,19 +7,19 @@ import DataGridTable from "@/shared/components/ui/data-grid-table";
 import { camelCaseToTitleCase } from "@/shared/utils";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { filterSchema, type FilterSchemaType } from "@/types";
+import { filterSchema, type FilterSchemaType } from "@/shared/types";
 import { getTransactionChipColor, getTransactionTypeChipColor } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { useSearch } from "@/use-search.ts";
 import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
 import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { useNotification } from "@/shared";
 import { formatRelativeDateTime } from "@/shared/utils/get-relative-time.ts";
 
 const InventoryTransactions = () => {
-    const notify = useNotifier();
+    const { error: errorMessage } = useNotification();
 
     const { control, watch } = useForm<FilterSchemaType>({
         mode: "onChange",
@@ -174,9 +174,9 @@ const InventoryTransactions = () => {
     }, [fulfilledTimeStamp]);
 
     if (isError) {
-        notify(`Failed to load transactions. Please try again later.`, "error");
-        const apiError = getApiError(error, `Failed to load transactions.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        errorMessage(`Failed to load transactions. Please try again later.`);
+        const apiError = parseApiErrorUtil(error, `Failed to load transactions.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

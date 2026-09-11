@@ -1,6 +1,6 @@
-import type {FC, ReactNode} from "react";
-import {Box, type PaperProps, SwipeableDrawer, type SxProps, type Theme} from "@mui/material";
-import type {DrawerAnchor} from "@/types";
+import type { FC, ReactNode } from "react";
+import { Box, type PaperProps, SwipeableDrawer, type SxProps, type Theme } from "@mui/material";
+import type { DrawerAnchor } from "@/shared/types";
 
 interface Props {
     anchor?: DrawerAnchor;
@@ -13,7 +13,7 @@ interface Props {
     PaperProps?: Partial<PaperProps>;
 }
 
-const CustomDrawer: FC<Props> = ({anchor, open, onClose, onOpen, children, PaperProps, sx, key}) => {
+const CustomDrawer: FC<Props> = ({ anchor, open, onClose, onOpen, children, PaperProps, sx, key }) => {
     return (
         <SwipeableDrawer
             key={key}

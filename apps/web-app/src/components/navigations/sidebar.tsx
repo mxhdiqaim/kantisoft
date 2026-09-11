@@ -30,7 +30,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { Props as AppBarProps } from "./appbar";
 import { UserRoleEnum } from "@/types/user-types.ts";
-import type { StoreType } from "@/types/store-types.ts";
+import type { BusinessType } from "@/modules/iam/types/business.type.ts";
 import CustomButton from "@/shared/components/ui/button.tsx";
 
 import Icon from "@/shared/components/ui/icon.tsx";
@@ -55,7 +55,7 @@ const SideBar: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
     const { data: stores, isLoading: isLoadingStores } = useGetAllStoresQuery();
     const activeStore = useSelector(selectActiveStore);
 
-    const handleStoreSelect = (store: StoreType) => {
+    const handleStoreSelect = (store: BusinessType) => {
         dispatch(setActiveStore(store));
 
         // Reset the entire API state to force refetching of all data for the new store

@@ -1,7 +1,7 @@
 import SalesHistoryOverviewCard from "@/components/point-of-sale/sales-history-overview-card.tsx";
 import SalesHistoryTable from "@/components/point-of-sale/sales-history-table.tsx";
 import { useGetOrdersByPeriodQuery } from "@/store/slice";
-import { filterSchema, type FilterSchemaType } from "@/types";
+import { filterSchema, type FilterSchemaType } from "@/shared/types";
 import { formatCurrency } from "@/shared/utils";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DinnerDiningOutlined, DomainVerificationOutlined, MonetizationOn, Person2Outlined } from "@mui/icons-material";
@@ -11,13 +11,13 @@ import { useForm } from "react-hook-form";
 import { UserRoleEnum, UserStatusEnum } from "@/types/user-types.ts";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { useNotification } from "@/shared";
 import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
 
 const SalesHistory = () => {
-    const notify = useNotifier();
+    const { error: errorMessage } = useNotification();
     const currentUser = useSelector(selectCurrentUser);
 
     const { control, watch } = useForm<FilterSchemaType>({
@@ -55,9 +55,9 @@ const SalesHistory = () => {
     }, [fulfilledTimeStamp]);
 
     if (isError) {
-        notify(` Failed to load sales history. Please try again later.`, "error");
-        const apiError = getApiError(error, `Failed to load sales history.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        errorMessage(` Failed to load sales history. Please try again later.`);
+        const apiError = parseApiErrorUtil(error, `Failed to load sales history.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

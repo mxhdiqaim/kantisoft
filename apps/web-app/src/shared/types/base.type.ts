@@ -5,8 +5,8 @@ import * as yup from "yup";
 export type BaseSchema = {
     id: string;
     createdAt: string;
-    lastModified: string;
-}
+    updatedAt: string;
+};
 
 export const extendBaseSchema = <T extends yup.AnyObject>(fields: T): yup.ObjectSchema<any> => {
     return yup.object({
@@ -62,10 +62,10 @@ export const localSyncStatusEnum = {
     SYNCED: "synced",
     PENDING: "pending",
     ERROR: "error",
-    SYNCING: "syncing"
+    SYNCING: "syncing",
 } as const;
 
-export const LOCAL_SYNC_STATUS_VALUES = Object.values(localSyncStatusEnum)
+export const LOCAL_SYNC_STATUS_VALUES = Object.values(localSyncStatusEnum);
 
 export type LocalSyncStatus = (typeof LOCAL_SYNC_STATUS_VALUES)[number];
 

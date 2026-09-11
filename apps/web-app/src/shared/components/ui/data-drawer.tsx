@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import { Box, Grid, IconButton, type SxProps, type Theme, Typography } from "@mui/material";
 import CustomDrawer from "@/shared/components/ui/custom-drawer.tsx";
-import type { DrawerAnchor } from "@/types";
+import type { DrawerAnchor } from "@/shared/types";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { type ApiError, getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { useNotification } from "@/shared";
 
 import Icon from "@/shared/components/ui/icon.tsx";
 import CancelSvgIcon from "@/assets/icons/cancel.svg";
@@ -19,7 +19,7 @@ interface Props {
     sx?: SxProps<Theme>;
     PaperProps?: SxProps<Theme>;
     error?: unknown;
-    apiError?: ApiError;
+    apiError?: { message: string; status?: number };
 }
 
 const DataDrawer = ({
@@ -34,11 +34,11 @@ const DataDrawer = ({
     error,
     apiError,
 }: Props) => {
-    const notify = useNotifier();
+    const { error: errorMessage } = useNotification();
 
     if (error) {
-        const apiError = getApiError(error, "Failed to load raw material data.");
-        notify(apiError.message, "error");
+        const apiError = parseApiErrorUtil(error, "Failed to load raw material data.");
+        errorMessage(apiError.message);
     }
 
     return (
@@ -69,7 +69,7 @@ const DataDrawer = ({
                 </Grid>
             </Grid>
             {error ? (
-                <ApiErrorDisplay statusCode={apiError?.type} message={apiError?.message} />
+                <ApiErrorDisplay statusCode={apiError?.status} message={apiError?.message} />
             ) : (
                 <Box>{children}</Box>
             )}

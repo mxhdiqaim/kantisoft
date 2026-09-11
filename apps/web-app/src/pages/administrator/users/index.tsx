@@ -1,6 +1,6 @@
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { useNotification } from "@/shared";
 import { useAppSelector } from "@/store";
 import { useChangeUserStoreMutation, useGetAllStoresQuery, useGetAllUsersQuery } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
@@ -22,11 +22,10 @@ import { useTranslation } from "react-i18next";
 import UserCreateForm from "@/components/users/user-create-form.tsx";
 import UserUpdateForm from "@/components/users/user-update-form.tsx";
 import ViewUserDrawer from "@/components/administrator/user/view-user-drawer.tsx";
-
 import { AddOutlined, EditOutlined, MoreVert, StorefrontOutlined, VisibilityOutlined } from "@mui/icons-material";
 
 const UsersPage = () => {
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
     const navigate = useNavigate();
     const theme = useTheme();
     const { t } = useTranslation();
@@ -102,11 +101,11 @@ const UsersPage = () => {
     const handleChangeStore = async (userId: string, newStoreId: string) => {
         try {
             await changeUserStore({ id: userId, newStoreId }).unwrap();
-            notify("User store changed successfully", "success");
+            successMessage("User store changed successfully");
             handleCloseChangeStoreDialog();
         } catch (err) {
-            const apiError = getApiError(err, "Failed to change user store.");
-            notify(apiError.message, "error");
+            const apiError = parseApiErrorUtil(err, "Failed to change user store.");
+            errorMessage(apiError.message);
         }
     };
 
@@ -308,9 +307,9 @@ const UsersPage = () => {
     );
 
     if (isError) {
-        const apiError = getApiError(error, "Failed to load users. Please try again later.");
-        notify(apiError.message, "error");
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        const apiError = parseApiErrorUtil(error, "Failed to load users. Please try again later.");
+        errorMessage(apiError.message);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

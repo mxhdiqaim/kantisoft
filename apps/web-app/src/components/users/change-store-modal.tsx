@@ -1,7 +1,7 @@
 import { type FC, useState } from "react";
 import { Box, FormControl, InputAdornment, MenuItem } from "@mui/material";
 import type { UserType } from "@/types/user-types.ts";
-import type { StoreType } from "@/types/store-types.ts";
+import type { BusinessType } from "@/modules/iam/types/business.type.ts";
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import { StyledTextField } from "@/shared/components/ui";
 import CustomButton from "@/shared/components/ui/button.tsx";
@@ -13,7 +13,7 @@ interface Props {
     open: boolean;
     onClose: () => void;
     user: UserType | null;
-    stores: StoreType[];
+    stores: BusinessType[];
     onConfirm: (userId: string, newStoreId: string) => void;
     isLoading: boolean;
 }

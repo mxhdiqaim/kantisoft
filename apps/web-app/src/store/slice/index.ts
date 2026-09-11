@@ -1,4 +1,4 @@
-import { type ActivityLogEntry, type ActivityLogResponse, type QueryParamType } from "@/types";
+import { type ActivityLogEntry, type ActivityLogResponse, type QueryParamType } from "@/shared/types";
 import type {
     InventoryAlertType,
     SalesTrendType,
@@ -13,7 +13,7 @@ import type {
     Period as TimePeriod,
     SingleOrderType,
 } from "@/types/order-types.ts";
-import type { CreateStoreType, PaginatedStoreResponse, StoreType } from "@/types/store-types";
+import type { CreateBusinessType, PaginatedStoreResponse, BusinessType } from "@/modules/iam/types/business.type.ts";
 import { type CreateUserType, type RegisterUserType, UserRoleEnum, type UserType } from "@/types/user-types";
 import {
     type BaseQueryFn,
@@ -546,7 +546,7 @@ export const apiSlice = createApi({
         // -------------------------
         // Store Endpoints
         // -------------------------
-        getAllStores: builder.query<StoreType[], void>({
+        getAllStores: builder.query<BusinessType[], void>({
             query: () => "/stores",
             transformResponse: (response: PaginatedStoreResponse) => response.data,
             providesTags: (result) =>
@@ -554,11 +554,11 @@ export const apiSlice = createApi({
                     ? [...result.map(({ id }) => ({ type: "Store" as const, id })), { type: "Store", id: "LIST" }]
                     : [{ type: "Store", id: "LIST" }],
         }),
-        getStoreById: builder.query<StoreType, string>({
+        getStoreById: builder.query<BusinessType, string>({
             query: (id) => `/stores/${id}`,
             providesTags: (_result, _error, id) => [{ type: "Store", id }],
         }),
-        createStore: builder.mutation<StoreType, CreateStoreType>({
+        createStore: builder.mutation<BusinessType, CreateBusinessType>({
             query: (newStore) => ({
                 url: "/stores/create",
                 method: "POST",
@@ -566,7 +566,7 @@ export const apiSlice = createApi({
             }),
             invalidatesTags: [{ type: "Store", id: "LIST" }],
         }),
-        updateStore: builder.mutation<StoreType, Partial<StoreType> & Pick<StoreType, "id">>({
+        updateStore: builder.mutation<BusinessType, Partial<BusinessType> & Pick<BusinessType, "id">>({
             query: ({ id, ...patch }) => ({
                 url: `/stores/${id}`,
                 method: "PATCH",

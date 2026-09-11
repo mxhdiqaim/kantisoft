@@ -10,14 +10,14 @@ import CustomButton from "@/shared/components/ui/button.tsx";
 import { ArrowBackIosNewOutlined } from "@mui/icons-material";
 import { getTransactionChipColor } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { useNotification } from "@/shared";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
 import { useSearch } from "@/use-search.ts";
 
 const SingleInventoryTransaction = () => {
-    const notify = useNotifier();
+    const { error: errorMessage } = useNotification();
     const { id: menuItemId } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
@@ -155,9 +155,9 @@ const SingleInventoryTransaction = () => {
     }
 
     if (isError) {
-        notify(`Failed to load transactions. Please try again later.`, "error");
-        const apiError = getApiError(error, `Failed to load transactions.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        errorMessage(`Failed to load transactions. Please try again later.`);
+        const apiError = parseApiErrorUtil(error, `Failed to load transactions.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

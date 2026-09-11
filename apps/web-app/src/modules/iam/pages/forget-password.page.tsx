@@ -3,13 +3,13 @@ import { Box, Typography, Grid } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/config/firebase.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { useNotification } from "@/shared";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import { StyledTextField } from "@/shared/components/ui";
 
 const ForgetPasswordPage = () => {
     const navigate = useNavigate();
-    const notify = useNotifier();
+    const { warning: warningMessage, success: successMessage, error: errorMessage } = useNotification();
 
     const [email, setEmail] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -18,7 +18,7 @@ const ForgetPasswordPage = () => {
         event.preventDefault();
 
         if (!email) {
-            notify("Please enter your email address", "warning");
+            warningMessage("Please enter your email address");
             return;
         }
 
@@ -26,7 +26,7 @@ const ForgetPasswordPage = () => {
         try {
             // Firebase handles everything: generates the token, sends the email
             await sendPasswordResetEmail(auth, email);
-            notify("Password reset email sent! Check your inbox.", "success");
+            successMessage("Password reset email sent! Check your inbox.");
             setEmail("");
         } catch (error) {
             // Check for specific Firebase error codes
@@ -35,7 +35,7 @@ const ForgetPasswordPage = () => {
                     ? "No account found with this email."
                     : "Failed to send reset email. Please try again.";
 
-            notify(errorMsg, "error");
+            errorMessage(errorMsg);
         } finally {
             setIsLoading(false);
         }

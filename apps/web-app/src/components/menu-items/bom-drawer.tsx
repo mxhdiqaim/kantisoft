@@ -24,13 +24,13 @@ import {
     useGetAllUnitOfMeasurementsQuery,
     useGetBOMQuery,
 } from "@/store/slice";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { useNotification } from "@/shared";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import { defineBomSchema, type DefineBomSchemaType } from "@/types/bom-types.ts";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import { StyledTextField } from "@/shared/components/ui";
 import { bigDrawerPaperProps } from "@/components/styles";
 import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
@@ -52,7 +52,7 @@ interface Props {
 
 const BillOfMaterialsDrawer: FC<Props> = ({ open, onOpen, onClose, menuItemId }) => {
     const theme = useTheme();
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
 
     const { data: bomData, isLoading: isLoadingBom } = useGetBOMQuery(menuItemId!, { skip: !menuItemId });
     const memoizedBom = useMemoizedArray(bomData);
@@ -104,12 +104,12 @@ const BillOfMaterialsDrawer: FC<Props> = ({ open, onOpen, onClose, menuItemId })
 
         try {
             await defineBom({ menuItemId: menuItemId!, bomItems: data.bomItems }).unwrap();
-            notify("Recipe updated successfully!", "success");
+            successMessage("Recipe updated successfully!");
             onClose();
         } catch (error) {
             const defaultMessage = `Failed to save recipe. Please try again.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiErrorUtil(error, defaultMessage);
+            errorMessage(apiError.message);
         }
     };
 

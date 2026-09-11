@@ -11,7 +11,7 @@ import type { DeletedRawMaterialType } from "@/types/raw-material-types.ts";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
 import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { useNotification } from "@/shared";
 
 import { MoreVert, Undo as UndoIcon } from "@mui/icons-material";
 import { useRecoverRawMaterialMutation } from "@/store/slice";
@@ -22,7 +22,7 @@ interface Props {
 }
 
 const RawMaterialTrashBinTab = ({ data, loading }: Props) => {
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
     const theme = useTheme();
 
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -49,11 +49,11 @@ const RawMaterialTrashBinTab = ({ data, loading }: Props) => {
 
         try {
             await recoverRawMaterial(selectedRow.id).unwrap();
-            notify("Raw material recovered successfully", "success");
+            successMessage("Raw material recovered successfully");
             handleCloseDeleteModal();
         } catch (error) {
             console.error("Failed to recover raw material:", error);
-            notify("Failed to recover raw material", "error");
+            errorMessage("Failed to recover raw material");
         }
     };
 

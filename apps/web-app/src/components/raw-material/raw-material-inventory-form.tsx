@@ -18,8 +18,8 @@ import {
     useUpdateRawMaterialInventoryMutation,
 } from "@/store/slice";
 import CustomButton from "@/shared/components/ui/button.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { useNotification } from "@/shared";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
@@ -30,7 +30,7 @@ interface Props {
 }
 
 const RawMaterialInventoryForm: FC<Props> = ({ open, onClose, rawMaterialInventory }) => {
-    const notify = useNotifier();
+    const notification = useNotification();
     const isEditMode = !!rawMaterialInventory;
 
     const { data: rawMaterialData, isLoading: isFetchingRawMaterial } = useGetAllRawMaterialsQuery(undefined, {
@@ -147,15 +147,15 @@ const RawMaterialInventoryForm: FC<Props> = ({ open, onClose, rawMaterialInvento
                     minStockLevel: data.minStockLevel,
                 };
                 await updateRawMaterialInventory(payload as UpdateRawMaterialInventoryType).unwrap();
-                notify("Raw Material Inventory Updated Successfully!", "success");
+                notification.success("Raw Material Inventory Updated Successfully!");
             } else {
                 await createRawMaterialInventory(data as CreateRawMaterialInventoryType).unwrap();
-                notify("Raw Material Inventory Added Successfully!", "success");
+                notification.success("Raw Material Inventory Added Successfully!");
             }
         } catch (error) {
             const defaultMessage = `Failed to update Inventory. Please try again.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiErrorUtil(error, defaultMessage);
+            notification.error(apiError.message);
         }
     };
 

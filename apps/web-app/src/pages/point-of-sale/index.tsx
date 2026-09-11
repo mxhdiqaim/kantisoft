@@ -3,8 +3,8 @@ import MenuIteFormModal from "@/components/menu-items/menu-item-form-modal.tsx";
 import OrderCart from "@/components/point-of-sale/order-cart";
 import PaymentModal from "@/components/point-of-sale/payment-modal";
 import { MenuItemSkeleton } from "@/shared";
-import { getApiError } from "@/helpers/get-api-error";
-import useNotifier from "@/hooks/useNotifier";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { useNotification } from "@/shared";
 import { useCreateOrderMutation, useGetMenuItemsQuery } from "@/store/slice";
 import type { CartItem } from "@/types/cart-item-type";
 import type { MenuItemType } from "@/types/menu-item-type";
@@ -17,7 +17,7 @@ import { useSearch } from "@/use-search.ts";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
 const PointOfSale = () => {
-    const notify = useNotifier();
+    const { warning, success, error: errorMessage } = useNotification();
     const { t } = useTranslation();
 
     const { data: menuItems, isLoading: isLoadingMenuItems, isError } = useGetMenuItemsQuery({});
@@ -60,7 +60,7 @@ const PointOfSale = () => {
 
     const handleOpenPaymentDialog = () => {
         if (cartItems.length === 0) {
-            notify("Please add items to the cart first.", "warning");
+            warning("Please add items to the cart first.");
             return;
         }
         setPaymentDialogOpen(true);
@@ -73,14 +73,14 @@ const PointOfSale = () => {
     const handleCompleteSale = async (orderData: Omit<CreateOrderType, "amountReceived">) => {
         try {
             await createOrder(orderData).unwrap();
-            notify("Order completed successfully!", "success");
+            success("Order completed successfully!");
             setCartItems([]);
             setPaymentDialogOpen(false);
         } catch (error) {
             console.log(error);
             const defaultMessage = "Failed to complete order.";
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiErrorUtil(error, defaultMessage);
+            errorMessage(apiError.message);
         }
     };
 

@@ -4,8 +4,8 @@ import { Box, FormControl, Grid, InputAdornment, MenuItem } from "@mui/material"
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { createWastageScheme, type CreateWastageType } from "@/types/production-types.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { useNotification } from "@/shared";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import {
     useGetAllRawMaterialInventoryQuery,
     useGetAllUnitOfMeasurementsQuery,
@@ -25,7 +25,7 @@ interface Props {
 }
 
 const WastageFormModal: FC<Props> = ({ open, onClose }) => {
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
 
     // Fetch Data
     const { data: rawMaterialInventory, isLoading: fetchingRawMaterialInventory } =
@@ -68,15 +68,15 @@ const WastageFormModal: FC<Props> = ({ open, onClose }) => {
     const onSubmit = async (data: CreateWastageType) => {
         try {
             await recordWastage(data).unwrap();
-            notify(`Successfully recorded wastage`, "success");
+            successMessage(`Successfully recorded wastage`);
 
             reset();
             onClose();
         } catch (error) {
             const defaultMessage = `Failed to record wastage.`;
-            const apiError = getApiError(error, defaultMessage);
+            const apiError = parseApiErrorUtil(error, defaultMessage);
 
-            notify(apiError.message, "error");
+            errorMessage(apiError.message);
             console.log(`Failed to record wastage:`, error);
         }
     };

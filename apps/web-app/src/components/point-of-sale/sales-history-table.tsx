@@ -1,4 +1,4 @@
-import useNotifier from "@/hooks/useNotifier.ts";
+import { useNotification } from "@/shared";
 import { useAppSelector } from "@/store";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
 import type { OrderType } from "@/types/order-types.ts";
@@ -33,7 +33,7 @@ export interface Props {
 const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: Props) => {
     const theme = useTheme();
     const navigate = useNavigate();
-    const notify = useNotifier();
+    const notification = useNotification();
     const dispatch = useDispatch();
     const currentUser = useAppSelector(selectCurrentUser);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -104,7 +104,7 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
         const dataToExport = prepareExportData();
 
         if (dataToExport.length === 0) {
-            notify("No data to export.", "error");
+            notification.error("No data to export.");
             return;
         }
 
@@ -117,7 +117,7 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
         const dataToExport = prepareExportData();
 
         if (dataToExport.length === 0) {
-            notify("No data to export.", "error");
+            notification.error("No data to export.");
             return;
         }
 
@@ -255,7 +255,7 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
                         if (orderToFind) {
                             setOrderToPrint(orderToFind);
                         } else {
-                            notify("Order data not found for printing.", "error");
+                            notification.error("Order data not found for printing.");
                             handleMenuClose();
                         }
                     };
@@ -297,7 +297,7 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
                 },
             },
         ],
-        [theme, anchorEl, selectedRowId, currentUser, orders, navigate, notify],
+        [theme, anchorEl, selectedRowId, currentUser, orders, navigate, notification],
     );
 
     useEffect(() => {

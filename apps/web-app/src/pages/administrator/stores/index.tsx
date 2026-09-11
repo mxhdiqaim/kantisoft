@@ -2,11 +2,11 @@ import { useDeleteStoreMutation, useGetAllStoresQuery } from "@/store/slice";
 import { Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
-import type { StoreType } from "@/types/store-types.ts";
+import type { BusinessType } from "@/modules/iam/types/business.type.ts";
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
 import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { useNotification } from "@/shared";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import DataGridTable from "@/shared/components/ui/data-grid-table";
 import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
 import { useSearch } from "@/use-search.ts";
@@ -23,7 +23,7 @@ import { AddOutlined, DeleteOutline, EditOutlined, MoreVert, VisibilityOutlined 
 const StoresScreen = () => {
     const theme = useTheme();
     const { t } = useTranslation();
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
 
     const { data: storesData, isLoading, isFetching, isError, error } = useGetAllStoresQuery();
     const memoizedStores = useMemoizedArray(storesData);
@@ -35,12 +35,12 @@ const StoresScreen = () => {
         searchKeys: ["name", "storeType", "location"],
     });
 
-    const [selectedRow, setSelectedRow] = useState<StoreType | null>(null);
+    const [selectedRow, setSelectedRow] = useState<BusinessType | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [openStoreForm, setOpenStoreForm] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
 
-    const handleMenuClick = (_event: MouseEvent<HTMLElement>, row: StoreType) => {
+    const handleMenuClick = (_event: MouseEvent<HTMLElement>, row: BusinessType) => {
         setSelectedRow(row);
     };
 
@@ -62,11 +62,11 @@ const StoresScreen = () => {
         if (!selectedRow) return;
         try {
             await deleteStore(selectedRow.id).unwrap();
-            notify("Store deleted successfully", "success");
+            successMessage("Store deleted successfully");
         } catch (error) {
             const defaultMessage = "Failed to delete store";
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiErrorUtil(error, defaultMessage);
+            errorMessage(apiError.message);
         } finally {
             handleCloseDeleteModal();
         }
@@ -77,7 +77,7 @@ const StoresScreen = () => {
         setSelectedRow(null);
     };
 
-    const columns: GridColDef<StoreType>[] = useMemo(
+    const columns: GridColDef<BusinessType>[] = useMemo(
         () => [
             {
                 flex: 1,
@@ -99,7 +99,7 @@ const StoresScreen = () => {
                 minWidth: 120,
                 align: "left",
                 headerAlign: "left",
-                renderCell: (params: GridRenderCellParams<StoreType>) => {
+                renderCell: (params: GridRenderCellParams<BusinessType>) => {
                     const isMain = params.row.branchType === "main";
                     const label = isMain ? `Main ${t("store")}` : `Branch ${t("store")}`;
                     const color = isMain ? "primary" : "secondary";
@@ -152,7 +152,7 @@ const StoresScreen = () => {
                 width: 180,
                 align: "left",
                 headerAlign: "left",
-                renderCell: (params: GridRenderCellParams<StoreType, string>) => {
+                renderCell: (params: GridRenderCellParams<BusinessType, string>) => {
                     const date = new Date(params.value as string);
                     if (isNaN(date.getTime())) {
                         return "Invalid Date";
@@ -217,9 +217,9 @@ const StoresScreen = () => {
     );
 
     if (isError) {
-        notify(`Failed to load ${t("store")}. Please try again later.`, "error");
-        const apiError = getApiError(error, `Failed to load ${t("store")}.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        errorMessage(`Failed to load ${t("store")}. Please try again later.`);
+        const apiError = parseApiErrorUtil(error, `Failed to load ${t("store")}.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

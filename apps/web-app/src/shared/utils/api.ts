@@ -19,18 +19,16 @@ export const api = axios.create({
     },
 });
 
-// Lock to prevent multiple sign out redirects if parallel requests fail simultaneously
+// Lock to prevent multiple sign-out redirects if parallel requests fail simultaneously
 let isSigningOut = false;
 
-// ----------------------------------------------------------------------
 // Request Interceptor: Inject Clerk Token
-// ----------------------------------------------------------------------
 api.interceptors.request.use(
     async (config) => {
         try {
             // Wait for Clerk to initialize and check for an active session
             if (window.Clerk && window.Clerk.session) {
-                // getToken() automatically checks expiry and fetches a fresh token if needed!
+                // getToken() automatically checks expiry and fetches a fresh token if needed
                 const token = await window.Clerk.session.getToken();
 
                 if (token) {
@@ -46,9 +44,7 @@ api.interceptors.request.use(
     (error) => Promise.reject(error),
 );
 
-// ----------------------------------------------------------------------
 // Response Interceptor: Handle Global 401s
-// ----------------------------------------------------------------------
 api.interceptors.response.use(
     (response) => response,
     (error) => {
@@ -60,7 +56,7 @@ api.interceptors.response.use(
                 isSigningOut = true;
                 console.warn("Session expired or unauthorized. Logging out...");
 
-                // Zustand Magic: Call the logout action directly outside of React!
+                // Call the logout action directly outside of React!
                 useAuthStore.getState().logOut();
 
                 // Redirect to sign in

@@ -6,7 +6,7 @@ import { getRoleChipColor } from "@/shared/utils";
 import { useGetUserByIdQuery } from "@/store/slice";
 import ViewUserSkeleton from "@/components/profile/loading";
 import ApiErrorDisplay from "@/components/feedback/api-error-display";
-import { getApiError } from "@/helpers/get-api-error";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import { selectActiveStore } from "@/store/slice/store-slice";
 import { useSelector } from "react-redux";
 import CustomButton from "@/shared/components/ui/button.tsx";
@@ -53,8 +53,8 @@ const ProfilePage = () => {
     }
 
     if (isError || !user) {
-        const apiError = getApiError(error, "Failed to load your profile.");
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        const apiError = parseApiErrorUtil(error, "Failed to load your profile.");
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

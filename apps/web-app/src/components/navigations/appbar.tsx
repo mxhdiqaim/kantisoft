@@ -1,5 +1,5 @@
 import { useFullscreen } from "@/hooks/use-fullscreen";
-import useNotifier from "@/hooks/useNotifier";
+import { useNotification } from "@/shared";
 import { useSignoutMutation } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
 import { LogoutOutlined, PersonOutline } from "@mui/icons-material";
@@ -41,7 +41,7 @@ const AppbarComponent: FC<Props> = ({ toggleDrawer, drawerState }) => {
     const { isFullscreen, toggleFullscreen } = useFullscreen();
     const navigate = useNavigate();
     const { pathname } = useLocation();
-    const notify = useNotifier();
+    const { success: successMessage } = useNotification();
 
     const currentUser = useSelector(selectCurrentUser);
 
@@ -58,7 +58,7 @@ const AppbarComponent: FC<Props> = ({ toggleDrawer, drawerState }) => {
             console.error("Server signout failed, proceeding with client-side signout:", error);
         } finally {
             navigate("/signin");
-            notify("You have been logged out successfully.", "success");
+            successMessage("You have been logged out successfully.");
         }
     };
 

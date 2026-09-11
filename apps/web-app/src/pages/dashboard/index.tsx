@@ -10,7 +10,7 @@ import { Box, CircularProgress, Grid, Typography, useTheme } from "@mui/material
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
-import { filterSchema, type FilterSchemaType } from "@/types";
+import { filterSchema, type FilterSchemaType } from "@/shared/types";
 
 const Index = () => {
     const theme = useTheme();

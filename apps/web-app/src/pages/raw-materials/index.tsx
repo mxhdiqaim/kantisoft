@@ -13,9 +13,9 @@ import RawMaterialForm from "@/components/raw-material/raw-material-form.tsx";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
 import type { RawMaterialType } from "@/types/raw-material-types.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { useNotification } from "@/shared";
 import ViewRawMaterialDrawer from "@/components/raw-material/view-raw-material-drawer.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { useTranslation } from "react-i18next";
 import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
@@ -26,7 +26,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 const RawMaterials = () => {
     const theme = useTheme();
     const { t } = useTranslation();
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
     const [formModalOpen, setFormModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [selectedRow, setSelectedRow] = useState<RawMaterialType | null>(null);
@@ -86,11 +86,11 @@ const RawMaterials = () => {
         if (selectedRow) {
             try {
                 await deleteRawMaterial(selectedRow.id).unwrap();
-                notify("Factory deleted successfully", "success");
+                successMessage("Factory deleted successfully");
                 handleCloseDeleteModal();
             } catch (error) {
                 console.error("Failed to delete factory:", error);
-                notify("Failed to delete factory", "error");
+                errorMessage("Failed to delete factory");
             }
         }
     };
@@ -241,9 +241,9 @@ const RawMaterials = () => {
     );
 
     if (isError) {
-        notify(`Failed to load ${t("rawMaterial")}.`, "error");
-        const apiError = getApiError(error, `Failed to load ${t("rawMaterial")}.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        errorMessage(`Failed to load ${t("rawMaterial")}.`);
+        const apiError = parseApiErrorUtil(error, `Failed to load ${t("rawMaterial")}.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

@@ -14,13 +14,13 @@ import InventoryHealthHeader from "@/components/records/inventory-health-header.
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { useNotification } from "@/shared";
 
 import MoneyIcon from "@mui/icons-material/Money";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
-import { filterSchema, type FilterSchemaType } from "@/types";
+import { filterSchema, type FilterSchemaType } from "@/shared/types";
 
 const tabsArray = [
     {
@@ -36,7 +36,7 @@ const tabsArray = [
 ];
 
 const ProfitabilityWastageScreen = () => {
-    const notify = useNotifier();
+    const { error: errorMessage } = useNotification();
 
     const { control, watch } = useForm<FilterSchemaType>({
         mode: "onChange",
@@ -82,9 +82,9 @@ const ProfitabilityWastageScreen = () => {
     }, [fulfilledTimeStamp]);
 
     if (isError) {
-        notify(` Failed to load page. Please try again later.`, "error");
-        const apiError = getApiError(error, `Failed to load page.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        errorMessage(` Failed to load page. Please try again later.`);
+        const apiError = parseApiErrorUtil(error, `Failed to load page.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

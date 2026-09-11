@@ -1,6 +1,6 @@
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { useNotification } from "@/shared";
 import { useCreateMenuItemMutation, useGetAllCategoriesQuery, useUpdateMenuItemMutation } from "@/store/slice";
 import {
     createMenuItemSchema,
@@ -25,7 +25,7 @@ interface Props {
 }
 
 const MenuItemFormModal = ({ open, onClose, menuItemToEdit }: Props) => {
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage, warning: warningMessage } = useNotification();
 
     const [createMenuItem, { isLoading: isCreating }] = useCreateMenuItemMutation();
     const [updateMenuItem, { isLoading: isUpdating }] = useUpdateMenuItemMutation();
@@ -81,24 +81,24 @@ const MenuItemFormModal = ({ open, onClose, menuItemToEdit }: Props) => {
                     id: menuItemToEdit.id,
                     ...(payload as EditMenuItemType),
                 }).unwrap();
-                notify("Menu item updated successfully!", "success");
+                successMessage("Menu item updated successfully!");
             } else {
                 await createMenuItem(payload as CreateMenuItemType).unwrap();
-                notify("Menu item added successfully!", "success");
+                successMessage("Menu item added successfully!");
             }
             onClose();
         } catch (error) {
             // Handle Offline Case: Close modal and notify
             if (isOffline || error?.status === "FETCH_ERROR") {
-                notify("Working offline: Item saved locally and will sync later.", "warning");
+                warningMessage("Working offline: Item saved locally and will sync later.");
                 onClose(); // Close the modal because onQueryStarted already saved it to Dexie!
                 return;
             }
 
             // Handle Actual Backend Errors (Validation, etc.)
             const defaultMessage = `Failed to ${isEditMode ? "update" : "add"} menu item.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiErrorUtil(error, defaultMessage);
+            errorMessage(apiError.message);
             console.log(`Failed to ${isEditMode ? "update" : "add"} menu item:`, error);
         }
     };

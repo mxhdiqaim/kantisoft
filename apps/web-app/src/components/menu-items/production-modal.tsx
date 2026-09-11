@@ -1,13 +1,13 @@
 import { Box, CircularProgress, FormControl, Grid, InputAdornment, MenuItem, Stack, Typography } from "@mui/material";
 import { useGetMenuItemsQuery, useRunProductionMutation } from "@/store/slice";
-import useNotifier from "@/hooks/useNotifier";
+import { useNotification } from "@/shared";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { createProductionSchema, type CreateProductionType } from "@/types/production-types.ts";
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import { StyledTextField } from "@/shared/components/ui";
 import CustomButton from "@/shared/components/ui/button.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
 import Icon from "@/shared/components/ui/icon.tsx";
@@ -19,7 +19,7 @@ interface Props {
 }
 
 const ProductionModal = ({ open, onClose }: Props) => {
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
     const [runProduction, { isLoading: isProducing }] = useRunProductionMutation();
 
     const { data: menuItemsData, isLoading: isLoadingMenuItems } = useGetMenuItemsQuery({});
@@ -41,15 +41,15 @@ const ProductionModal = ({ open, onClose }: Props) => {
     const onSubmit = async (data: CreateProductionType) => {
         try {
             await runProduction(data).unwrap();
-            notify(`Successfully produced ${data.quantityToProduce} units.`, "success");
+            successMessage(`Successfully produced ${data.quantityToProduce} units.`);
 
             reset();
             onClose();
         } catch (error) {
             const defaultMessage = `Failed to make production.`;
-            const apiError = getApiError(error, defaultMessage);
+            const apiError = parseApiErrorUtil(error, defaultMessage);
 
-            notify(apiError.message, "error");
+            errorMessage(apiError.message);
             console.log(`Failed to make production:`, error);
         }
     };

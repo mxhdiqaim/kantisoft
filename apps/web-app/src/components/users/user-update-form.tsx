@@ -1,5 +1,5 @@
-import { getApiError } from "@/helpers/get-api-error";
-import useNotifier from "@/hooks/useNotifier";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { useNotification } from "@/shared";
 import { useUpdateUserMutation } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
 import { updateUserSchema, type UpdateUserType, UserRoleEnum, type UserType } from "@/types/user-types";
@@ -23,7 +23,7 @@ interface Props {
 }
 
 const UserUpdateForm = ({ open, onClose, currentData }: Props) => {
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
     const currentUser = useSelector(selectCurrentUser);
 
     const [updateUser, { isLoading: isUpdating, isSuccess: isUpdated }] = useUpdateUserMutation();
@@ -78,13 +78,13 @@ const UserUpdateForm = ({ open, onClose, currentData }: Props) => {
             const payload = { ...data };
 
             await updateUser({ id: currentData.id, ...payload }).unwrap();
-            notify("User updated successfully!", "success");
+            successMessage("User updated successfully!");
 
             onClose();
         } catch (error) {
             const defaultMessage = `Failed to create user.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiErrorUtil(error, defaultMessage);
+            errorMessage(apiError.message);
         }
     };
 

@@ -1,6 +1,6 @@
-import {extendBaseSchema} from "@/types";
+import { extendBaseSchema } from "@/shared/types";
 import * as yup from "yup";
-import {STORE_TYPES} from "./store-types";
+import { STORE_TYPES } from "@/modules/iam/types";
 
 // Password-specific validation rules
 const PASSWORD_RULES = {
@@ -110,11 +110,7 @@ export const createUserSchemaWithoutStatusStoreIDRole = createUserSchema.omit(["
 export const registerUserSchema = createUserSchemaWithoutStatusStoreIDRole.concat(
     yup.object().shape({
         storeName: yup.string().required("Store name is required"),
-        storeType: yup
-            .string()
-            .oneOf(STORE_TYPES)
-            .default("restaurant")
-            .required("Store type is required"),
+        storeType: yup.string().oneOf(STORE_TYPES).default("restaurant").required("Store type is required"),
     }),
 );
 
@@ -166,7 +162,6 @@ export const roleHierarchy: Record<UserRoleType, number> = {
     guest: 3,
 } as const;
 
-
 export const updatePasswordSchema = yup.object({
     oldPassword: yup.string().required("Password is required"),
     newPassword: yup
@@ -182,6 +177,6 @@ export const updatePasswordSchema = yup.object({
         .string()
         .required("Please confirm your password")
         .oneOf([yup.ref("newPassword")], "Passwords must match"),
-})
+});
 
 export type UpdatePasswordType = yup.InferType<typeof updatePasswordSchema>;

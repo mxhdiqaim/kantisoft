@@ -3,8 +3,8 @@ import { Box, FormControl, Grid, InputAdornment, MenuItem, Stack } from "@mui/ma
 import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
 import { drawerPaperProps } from "@/components/styles";
 import { useGetAllUnitOfMeasurementsQuery, useStockInRawMaterialInventoryMutation } from "@/store/slice";
-import { getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { useNotification } from "@/shared";
 import { StyledTextField } from "@/shared/components/ui";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import { Controller, useForm } from "react-hook-form";
@@ -31,7 +31,7 @@ interface Props {
 }
 
 const RawMaterialStockInDrawer: FC<Props> = ({ open, onOpen, onClose, rawMaterialInventory }) => {
-    const notify = useNotifier();
+    const notification = useNotification();
 
     const { data: measurementUnit, isLoading: isMeasurementLoading } = useGetAllUnitOfMeasurementsQuery();
     const memoizedMeasurement = useMemoizedArray(measurementUnit);
@@ -59,13 +59,13 @@ const RawMaterialStockInDrawer: FC<Props> = ({ open, onOpen, onClose, rawMateria
     const onSubmit = async (data: StockInRawMaterialType) => {
         try {
             await stockInRawMaterialInventory({ ...data, id: rawMaterialInventory.rawMaterialId });
-            notify("Stock in Successfully!", "success");
+            notification.success("Stock in Successfully!");
             onClose();
             reset();
         } catch (error) {
             const defaultMessage = `Failed to stock in. Please try again.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiErrorUtil(error, defaultMessage);
+            notification.error(apiError.message);
         }
     };
 

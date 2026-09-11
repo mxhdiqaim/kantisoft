@@ -3,7 +3,7 @@ import { Box, Chip, Divider, Grid, Stack, Typography } from "@mui/material";
 import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
 import { drawerPaperProps } from "@/components/styles";
 import { useGetRawMaterialInventoryStockQuery } from "@/store/slice";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import ViewRawMaterialSkeleton from "@/shared/components/spinners/view-raw-material-skeleton.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
 import { camelCaseToTitleCase, formatCurrency, formatNumber } from "@/shared/utils";
@@ -35,7 +35,7 @@ const InventoryDetailsDrawer: FC<Props> = ({ open, onOpen, onClose, rawMaterialI
         setFormModalOpen(true);
     };
 
-    const apiError = getApiError(error, "Failed to load raw material data.");
+    const apiError = parseApiErrorUtil(error, "Failed to load raw material data.");
 
     return (
         <DataDrawer

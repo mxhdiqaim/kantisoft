@@ -1,7 +1,7 @@
-import { getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { useNotification } from "@/shared";
 import { useSignupMutation } from "@/store/slice";
-import { STORE_TYPES } from "@/types/store-types.ts";
+import { STORE_TYPES } from "@/modules/iam/types/business.type.ts";
 import { registerUserSchema, type RegisterUserType } from "@/types/user-types.ts";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
@@ -27,7 +27,7 @@ import { setCredentials } from "@/store/slice/auth-slice.ts";
 
 const RegisterPage = () => {
     const navigate = useNavigate();
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
     const dispatch = useDispatch();
 
     const [signup, { isLoading: isBackendLoading }] = useSignupMutation();
@@ -61,11 +61,11 @@ const RegisterPage = () => {
 
             dispatch(setCredentials({ user: response.user }));
 
-            notify("Registration successful!", "success");
+            successMessage("Registration successful!");
             navigate("/", { replace: true });
         } catch (err) {
-            const apiMessage = getApiError(err, "Registration failed. Please try again.");
-            notify(apiMessage.message, "error");
+            const apiMessage = parseApiErrorUtil(err, "Registration failed. Please try again.");
+            errorMessage(apiMessage.message);
         }
     };
 

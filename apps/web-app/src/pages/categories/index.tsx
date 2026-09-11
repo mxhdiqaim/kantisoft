@@ -7,9 +7,9 @@ import { type MouseEvent, useMemo, useState } from "react";
 import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
 import { useSearch } from "@/use-search.ts";
 import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { useNotification } from "@/shared";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import CategoryFormModal from "@/components/menu-items/category-form-modal.tsx";
 import type { CategoryType } from "@/types/categories-types.ts";
@@ -22,7 +22,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 const CategoriesScreen = () => {
     const theme = useTheme();
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
 
     const [formModalOpen, setFormModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -63,11 +63,11 @@ const CategoriesScreen = () => {
         if (selectedRow) {
             try {
                 await deleteCategory(selectedRow.id).unwrap();
-                notify("Factory deleted successfully", "success");
+                successMessage("Factory deleted successfully");
                 handleCloseDeleteModal();
             } catch (error) {
                 console.error("Failed to delete factory:", error);
-                notify("Failed to delete factory", "error");
+                errorMessage("Failed to delete factory");
             }
         }
     };
@@ -154,9 +154,9 @@ const CategoriesScreen = () => {
     );
 
     if (isError) {
-        notify(`Failed to load Categories.`, "error");
-        const apiError = getApiError(error, `Failed to load categories.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        errorMessage(`Failed to load Categories.`);
+        const apiError = parseApiErrorUtil(error, `Failed to load categories.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

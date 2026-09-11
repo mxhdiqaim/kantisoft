@@ -54,7 +54,7 @@ src/modules/iam/
 │   └── auth.types.ts     
 ├── validation/           # Yup/Zod schemas
 │   └── auth.schema.ts    
-└── index.ts              # The entry file of the module
+└── base.type.ts              # The entry file of the module
 ```
 
 ## Strict architectural rules

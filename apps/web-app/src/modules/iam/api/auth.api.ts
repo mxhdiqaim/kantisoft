@@ -3,7 +3,7 @@ import { useAuthStore } from "../store/auth.store";
 import { api } from "@/shared/utils/api";
 import type { UserType, RegisterUserType } from "@/types/user-types";
 
-// 1. Sign In Mutation
+// Sign In Mutation
 export const useSigninMutation = () => {
     // Zustand hooks can be used directly inside other hooks!
     const setCredentials = useAuthStore((state) => state.setCredentials);
@@ -26,7 +26,7 @@ export const useSigninMutation = () => {
     });
 };
 
-// 2. Sign Up Mutation
+// Sign Up Mutation
 export const useSignupMutation = () => {
     return useMutation({
         mutationFn: async (body: Omit<RegisterUserType, "confirmPassword">) => {
@@ -36,7 +36,7 @@ export const useSignupMutation = () => {
     });
 };
 
-// 3. Sign Out Mutation
+// Sign Out Mutation
 export const useSignoutMutation = () => {
     const logOut = useAuthStore((state) => state.logOut);
     const queryClient = useQueryClient();
@@ -57,6 +57,22 @@ export const useSignoutMutation = () => {
 
             // 3. Redirect
             window.location.href = "/signin";
+        },
+    });
+};
+
+export const useSyncProfileMutation = () => {
+    const setCredentials = useAuthStore((state) => state.setCredentials);
+
+    return useMutation({
+        // Assuming your backend has a /users/me endpoint that returns the profile
+        // based on the Clerk JWT token in the header.
+        mutationFn: async () => {
+            const response = await api.get<{ data: UserType }>("/users/me");
+            return response.data.data;
+        },
+        onSuccess: (user) => {
+            setCredentials(user);
         },
     });
 };

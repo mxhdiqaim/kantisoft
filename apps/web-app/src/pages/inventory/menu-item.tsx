@@ -1,11 +1,11 @@
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
 import { Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import { useDeleteMenuItemMutation, useGetMenuItemsQuery } from "@/store/slice";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { useNotification } from "@/shared";
 import MenuItemFormModal from "@/components/menu-items/menu-item-form-modal.tsx";
 import type { MenuItemType } from "@/types/menu-item-type.ts";
 import { useTranslation } from "react-i18next";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
 import { useAppSelector } from "@/store";
@@ -22,11 +22,11 @@ import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { getMenuItemsInventoryStatusChip } from "@/shared/components/ui";
 import BillOfMaterialsDrawer from "@/components/menu-items/bom-drawer.tsx";
 import { DeleteOutline, EditOutlined, MoreVert, RestaurantMenuOutlined } from "@mui/icons-material";
-import { localSyncStatusEnum } from "@/types";
+import { localSyncStatusEnum } from "@/shared/types";
 
 const MenuItems = () => {
     const theme = useTheme();
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
     const { t } = useTranslation();
 
     const currentUser = useAppSelector(selectCurrentUser);
@@ -76,52 +76,6 @@ const MenuItems = () => {
         setOpenRecipeDrawer(false);
     }, []);
 
-    // // Define custom formatters for MenuItemsTable
-    // const menuItemsFieldFormatters = useMemo(
-    //     () => ({
-    //         itemCode: (row: MenuItemType) => row.itemCode,
-    //         name: (row: MenuItemType) => row.name,
-    //         price: (row: MenuItemType) => row.price,
-    //         store: (row: MenuItemType) => row.store?.name,
-    //         inventoryQuantity: (row: MenuItemType) => row.inventory?.quantity ?? "",
-    //         inventoryStockStatus: (row: MenuItemType) => row.inventory?.status ?? "",
-    //     }),
-    //     [],
-    // );
-
-    // const prepareExportData = () => {
-    //     return getExportFormattedData(
-    //         filteredData, // Your data source
-    //         columns, // Your column definitions
-    //         menuItemsFieldFormatters // Your specific formatters
-    //     );
-    // };
-
-    // const handleExportCsv = () => {
-    //     const dataToExport = prepareExportData();
-    //
-    //     if (dataToExport.length === 0) {
-    //         notify("No data to export.", "error");
-    //         return;
-    //     }
-    //
-    //     const filename = `menu_items_data.csv`;
-    //     exportToCsv(dataToExport, filename); // Uses generic utility
-    // };
-
-    // // Export to XLSX function
-    // const handleExportXlsx = () => {
-    //     const dataToExport = prepareExportData();
-    //
-    //     if (dataToExport.length === 0) {
-    //         notify("No data to export.", "error");
-    //         return;
-    //     }
-    //
-    //     const filename = `menu_items_data.xlsx`;
-    //     exportToXlsx(dataToExport, filename, "Sales History", columns); // Uses generic utility
-    // };
-
     const handleMenuClick = (event: MouseEvent<HTMLElement>, row: MenuItemType) => {
         setAnchorEl(event.currentTarget);
         setSelectedRow(row);
@@ -135,10 +89,10 @@ const MenuItems = () => {
     const handleDelete = async (rowId: string) => {
         try {
             await deleteMenuItem(rowId).unwrap();
-            notify("Menu item deleted successfully", "success");
+            successMessage("Menu item deleted successfully");
         } catch (error) {
             console.error("Failed to delete menu item:", error);
-            notify("Failed to delete menu item", "error");
+            errorMessage("Failed to delete menu item");
         }
 
         handleMenuClose();
@@ -347,8 +301,8 @@ const MenuItems = () => {
     );
 
     if (isError && (!menuItems || menuItems.length === 0)) {
-        const apiError = getApiError(error, `Failed to load ${t("menuItem")}.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        const apiError = parseApiErrorUtil(error, `Failed to load ${t("menuItem")}.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

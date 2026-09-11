@@ -17,7 +17,7 @@ import { getInventoryStatusChipColor } from "@/shared/components/ui";
 import type { GetRawMaterialInventoryStockType } from "@/types/raw-material-types.ts";
 import InventoryDetailsDrawer from "@/components/raw-material/inventory-details-drawer.tsx";
 import RawMaterialStockInDrawer from "@/components/raw-material/raw-material-stock-in-drawer.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -233,8 +233,8 @@ const RawMaterialInventory = () => {
     );
 
     if (isError) {
-        const apiError = getApiError(error, `Failed to Inventory.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        const apiError = parseApiErrorUtil(error, `Failed to Inventory.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

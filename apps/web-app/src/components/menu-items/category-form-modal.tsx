@@ -5,8 +5,8 @@ import CustomModal from "@/components/customs/custom-modal.tsx";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useCreateCategoryMutation, useUpdateCategoryMutation } from "@/store/slice";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { useNotification } from "@/shared";
+import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import { StyledTextField } from "@/shared/components/ui";
 import { type CategoryType, createCategorySchema, type CreateCategoryType } from "@/types/categories-types.ts";
@@ -18,7 +18,7 @@ interface Props {
 }
 
 const CategoryFormModal: FC<Props> = ({ open, onClose, categoryData }) => {
-    const notify = useNotifier();
+    const notification = useNotification();
     const isEditMode = !!categoryData;
 
     const [createCategory, { isLoading: isCreating, isSuccess: isCreateSuccess, reset: resetCreateMutation }] =
@@ -70,15 +70,15 @@ const CategoryFormModal: FC<Props> = ({ open, onClose, categoryData }) => {
         try {
             if (isEditMode && categoryData) {
                 await updateCategory({ id: categoryData.id, ...data }).unwrap();
-                notify("Category Updated Successfully!", "success");
+                notification.success("Category Updated Successfully!");
             } else {
                 await createCategory(data).unwrap();
-                notify("Category Added Successfully!", "success");
+                notification.success("Category Added Successfully!");
             }
         } catch (error) {
             const defaultMessage = `Failed to ${isEditMode ? "update" : "create"} Category. Please try again.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiErrorUtil(error, defaultMessage);
+            notification.error(apiError.message);
         }
     };
 
