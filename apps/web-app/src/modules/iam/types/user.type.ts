@@ -1,6 +1,6 @@
 import { extendBaseSchema } from "@/shared/types";
 import * as yup from "yup";
-import { STORE_TYPES } from "@/modules/iam/types";
+import { STORE_TYPES } from "@/modules/iam/types/index.ts";
 
 // Password-specific validation rules
 const PASSWORD_RULES = {

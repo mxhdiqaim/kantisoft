@@ -4,7 +4,7 @@ import { useAppSelector } from "@/store";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserRoleEnum } from "@/types/user-types.ts";
+import { UserRoleEnum } from "@/modules";
 
 const HomeScreen = () => {
     const navigate = useNavigate();

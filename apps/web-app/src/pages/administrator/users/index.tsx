@@ -4,7 +4,7 @@ import { useNotification } from "@/shared";
 import { useAppSelector } from "@/store";
 import { useChangeUserStoreMutation, useGetAllStoresQuery, useGetAllUsersQuery } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
-import { roleHierarchy, UserRoleEnum, UserStatusEnum, type UserType } from "@/types/user-types.ts";
+import { roleHierarchy, UserRoleEnum, UserStatusEnum, type UserType } from "@/modules";
 import { Avatar, Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { type MouseEvent, useCallback, useMemo, useState } from "react";

@@ -2,7 +2,7 @@ import { useGetActivitiesQuery } from "@/store/slice";
 import { Box, Chip, Grid, Typography } from "@mui/material";
 import { useAppSelector } from "@/store";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
-import { UserRoleEnum } from "@/types/user-types.ts";
+import { UserRoleEnum } from "@/modules";
 import { useMemo, useState } from "react";
 import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
 import { type GridColDef } from "@mui/x-data-grid";

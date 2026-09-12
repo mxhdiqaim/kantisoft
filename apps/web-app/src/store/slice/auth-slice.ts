@@ -1,5 +1,5 @@
 import type { RootState } from "@/store";
-import type { UserType } from "@/types/user-types";
+import type { UserType } from "@/modules/iam/types/user.type.ts";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { getUserDataFromStorage } from "@/shared/utils";
 

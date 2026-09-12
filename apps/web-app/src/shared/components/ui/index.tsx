@@ -1,8 +1,8 @@
-import {OrderStatus} from "@/types/order-types.ts";
-import {InventoryStatusEnum, TransactionTypeEnum} from "@/types/inventory-types.ts";
-import type {UserRoleType, UserStatus} from "@/types/user-types.ts";
-import type {MenuItemInventoryType} from "@/types/menu-item-type.ts";
-import {styled, TextField} from "@mui/material";
+import { OrderStatus } from "@/types/order-types.ts";
+import { InventoryStatusEnum, TransactionTypeEnum } from "@/types/inventory-types.ts";
+import type { UserRoleType, UserStatus } from "@/modules/iam/types/user.type.ts";
+import type { MenuItemInventoryType } from "@/types/menu-item-type.ts";
+import { styled, TextField } from "@mui/material";
 import CustomCard from "@/components/customs/custom-card.tsx";
 
 export const getPaymentStatusChipColor = (status: string) => {
@@ -54,8 +54,11 @@ export const getUserRoleChipColor = (role: UserRoleType) => {
     return colors[role] || "default";
 };
 
-export const getTransactionTypeChipColor = (type: typeof TransactionTypeEnum[keyof typeof TransactionTypeEnum]) => {
-    const colors: Record<typeof TransactionTypeEnum[keyof typeof TransactionTypeEnum], "success" | "warning" | "error" | "info" | "default"> = {
+export const getTransactionTypeChipColor = (type: (typeof TransactionTypeEnum)[keyof typeof TransactionTypeEnum]) => {
+    const colors: Record<
+        (typeof TransactionTypeEnum)[keyof typeof TransactionTypeEnum],
+        "success" | "warning" | "error" | "info" | "default"
+    > = {
         // comingIn: "success",
         // goingOut: "error",
         sale: "success",
@@ -87,14 +90,14 @@ export const getMenuItemsInventoryStatusChip = (status: MenuItemInventoryType) =
         outOfStock: "error",
     };
     return colors[status] || "default";
-}
+};
 
 export const StyledTextField = styled(TextField, {
     shouldForwardProp: (prop) => prop !== "disabled",
-})<{ disabled?: boolean }>(({disabled}) => ({
+})<{ disabled?: boolean }>(({ disabled }) => ({
     "& .MuiOutlinedInput-root": {
         height: 40,
-        "& fieldset": {height: 45},
+        "& fieldset": { height: 45 },
         background: disabled ? "#CFD1D3" : "transparent",
         color: disabled && "#7f8080",
         pointerEvents: disabled ? "none" : "auto",
@@ -124,7 +127,7 @@ export const getTextColor = (text: string) => {
     }
 };
 
-export const DashedCard = styled(CustomCard)(({theme}) => ({
+export const DashedCard = styled(CustomCard)(({ theme }) => ({
     borderStyle: "dashed",
     boxShadow: "none",
     borderRadius: theme.borderRadius.large,

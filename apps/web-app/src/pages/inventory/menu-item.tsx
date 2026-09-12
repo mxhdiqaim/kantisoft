@@ -16,7 +16,7 @@ import { camelCaseToTitleCase, formatCurrency } from "@/shared/utils";
 import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
 import { useSearch } from "@/use-search.ts";
 import CustomButton from "@/shared/components/ui/button.tsx";
-import { UserRoleEnum } from "@/types/user-types.ts";
+import { UserRoleEnum } from "@/modules";
 import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { getMenuItemsInventoryStatusChip } from "@/shared/components/ui";

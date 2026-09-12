@@ -21,7 +21,7 @@ import { useSearch } from "@/use-search.ts";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
 import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
-import { UserRoleEnum, UserStatusEnum } from "@/types/user-types.ts";
+import { UserRoleEnum, UserStatusEnum } from "@/modules";
 import { relativeTime } from "@/shared/utils/get-relative-time.ts";
 import { getInventoryStatusChipColor } from "@/shared/components/ui";
 import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";

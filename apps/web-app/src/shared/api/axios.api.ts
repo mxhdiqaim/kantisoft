@@ -1,6 +1,6 @@
 import axios from "axios";
-import { useAuthStore } from "@/modules/iam/store/auth.store";
-import { getEnvVariable } from "./index";
+import { useAuthStore } from "@/modules/iam/store/auth.store.ts";
+import { getEnvVariable } from "../utils";
 
 // Declare window.Clerk so TypeScript doesn't throw errors
 declare global {
@@ -12,7 +12,7 @@ declare global {
 
 const baseURL = getEnvVariable("VITE_APP_API_URL") || "http://localhost:7344/api/v1";
 
-export const api = axios.create({
+export const axiosApi = axios.create({
     baseURL,
     headers: {
         "Content-Type": "application/json",
@@ -23,7 +23,7 @@ export const api = axios.create({
 let isSigningOut = false;
 
 // Request Interceptor: Inject Clerk Token
-api.interceptors.request.use(
+axiosApi.interceptors.request.use(
     async (config) => {
         try {
             // Wait for Clerk to initialize and check for an active session
@@ -45,7 +45,7 @@ api.interceptors.request.use(
 );
 
 // Response Interceptor: Handle Global 401s
-api.interceptors.response.use(
+axiosApi.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {

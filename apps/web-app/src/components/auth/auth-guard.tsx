@@ -1,5 +1,5 @@
 import { appRoutes } from "@/app/router";
-import { type UserType } from "@/types/user-types";
+import { type UserType } from "@/modules/iam/types";
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 

@@ -8,7 +8,7 @@ import { DinnerDiningOutlined, DomainVerificationOutlined, MonetizationOn, Perso
 import { Box, Grid, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { UserRoleEnum, UserStatusEnum } from "@/types/user-types.ts";
+import { UserRoleEnum, UserStatusEnum } from "@/modules";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
 import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";

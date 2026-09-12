@@ -29,8 +29,7 @@ import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { Props as AppBarProps } from "./appbar";
-import { UserRoleEnum } from "@/types/user-types.ts";
-import type { BusinessType } from "@/modules/iam/types/business.type.ts";
+import { type BusinessType, UserRoleEnum } from "@/modules/iam/types";
 import CustomButton from "@/shared/components/ui/button.tsx";
 
 import Icon from "@/shared/components/ui/icon.tsx";

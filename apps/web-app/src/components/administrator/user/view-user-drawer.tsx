@@ -5,7 +5,7 @@ import { useNotification } from "@/shared";
 import { useAppSelector } from "@/store";
 import { useDeleteUserMutation, useGetUserByIdQuery, useUpdateUserMutation } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
-import { roleHierarchy, type UserRoleType, UserStatusEnum, type UserType } from "@/types/user-types.ts";
+import { roleHierarchy, type UserRoleType, UserStatusEnum, type UserType } from "@/modules/iam/types/user.type.ts";
 import { Avatar, Box, Chip, Divider, Grid, Typography } from "@mui/material";
 import { format } from "date-fns";
 import { type FC, useEffect, useState } from "react";

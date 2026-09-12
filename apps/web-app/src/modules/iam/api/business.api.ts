@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/shared/utils/api";
-import type { BusinessType, CreateBusinessType } from "@/modules/iam/types/business.type";
+import { axiosApi } from "@/shared/api";
+import type { BusinessType, CreateBusinessType } from "@/modules/iam/types";
 
 // Fetch all businesses
 export const useGetBusinessesQuery = () => {
     return useQuery({
         queryKey: ["businesses"],
         queryFn: async () => {
-            const response = await api.get<{ data: BusinessType[] }>("/business");
+            const response = await axiosApi.get<{ data: BusinessType[] }>("/business");
 
             return response.data.data;
         },
@@ -19,7 +19,7 @@ export const useGetBusinessByIdQuery = (id: string) => {
     return useQuery({
         queryKey: ["business", id],
         queryFn: async () => {
-            const response = await api.get<{ data: BusinessType }>(`/business/${id}`);
+            const response = await axiosApi.get<{ data: BusinessType }>(`/business/${id}`);
             return response.data.data;
         },
         enabled: !!id,
@@ -32,7 +32,7 @@ export const useCreateBusinessMutation = () => {
 
     return useMutation({
         mutationFn: async (data: CreateBusinessType) => {
-            const response = await api.post<{ data: BusinessType }>("/business", data);
+            const response = await axiosApi.post<{ data: BusinessType }>("/business", data);
             return response.data.data;
         },
         onSuccess: () => {
@@ -48,7 +48,7 @@ export const useUpdateBusinessMutation = () => {
 
     return useMutation({
         mutationFn: async ({ id, ...patch }: Partial<CreateBusinessType> & { id: string }) => {
-            const response = await api.patch<{ data: BusinessType }>(`/business/${id}`, patch);
+            const response = await axiosApi.patch<{ data: BusinessType }>(`/business/${id}`, patch);
             return response.data.data;
         },
         onSuccess: (_data, variables) => {

@@ -4,7 +4,7 @@ import SearchField from "@/shared/components/ui/search-field.tsx";
 import type { Control } from "react-hook-form";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import { FileDownloadOutlined } from "@mui/icons-material";
-import { UserRoleEnum } from "@/types/user-types.ts";
+import { UserRoleEnum } from "@/modules/iam/types/user.type.ts";
 import { useAppSelector } from "@/store";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
 import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";

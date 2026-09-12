@@ -2,7 +2,7 @@ import { useNotification } from "@/shared";
 import { useAppSelector } from "@/store";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
 import type { OrderType } from "@/types/order-types.ts";
-import { UserRoleEnum } from "@/types/user-types.ts";
+import { UserRoleEnum } from "@/modules/iam/types";
 import { formatCurrency } from "@/shared/utils";
 import { relativeTime } from "@/shared/utils/get-relative-time.ts";
 import { EditOutlined, MoreVert, PrintOutlined, VisibilityOutlined } from "@mui/icons-material";

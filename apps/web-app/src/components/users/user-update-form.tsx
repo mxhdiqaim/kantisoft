@@ -2,7 +2,7 @@ import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import { useNotification } from "@/shared";
 import { useUpdateUserMutation } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
-import { updateUserSchema, type UpdateUserType, UserRoleEnum, type UserType } from "@/types/user-types";
+import { updateUserSchema, type UpdateUserType, UserRoleEnum, type UserType } from "@/modules";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Box, FormControl, Grid, InputAdornment, MenuItem } from "@mui/material";
 import { useEffect } from "react";

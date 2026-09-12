@@ -1,8 +1,7 @@
 import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import { useNotification } from "@/shared";
 import { useSignupMutation } from "@/store/slice";
-import { STORE_TYPES } from "@/modules/iam/types/business.type.ts";
-import { registerUserSchema, type RegisterUserType } from "@/types/user-types.ts";
+import { registerUserSchema, type RegisterUserType, STORE_TYPES } from "@/modules/iam/types";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import {

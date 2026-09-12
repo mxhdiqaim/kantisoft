@@ -13,8 +13,15 @@ import type {
     Period as TimePeriod,
     SingleOrderType,
 } from "@/types/order-types.ts";
-import type { CreateBusinessType, PaginatedStoreResponse, BusinessType } from "@/modules/iam/types/business.type.ts";
-import { type CreateUserType, type RegisterUserType, UserRoleEnum, type UserType } from "@/types/user-types";
+import type {
+    CreateBusinessType,
+    PaginatedStoreResponse,
+    BusinessType,
+    UserType,
+    CreateUserType,
+    RegisterUserType,
+} from "@/modules/iam/types";
+import { UserRoleEnum } from "@/modules/iam/types";
 import {
     type BaseQueryFn,
     createApi,

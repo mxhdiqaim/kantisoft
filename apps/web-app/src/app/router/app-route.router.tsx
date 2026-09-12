@@ -23,7 +23,7 @@ import {
     UsersScreen,
     ViewSalesHistoryScreen,
 } from "@/pages";
-import { type UserRole, UserRoleEnum } from "@/types/user-types.ts";
+import { type UserRole, UserRoleEnum } from "@/modules/iam/types/user.type.ts";
 import { DashboardOutlined, KitchenOutlined } from "@mui/icons-material";
 import AddAlertOutlinedIcon from "@mui/icons-material/AddAlertOutlined";
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";

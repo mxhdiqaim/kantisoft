@@ -1,7 +1,6 @@
 import { type FC, useState } from "react";
 import { Box, FormControl, InputAdornment, MenuItem } from "@mui/material";
-import type { UserType } from "@/types/user-types.ts";
-import type { BusinessType } from "@/modules/iam/types/business.type.ts";
+import { type BusinessType, type UserType } from "@/modules";
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import { StyledTextField } from "@/shared/components/ui";
 import CustomButton from "@/shared/components/ui/button.tsx";

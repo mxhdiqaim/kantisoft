@@ -1,16 +1,16 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthStore } from "../store/auth.store";
-import { api } from "@/shared/utils/api";
-import type { UserType, RegisterUserType } from "@/types/user-types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@/modules";
+import { axiosApi } from "@/shared/api";
+import type { UserType, RegisterUserType } from "@/modules";
 
 // Sign In Mutation
 export const useSigninMutation = () => {
-    // Zustand hooks can be used directly inside other hooks!
+    // Zustand hooks can be used directly inside other hooks
     const setCredentials = useAuthStore((state) => state.setCredentials);
 
     return useMutation({
         mutationFn: async (token: string) => {
-            const response = await api.post<{ user: UserType }>(
+            const response = await axiosApi.post<{ user: UserType }>(
                 "/auth",
                 {},
                 {
@@ -30,7 +30,7 @@ export const useSigninMutation = () => {
 export const useSignupMutation = () => {
     return useMutation({
         mutationFn: async (body: Omit<RegisterUserType, "confirmPassword">) => {
-            const response = await api.post<{ user: UserType; token: string }>("/auth/signup", body);
+            const response = await axiosApi.post<{ user: UserType; token: string }>("/auth/signup", body);
             return response.data;
         },
     });
@@ -43,7 +43,7 @@ export const useSignoutMutation = () => {
 
     return useMutation({
         mutationFn: async () => {
-            await api.post("/auth/signout");
+            await axiosApi.post("/auth/signout");
         },
         onSettled: () => {
             // Whether the server call succeeds or fails (e.g. offline), force the local logout anyway.
@@ -57,18 +57,13 @@ export const useSignoutMutation = () => {
     });
 };
 
-export const useSyncProfileMutation = () => {
-    const setCredentials = useAuthStore((state) => state.setCredentials);
-
-    return useMutation({
-        // Assuming your backend has a /users/me endpoint that returns the profile
-        // based on the Clerk JWT token in the header.
-        mutationFn: async () => {
-            const response = await api.get<{ data: UserType }>("/user/me");
+export const useGetMeQuery = (enabled: boolean) => {
+    return useQuery({
+        queryKey: ["me"],
+        queryFn: async () => {
+            const response = await axiosApi.get<{ data: UserType }>("/iam/user/me");
             return response.data.data;
         },
-        onSuccess: (user) => {
-            setCredentials(user);
-        },
+        enabled,
     });
 };
