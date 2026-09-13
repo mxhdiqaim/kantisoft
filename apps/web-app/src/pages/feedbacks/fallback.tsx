@@ -5,7 +5,7 @@ import CardContent from "@mui/material/CardContent";
 import type { FallbackProps } from "react-error-boundary";
 import { useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import BlankLayout from "@/components/layout/blank-layout";
+import { BlankLayout } from "@/shared";
 import CustomCard from "@/components/customs/custom-card";
 import CustomButton from "@/shared/components/ui/button.tsx";
 

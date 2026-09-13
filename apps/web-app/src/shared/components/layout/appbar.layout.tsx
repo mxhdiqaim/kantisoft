@@ -1,12 +1,8 @@
-import { useFullscreen } from "@/hooks/use-fullscreen";
-import { useNotification } from "@/shared";
-import { useSignoutMutation } from "@/store/slice";
-import { selectCurrentUser } from "@/store/slice/auth-slice";
+import { useNotification, useFullscreen } from "@/shared";
 import { LogoutOutlined, PersonOutline } from "@mui/icons-material";
 import FullscreenExitOutlinedIcon from "@mui/icons-material/FullscreenExitOutlined";
 import FullscreenOutlinedIcon from "@mui/icons-material/FullscreenOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
-
 import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
 import {
     alpha,
@@ -22,13 +18,15 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
-import { type FC } from "react";
-import { useSelector } from "react-redux";
+import { useState, type FC } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import CustomButton from "@/shared/components/ui/button.tsx";
 import { findRouteByPath } from "@/shared/utils/routes.ts";
 import { appRoutes } from "@/app/router";
 import { useTranslation } from "react-i18next";
+import { useAuthStore } from "@/modules";
+import { useClerk } from "@clerk/react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface Props {
     toggleDrawer?: (open: boolean) => void;
@@ -43,22 +41,37 @@ const AppbarComponent: FC<Props> = ({ toggleDrawer, drawerState }) => {
     const { pathname } = useLocation();
     const { success: successMessage } = useNotification();
 
-    const currentUser = useSelector(selectCurrentUser);
+    // Fetch user from Zustand instead of Redux
+    const currentUser = useAuthStore((state) => state.user);
+    const logOut = useAuthStore((state) => state.logOut);
 
-    // Find the current route object based on the pathname
+    // Set up Clerk and TanStack tools
+    const { signOut } = useClerk();
+    const queryClient = useQueryClient();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+
     const currentRoute = findRouteByPath(appRoutes, pathname);
-    const pageTitle = currentRoute?.title || "Home"; // Fallback to "Home" if no title is found
-
-    const [signout, { isLoading: isLoggingOut }] = useSignoutMutation();
+    const pageTitle = currentRoute?.title || "Home";
 
     const handleLogout = async () => {
         try {
-            await signout({}).unwrap();
-        } catch (error) {
-            console.error("Server signout failed, proceeding with client-side signout:", error);
-        } finally {
+            setIsLoggingOut(true);
+
+            // Tell Clerk to destroy the session cookie
+            await signOut();
+
+            // Clear Zustand local state
+            logOut();
+
+            // Clear all TanStack API cache
+            queryClient.clear();
+
             navigate("/signin");
             successMessage("You have been logged out successfully.");
+        } catch (error) {
+            console.error("Signout failed:", error);
+        } finally {
+            setIsLoggingOut(false);
         }
     };
 
@@ -82,9 +95,7 @@ const AppbarComponent: FC<Props> = ({ toggleDrawer, drawerState }) => {
                     <IconButton
                         onClick={() => toggleDrawer && toggleDrawer(!drawerState)}
                         aria-label="menu"
-                        sx={{
-                            display: { xs: "block", md: "none" },
-                        }}
+                        sx={{ display: { xs: "block", md: "none" } }}
                     >
                         <MenuOutlinedIcon />
                     </IconButton>
@@ -102,27 +113,21 @@ const AppbarComponent: FC<Props> = ({ toggleDrawer, drawerState }) => {
                     <IconButton
                         aria-label="toggle fullscreen"
                         onClick={toggleFullscreen}
-                        sx={{
-                            background: theme.palette.background.default,
-                        }}
+                        sx={{ background: theme.palette.background.default }}
                     >
                         {isFullscreen ? <FullscreenExitOutlinedIcon /> : <FullscreenOutlinedIcon />}
                     </IconButton>
 
                     <IconButton
                         aria-label="notifications"
-                        sx={{
-                            background: theme.palette.background.default,
-                        }}
+                        sx={{ background: theme.palette.background.default }}
                         disabled={true}
                     >
                         <NotificationsNoneOutlinedIcon />
                     </IconButton>
                     <CustomButton
                         variant={"text"}
-                        sx={{
-                            color: theme.palette.text.primary,
-                        }}
+                        sx={{ color: theme.palette.text.primary }}
                         startIcon={
                             <Tooltip title="Account settings" placement={"top"}>
                                 <Avatar sx={{ width: 36, height: 36, backgroundColor: "primary.main" }}>

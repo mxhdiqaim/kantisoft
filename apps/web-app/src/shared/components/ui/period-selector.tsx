@@ -1,6 +1,6 @@
 import { type Control, Controller, type FieldValues, type Path } from "react-hook-form";
 import { Box, FormControl, InputAdornment, Typography } from "@mui/material";
-import { StyledTextField } from "@/shared/components/ui/index.tsx";
+import { StyledTextField } from "@/shared/components/ui";
 import { relativeTime } from "@/shared/utils/get-relative-time.ts";
 import StyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
 

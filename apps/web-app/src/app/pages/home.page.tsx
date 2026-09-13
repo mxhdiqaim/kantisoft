@@ -1,39 +1,43 @@
-import { AppSkeleton } from "@/shared";
+import { AppSkeleton } from "@/shared/components/spinners";
 import { appRoutes } from "@/app/router";
-import { useAppSelector } from "@/store";
-import { selectCurrentUser } from "@/store/slice/auth-slice";
+import { useAuthStore } from "@/modules/iam/store/auth.store.ts";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserRoleEnum } from "@/modules";
+import { UserRoleEnum } from "@/modules/iam/types";
 
-const HomeScreen = () => {
+const HomePage = () => {
     const navigate = useNavigate();
-    const currentUser = useAppSelector(selectCurrentUser);
+
+    // Get the current user directly from Zustand
+    const currentUser = useAuthStore((state) => state.user);
+
+    console.log({ currentUser });
 
     useEffect(() => {
         if (currentUser) {
-            // Specifically, handle the 'guest' role to prevent redirection to a data-heavy dashboard.
-            if (currentUser.role === UserRoleEnum.GUEST) {
+            const role = currentUser.role as UserRoleEnum;
+
+            // Handle restricted roles to prevent redirection to a data-heavy dashboard.
+            // With the new hierarchy, Cashiers and Guests go straight to the POS.
+            if (role === UserRoleEnum.GUEST || role === UserRoleEnum.CASHIER) {
                 navigate("/pos-sale/pos", { replace: true });
                 return;
             }
 
             // Find the first accessible, non-hidden, primary route for the user's role.
-            // The appRoutes supposed to be ordered by precedence (most important routes first), but for now they are not
             const destinationRoute = appRoutes.find(
                 (route) =>
                     !route.hidden &&
                     route.icon && // A good indicator of a primary navigation item
-                    route.roles?.includes(currentUser.role),
+                    route.roles?.includes(role),
             );
 
             if (destinationRoute) {
                 // If a suitable page is found, redirect the user there.
                 navigate(destinationRoute.to, { replace: true });
             } else {
-                // As a fallback, if no specific page is found for the user's role,
-                // send them to the login page.
-                navigate("/admin/profile", { replace: true });
+                // As a fallback, send them to their profile page.
+                navigate("/admin/users/profile", { replace: true });
             }
         } else {
             // If there's no authenticated user, they must log in.
@@ -45,4 +49,4 @@ const HomeScreen = () => {
     return <AppSkeleton />;
 };
 
-export default HomeScreen;
+export default HomePage;

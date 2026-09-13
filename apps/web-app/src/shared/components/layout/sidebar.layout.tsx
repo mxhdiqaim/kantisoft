@@ -1,11 +1,6 @@
 import { appRoutes, type AppRouteType } from "@/app/router";
-import { useAppSelector } from "@/store";
-import { apiSlice, useGetAllStoresQuery, useSignoutMutation } from "@/store/slice";
-import { selectCurrentUser } from "@/store/slice/auth-slice";
-import { selectActiveStore, setActiveStore } from "@/store/slice/store-slice";
 import { LogoutOutlined, StorefrontOutlined } from "@mui/icons-material";
-import useScreenSize from "@/hooks/use-screen-size";
-
+import { useScreenSize } from "@/shared";
 import ExpandLessOutlinedIcon from "@mui/icons-material/ExpandLessOutlined";
 import ExpandMoreOutlinedIcon from "@mui/icons-material/ExpandMoreOutlined";
 import {
@@ -19,59 +14,58 @@ import {
     ListItemButton,
     ListItemIcon,
     ListItemText,
-    MenuItem,
     type SxProps,
     type Theme,
     useTheme,
 } from "@mui/material";
-import { type FC, Fragment, useEffect, useState } from "react";
+import { useState, type FC, Fragment, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import type { Props as AppBarProps } from "./appbar";
-import { type BusinessType, UserRoleEnum } from "@/modules/iam/types";
-import CustomButton from "@/shared/components/ui/button.tsx";
-
-import Icon from "@/shared/components/ui/icon.tsx";
+import type { Props as AppBarProps } from "./appbar.layout.tsx";
+import CustomButton from "@/shared/components/ui/button";
+import Icon from "@/shared/components/ui/icon";
 import CancelSvgIcon from "@/assets/icons/cancel.svg";
 import CollapseSvgIcon from "@/assets/icons/collapse.svg";
+
+import { UserRoleEnum } from "@/modules/iam/types";
+import { useAuthStore } from "@/modules/iam/store/auth.store";
+import { useClerk } from "@clerk/react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Props extends AppBarProps {
     sx?: SxProps<Theme>;
     showDrawer?: boolean;
 }
 
-const SideBar: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
+const SidebarLayout: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
     const { t } = useTranslation();
     const theme = useTheme();
     const screenSize = useScreenSize();
     const location = useLocation();
     const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const [signout, { isLoading }] = useSignoutMutation();
-    const currentUser = useAppSelector(selectCurrentUser);
 
-    const { data: stores, isLoading: isLoadingStores } = useGetAllStoresQuery();
-    const activeStore = useSelector(selectActiveStore);
+    // Zustand & Clerk Hooks
+    const currentUser = useAuthStore((state) => state.user);
+    const logOut = useAuthStore((state) => state.logOut);
 
-    const handleStoreSelect = (store: BusinessType) => {
-        dispatch(setActiveStore(store));
-
-        // Reset the entire API state to force refetching of all data for the new store
-        dispatch(apiSlice.util.resetApiState());
-    };
+    const { signOut } = useClerk();
+    const queryClient = useQueryClient();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const handleLogout = async () => {
         try {
-            await signout({}).unwrap();
-        } catch (error) {
-            console.error("Server signout failed, proceeding with client-side signout:", error);
-        } finally {
+            setIsLoggingOut(true);
+            await signOut();
+            logOut();
+            queryClient.clear();
             navigate("/signin");
+        } catch (error) {
+            console.error("Signout failed:", error);
+        } finally {
+            setIsLoggingOut(false);
         }
     };
 
-    // Track expanded items by level: { 0: "/catalog", 1: "menu-items" }
     const [expandedItems, setExpandedItems] = useState<Record<number, string>>({});
 
     const handleItemClick = (route: AppRouteType, level: number) => {
@@ -79,7 +73,6 @@ const SideBar: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
 
         if (route.children) {
             setExpandedItems((prev) => {
-                // If clicking the same item, close it and all its children levels
                 if (prev[level] === route.to) {
                     const newState = { ...prev };
                     Object.keys(newState).forEach((key) => {
@@ -87,7 +80,6 @@ const SideBar: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
                     });
                     return newState;
                 }
-                // Otherwise, set this level to the new route and clear deeper levels
                 const newState = { ...prev, [level]: route.to };
                 Object.keys(newState).forEach((key) => {
                     if (Number(key) > level) delete newState[Number(key)];
@@ -95,7 +87,6 @@ const SideBar: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
                 return newState;
             });
         } else if (toggleDrawer && (screenSize === "mobile" || screenSize === "tablet")) {
-            // Close a drawer on mobile when a leaf node is clicked
             toggleDrawer(false);
         }
     };
@@ -107,7 +98,7 @@ const SideBar: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
                     return false;
                 }
                 if (route.roles && currentUser) {
-                    return route.roles.includes(currentUser.role);
+                    return route.roles.includes(currentUser.role as UserRoleEnum);
                 }
                 return true;
             })
@@ -121,13 +112,9 @@ const SideBar: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
 
     const renderMenuItem = (route: AppRouteType, index: number, level: number = 0, parentPath: string = "") => {
         const fullPath = (parentPath + "/" + route.to).replace(/\/+/g, "/");
-
         const isActive = location.pathname.startsWith(fullPath);
         const isSelected = location.pathname === fullPath;
-
-        // Check if this level's active item matches this route
         const isExpanded = expandedItems[level] === route.to;
-
         const hasChildren = route.children && route.children.length > 0;
         const linkProps = !hasChildren ? { component: Link, to: fullPath } : {};
 
@@ -147,13 +134,11 @@ const SideBar: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
                             transition: theme.transitions.create(["background-color", "color"], {
                                 duration: theme.transitions.duration.short,
                             }),
-
                             ...(isExpanded && {
                                 color: theme.palette.text.primary,
                                 border: `0.5px solid ${theme.palette.alternate.dark}`,
                                 backgroundColor: theme.palette.background.default,
                             }),
-
                             "&.Mui-selected": {
                                 color: theme.palette.primary.main,
                                 backgroundColor: theme.palette.action.selected,
@@ -162,7 +147,6 @@ const SideBar: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
                                     backgroundColor: theme.palette.action.hover,
                                 },
                             },
-
                             "&:hover": {
                                 backgroundColor: theme.palette.action.hover,
                                 color: isActive ? theme.palette.primary.main : theme.palette.text.primary,
@@ -207,8 +191,6 @@ const SideBar: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
 
     useEffect(() => {
         const newExpanded: Record<number, string> = {};
-
-        // Helper to find the path in the tree
         const findActivePaths = (routes: AppRouteType[], currentLevel: number) => {
             for (const route of routes) {
                 const isParentOfCurrent = location.pathname.includes(route.to);
@@ -222,26 +204,6 @@ const SideBar: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
         findActivePaths(appRoutes, 0);
         setExpandedItems(newExpanded);
     }, [location.pathname]);
-
-    useEffect(() => {
-        if (stores && stores.length > 0 && currentUser) {
-            const userDefaultStore = stores.find((store) => store.id === currentUser.storeId);
-
-            if (currentUser.role !== UserRoleEnum.MANAGER) {
-                // For non-managers, always set their default store as active
-                if (userDefaultStore && activeStore?.id !== userDefaultStore.id) {
-                    dispatch(setActiveStore(userDefaultStore));
-                }
-            } else {
-                // For managers, if no store is active, set their default one.
-                if (!activeStore && userDefaultStore) {
-                    dispatch(setActiveStore(userDefaultStore));
-                }
-            }
-        }
-    }, [activeStore, stores, currentUser, dispatch]);
-
-    const isManager = currentUser?.role === UserRoleEnum.MANAGER;
 
     return (
         <Drawer
@@ -271,34 +233,26 @@ const SideBar: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
                     borderBottom: "1px solid #CFD1D3",
                 }}
             >
-                {isLoadingStores ? (
-                    <CircularProgress size={24} />
-                ) : (
-                    <CustomButton
-                        startIcon={<StorefrontOutlined sx={{ mr: 1 }} />}
-                        endIcon={isManager && <ExpandMoreOutlinedIcon />}
-                        title={activeStore?.name || "Select Store"}
-                        sx={{
-                            borderRadius: 1,
-                            color: "text.primary",
-                            textTransform: "none",
-                            cursor: "pointer",
-                        }}
-                        component={isManager ? "button" : Link}
-                        to={!isManager ? "/" : undefined}
-                    >
-                        {isManager &&
-                            (stores ?? []).map((store) => (
-                                <MenuItem
-                                    key={store.id}
-                                    onClick={() => handleStoreSelect(store)}
-                                    selected={store.id === activeStore?.id}
-                                >
-                                    {store.name}
-                                </MenuItem>
-                            ))}
-                    </CustomButton>
-                )}
+                {/*
+                  Simplified Header! We no longer fetch or map businesses.
+                  Just show "Workspace" or optionally the user's role to confirm login state.
+                */}
+                <CustomButton
+                    startIcon={<StorefrontOutlined sx={{ mr: 1 }} />}
+                    title={
+                        currentUser
+                            ? `${currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)} Workspace`
+                            : "Workspace"
+                    }
+                    sx={{
+                        borderRadius: 1,
+                        color: "text.primary",
+                        textTransform: "none",
+                        cursor: "default",
+                        pointerEvents: "none", // Disabled interactions for now
+                    }}
+                />
+
                 {screenSize === "mobile" || screenSize === "tablet" ? (
                     <IconButton
                         aria-label="menu"
@@ -319,13 +273,14 @@ const SideBar: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
                     {filterRoutes(appRoutes).map((route, index) => renderMenuItem(route, index))}
                 </Box>
             </List>
+
             <Box position={"absolute"} bottom={0} width={"100%"} p={2}>
                 <CustomButton
-                    title={isLoading ? "Logging out..." : t("Logout")}
+                    title={isLoggingOut ? "Logging out..." : t("Logout")}
                     onClick={handleLogout}
-                    disabled={isLoading}
+                    disabled={isLoggingOut}
                     variant="contained"
-                    startIcon={<LogoutOutlined />}
+                    startIcon={isLoggingOut ? <CircularProgress size={20} color="inherit" /> : <LogoutOutlined />}
                     sx={{
                         width: "100%",
                         backgroundColor: theme.palette.error.main,
@@ -348,4 +303,4 @@ const SideBar: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
     );
 };
 
-export default SideBar;
+export default SidebarLayout;

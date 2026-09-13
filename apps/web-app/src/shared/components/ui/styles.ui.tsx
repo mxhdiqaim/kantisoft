@@ -1,6 +1,6 @@
 import { OrderStatus } from "@/types/order-types.ts";
 import { InventoryStatusEnum, TransactionTypeEnum } from "@/types/inventory-types.ts";
-import type { UserRoleType, UserStatus } from "@/modules/iam/types/user.type.ts";
+import { UserRoleEnum, type UserStatus } from "@/modules/iam/types/user.type.ts";
 import type { MenuItemInventoryType } from "@/types/menu-item-type.ts";
 import { styled, TextField } from "@mui/material";
 import CustomCard from "@/components/customs/custom-card.tsx";
@@ -44,11 +44,13 @@ export const getUserStatusChipColor = (status: UserStatus) => {
     return colors[status] || "default";
 };
 
-export const getUserRoleChipColor = (role: UserRoleType) => {
-    const colors: Record<UserRoleType, "secondary" | "primary" | "info" | "default"> = {
-        manager: "secondary",
+export const getUserRoleChipColor = (role: UserRoleEnum) => {
+    const colors: Record<UserRoleEnum, string> = {
+        owner: "primary",
         admin: "primary",
-        user: "info",
+        manager: "secondary",
+        staff: "info",
+        cashier: "primary",
         guest: "default",
     };
     return colors[role] || "default";
@@ -59,8 +61,6 @@ export const getTransactionTypeChipColor = (type: (typeof TransactionTypeEnum)[k
         (typeof TransactionTypeEnum)[keyof typeof TransactionTypeEnum],
         "success" | "warning" | "error" | "info" | "default"
     > = {
-        // comingIn: "success",
-        // goingOut: "error",
         sale: "success",
         return: "warning",
         waste: "error",

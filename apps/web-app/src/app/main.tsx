@@ -1,5 +1,7 @@
+import { store } from "@/store";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { Provider } from "react-redux";
 import App from "./App.tsx";
 import "../index.css";
 import { SnackbarProvider } from "notistack";
@@ -28,21 +30,23 @@ if (import.meta.env.PROD && VITE_APP_SENTRY_DSN) {
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <TanstackQueryClientProvider client={tanstackQueryClient}>
-            <SyncProvider>
-                <SnackbarProvider
-                    maxSnack={3}
-                    autoHideDuration={3000}
-                    variant="default"
-                    anchorOrigin={{
-                        vertical: "bottom",
-                        horizontal: "center",
-                    }}
-                >
-                    <ClerkProvider publishableKey={VITE_CLERK_PUBLISHABLE_KEY} afterSignOutUrl="/">
-                        <App />
-                    </ClerkProvider>
-                </SnackbarProvider>
-            </SyncProvider>
+            <Provider store={store}>
+                <SyncProvider>
+                    <SnackbarProvider
+                        maxSnack={3}
+                        autoHideDuration={3000}
+                        variant="default"
+                        anchorOrigin={{
+                            vertical: "bottom",
+                            horizontal: "center",
+                        }}
+                    >
+                        <ClerkProvider publishableKey={VITE_CLERK_PUBLISHABLE_KEY} afterSignOutUrl="/">
+                            <App />
+                        </ClerkProvider>
+                    </SnackbarProvider>
+                </SyncProvider>
+            </Provider>
         </TanstackQueryClientProvider>
     </StrictMode>,
 );

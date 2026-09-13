@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
 import { Box, Grid, IconButton, type SxProps, type Theme, Typography } from "@mui/material";
-import CustomDrawer from "@/shared/components/ui/custom-drawer.tsx";
+import CustomDrawer from "@/shared/components/ui/drawers/custom.drawer.tsx";
 import type { DrawerAnchor } from "@/shared/types";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import { useNotification } from "@/shared";
-
 import Icon from "@/shared/components/ui/icon.tsx";
 import CancelSvgIcon from "@/assets/icons/cancel.svg";
 

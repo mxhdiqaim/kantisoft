@@ -1,4 +1,4 @@
-import Layout from "@/components/layout";
+import { Layout } from "@/shared";
 import ErrorFallback from "@/pages/feedbacks/fallback.tsx";
 import { ThemeProvider } from "../../../../packages/ui/src/theme";
 import { ScrollToTop } from "@/shared/utils";
@@ -45,12 +45,10 @@ const renderRoutes = (routes: AppRouteType[], parentPath = ""): JSX.Element[] =>
     });
 };
 
-// Component with router-dependent logic
 const AppContent = () => {
-    // Clerk initialization status
     const { isLoaded } = useAuth();
 
-    // Block rendering until Clerk is fully initialized
+    // Block rendering until Clerk is fully initialised
     if (!isLoaded) {
         return <Spinner />;
     }

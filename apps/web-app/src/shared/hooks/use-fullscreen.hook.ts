@@ -1,4 +1,4 @@
-import { FullscreenContext, type FullscreenContextType } from "@/context/fullscreen-context";
+import { FullscreenContext, type FullscreenContextType } from "@/context/fullscreen-context.tsx";
 import { useContext } from "react";
 
 export const useFullscreen = (): FullscreenContextType => {

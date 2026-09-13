@@ -12,12 +12,14 @@ const PASSWORD_RULES = {
     requireSpecialChar: true,
 } as const;
 
-export const UserRoleEnum = {
-    MANAGER: "manager",
-    ADMIN: "admin",
-    USER: "user",
-    GUEST: "guest",
-} as const;
+export enum UserRoleEnum {
+    OWNER = "owner",
+    ADMIN = "admin",
+    MANAGER = "manager",
+    STAFF = "staff",
+    CASHIER = "cashier",
+    GUEST = "guest",
+}
 export const USER_ROLES = Object.values(UserRoleEnum);
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 export type UserRoleType = (typeof USER_ROLES)[number];
@@ -61,7 +63,7 @@ export const baseUserSchema = yup.object({
         // Otherwise, the field is optional and not required.
         otherwise: (schema) => schema.notRequired(),
     }),
-    role: yup.string().oneOf(USER_ROLES).default("guest"),
+    role: yup.string().oneOf(USER_ROLES).default(UserRoleEnum.GUEST),
 
     storeId: yup.string().uuid().required("Store ID is required"),
     store: yup.object({
@@ -100,7 +102,7 @@ export const createUserSchema = yup.object({
         // Otherwise, the field is optional and not required.
         otherwise: (schema) => schema.notRequired(),
     }),
-    role: yup.string().oneOf(USER_ROLES).default("guest"),
+    role: yup.string().oneOf(USER_ROLES).default(UserRoleEnum.GUEST),
     // status: yup.string().oneOf(USER_STATUSES).default("active"),
     storeId: yup.string().uuid().required("Store ID is required"),
 });
@@ -130,7 +132,7 @@ export const updateUserSchema = yup.object({
         // Otherwise, the field is optional and not required.
         otherwise: (schema) => schema.notRequired(),
     }),
-    role: yup.string().oneOf(USER_ROLES).default("guest"),
+    role: yup.string().oneOf(USER_ROLES).default(UserRoleEnum.GUEST),
     storeId: yup.string().uuid().required("Store ID is required"),
 });
 
@@ -156,10 +158,12 @@ export type UserWithoutPasswords = yup.InferType<typeof userSchema>;
 export type UserType = Omit<UserWithoutPasswords, "password" | "confirmPassword">;
 
 export const roleHierarchy: Record<UserRoleType, number> = {
-    manager: 0,
+    owner: 0,
     admin: 1,
-    user: 2,
-    guest: 3,
+    manager: 2,
+    staff: 3,
+    cashier: 4,
+    guest: 5,
 } as const;
 
 export const updatePasswordSchema = yup.object({
