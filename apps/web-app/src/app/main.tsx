@@ -41,7 +41,24 @@ createRoot(document.getElementById("root")!).render(
                             horizontal: "center",
                         }}
                     >
-                        <ClerkProvider publishableKey={VITE_CLERK_PUBLISHABLE_KEY} afterSignOutUrl="/">
+                        <ClerkProvider
+                            publishableKey={VITE_CLERK_PUBLISHABLE_KEY}
+                            afterSignOutUrl="/"
+                            localization={{
+                                signIn: {
+                                    start: {
+                                        title: "Login to Kantisoft",
+                                        subtitle: "Welcome back!",
+                                    },
+                                },
+                                signUp: {
+                                    start: {
+                                        title: "Start Registration",
+                                        subtitle: "Manage your business",
+                                    },
+                                },
+                            }}
+                        >
                             <App />
                         </ClerkProvider>
                     </SnackbarProvider>

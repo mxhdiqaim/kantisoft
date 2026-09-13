@@ -149,12 +149,12 @@ const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQuery
             // Reset the entire API state to clear cache and stop other queries
             api.dispatch(apiSlice.util.resetApiState());
 
-            // Redirect to signin page
-            window.location.href = "/signin";
+            // Redirect to login page
+            window.location.href = "/login";
         }
         // Preventing other queries from failing and causing unhandled exceptions
         // while the signout is in progress, return a promise that never resolves.
-        // The page reload to "/signin" will render this moot.
+        // The page reload to "/login" will render this moot.
         return new Promise(() => {});
     }
 
@@ -200,78 +200,6 @@ export const apiSlice = createApi({
         "Categories",
     ],
     endpoints: (builder) => ({
-        // -------------------------
-        // Health Check Endpoint
-        // -------------------------
-        healthCheck: builder.query<{ status: string }, void>({
-            query: () => "/health",
-        }),
-
-        // -------------------------
-        // Auth Endpoints
-        // -------------------------
-        signin: builder.mutation({
-            query: ({ token }) => ({
-                url: "/auth",
-                method: "POST",
-                // Pass the token in the Authorization header
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }),
-            async onQueryStarted(_args, { dispatch, queryFulfilled }) {
-                try {
-                    const { data } = await queryFulfilled;
-
-                    // On success, dispatch setCredentials to store token and user
-                    dispatch(setCredentials(data));
-                } catch (error) {
-                    console.error("Signin failed:", error);
-                }
-            },
-        }),
-
-        signout: builder.mutation({
-            query: () => ({
-                url: "/auth/signout",
-                method: "POST",
-            }),
-            async onQueryStarted(_args, { dispatch, queryFulfilled }) {
-                try {
-                    await queryFulfilled;
-                    // Dispatch the logOut action to clear credentials and localStorage
-                    dispatch(logOut());
-                    // Clear the RTK Query cache
-                    dispatch(apiSlice.util.resetApiState());
-
-                    // Redirect to signin page
-                    window.location.href = "/signin";
-
-                    // reload
-                    // window.location.reload();
-                } catch (error) {
-                    console.error("Signout failed:", error);
-                    // Even if the server call fails, force a local signout
-                    dispatch(logOut());
-                    dispatch(apiSlice.util.resetApiState());
-
-                    // Redirect to signin page
-                    window.location.href = "/signin";
-
-                    // reload
-                    // window.location.reload();
-                }
-            },
-        }),
-
-        signup: builder.mutation<{ user: UserType; token: string }, Omit<RegisterUserType, "confirmPassword">>({
-            query: (body) => ({
-                url: "/auth/signup",
-                method: "POST",
-                body,
-            }),
-        }),
-
         getActivities: builder.query<ActivityLogEntry[], { limit?: number; offset?: number }>({
             query: ({ limit = 20, offset = 0 } = {}) => ({
                 url: "/activities",
@@ -1036,13 +964,6 @@ export const apiSlice = createApi({
 
 // Export auto-generated hooks for use in your components
 export const {
-    useHealthCheckQuery,
-
-    // Auth hooks
-    useSigninMutation,
-    useSignoutMutation,
-    useSignupMutation,
-
     // Order hooks
     useGetOrdersByPeriodQuery,
     useGetOrderByIdQuery,

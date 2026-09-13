@@ -43,7 +43,6 @@ const AppbarComponent: FC<AppbarProps> = ({ toggleDrawer, drawerState }) => {
     const currentUser = useAuthStore((state) => state.user);
     const logOut = useAuthStore((state) => state.logOut);
 
-    // Set up Clerk and TanStack tools
     const { signOut } = useClerk();
     const queryClient = useQueryClient();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -64,7 +63,7 @@ const AppbarComponent: FC<AppbarProps> = ({ toggleDrawer, drawerState }) => {
             // Clear all TanStack API cache
             queryClient.clear();
 
-            navigate("/signin");
+            navigate("/login");
             successMessage("You have been logged out successfully.");
         } catch (error) {
             console.error("Signout failed:", error);

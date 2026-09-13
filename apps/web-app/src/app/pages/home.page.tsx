@@ -11,8 +11,6 @@ const HomePage = () => {
     // Get the current user directly from Zustand
     const currentUser = useAuthStore((state) => state.user);
 
-    console.log({ currentUser });
-
     useEffect(() => {
         if (currentUser) {
             const role = currentUser.role as UserRoleEnum;
@@ -41,7 +39,7 @@ const HomePage = () => {
             }
         } else {
             // If there's no authenticated user, they must log in.
-            navigate("/signin", { replace: true });
+            navigate("/login", { replace: true });
         }
     }, [currentUser, navigate]);
 

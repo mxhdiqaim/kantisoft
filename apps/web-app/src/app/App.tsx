@@ -5,7 +5,6 @@ import { type JSX } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { FullscreenProvider } from "../context/fullscreen-context.tsx";
-import "@/config/i18next.config.ts";
 import Spinner from "@/components/feedback/spinner.tsx";
 import { appRoutes, GuardedRoute, type AppRouteType } from "@/app/router";
 import { useAuth } from "@clerk/react";

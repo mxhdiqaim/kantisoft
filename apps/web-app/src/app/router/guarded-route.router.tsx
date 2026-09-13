@@ -24,7 +24,7 @@ const GuardedRoute = memo(function GuardedRoute({ children, authGuard }: Props) 
 
     // If route requires auth and user is NOT authenticated, redirect to sign in page
     if (authGuard && !isAuthenticated) {
-        return <Navigate to="/signin" state={{ from: location }} replace />;
+        return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
     // If route requires auth and user is authenticated, show the page

@@ -87,7 +87,7 @@ const ForgetPasswordPage = () => {
                         />
 
                         <Box sx={{ textAlign: "center" }}>
-                            <CustomButton title="Back to signin" variant="text" onClick={() => navigate("/signin")} />
+                            <CustomButton title="Back to log in" variant="text" onClick={() => navigate("/login")} />
                         </Box>
                     </Box>
                 </Box>

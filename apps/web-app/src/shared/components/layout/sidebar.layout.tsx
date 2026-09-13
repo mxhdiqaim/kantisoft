@@ -55,7 +55,7 @@ const SidebarLayout: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer })
             await signOut();
             logOut();
             queryClient.clear();
-            navigate("/signin");
+            navigate("/login");
         } catch (error) {
             console.error("Signout failed:", error);
         } finally {
@@ -232,7 +232,7 @@ const SidebarLayout: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer })
             >
                 {/*
                   Simplified Header! We no longer fetch or map businesses.
-                  Just show "Workspace" or optionally the user's role to confirm login state.
+                  Just show "Workspace" or optionally the user's role to confirm the login state.
                 */}
                 <CustomButton
                     startIcon={<StorefrontOutlined sx={{ mr: 1 }} />}

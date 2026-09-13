@@ -1,7 +1,10 @@
-import { Grid } from "@mui/material";
+import { Box, Grid, Typography } from "@mui/material";
 import { SignIn } from "@clerk/react";
+import { CustomButton } from "@/shared";
+import { useNavigate } from "react-router-dom";
 
 const LoginPage = () => {
+    const navigate = useNavigate();
     return (
         <Grid container spacing={2}>
             <Grid
@@ -14,7 +17,31 @@ const LoginPage = () => {
                     m: { xs: 3, md: 0 },
                 }}
             >
-                <SignIn appearance={{ theme: "simple" }} />
+                <Box
+                    sx={{
+                        width: "100%",
+                        maxWidth: { xs: "100%", sm: "400px" },
+                    }}
+                >
+                    <SignIn
+                        appearance={{
+                            theme: "simple",
+                            elements: {
+                                footerAction: { display: "none" },
+                            },
+                        }}
+                    />
+                    <Box sx={{ textAlign: "center", mt: 2 }}>
+                        <Typography variant="body1">
+                            Don&#39;t have an account?{" "}
+                            <CustomButton
+                                title={"Register it here"}
+                                variant="text"
+                                onClick={() => navigate("/register")}
+                            />
+                        </Typography>
+                    </Box>
+                </Box>
             </Grid>
         </Grid>
     );

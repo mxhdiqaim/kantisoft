@@ -251,14 +251,14 @@ export const appRoutes: AppRouteType[] = [
     // Public Routes
     // ---------------------------------
     {
-        to: "/signin",
+        to: "/login",
         element: LoginPage,
         useLayout: false,
         authGuard: false,
         roles: [UserRoleEnum.GUEST],
     },
     {
-        to: "/signup",
+        to: "/register",
         element: RegisterPage,
         useLayout: false,
         authGuard: false,

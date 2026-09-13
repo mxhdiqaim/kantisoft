@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useAuth } from "@clerk/react";
-import { useHealthCheckQuery } from "@/shared/api";
-import { useGetMeQuery, useAuthStore } from "@/modules";
+import { useAuthStore } from "@/modules/iam/store/auth.store";
+import { useHealthCheckQuery } from "@/shared/api/system.api";
+import { useGetMeQuery } from "@/modules/iam/api/auth.api";
 
 export const useAuthStatus = () => {
     const { isLoaded: isClerkLoaded, isSignedIn } = useAuth();
