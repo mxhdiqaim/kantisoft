@@ -11,7 +11,7 @@ export interface ParsedApiError {
  * Universally parses errors from Axios, Clerk, or standard JS.
  * Extracts the exact message thrown by the backend AppError class.
  */
-export const parseApiErrorUtil = (error: unknown, defaultMessage = "An unexpected error occurred."): ParsedApiError => {
+export const parseApiError = (error: unknown, defaultMessage = "An unexpected error occurred."): ParsedApiError => {
     // Handle Backend API Errors
     if (isAxiosError(error)) {
         // No response means the server is down or user is offline

@@ -1,5 +1,5 @@
 import CustomCard from "@/components/customs/custom-card";
-import { BlankLayout, CustomButton } from "@/shared";
+import { BlankLayout, CustomButton } from "@/shared/components";
 import { Box, styled, Typography, useTheme } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 

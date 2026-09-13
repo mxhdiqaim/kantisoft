@@ -12,7 +12,9 @@ import {
     TransactionTypeEnum,
 } from "@/types/inventory-types.ts";
 import { useAdjustStockMutation } from "@/store/slice";
-import { StyledTextField, IconUtil, CustomButton, useNotification, parseApiErrorUtil } from "@/shared";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
 
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
@@ -67,7 +69,7 @@ const InventoryAdjustmentForm: FC<Props> = ({ open, onClose, inventoryItem }) =>
             notifySuccess("Stock adjusted successfully!");
         } catch (error) {
             const defaultMessage = `Failed to adjust stock. Please try again.`;
-            const apiError = parseApiErrorUtil(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
             notifyError(apiError.message);
         }
     };

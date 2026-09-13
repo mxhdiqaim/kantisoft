@@ -8,24 +8,24 @@ import type { InventoryType } from "@/types/inventory-types.ts";
 import { Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { type MouseEvent, useMemo, useState } from "react";
-import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
-import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
 import CreateInventoryForm from "@/components/inventory/create-inventory-form.tsx";
 import { useTranslation } from "react-i18next";
-import CustomButton from "@/shared/components/ui/button.util.tsx";
-import { useNotification } from "@/shared";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
+import {
+    CustomButton,
+    getInventoryStatusChipColor,
+    SearchActionTable,
+    DataGridTable,
+    StyledBoxTable,
+} from "@/shared/components";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError, relativeTime, camelCaseToTitleCase } from "@/shared/utils";
 import InventoryAdjustmentForm from "@/components/inventory/inventory-adjustment-form.tsx";
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "@/use-search.ts";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
-import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
-import { UserRoleEnum, UserStatusEnum } from "@/modules";
-import { relativeTime } from "@/shared/utils/time-date.util.ts";
-import { getInventoryStatusChipColor } from "@/shared/components/ui";
+import { UserRoleEnum, UserStatusEnum } from "@/modules/iam";
 import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
-import { camelCaseToTitleCase } from "@/shared/utils/custom.util.ts";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
@@ -98,7 +98,7 @@ const Goods = () => {
             successMessage("Item has been restored.");
         } catch (err) {
             const defaultMessage = "Failed to continue item.";
-            const apiError = parseApiErrorUtil(err, defaultMessage);
+            const apiError = parseApiError(err, defaultMessage);
             errorMessage(apiError.message);
         }
     };
@@ -110,7 +110,7 @@ const Goods = () => {
             successMessage("Item has been discontinued.");
         } catch (err) {
             const defaultMessage = "Failed to discontinue item.";
-            const apiError = parseApiErrorUtil(err, defaultMessage);
+            const apiError = parseApiError(err, defaultMessage);
             errorMessage(apiError.message);
         }
     };
@@ -123,7 +123,7 @@ const Goods = () => {
                 handleCloseDeleteModal();
             } catch (err) {
                 const defaultMessage = "Failed to delete item.";
-                const apiError = parseApiErrorUtil(err, defaultMessage);
+                const apiError = parseApiError(err, defaultMessage);
                 errorMessage(apiError.message);
             }
         }
@@ -296,7 +296,7 @@ const Goods = () => {
     );
 
     if (isError) {
-        const apiError = parseApiErrorUtil(error, `Failed to load Goods.`);
+        const apiError = parseApiError(error, `Failed to load Goods.`);
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 

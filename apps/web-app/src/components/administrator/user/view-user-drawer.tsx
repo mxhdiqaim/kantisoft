@@ -1,7 +1,7 @@
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import ViewUserSkeleton from "@/components/users/loading/view-user-skeleton.tsx";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
-import { useNotification } from "@/shared";
+import { parseApiError, getInitials } from "@/shared/utils";
+import { useNotification } from "@/shared/hooks";
 import { useAppSelector } from "@/store";
 import { useDeleteUserMutation, useGetUserByIdQuery, useUpdateUserMutation } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
@@ -10,12 +10,9 @@ import { Avatar, Box, Chip, Divider, Grid, Typography } from "@mui/material";
 import { format } from "date-fns";
 import { type FC, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getUserRoleChipColor, getUserStatusChipColor } from "@/shared/components/ui";
+import { getUserRoleChipColor, getUserStatusChipColor, CustomButton, DataDrawer } from "@/shared/components/ui";
 import { drawerPaperProps } from "@/components/styles";
-import DataDrawerUi from "@/shared/components/ui/data-drawer.ui.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import { getInitials } from "@/shared/utils/custom.util.ts";
-import CustomButton from "@/shared/components/ui/button.util.tsx";
 import { BlockOutlined, DeleteOutline, EditOutlined } from "@mui/icons-material";
 
 interface Props {
@@ -52,7 +49,7 @@ const ViewUserDrawer: FC<Props> = ({ userId, open, onOpen, onClose, handleEdit }
             await updateUser({ id: user.id, status: newStatus }).unwrap();
             notification.success(`User has been ${newStatus}.`);
         } catch (err) {
-            const apiError = parseApiErrorUtil(err, "Failed to update user status.");
+            const apiError = parseApiError(err, "Failed to update user status.");
             notification.error(apiError.message);
         }
     };
@@ -67,7 +64,7 @@ const ViewUserDrawer: FC<Props> = ({ userId, open, onOpen, onClose, handleEdit }
                 notification.success("User deleted successfully");
                 navigate("/users");
             } catch (err) {
-                const apiError = parseApiErrorUtil(err, "Failed to delete user.");
+                const apiError = parseApiError(err, "Failed to delete user.");
                 notification.error(apiError.message);
             }
         }, 5000);
@@ -90,13 +87,13 @@ const ViewUserDrawer: FC<Props> = ({ userId, open, onOpen, onClose, handleEdit }
     }, [deleteTimer]);
 
     if (error) {
-        const apiError = parseApiErrorUtil(error, "Failed to load user data.");
+        const apiError = parseApiError(error, "Failed to load user data.");
         notification.error(apiError.message);
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (
-        <DataDrawerUi
+        <DataDrawer
             title={"User Details"}
             anchor={"right"}
             open={open}
@@ -276,7 +273,7 @@ const ViewUserDrawer: FC<Props> = ({ userId, open, onOpen, onClose, handleEdit }
                     </Grid>
                 </Grid>
             )}
-        </DataDrawerUi>
+        </DataDrawer>
     );
 };
 

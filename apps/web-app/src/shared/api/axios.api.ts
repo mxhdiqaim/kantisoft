@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useAuthStore } from "@/modules/iam/store/auth.store.ts";
-import { getEnvVariable } from "../utils/custom.util.ts";
+import { getEnvVariable } from "@/shared/utils/env.util";
 
 // Declare window.Clerk so TypeScript doesn't throw errors
 declare global {

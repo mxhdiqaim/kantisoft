@@ -2,21 +2,17 @@ import { Box, Chip, Grid, Typography } from "@mui/material";
 import { useGetInventoryTransactionsQuery } from "@/store/slice";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useEffect, useMemo, useState } from "react";
-import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
-import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
-import { camelCaseToTitleCase } from "@/shared/utils/custom.util.ts";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { filterSchema, type FilterSchemaType } from "@/shared/types";
-import { getTransactionChipColor, getTransactionTypeChipColor } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { useSearch } from "@/use-search.ts";
-import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
-import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { useNotification } from "@/shared";
-import { formatRelativeDateTime } from "@/shared/utils/time-date.util.ts";
+import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
+import { filterSchema, type FilterSchemaType } from "@/shared/types";
+import { getTransactionChipColor, getTransactionTypeChipColor } from "@/shared/components/ui";
+import { StyledBoxTable, DataGridTable, SearchActionTable } from "@/shared/components";
+import { parseApiError, camelCaseToTitleCase, formatRelativeDateTime } from "@/shared/utils";
+import { useNotification } from "@/shared/hooks";
 
 const InventoryTransactions = () => {
     const { error: errorMessage } = useNotification();
@@ -175,7 +171,7 @@ const InventoryTransactions = () => {
 
     if (isError) {
         errorMessage(`Failed to load transactions. Please try again later.`);
-        const apiError = parseApiErrorUtil(error, `Failed to load transactions.`);
+        const apiError = parseApiError(error, `Failed to load transactions.`);
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 

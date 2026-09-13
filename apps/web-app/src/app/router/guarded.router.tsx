@@ -1,5 +1,5 @@
 import ServerDown from "@/pages/feedbacks/server-down.tsx";
-import Spinner from "@/components/feedback/spinner.tsx";
+import { PageSpinner } from "@/shared/components";
 import { useAuthStatus } from "@/shared/hooks";
 import type { UserRole } from "@/modules/iam/types/user.type.ts";
 import { memo, type ReactNode } from "react";
@@ -17,7 +17,7 @@ const GuardedRoute = memo(function GuardedRoute({ children, authGuard }: Props) 
     const location = useLocation();
 
     // Show loading spinner if still checking status
-    if (isLoading) return <Spinner />;
+    if (isLoading) return <PageSpinner />;
 
     // Show server down page if the server isn't responding
     if (!isServerOk) return <ServerDown />;

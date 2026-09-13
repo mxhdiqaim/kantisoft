@@ -3,7 +3,8 @@ import { Box, Typography, Grid } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { firebaseAuth } from "@/config";
-import { useNotification, CustomButton, StyledTextField } from "@/shared";
+import { CustomButton, StyledTextField } from "@/shared/components";
+import { useNotification } from "@/shared/hooks";
 
 const ForgetPasswordPage = () => {
     const navigate = useNavigate();

@@ -1,6 +1,6 @@
 import { Stack, Typography } from "@mui/material";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { CustomButton } from "@/shared";
+import { CustomButton } from "@/shared/components";
 
 interface Props {
     open: boolean;

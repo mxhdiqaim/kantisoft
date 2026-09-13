@@ -1,20 +1,15 @@
 import { useUpdateUserMutation } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
-import { updateUserSchema, type UpdateUserType, UserRoleEnum, type UserType } from "@/modules";
+import { updateUserSchema, type UpdateUserType, UserRoleEnum, type UserType } from "@/modules/iam";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Box, FormControl, Grid, InputAdornment, MenuItem } from "@mui/material";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import {
-    getRolePermissions,
-    CustomButton,
-    StyledTextField,
-    IconUtil,
-    parseApiErrorUtil,
-    useNotification,
-} from "@/shared";
+import { useNotification } from "@/shared/hooks";
+import { getRolePermissions, parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
 
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
@@ -85,7 +80,7 @@ const UserUpdateForm = ({ open, onClose, currentData }: Props) => {
             onClose();
         } catch (error) {
             const defaultMessage = `Failed to create user.`;
-            const apiError = parseApiErrorUtil(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
             errorMessage(apiError.message);
         }
     };

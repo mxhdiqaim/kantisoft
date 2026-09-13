@@ -2,7 +2,7 @@ import { type FC, type ReactNode, useState } from "react";
 import { Box, useTheme } from "@mui/material";
 import AppbarComponent from "./appbar.layout.tsx";
 import SidebarLayout from "./sidebar.layout.tsx";
-import { useScreenSize } from "@/shared";
+import { useScreenSize } from "@/shared/hooks";
 import CustomDrawer from "@/components/customs/custom-drawer.tsx";
 import OfflineBanner from "@/components/feedback/offline-banner.tsx";
 

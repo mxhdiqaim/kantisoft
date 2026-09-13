@@ -1,14 +1,9 @@
 import { Box, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import { useDeleteCategoryMutation, useGetAllCategoriesQuery } from "@/store/slice";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import {
-    DataGridTable,
-    StyledBoxTable,
-    SearchActionTable,
-    parseApiErrorUtil,
-    useNotification,
-    CustomButton,
-} from "@/shared";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { DataGridTable, StyledBoxTable, SearchActionTable, CustomButton } from "@/shared/components";
 import type { GridColDef } from "@mui/x-data-grid";
 import { type MouseEvent, useMemo, useState } from "react";
 import { useSearch } from "@/use-search.ts";
@@ -157,7 +152,7 @@ const CategoriesScreen = () => {
 
     if (isError) {
         errorMessage(`Failed to load Categories.`);
-        const apiError = parseApiErrorUtil(error, `Failed to load categories.`);
+        const apiError = parseApiError(error, `Failed to load categories.`);
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 

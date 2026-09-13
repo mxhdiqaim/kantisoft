@@ -4,7 +4,6 @@ import { Box, FormControl, Grid, InputAdornment, MenuItem } from "@mui/material"
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { createWastageScheme, type CreateWastageType } from "@/types/production-types.ts";
-import { useNotification, IconUtil, CustomButton, parseApiErrorUtil } from "@/shared";
 import {
     useGetAllRawMaterialInventoryQuery,
     useGetAllUnitOfMeasurementsQuery,
@@ -13,6 +12,9 @@ import {
 import { StyledTextField } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { useUnitFilter } from "@/hooks/use-unit-filter.ts";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil } from "@/shared/components";
 
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
@@ -71,7 +73,7 @@ const WastageFormModal: FC<Props> = ({ open, onClose }) => {
             onClose();
         } catch (error) {
             const defaultMessage = `Failed to record wastage.`;
-            const apiError = parseApiErrorUtil(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
 
             errorMessage(apiError.message);
             console.log(`Failed to record wastage:`, error);

@@ -1,20 +1,17 @@
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
-import { useNotification } from "@/shared";
+import { parseApiError } from "@/shared/utils";
+import { useNotification } from "@/shared/hooks";
 import { useAppSelector } from "@/store";
 import { useChangeUserStoreMutation, useGetAllStoresQuery, useGetAllUsersQuery } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
-import { roleHierarchy, UserRoleEnum, UserStatusEnum, type UserType } from "@/modules";
+import { roleHierarchy, UserRoleEnum, UserStatusEnum, type UserType } from "@/modules/iam";
 import { Avatar, Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
-import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
+import { StyledBoxTable, DataGridTable, SearchActionTable, CustomButton } from "@/shared/components";
 import ChangeStoreModal from "@/components/users/change-store-modal.tsx";
-import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
-import CustomButton from "@/shared/components/ui/button.util.tsx";
 import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 import { getUserStatusChipColor } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
@@ -104,7 +101,7 @@ const UsersPage = () => {
             successMessage("User store changed successfully");
             handleCloseChangeStoreDialog();
         } catch (err) {
-            const apiError = parseApiErrorUtil(err, "Failed to change user store.");
+            const apiError = parseApiError(err, "Failed to change user store.");
             errorMessage(apiError.message);
         }
     };
@@ -313,7 +310,7 @@ const UsersPage = () => {
     );
 
     if (isError) {
-        const apiError = parseApiErrorUtil(error, "Failed to load users. Please try again later.");
+        const apiError = parseApiError(error, "Failed to load users. Please try again later.");
         errorMessage(apiError.message);
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }

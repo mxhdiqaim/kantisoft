@@ -1,7 +1,7 @@
 import type { RootState } from "@/store";
 import type { UserType } from "@/modules/iam/types/user.type.ts";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { getUserDataFromStorage } from "@/shared";
+import { getUserDataFromStorage } from "@/shared/utils";
 
 type AuthState = {
     user: UserType | null;

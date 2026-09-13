@@ -1,23 +1,23 @@
 import { Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import { useGetAllRawMaterialInventoryQuery } from "@/store/slice";
-import CustomButton from "@/shared/components/ui/button.util.tsx";
 import RawMaterialInventoryForm from "@/components/raw-material/raw-material-inventory-form.tsx";
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
-import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
 import { useSearch } from "@/use-search.ts";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import type { GridColDef } from "@mui/x-data-grid";
-import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
+import {
+    StyledBoxTable,
+    CustomButton,
+    SearchActionTable,
+    getInventoryStatusChipColor,
+    DataGridTable,
+} from "@/shared/components";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
-import { formatRelativeDateTime } from "@/shared/utils/time-date.util.ts";
-import { camelCaseToTitleCase, formatNumber } from "@/shared/utils/custom.util.ts";
-import { getInventoryStatusChipColor } from "@/shared/components/ui";
+import { camelCaseToTitleCase, formatNumber, parseApiError, formatRelativeDateTime } from "@/shared/utils";
 import type { GetRawMaterialInventoryStockType } from "@/types/raw-material-types.ts";
 import InventoryDetailsDrawer from "@/components/raw-material/inventory-details-drawer.tsx";
 import RawMaterialStockInDrawer from "@/components/raw-material/raw-material-stock-in-drawer.tsx";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -233,7 +233,7 @@ const RawMaterialInventory = () => {
     );
 
     if (isError) {
-        const apiError = parseApiErrorUtil(error, `Failed to Inventory.`);
+        const apiError = parseApiError(error, `Failed to Inventory.`);
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 

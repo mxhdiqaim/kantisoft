@@ -1,7 +1,8 @@
 import { type Control, Controller, type FieldValues, type Path } from "react-hook-form";
 import { Box, FormControl, InputAdornment, Typography } from "@mui/material";
-import { StyledTextField, relativeTime, IconUtil } from "@/shared";
+import { StyledTextField, IconUtil } from "@/shared/components";
 import StyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
+import { relativeTime } from "@/shared/utils";
 
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 

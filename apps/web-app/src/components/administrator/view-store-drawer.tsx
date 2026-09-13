@@ -3,10 +3,10 @@ import ViewStoreLoading from "@/components/stores/loading/view-store-loading.tsx
 import { useGetStoreByIdQuery } from "@/store/slice";
 import { Chip, Grid, Typography, useTheme } from "@mui/material";
 import { drawerPaperProps } from "@/components/styles";
-import DataDrawerUi from "@/shared/components/ui/data-drawer.ui.tsx";
+import { DataDrawer } from "@/shared/components";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import { useNotification } from "@/shared";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
@@ -66,13 +66,13 @@ const ViewStoreDrawer: FC<Props> = ({ open, onOpen, onClose, storeId }) => {
     const memoizedStoreDetails = useMemoizedArray(storeDetails);
 
     if (isError) {
-        const apiError = parseApiErrorUtil(error, "Failed to load store data.");
+        const apiError = parseApiError(error, "Failed to load store data.");
         notification.error(apiError.message);
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (
-        <DataDrawerUi
+        <DataDrawer
             title={"Store Details"}
             anchor={"right"}
             open={open}
@@ -100,7 +100,7 @@ const ViewStoreDrawer: FC<Props> = ({ open, onOpen, onClose, storeId }) => {
                     </CustomCard>
                 </>
             )}
-        </DataDrawerUi>
+        </DataDrawer>
     );
 };
 

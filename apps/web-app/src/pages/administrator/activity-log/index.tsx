@@ -2,19 +2,15 @@ import { useGetActivitiesQuery } from "@/store/slice";
 import { Box, Chip, Grid, Typography } from "@mui/material";
 import { useAppSelector } from "@/store";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
-import { UserRoleEnum } from "@/modules";
+import { UserRoleEnum } from "@/modules/iam";
 import { useMemo, useState } from "react";
-import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
+import { StyledBoxTable, DataGridTable, SearchActionTable } from "@/shared/components";
 import { type GridColDef } from "@mui/x-data-grid";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
-import { useNotification } from "@/shared";
-import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
-import { getActionColor } from "@/shared/utils/custom.util.ts";
+import { useNotification } from "@/shared/hooks";
+import { getActionColor, formatDateTimeCustom, parseApiError } from "@/shared/utils";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
-import { formatDateTimeCustom } from "@/shared/utils/time-date.util.ts";
 import { useTranslation } from "react-i18next";
 
 const ActivityLogPage = () => {
@@ -148,7 +144,7 @@ const ActivityLogPage = () => {
     }
 
     if (isError && !data) {
-        const apiError = parseApiErrorUtil(error, "Failed to load users. Please try again later.");
+        const apiError = parseApiError(error, "Failed to load users. Please try again later.");
         errorMessage(apiError.message);
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }

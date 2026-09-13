@@ -5,10 +5,9 @@ import CustomModal from "@/components/customs/custom-modal.tsx";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useCreateCategoryMutation, useUpdateCategoryMutation } from "@/store/slice";
-import { useNotification } from "@/shared";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
-import CustomButton from "@/shared/components/ui/button.util.tsx";
-import { StyledTextField } from "@/shared/components/ui";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, StyledTextField } from "@/shared/components";
 import { type CategoryType, createCategorySchema, type CreateCategoryType } from "@/types/categories-types.ts";
 
 interface Props {
@@ -77,7 +76,7 @@ const CategoryFormModal: FC<Props> = ({ open, onClose, categoryData }) => {
             }
         } catch (error) {
             const defaultMessage = `Failed to ${isEditMode ? "update" : "create"} Category. Please try again.`;
-            const apiError = parseApiErrorUtil(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
             notification.error(apiError.message);
         }
     };

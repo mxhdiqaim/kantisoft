@@ -6,8 +6,10 @@ import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { createInventorySchema, type CreateInventoryType } from "@/types/inventory-types.ts";
 import { useCreateInventoryRecordMutation, useGetMenuItemsQuery } from "@/store/slice";
-import { StyledTextField, IconUtil, useNotification, parseApiErrorUtil, CustomButton } from "@/shared";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
 
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
@@ -56,7 +58,7 @@ const CreateInventoryForm: FC<Props> = ({ open, onClose }) => {
             successMessage("Inventory Record Added Successfully!");
         } catch (error) {
             const defaultMessage = `Failed to create inventory record. Please try again.`;
-            const apiError = parseApiErrorUtil(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
 
             errorMessage(apiError.message);
         }

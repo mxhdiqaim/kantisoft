@@ -1,4 +1,4 @@
-import { useNotification } from "@/shared";
+import { useNotification } from "@/shared/hooks";
 import { useAppSelector } from "@/store";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
 import type { OrderType } from "@/types/order-types.ts";

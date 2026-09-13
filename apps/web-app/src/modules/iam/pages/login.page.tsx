@@ -1,6 +1,6 @@
 import { Box, Grid, Typography } from "@mui/material";
 import { SignIn } from "@clerk/react";
-import { CustomButton } from "@/shared";
+import { CustomButton } from "@/shared/components";
 import { useNavigate } from "react-router-dom";
 
 const LoginPage = () => {

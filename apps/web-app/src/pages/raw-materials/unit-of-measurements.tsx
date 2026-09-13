@@ -7,9 +7,9 @@ import { useSearch } from "@/use-search.ts";
 import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
 import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
 import type { GridColDef } from "@mui/x-data-grid";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
+import { parseApiError } from "@/shared/utils";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { useNotification } from "@/shared";
+import { useNotification } from "@/shared/hooks";
 import { useTranslation } from "react-i18next";
 
 const UnitOfMeasurements = () => {
@@ -114,7 +114,7 @@ const UnitOfMeasurements = () => {
 
     if (isError) {
         errorMessage(`Failed to load ${t("measurement")}.`);
-        const apiError = parseApiErrorUtil(error, `Failed to load ${t("measurement")}.`);
+        const apiError = parseApiError(error, `Failed to load ${t("measurement")}.`);
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 

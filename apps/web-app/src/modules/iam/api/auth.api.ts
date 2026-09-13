@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { axiosApi } from "@/shared/api";
-import { useAuthStore, type UserType } from "@/modules";
+import { useAuthStore, type UserType } from "@/modules/iam";
 
 export const useGetMeQuery = (enabled: boolean) => {
     return useQuery({

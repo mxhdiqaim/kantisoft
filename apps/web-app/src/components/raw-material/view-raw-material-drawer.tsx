@@ -1,6 +1,6 @@
 import { useGetSingleRawMaterialQuery } from "@/store/slice";
 // import useNotifier from "@/hooks/useNotifier.ts";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
+import { parseApiError } from "@/shared/utils";
 // import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { Box, Divider, Grid, Stack, Typography } from "@mui/material";
 import { EditOutlined } from "@mui/icons-material";
@@ -12,7 +12,7 @@ import { type FC, useState } from "react";
 import { drawerPaperProps } from "@/components/styles";
 import DataDrawerUi from "@/shared/components/ui/data-drawer.ui.tsx";
 import { formatDateCustom, formatRelativeDateTime } from "@/shared/utils/time-date.util.ts";
-import { ViewRawMaterialSkeleton } from "@/shared";
+import { ViewRawMaterialSkeleton } from "@/shared/components";
 
 interface Props {
     open: boolean;
@@ -42,7 +42,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({ rawMaterialId, open, onOpen, onClose
         setFormModalOpen(true);
     };
 
-    const apiError = parseApiErrorUtil(error, "Failed to load raw material data.");
+    const apiError = parseApiError(error, "Failed to load raw material data.");
 
     return (
         <DataDrawerUi

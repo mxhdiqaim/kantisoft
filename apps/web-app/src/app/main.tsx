@@ -6,7 +6,7 @@ import App from "./App.tsx";
 import "../index.css";
 import { SnackbarProvider } from "notistack";
 import * as Sentry from "@sentry/react";
-import { getEnvVariable } from "@/shared";
+import { getEnvVariable } from "@/shared/utils";
 import { SyncProvider } from "@/context/sync-context.tsx";
 import { ClerkProvider } from "@clerk/react";
 import { QueryClientProvider as TanstackQueryClientProvider } from "@tanstack/react-query";

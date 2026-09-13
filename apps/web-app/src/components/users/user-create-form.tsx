@@ -1,21 +1,16 @@
 import { useCreateUserMutation, useGetAllStoresQuery } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
-import { createUserSchema, type CreateUserType, UserRoleEnum, type BusinessType } from "@/modules";
+import { createUserSchema, type CreateUserType, UserRoleEnum, type BusinessType } from "@/modules/iam";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { Box, FormControl, Grid, IconButton, InputAdornment, MenuItem, TextField } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
-import {
-    StyledTextField,
-    CustomButton,
-    IconUtil,
-    getRolePermissions,
-    useNotification,
-    parseApiErrorUtil,
-} from "@/shared";
 import CustomModal from "@/components/customs/custom-modal.tsx";
+import { useNotification } from "@/shared/hooks";
+import { getRolePermissions, parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
 
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
@@ -53,7 +48,7 @@ const UserCreateForm = ({ open, onClose }: Props) => {
                 lastName: "",
                 email: "",
                 phone: "",
-                role: UserRoleEnum.USER,
+                role: UserRoleEnum.STAFF,
                 storeId: "",
                 password: "",
                 confirmPassword: "",
@@ -76,7 +71,7 @@ const UserCreateForm = ({ open, onClose }: Props) => {
             onClose();
         } catch (error) {
             const defaultMessage = `Failed to create user.`;
-            const apiError = parseApiErrorUtil(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
             errorMessage(apiError.message);
         }
     };

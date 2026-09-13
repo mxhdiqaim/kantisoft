@@ -1,4 +1,4 @@
-import { AppSkeleton } from "@/shared/components/spinners";
+import { PageSpinner } from "@/shared/components";
 import { appRoutes } from "@/app/router";
 import { useAuthStore } from "@/modules/iam/store/auth.store.ts";
 import { useEffect } from "react";
@@ -44,7 +44,7 @@ const HomePage = () => {
     }, [currentUser, navigate]);
 
     // Render a loading spinner to provide feedback while the redirection logic runs.
-    return <AppSkeleton />;
+    return <PageSpinner />;
 };
 
 export default HomePage;

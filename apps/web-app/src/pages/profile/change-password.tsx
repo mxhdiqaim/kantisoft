@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Box, IconButton, InputAdornment, Typography } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
-import { useNotification } from "@/shared";
+import { useNotification } from "@/shared/hooks";
 import { useNavigate } from "react-router-dom";
 import CustomButton from "@/shared/components/ui/button.util.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
 import { StyledTextField } from "@/shared/components/ui";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { updatePasswordSchema, type UpdatePasswordType } from "@/modules";
+import { updatePasswordSchema, type UpdatePasswordType } from "@/modules/iam";
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
 import { firebaseAuth } from "@/config";
 

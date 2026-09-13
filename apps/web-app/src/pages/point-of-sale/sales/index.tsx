@@ -2,18 +2,17 @@ import SalesHistoryOverviewCard from "@/components/point-of-sale/sales-history-o
 import SalesHistoryTable from "@/components/point-of-sale/sales-history-table.tsx";
 import { useGetOrdersByPeriodQuery } from "@/store/slice";
 import { filterSchema, type FilterSchemaType } from "@/shared/types";
-import { formatCurrency } from "@/shared/utils/custom.util.ts";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DinnerDiningOutlined, DomainVerificationOutlined, MonetizationOn, Person2Outlined } from "@mui/icons-material";
 import { Box, Grid, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { UserRoleEnum, UserStatusEnum } from "@/modules";
+import { UserRoleEnum, UserStatusEnum } from "@/modules/iam";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
+import { parseApiError, formatCurrency } from "@/shared/utils";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { useNotification } from "@/shared";
+import { useNotification } from "@/shared/hooks";
 import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
 
 const SalesHistory = () => {
@@ -56,7 +55,7 @@ const SalesHistory = () => {
 
     if (isError) {
         errorMessage(` Failed to load sales history. Please try again later.`);
-        const apiError = parseApiErrorUtil(error, `Failed to load sales history.`);
+        const apiError = parseApiError(error, `Failed to load sales history.`);
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 

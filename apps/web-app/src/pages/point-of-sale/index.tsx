@@ -2,9 +2,9 @@ import EachMenuItem from "@/components/point-of-sale/each-menu-item.tsx";
 import MenuIteFormModal from "@/components/menu-items/menu-item-form-modal.tsx";
 import OrderCart from "@/components/point-of-sale/order-cart";
 import PaymentModal from "@/components/point-of-sale/payment-modal";
-import { MenuItemSkeleton } from "@/shared";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
-import { useNotification } from "@/shared";
+import { MenuItemSkeleton, SearchActionTable } from "@/shared/components";
+import { parseApiError } from "@/shared/utils";
+import { useNotification } from "@/shared/hooks";
 import { useCreateOrderMutation, useGetMenuItemsQuery } from "@/store/slice";
 import type { CartItem } from "@/types/cart-item-type";
 import type { MenuItemType } from "@/types/menu-item-type";
@@ -12,7 +12,6 @@ import type { CreateOrderType } from "@/types/order-types";
 import { Box, Grid, Typography } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
@@ -79,7 +78,7 @@ const PointOfSale = () => {
         } catch (error) {
             console.log(error);
             const defaultMessage = "Failed to complete order.";
-            const apiError = parseApiErrorUtil(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
             errorMessage(apiError.message);
         }
     };

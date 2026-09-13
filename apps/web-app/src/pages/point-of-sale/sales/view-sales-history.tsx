@@ -6,10 +6,10 @@ import { Box } from "@mui/material";
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import CustomButton from "@/shared/components/ui/button.util.tsx";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
+import { CustomButton } from "@/shared/components";
+import { parseApiError } from "@/shared/utils";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { useNotification } from "@/shared";
+import { useNotification } from "@/shared/hooks";
 import { useTranslation } from "react-i18next";
 
 import { ArrowBackIosNewOutlined, LocalPrintshopOutlined } from "@mui/icons-material";
@@ -53,7 +53,7 @@ const ViewSalesHistory = () => {
 
     if (isError) {
         errorMessage(`Failed to load ${t("history")}.`);
-        const apiError = parseApiErrorUtil(error, `Failed to load ${t("history")}.`);
+        const apiError = parseApiError(error, `Failed to load ${t("history")}.`);
 
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }

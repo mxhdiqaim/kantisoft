@@ -5,12 +5,10 @@ import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import type { BusinessType } from "@/modules/iam/types/business.type.ts";
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
 import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
-import { useNotification } from "@/shared";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
-import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
-import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { DataGridTable, SearchActionTable, CustomButton } from "@/shared/components";
 import { useSearch } from "@/use-search.ts";
-import CustomButton from "@/shared/components/ui/button.util.tsx";
 import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
@@ -65,7 +63,7 @@ const StoresScreen = () => {
             successMessage("Store deleted successfully");
         } catch (error) {
             const defaultMessage = "Failed to delete store";
-            const apiError = parseApiErrorUtil(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
             errorMessage(apiError.message);
         } finally {
             handleCloseDeleteModal();
@@ -218,7 +216,7 @@ const StoresScreen = () => {
 
     if (isError) {
         errorMessage(`Failed to load ${t("store")}. Please try again later.`);
-        const apiError = parseApiErrorUtil(error, `Failed to load ${t("store")}.`);
+        const apiError = parseApiError(error, `Failed to load ${t("store")}.`);
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 

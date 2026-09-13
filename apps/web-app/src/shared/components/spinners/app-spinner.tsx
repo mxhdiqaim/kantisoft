@@ -1,12 +1,12 @@
 import { Box, Skeleton, useTheme } from "@mui/material";
 
-const AppSkeleton = () => {
+const AppSpinner = () => {
     const theme = useTheme();
     const sidebarWidth = theme.layout.sidebarWidth; // A standard sidebar width
     const appBarHeight = theme.layout.appBarHeight; // Height of the app bar
 
     return (
-        <Box sx={{ display: "flex", height: "100vh", overflow: "hidden" }}>
+        <Box sx={{ display: "flex", overflow: "hidden", mt: 4, mr: 4, ml: 4 }}>
             <Box
                 component="main"
                 sx={{
@@ -18,7 +18,7 @@ const AppSkeleton = () => {
                 {/* Top App Bar Skeleton */}
                 <Skeleton
                     variant="rectangular"
-                    height={`calc(100vh - ${appBarHeight * 1.5}px)`}
+                    height={`calc(100vh - ${appBarHeight}px)`}
                     animation="wave"
                     sx={{ borderRadius: 1 }}
                 />
@@ -27,4 +27,4 @@ const AppSkeleton = () => {
     );
 };
 
-export default AppSkeleton;
+export default AppSpinner;

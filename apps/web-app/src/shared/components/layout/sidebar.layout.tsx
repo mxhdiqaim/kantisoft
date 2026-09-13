@@ -1,6 +1,5 @@
 import { appRoutes, type AppRouteType } from "@/app/router";
 import { LogoutOutlined, StorefrontOutlined } from "@mui/icons-material";
-import { type AppbarProps, useScreenSize } from "@/shared";
 import ExpandLessOutlinedIcon from "@mui/icons-material/ExpandLessOutlined";
 import ExpandMoreOutlinedIcon from "@mui/icons-material/ExpandMoreOutlined";
 import {
@@ -21,13 +20,14 @@ import {
 import { useState, type FC, Fragment, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { IconUtil, CustomButton } from "@/shared";
+import { IconUtil, CustomButton, type AppbarProps } from "@/shared/components";
 import CancelSvgIcon from "@/assets/icons/cancel.svg";
 import CollapseSvgIcon from "@/assets/icons/collapse.svg";
 import { UserRoleEnum } from "@/modules/iam/types";
 import { useAuthStore } from "@/modules/iam/store/auth.store";
 import { useClerk } from "@clerk/react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useScreenSize } from "@/shared/hooks";
 
 interface Props extends AppbarProps {
     sx?: SxProps<Theme>;

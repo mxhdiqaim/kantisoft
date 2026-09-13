@@ -2,18 +2,19 @@ import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Box, Chip, CircularProgress, Grid, Typography } from "@mui/material";
 import { useGetAllInventoryQuery, useGetTransactionsByMenuItemQuery } from "@/store/slice";
-import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
 import type { GridColDef } from "@mui/x-data-grid";
-import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
-import { relativeTime } from "@/shared/utils/time-date.util.ts";
-import CustomButton from "@/shared/components/ui/button.util.tsx";
 import { ArrowBackIosNewOutlined } from "@mui/icons-material";
-import { getTransactionChipColor } from "@/shared/components/ui";
+import {
+    getTransactionChipColor,
+    DataGridTable,
+    StyledBoxTable,
+    CustomButton,
+    SearchActionTable,
+} from "@/shared/components";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
-import { useNotification } from "@/shared";
+import { parseApiError, relativeTime } from "@/shared/utils";
+import { useNotification } from "@/shared/hooks";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
 
 const SingleInventoryTransaction = () => {
@@ -156,7 +157,7 @@ const SingleInventoryTransaction = () => {
 
     if (isError) {
         errorMessage(`Failed to load transactions. Please try again later.`);
-        const apiError = parseApiErrorUtil(error, `Failed to load transactions.`);
+        const apiError = parseApiError(error, `Failed to load transactions.`);
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 

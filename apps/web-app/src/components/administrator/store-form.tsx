@@ -11,7 +11,9 @@ import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { StyledTextField, IconUtil, CustomButton, useNotification, parseApiErrorUtil } from "@/shared";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
+import { useNotification } from "@/shared/hooks";
 
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
@@ -76,7 +78,7 @@ const StoreForm = ({ open, onClose, currentData }: Props) => {
             reset();
         } catch (error) {
             const defaultMessage = isEditMode ? "Failed to update store" : "Failed to create store";
-            const apiError = parseApiErrorUtil(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
             errorMessage(apiError.message);
         }
     };

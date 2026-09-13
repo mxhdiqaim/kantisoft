@@ -1,4 +1,4 @@
-import { type ComponentType, type ReactNode } from "react";
+import { type ComponentType, lazy, type ReactNode } from "react";
 import {
     ActivityLogScreen,
     CategoriesScreen,
@@ -22,14 +22,19 @@ import {
     UsersScreen,
     ViewSalesHistoryScreen,
 } from "@/pages";
-import { type UserRole, UserRoleEnum } from "@/modules/iam/types/user.type.ts";
 import { DashboardOutlined, KitchenOutlined } from "@mui/icons-material";
 import AddAlertOutlinedIcon from "@mui/icons-material/AddAlertOutlined";
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 import RestaurantMenuOutlinedIcon from "@mui/icons-material/RestaurantMenuOutlined";
 import InventoryOutlinedIcon from "@mui/icons-material/InventoryOutlined";
-import { LoginPage, RegisterPage, ForgetPasswordPage } from "@/modules";
-import { HomePage } from "@/app/pages";
+
+// IAM & App Pages
+const LoginPage = lazy(() => import("@/modules/iam/pages/login.page"));
+const RegisterPage = lazy(() => import("@/modules/iam/pages/register.page"));
+const ForgetPasswordPage = lazy(() => import("@/modules/iam/pages/forget-password.page"));
+const HomePage = lazy(() => import("@/app/pages/home.page"));
+
+import { type UserRole, UserRoleEnum } from "@/modules/iam";
 
 export interface AppRouteType {
     to: string;

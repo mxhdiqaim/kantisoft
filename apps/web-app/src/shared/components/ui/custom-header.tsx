@@ -1,6 +1,6 @@
 import { type Control, Controller, type FieldValues, type Path } from "react-hook-form";
 import { Box, FormControl, InputAdornment, MenuItem, Typography } from "@mui/material";
-import { StyledTextField, IconUtil } from "@/shared";
+import { StyledTextField, IconUtil } from "@/shared/components";
 
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 

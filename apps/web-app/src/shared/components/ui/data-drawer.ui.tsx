@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import { Box, Grid, IconButton, type SxProps, type Theme, Typography } from "@mui/material";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { useNotification, IconUtil, parseApiErrorUtil, type DrawerAnchor, CustomDrawer } from "@/shared";
+import { parseApiError } from "@/shared/utils";
+import type { DrawerAnchor } from "@/shared/types";
+import { useNotification } from "@/shared/hooks";
+import { CustomDrawer, IconUtil } from "@/shared/components";
 import CancelSvgIcon from "@/assets/icons/cancel.svg";
 
 interface Props {
@@ -32,7 +35,7 @@ const DataDrawerUi = ({
     const { error: errorMessage } = useNotification();
 
     if (error) {
-        const apiError = parseApiErrorUtil(error, "Failed to load raw material data.");
+        const apiError = parseApiError(error, "Failed to load raw material data.");
         errorMessage(apiError.message);
     }
 

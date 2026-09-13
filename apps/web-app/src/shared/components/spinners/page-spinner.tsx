@@ -1,6 +1,6 @@
 import { Box, Skeleton, useTheme } from "@mui/material";
 
-const PageSkeleton = () => {
+const PageSpinner = () => {
     const theme = useTheme();
     return (
         <Box sx={{ display: "flex", height: "100vh" }}>
@@ -14,23 +14,10 @@ const PageSkeleton = () => {
                     bgcolor: "background.paper",
                 }}
             >
-                <Skeleton
-                    variant="text"
-                    width="100%"
-                    height={40}
-                    sx={{ mb: 2 }}
-                />
+                <Skeleton variant="text" width="100%" height={40} sx={{ mb: 2 }} />
                 {Array.from(new Array(4)).map((_, index) => (
-                    <Box
-                        key={index}
-                        sx={{ display: "flex", alignItems: "center", mb: 2 }}
-                    >
-                        <Skeleton
-                            variant="text"
-                            width={36}
-                            height={60}
-                            sx={{ mr: 1.5 }}
-                        />
+                    <Box key={index} sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                        <Skeleton variant="text" width={36} height={60} sx={{ mr: 1.5 }} />
                         <Skeleton variant="text" width="80%" height={60} />
                     </Box>
                 ))}
@@ -47,12 +34,7 @@ const PageSkeleton = () => {
                         mb: 4,
                     }}
                 >
-                    <Skeleton
-                        variant="text"
-                        width={250}
-                        height={50}
-                        sx={{ mr: 2 }}
-                    />
+                    <Skeleton variant="text" width={250} height={50} sx={{ mr: 2 }} />
                     <Skeleton variant="circular" width={40} height={40} />
                 </Box>
 
@@ -63,4 +45,4 @@ const PageSkeleton = () => {
     );
 };
 
-export default PageSkeleton;
+export default PageSpinner;

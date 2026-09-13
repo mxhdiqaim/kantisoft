@@ -24,18 +24,20 @@ import {
     useGetAllUnitOfMeasurementsQuery,
     useGetBOMQuery,
 } from "@/store/slice";
-import { useNotification, parseApiErrorUtil, StyledTextField, IconUtil, DataDrawer, CustomButton } from "@/shared";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { defineBomSchema, type DefineBomSchemaType } from "@/types/bom-types.ts";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { bigDrawerPaperProps } from "@/components/styles";
-
 import {
     AddCircleOutline as AddIcon,
     DeleteOutline as DeleteIcon,
     SaveOutlined as SaveIcon,
 } from "@mui/icons-material";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, DataDrawer, IconUtil, StyledTextField } from "@/shared/components";
+
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -103,7 +105,7 @@ const BillOfMaterialsDrawer: FC<Props> = ({ open, onOpen, onClose, menuItemId })
             onClose();
         } catch (error) {
             const defaultMessage = `Failed to save recipe. Please try again.`;
-            const apiError = parseApiErrorUtil(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
             errorMessage(apiError.message);
         }
     };

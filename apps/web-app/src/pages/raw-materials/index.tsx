@@ -1,21 +1,16 @@
 import { Box, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import { useDeleteRawMaterialMutation, useGetAllRawMaterialsQuery } from "@/store/slice";
-import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
 import type { GridColDef } from "@mui/x-data-grid";
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
-import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
-import { formatCurrency } from "@/shared/utils/custom.util.ts";
-import { formatDateCustom, formatRelativeDateTime } from "@/shared/utils/time-date.util.ts";
 import RawMaterialForm from "@/components/raw-material/raw-material-form.tsx";
-import CustomButton from "@/shared/components/ui/button.util.tsx";
+import { CustomButton, SearchActionTable, StyledBoxTable, DataGridTable } from "@/shared/components";
 import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 import type { RawMaterialType } from "@/types/raw-material-types.ts";
-import { useNotification } from "@/shared";
+import { useNotification } from "@/shared/hooks";
 import ViewRawMaterialDrawer from "@/components/raw-material/view-raw-material-drawer.tsx";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
+import { parseApiError, formatCurrency, formatDateCustom, formatRelativeDateTime } from "@/shared/utils";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { useTranslation } from "react-i18next";
 import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
@@ -242,7 +237,7 @@ const RawMaterials = () => {
 
     if (isError) {
         errorMessage(`Failed to load ${t("rawMaterial")}.`);
-        const apiError = parseApiErrorUtil(error, `Failed to load ${t("rawMaterial")}.`);
+        const apiError = parseApiError(error, `Failed to load ${t("rawMaterial")}.`);
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 

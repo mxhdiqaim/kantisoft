@@ -9,7 +9,6 @@ import {
     useGetAllUnitOfMeasurementsQuery,
     useUpdateRawMaterialMutation,
 } from "@/store/slice";
-import { useNotification, parseApiErrorUtil, CustomButton, StyledTextField, IconUtil } from "@/shared";
 import {
     createRawMaterialSchema,
     type CreateRawMaterialType,
@@ -19,6 +18,9 @@ import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { useMeasurementSymbol } from "@/hooks/use-measurement-symbol.ts";
 
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
 
 interface Props {
     open: boolean;
@@ -101,7 +103,7 @@ const RawMaterialForm: FC<Props> = ({ open, onClose, rawMaterial }) => {
             }
         } catch (error) {
             const defaultMessage = `Failed to ${isEditMode ? "update" : "create"} Raw Material. Please try again.`;
-            const apiError = parseApiErrorUtil(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
             notification.error(apiError.message);
         }
     };

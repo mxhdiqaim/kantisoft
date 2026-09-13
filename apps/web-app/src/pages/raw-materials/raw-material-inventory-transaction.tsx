@@ -2,23 +2,27 @@ import { Box, Chip, FormControl, Grid, InputAdornment, MenuItem, Typography, use
 import { useGetAllRawMaterialsQuery, useGetRawMaterialInventoryTransactionsQuery } from "@/store/slice";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useEffect, useMemo, useState } from "react";
-import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
-import { camelCaseToTitleCase, formatNumber } from "@/shared/utils/custom.util.ts";
-import { getTransactionTypeChipColor, StyledTextField } from "@/shared/components/ui";
-import { formatDateTimeCustom } from "@/shared/utils/time-date.util.ts";
-import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
+import {
+    StyledBoxTable,
+    DataGridTable,
+    SearchActionTable,
+    getTransactionTypeChipColor,
+    StyledTextField,
+    IconUtil,
+} from "@/shared/components";
+import { camelCaseToTitleCase, formatNumber, formatDateTimeCustom, parseApiError } from "@/shared/utils";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { useSearch } from "@/use-search.ts";
-import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import {
     fetchRawMaterialAndFilterByPeriod,
     type FetchRawMaterialAndFilterByPeriodType,
 } from "@/types/raw-material-types.ts";
 import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { useNotification, IconUtil, parseApiErrorUtil } from "@/shared";
+import { useNotification } from "@/shared/hooks";
+
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 const RawMaterialInventoryTransaction = () => {
@@ -218,7 +222,7 @@ const RawMaterialInventoryTransaction = () => {
 
     if (isError) {
         errorMessage(`Failed to load Transactions. Please try again later.`);
-        const apiError = parseApiErrorUtil(error, `Failed to load Transactions.`);
+        const apiError = parseApiError(error, `Failed to load Transactions.`);
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 

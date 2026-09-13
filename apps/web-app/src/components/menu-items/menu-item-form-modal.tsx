@@ -1,5 +1,4 @@
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { useNotification, parseApiErrorUtil, IconUtil, StyledTextField, CustomButton } from "@/shared";
 import { useCreateMenuItemMutation, useGetAllCategoriesQuery, useUpdateMenuItemMutation } from "@/store/slice";
 import {
     createMenuItemSchema,
@@ -12,6 +11,10 @@ import { Box, FormControl, Grid, InputAdornment, MenuItem, Typography } from "@m
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
+
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -93,7 +96,7 @@ const MenuItemFormModal = ({ open, onClose, menuItemToEdit }: Props) => {
 
             // Handle Actual Backend Errors (Validation, etc.)
             const defaultMessage = `Failed to ${isEditMode ? "update" : "add"} menu item.`;
-            const apiError = parseApiErrorUtil(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
             errorMessage(apiError.message);
             console.log(`Failed to ${isEditMode ? "update" : "add"} menu item:`, error);
         }

@@ -2,14 +2,13 @@ import { useAppSelector } from "@/store";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
 import { Avatar, Box, Chip, Divider, Grid, Stack, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { getRoleChipColor } from "@/shared/utils/custom.util.ts";
+import { getRoleChipColor, parseApiError } from "@/shared/utils";
 import { useGetUserByIdQuery } from "@/store/slice";
 import ViewUserSkeleton from "@/components/profile/loading";
 import ApiErrorDisplay from "@/components/feedback/api-error-display";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import { selectActiveStore } from "@/store/slice/store-slice";
 import { useSelector } from "react-redux";
-import CustomButton from "@/shared/components/ui/button.util.tsx";
+import { CustomButton } from "@/shared/components";
 import CustomCard from "@/components/customs/custom-card.tsx";
 import UserUpdateForm from "@/components/users/user-update-form.tsx";
 import { useState } from "react";
@@ -53,7 +52,7 @@ const ProfilePage = () => {
     }
 
     if (isError || !user) {
-        const apiError = parseApiErrorUtil(error, "Failed to load your profile.");
+        const apiError = parseApiError(error, "Failed to load your profile.");
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 

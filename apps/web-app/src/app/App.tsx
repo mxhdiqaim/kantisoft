@@ -1,13 +1,13 @@
-import { AppLayout, ScrollToTop } from "@/shared";
 import ErrorFallback from "@/pages/feedbacks/fallback.tsx";
 import { ThemeProvider } from "../../../../packages/ui/src/theme";
-import { type JSX } from "react";
+import { type JSX, Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { FullscreenProvider } from "../context/fullscreen-context.tsx";
-import Spinner from "@/components/feedback/spinner.tsx";
 import { appRoutes, GuardedRoute, type AppRouteType } from "@/app/router";
 import { useAuth } from "@clerk/react";
+import { AppLayout, AppSpinner } from "@/shared/components";
+import { ScrollToTop } from "@/shared/utils";
 
 // Recursive function to render routes and their nested children
 const renderRoutes = (routes: AppRouteType[], parentPath = ""): JSX.Element[] => {
@@ -48,14 +48,16 @@ const AppContent = () => {
 
     // Block rendering until Clerk is fully initialised
     if (!isLoaded) {
-        return <Spinner />;
+        return <AppSpinner />;
     }
 
     return (
         <>
             <ScrollToTop />
             <ErrorBoundary FallbackComponent={ErrorFallback}>
-                <Routes>{renderRoutes(appRoutes)}</Routes>
+                <Suspense fallback={<AppSpinner />}>
+                    <Routes>{renderRoutes(appRoutes)}</Routes>
+                </Suspense>
             </ErrorBoundary>
         </>
     );

@@ -1,12 +1,13 @@
 import { Box, CircularProgress, FormControl, Grid, InputAdornment, MenuItem, Stack, Typography } from "@mui/material";
 import { useGetMenuItemsQuery, useRunProductionMutation } from "@/store/slice";
-import { useNotification } from "@/shared";
+import { useNotification } from "@/shared/hooks";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { createProductionSchema, type CreateProductionType } from "@/types/production-types.ts";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { parseApiErrorUtil, CustomButton, StyledTextField, IconUtil } from "@/shared";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
 
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
@@ -44,7 +45,7 @@ const ProductionModal = ({ open, onClose }: Props) => {
             onClose();
         } catch (error) {
             const defaultMessage = `Failed to make production.`;
-            const apiError = parseApiErrorUtil(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
 
             errorMessage(apiError.message);
             console.log(`Failed to make production:`, error);

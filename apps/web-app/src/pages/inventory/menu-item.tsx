@@ -1,22 +1,21 @@
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
 import { Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import { useDeleteMenuItemMutation, useGetMenuItemsQuery } from "@/store/slice";
-import { useNotification } from "@/shared";
+import { useNotification } from "@/shared/hooks";
 import MenuItemFormModal from "@/components/menu-items/menu-item-form-modal.tsx";
 import type { MenuItemType } from "@/types/menu-item-type.ts";
 import { useTranslation } from "react-i18next";
-import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
 import { useAppSelector } from "@/store";
 import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
 import type { GridColDef } from "@mui/x-data-grid";
 import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
-import { camelCaseToTitleCase, formatCurrency } from "@/shared/utils/custom.util.ts";
+import { camelCaseToTitleCase, formatCurrency, parseApiError } from "@/shared/utils";
 import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
 import CustomButton from "@/shared/components/ui/button.util.tsx";
-import { UserRoleEnum } from "@/modules";
+import { UserRoleEnum } from "@/modules/iam";
 import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { getMenuItemsInventoryStatusChip } from "@/shared/components/ui";
@@ -301,7 +300,7 @@ const MenuItems = () => {
     );
 
     if (isError && (!menuItems || menuItems.length === 0)) {
-        const apiError = parseApiErrorUtil(error, `Failed to load ${t("menuItem")}.`);
+        const apiError = parseApiError(error, `Failed to load ${t("menuItem")}.`);
         return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 

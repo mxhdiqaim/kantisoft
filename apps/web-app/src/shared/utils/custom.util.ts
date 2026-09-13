@@ -1,5 +1,5 @@
 import type { Period } from "@/types/order-types.ts";
-import { UserRoleEnum, type UserRoleType, type UserType } from "@/modules";
+import { UserRoleEnum, type UserRoleType, type UserType } from "@/modules/iam";
 import type { ChipProps } from "@mui/material";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
@@ -114,16 +114,6 @@ export const getTokenExpFromStorage = (): number | null => {
         return isNaN(exp) ? null : exp;
     }
     return null;
-};
-
-export const getEnvVariable = (key: string): string => {
-    const value = import.meta.env[key];
-
-    if (!value) {
-        throw new Error(`Environment variable is missing: ${key}`);
-    }
-
-    return value;
 };
 
 // convert snake case to Title Case

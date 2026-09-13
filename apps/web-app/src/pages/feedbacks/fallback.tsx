@@ -5,8 +5,8 @@ import CardContent from "@mui/material/CardContent";
 import type { FallbackProps } from "react-error-boundary";
 import { useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { BlankLayout, CustomButton } from "@/shared";
 import CustomCard from "@/components/customs/custom-card";
+import { BlankLayout, CustomButton } from "@/shared/components";
 
 const BoxWrapper = styled(Box)<BoxProps>(({ theme }) => ({
     [theme.breakpoints.down("md")]: {

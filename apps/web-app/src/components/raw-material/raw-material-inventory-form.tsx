@@ -9,7 +9,6 @@ import {
     type GetRawMaterialInventoryStockType,
     type UpdateRawMaterialInventoryType,
 } from "@/types/raw-material-types.ts";
-import { StyledTextField, CustomButton, IconUtil, useNotification, parseApiErrorUtil } from "@/shared";
 import {
     useCreateRawMaterialInventoryMutation,
     useGetAllRawMaterialsQuery,
@@ -17,6 +16,10 @@ import {
     useUpdateRawMaterialInventoryMutation,
 } from "@/store/slice";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
+
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -150,7 +153,7 @@ const RawMaterialInventoryForm: FC<Props> = ({ open, onClose, rawMaterialInvento
             }
         } catch (error) {
             const defaultMessage = `Failed to update Inventory. Please try again.`;
-            const apiError = parseApiErrorUtil(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
             notification.error(apiError.message);
         }
     };
@@ -158,11 +161,7 @@ const RawMaterialInventoryForm: FC<Props> = ({ open, onClose, rawMaterialInvento
     const isLoading = isCreating || isUpdating;
 
     return (
-        <CustomModal
-            open={open}
-            onClose={handleClose} // Use handleClose instead of onClose directly
-            title={isEditMode ? "Edit Minimum Stock" : "Create Inventory"}
-        >
+        <CustomModal open={open} onClose={handleClose} title={isEditMode ? "Edit Minimum Stock" : "Create Inventory"}>
             <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 3 }}>
                 <Grid container spacing={2}>
                     {!isEditMode && (

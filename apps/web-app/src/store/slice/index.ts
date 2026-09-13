@@ -19,7 +19,6 @@ import type {
     BusinessType,
     UserType,
     CreateUserType,
-    RegisterUserType,
 } from "@/modules/iam/types";
 import { UserRoleEnum } from "@/modules/iam/types";
 import {
@@ -30,7 +29,7 @@ import {
     type FetchBaseQueryError,
 } from "@reduxjs/toolkit/query/react";
 import type { RootState } from "..";
-import { logOut, selectCurrentUser, setCredentials } from "./auth-slice";
+import { logOut, selectCurrentUser } from "./auth-slice";
 import { selectActiveStore } from "@/store/slice/store-slice.ts";
 import type {
     AdjustStockResponseType,
@@ -41,7 +40,7 @@ import type {
     InventoryType,
     InventoryValuationHealthType,
 } from "@/types/inventory-types.ts";
-import { getEnvVariable } from "@/shared/utils/custom.util.ts";
+import { getEnvVariable } from "@/shared/utils/env.util";
 import type { UnitOfMeasurementType } from "@/types/unit-of-measurement-types.ts";
 import type {
     CreateRawMaterialInventoryType,

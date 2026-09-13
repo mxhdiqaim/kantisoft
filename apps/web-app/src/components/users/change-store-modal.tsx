@@ -1,8 +1,8 @@
 import { type FC, useState } from "react";
 import { Box, FormControl, InputAdornment, MenuItem } from "@mui/material";
-import { type BusinessType, type UserType } from "@/modules";
+import { type BusinessType, type UserType } from "@/modules/iam";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { StyledTextField, IconUtil, CustomButton } from "@/shared";
+import { StyledTextField, IconUtil, CustomButton } from "@/shared/components";
 
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 

@@ -2,15 +2,6 @@ import { type FC, useEffect } from "react";
 import { Box, FormControl, Grid, InputAdornment, MenuItem, Stack } from "@mui/material";
 import { drawerPaperProps } from "@/components/styles";
 import { useGetAllUnitOfMeasurementsQuery, useStockInRawMaterialInventoryMutation } from "@/store/slice";
-import {
-    useNotification,
-    parseApiErrorUtil,
-    StyledTextField,
-    CustomButton,
-    IconUtil,
-    camelCaseToTitleCase,
-    DataDrawer,
-} from "@/shared";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import {
@@ -22,6 +13,9 @@ import {
 import CustomCard from "@/components/customs/custom-card.tsx";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { useUnitFilter } from "@/hooks/use-unit-filter.ts";
+import { useNotification } from "@/shared/hooks";
+import { camelCaseToTitleCase, parseApiError } from "@/shared/utils";
+import { CustomButton, DataDrawer, IconUtil, StyledTextField } from "@/shared/components";
 
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
@@ -66,7 +60,7 @@ const RawMaterialStockInDrawer: FC<Props> = ({ open, onOpen, onClose, rawMateria
             reset();
         } catch (error) {
             const defaultMessage = `Failed to stock in. Please try again.`;
-            const apiError = parseApiErrorUtil(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
             notification.error(apiError.message);
         }
     };
