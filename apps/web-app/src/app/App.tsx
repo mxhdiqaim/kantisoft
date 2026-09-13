@@ -1,7 +1,6 @@
-import { Layout } from "@/shared";
+import { AppLayout, ScrollToTop } from "@/shared";
 import ErrorFallback from "@/pages/feedbacks/fallback.tsx";
 import { ThemeProvider } from "../../../../packages/ui/src/theme";
-import { ScrollToTop } from "@/shared/utils";
 import { type JSX } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
@@ -26,7 +25,7 @@ const renderRoutes = (routes: AppRouteType[], parentPath = ""): JSX.Element[] =>
 
         // Wrap with Layout if useLayout is true
         if (useLayout) {
-            element = <Layout>{element}</Layout>;
+            element = <AppLayout>{element}</AppLayout>;
         }
 
         // Wrap with GuardedRoute if authGuard is true

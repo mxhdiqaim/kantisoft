@@ -24,23 +24,18 @@ import {
     useGetAllUnitOfMeasurementsQuery,
     useGetBOMQuery,
 } from "@/store/slice";
-import { useNotification } from "@/shared";
+import { useNotification, parseApiErrorUtil, StyledTextField, IconUtil, DataDrawer, CustomButton } from "@/shared";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
 import { defineBomSchema, type DefineBomSchemaType } from "@/types/bom-types.ts";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
-import { StyledTextField } from "@/shared/components/ui";
 import { bigDrawerPaperProps } from "@/components/styles";
-import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
 
 import {
     AddCircleOutline as AddIcon,
     DeleteOutline as DeleteIcon,
     SaveOutlined as SaveIcon,
 } from "@mui/icons-material";
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -191,7 +186,7 @@ const BillOfMaterialsDrawer: FC<Props> = ({ open, onOpen, onClose, menuItemId })
                                                                         IconComponent: () => null,
                                                                         endAdornment: (
                                                                             <InputAdornment position="end">
-                                                                                <Icon
+                                                                                <IconUtil
                                                                                     src={ArrowDownIconSvg}
                                                                                     alt={"Dropdown Arrow"}
                                                                                     sx={{ width: 15, height: 15 }}

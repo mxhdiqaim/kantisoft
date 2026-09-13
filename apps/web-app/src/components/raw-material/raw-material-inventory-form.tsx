@@ -9,19 +9,15 @@ import {
     type GetRawMaterialInventoryStockType,
     type UpdateRawMaterialInventoryType,
 } from "@/types/raw-material-types.ts";
-import { StyledTextField } from "@/shared/components/ui";
-import Icon from "@/shared/components/ui/icon.tsx";
+import { StyledTextField, CustomButton, IconUtil, useNotification, parseApiErrorUtil } from "@/shared";
 import {
     useCreateRawMaterialInventoryMutation,
     useGetAllRawMaterialsQuery,
     useGetAllUnitOfMeasurementsQuery,
     useUpdateRawMaterialInventoryMutation,
 } from "@/store/slice";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import { useNotification } from "@/shared";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
-import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
     open: boolean;
@@ -186,7 +182,7 @@ const RawMaterialInventoryForm: FC<Props> = ({ open, onClose, rawMaterialInvento
                                                 IconComponent: () => null,
                                                 endAdornment: (
                                                     <InputAdornment position="end">
-                                                        <Icon
+                                                        <IconUtil
                                                             src={ArrowDownIconSvg}
                                                             alt={"Dropdown Arrow"}
                                                             sx={{ width: 15, height: 15 }}

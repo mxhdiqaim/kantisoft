@@ -1,6 +1,6 @@
 import { appRoutes, type AppRouteType } from "@/app/router";
 import { LogoutOutlined, StorefrontOutlined } from "@mui/icons-material";
-import { useScreenSize } from "@/shared";
+import { type AppbarProps, useScreenSize } from "@/shared";
 import ExpandLessOutlinedIcon from "@mui/icons-material/ExpandLessOutlined";
 import ExpandMoreOutlinedIcon from "@mui/icons-material/ExpandMoreOutlined";
 import {
@@ -21,18 +21,15 @@ import {
 import { useState, type FC, Fragment, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import type { Props as AppBarProps } from "./appbar.layout.tsx";
-import CustomButton from "@/shared/components/ui/button";
-import Icon from "@/shared/components/ui/icon";
+import { IconUtil, CustomButton } from "@/shared";
 import CancelSvgIcon from "@/assets/icons/cancel.svg";
 import CollapseSvgIcon from "@/assets/icons/collapse.svg";
-
 import { UserRoleEnum } from "@/modules/iam/types";
 import { useAuthStore } from "@/modules/iam/store/auth.store";
 import { useClerk } from "@clerk/react";
 import { useQueryClient } from "@tanstack/react-query";
 
-interface Props extends AppBarProps {
+interface Props extends AppbarProps {
     sx?: SxProps<Theme>;
     showDrawer?: boolean;
 }
@@ -259,11 +256,11 @@ const SidebarLayout: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer })
                         sx={{ borderRadius: 1 }}
                         onClick={() => toggleDrawer && toggleDrawer(!drawerState)}
                     >
-                        <Icon src={CancelSvgIcon} alt={"Cancel Icon"} />
+                        <IconUtil src={CancelSvgIcon} alt={"Cancel Icon"} />
                     </IconButton>
                 ) : (
                     <IconButton aria-label="menu" sx={{ borderRadius: 1 }}>
-                        <Icon src={CollapseSvgIcon} alt={"Collapse Icon"} />
+                        <IconUtil src={CollapseSvgIcon} alt={"Collapse Icon"} />
                     </IconButton>
                 )}
             </Box>

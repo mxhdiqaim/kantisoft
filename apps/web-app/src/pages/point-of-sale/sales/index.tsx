@@ -2,7 +2,7 @@ import SalesHistoryOverviewCard from "@/components/point-of-sale/sales-history-o
 import SalesHistoryTable from "@/components/point-of-sale/sales-history-table.tsx";
 import { useGetOrdersByPeriodQuery } from "@/store/slice";
 import { filterSchema, type FilterSchemaType } from "@/shared/types";
-import { formatCurrency } from "@/shared/utils";
+import { formatCurrency } from "@/shared/utils/custom.util.ts";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DinnerDiningOutlined, DomainVerificationOutlined, MonetizationOn, Person2Outlined } from "@mui/icons-material";
 import { Box, Grid, Typography } from "@mui/material";
@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import { UserRoleEnum, UserStatusEnum } from "@/modules";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { useNotification } from "@/shared";
 import PeriodSelector from "@/shared/components/ui/period-selector.tsx";

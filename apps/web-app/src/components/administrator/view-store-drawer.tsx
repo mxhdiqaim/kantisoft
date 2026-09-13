@@ -3,10 +3,10 @@ import ViewStoreLoading from "@/components/stores/loading/view-store-loading.tsx
 import { useGetStoreByIdQuery } from "@/store/slice";
 import { Chip, Grid, Typography, useTheme } from "@mui/material";
 import { drawerPaperProps } from "@/components/styles";
-import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
+import DataDrawerUi from "@/shared/components/ui/data-drawer.ui.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
 import { useNotification } from "@/shared";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
@@ -72,7 +72,7 @@ const ViewStoreDrawer: FC<Props> = ({ open, onOpen, onClose, storeId }) => {
     }
 
     return (
-        <DataDrawer
+        <DataDrawerUi
             title={"Store Details"}
             anchor={"right"}
             open={open}
@@ -100,7 +100,7 @@ const ViewStoreDrawer: FC<Props> = ({ open, onOpen, onClose, storeId }) => {
                     </CustomCard>
                 </>
             )}
-        </DataDrawer>
+        </DataDrawerUi>
     );
 };
 

@@ -1,5 +1,5 @@
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import { useNotification } from "@/shared";
 import { useAppSelector } from "@/store";
 import { useChangeUserStoreMutation, useGetAllStoresQuery, useGetAllUsersQuery } from "@/store/slice";
@@ -9,13 +9,13 @@ import { Avatar, Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/mat
 import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
+import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
+import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
 import ChangeStoreModal from "@/components/users/change-store-modal.tsx";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
+import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 import { getUserStatusChipColor } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { useTranslation } from "react-i18next";
@@ -127,7 +127,7 @@ const UsersPage = () => {
                     const initials =
                         `${params.row.firstName?.[0] ?? ""}${params.row.lastName?.[0] ?? ""}`.toUpperCase();
                     return (
-                        <TableStyledBox>
+                        <StyledBoxTable>
                             <Avatar
                                 sx={{
                                     backgroundColor: "primary.light",
@@ -144,7 +144,7 @@ const UsersPage = () => {
                             <Typography variant="body2" fontWeight="500">
                                 {name}
                             </Typography>
-                        </TableStyledBox>
+                        </StyledBoxTable>
                     );
                 },
             },
@@ -156,9 +156,9 @@ const UsersPage = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -170,11 +170,11 @@ const UsersPage = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" sx={{ textTransform: "capitalize" }}>
                             {params.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -185,14 +185,14 @@ const UsersPage = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params: GridRenderCellParams<UserType>) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={params.value}
                             color={getUserStatusChipColor(params.value)}
                             size="medium"
                             sx={{ textTransform: "capitalize", fontWeight: "bold" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -203,11 +203,11 @@ const UsersPage = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="500">
                             {params.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -223,11 +223,11 @@ const UsersPage = () => {
                         return "Invalid Date";
                     }
                     return (
-                        <TableStyledBox>
+                        <StyledBoxTable>
                             <Typography variant="body2" fontWeight="500">
                                 {date.toLocaleDateString()}
                             </Typography>
-                        </TableStyledBox>
+                        </StyledBoxTable>
                     );
                 },
             },
@@ -268,7 +268,13 @@ const UsersPage = () => {
                     const canChangeStore =
                         currentUser?.role === UserRoleEnum.MANAGER &&
                         params.row.id !== currentUser.id &&
-                        [UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.GUEST].includes(params.row.role);
+                        [
+                            UserRoleEnum.ADMIN,
+                            UserRoleEnum.MANAGER,
+                            UserRoleEnum.STAFF,
+                            UserRoleEnum.CASHIER,
+                            UserRoleEnum.GUEST,
+                        ].includes(params.row.role);
 
                     return (
                         <CustomButton
@@ -326,7 +332,7 @@ const UsersPage = () => {
                         />
                     )}
             </Box>
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

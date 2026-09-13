@@ -1,6 +1,6 @@
 import { useGetSalesTrendQuery } from "@/store/slice";
 import type { Period } from "@/types/order-types";
-import { formatCurrency, formatDateCustom } from "@/shared/utils";
+import { formatCurrency, formatDateCustom } from "@/shared";
 import { Box, Skeleton, Typography, useTheme } from "@mui/material";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import CustomCard from "@/components/customs/custom-card.tsx";

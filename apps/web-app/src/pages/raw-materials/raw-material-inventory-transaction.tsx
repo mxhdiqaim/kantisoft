@@ -2,26 +2,23 @@ import { Box, Chip, FormControl, Grid, InputAdornment, MenuItem, Typography, use
 import { useGetAllRawMaterialsQuery, useGetRawMaterialInventoryTransactionsQuery } from "@/store/slice";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useEffect, useMemo, useState } from "react";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
-import { camelCaseToTitleCase, formatNumber } from "@/shared/utils";
+import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
+import { camelCaseToTitleCase, formatNumber } from "@/shared/utils/custom.util.ts";
 import { getTransactionTypeChipColor, StyledTextField } from "@/shared/components/ui";
-import { formatDateTimeCustom } from "@/shared/utils/get-relative-time.ts";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
+import { formatDateTimeCustom } from "@/shared/utils/time-date.util.ts";
+import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { useSearch } from "@/use-search.ts";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import {
     fetchRawMaterialAndFilterByPeriod,
     type FetchRawMaterialAndFilterByPeriodType,
 } from "@/types/raw-material-types.ts";
 import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { useNotification } from "@/shared";
-
-import Icon from "@/shared/components/ui/icon.tsx";
+import { useNotification, IconUtil, parseApiErrorUtil } from "@/shared";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 const RawMaterialInventoryTransaction = () => {
@@ -71,9 +68,9 @@ const RawMaterialInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -84,14 +81,14 @@ const RawMaterialInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={camelCaseToTitleCase(params.value)}
                             color={getTransactionTypeChipColor(params.value)}
                             size="small"
                             sx={{ textTransform: "capitalize" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -102,9 +99,9 @@ const RawMaterialInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -116,11 +113,11 @@ const RawMaterialInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">
                             {formatNumber(params.value)} ({params.row.unitSymbol})
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -131,14 +128,14 @@ const RawMaterialInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={camelCaseToTitleCase(params.value)}
                             color={getTransactionTypeChipColor(params.value)}
                             size="small"
                             sx={{ textTransform: "capitalize" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -149,9 +146,9 @@ const RawMaterialInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -162,9 +159,9 @@ const RawMaterialInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{formatDateTimeCustom(params.value)}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -175,9 +172,9 @@ const RawMaterialInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             // {
@@ -235,7 +232,7 @@ const RawMaterialInventoryTransaction = () => {
             </Box>
             <Grid container spacing={2}>
                 <Grid size={{ xs: 12, md: 8 }}>
-                    <TableSearchActions
+                    <SearchActionTable
                         searchControl={searchControl}
                         searchSubmit={searchSubmit}
                         handleSearch={handleSearch}
@@ -258,7 +255,7 @@ const RawMaterialInventoryTransaction = () => {
                                         IconComponent: () => null,
                                         endAdornment: (
                                             <InputAdornment position="end">
-                                                <Icon
+                                                <IconUtil
                                                     src={ArrowDownIconSvg}
                                                     alt={"Dropdown Arrow"}
                                                     sx={{ width: 15, height: 15 }}

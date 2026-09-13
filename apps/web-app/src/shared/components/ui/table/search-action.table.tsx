@@ -2,12 +2,12 @@ import { type BaseSyntheticEvent } from "react";
 import { Box, Grid, Skeleton, type SxProps, type Theme, useTheme } from "@mui/material";
 import SearchField from "@/shared/components/ui/search-field.tsx";
 import type { Control } from "react-hook-form";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import { CustomButton } from "@/shared";
 import { FileDownloadOutlined } from "@mui/icons-material";
 import { UserRoleEnum } from "@/modules/iam/types/user.type.ts";
 import { useAppSelector } from "@/store";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
-import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 
 interface Props {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,7 +24,7 @@ interface Props {
     loading?: boolean;
 }
 
-const TableSearchActions = ({
+const SearchActionTable = ({
     searchSubmit,
     handleSearch,
     searchControl,
@@ -105,4 +105,4 @@ const TableSearchActions = ({
     );
 };
 
-export default TableSearchActions;
+export default SearchActionTable;

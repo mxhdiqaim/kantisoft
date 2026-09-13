@@ -6,7 +6,7 @@ import { useScreenSize } from "@/shared";
 import CustomDrawer from "@/components/customs/custom-drawer.tsx";
 import OfflineBanner from "@/components/feedback/offline-banner.tsx";
 
-const Layout: FC<{ children: ReactNode }> = ({ children }) => {
+const AppLayout: FC<{ children: ReactNode }> = ({ children }) => {
     const screenSize = useScreenSize();
     const theme = useTheme();
     const [drawerState, setDrawerState] = useState(false);
@@ -54,4 +54,4 @@ const Layout: FC<{ children: ReactNode }> = ({ children }) => {
     );
 };
 
-export default Layout;
+export default AppLayout;

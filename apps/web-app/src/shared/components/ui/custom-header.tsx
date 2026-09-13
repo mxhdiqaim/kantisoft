@@ -1,8 +1,7 @@
 import { type Control, Controller, type FieldValues, type Path } from "react-hook-form";
 import { Box, FormControl, InputAdornment, MenuItem, Typography } from "@mui/material";
-import { StyledTextField } from "@/shared/components/ui/index.tsx";
+import { StyledTextField, IconUtil } from "@/shared";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 type Props<T extends FieldValues> = {
@@ -43,7 +42,7 @@ const OverviewHeader = <T extends FieldValues>({ title, control, name }: Props<T
                                     IconComponent: () => null,
                                     endAdornment: (
                                         <InputAdornment position="end">
-                                            <Icon
+                                            <IconUtil
                                                 src={ArrowDownIconSvg}
                                                 alt={"Dropdown Arrow"}
                                                 sx={{ width: 15, height: 15 }}

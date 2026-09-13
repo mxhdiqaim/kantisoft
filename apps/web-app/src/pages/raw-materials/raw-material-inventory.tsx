@@ -1,23 +1,23 @@
 import { Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import { useGetAllRawMaterialInventoryQuery } from "@/store/slice";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
 import RawMaterialInventoryForm from "@/components/raw-material/raw-material-inventory-form.tsx";
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
+import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
 import { useSearch } from "@/use-search.ts";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import type { GridColDef } from "@mui/x-data-grid";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
+import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
-import { formatRelativeDateTime } from "@/shared/utils/get-relative-time.ts";
-import { camelCaseToTitleCase, formatNumber } from "@/shared/utils";
+import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
+import { formatRelativeDateTime } from "@/shared/utils/time-date.util.ts";
+import { camelCaseToTitleCase, formatNumber } from "@/shared/utils/custom.util.ts";
 import { getInventoryStatusChipColor } from "@/shared/components/ui";
 import type { GetRawMaterialInventoryStockType } from "@/types/raw-material-types.ts";
 import InventoryDetailsDrawer from "@/components/raw-material/inventory-details-drawer.tsx";
 import RawMaterialStockInDrawer from "@/components/raw-material/raw-material-stock-in-drawer.tsx";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -65,11 +65,11 @@ const RawMaterialInventory = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="500">
                             {params.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -83,10 +83,10 @@ const RawMaterialInventory = () => {
                     const symbol = params.row.unitOfMeasurement.symbol;
 
                     return (
-                        <TableStyledBox>
+                        <StyledBoxTable>
                             <Typography variant="body2">{formatNumber(params.value)}</Typography>
                             <Typography variant="body2">({symbol})</Typography>
-                        </TableStyledBox>
+                        </StyledBoxTable>
                     );
                 },
             },
@@ -121,10 +121,10 @@ const RawMaterialInventory = () => {
                     const symbol = params.row.unitOfMeasurement.symbol;
 
                     return (
-                        <TableStyledBox>
+                        <StyledBoxTable>
                             <Typography variant="body2">{formatNumber(params.value)}</Typography>
                             <Typography variant="body2">({symbol})</Typography>
-                        </TableStyledBox>
+                        </StyledBoxTable>
                     );
                 },
             },
@@ -136,14 +136,14 @@ const RawMaterialInventory = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={camelCaseToTitleCase(params.value)}
                             color={getInventoryStatusChipColor(params.value ?? "")}
                             size="small"
                             sx={{ textTransform: "capitalize" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -154,9 +154,9 @@ const RawMaterialInventory = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -167,9 +167,9 @@ const RawMaterialInventory = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{formatRelativeDateTime(params.value)}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -251,7 +251,7 @@ const RawMaterialInventory = () => {
                 />
             </Box>
 
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

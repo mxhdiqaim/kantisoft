@@ -5,14 +5,14 @@ import { filterSchema, type FilterSchemaType } from "@/shared/types";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useEffect, useMemo, useState } from "react";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
+import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
 import type { GridColDef } from "@mui/x-data-grid";
-import { formatCurrency, formatDateCustom } from "@/shared/utils";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
+import { formatCurrency, formatDateCustom } from "@/shared";
+import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
 import ProductionModal from "@/components/menu-items/production-modal.tsx";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
 import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
 import WastageFormModal from "@/components/menu-items/wastage-form-modal.tsx";
 import ProductionSummaryCard from "@/components/production/production-summary-card.tsx";
@@ -112,9 +112,9 @@ const ProductionScreen = () => {
                 minWidth: 180,
                 align: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -124,9 +124,9 @@ const ProductionScreen = () => {
                 minWidth: 150,
                 align: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -136,9 +136,9 @@ const ProductionScreen = () => {
                 minWidth: 150,
                 align: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -148,9 +148,9 @@ const ProductionScreen = () => {
                 minWidth: 150,
                 align: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{formatCurrency(params.value)}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -160,9 +160,9 @@ const ProductionScreen = () => {
                 minWidth: 150,
                 align: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{formatCurrency(params.value)}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -172,9 +172,9 @@ const ProductionScreen = () => {
                 minWidth: 160,
                 align: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -184,9 +184,9 @@ const ProductionScreen = () => {
                 minWidth: 150,
                 align: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{formatDateCustom(params.value)}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
         ],
@@ -229,7 +229,7 @@ const ProductionScreen = () => {
                 </Box>
             </Box>
 
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}
@@ -237,7 +237,7 @@ const ProductionScreen = () => {
                 sx={{ mb: 4 }}
             >
                 <PeriodSelector control={control} name={"timePeriod"} lastFetched={lastFetched} />
-            </TableSearchActions>
+            </SearchActionTable>
 
             <Grid container spacing={3} mb={4}>
                 {summaryCards.map((card, index) => (

@@ -1,5 +1,3 @@
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
-import { useNotification } from "@/shared";
 import { useCreateStoreMutation, useUpdateStoreMutation } from "@/store/slice";
 import {
     createBusinessSchema,
@@ -13,10 +11,8 @@ import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { StyledTextField } from "@/shared/components/ui";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import { StyledTextField, IconUtil, CustomButton, useNotification, parseApiErrorUtil } from "@/shared";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -137,7 +133,7 @@ const StoreForm = ({ open, onClose, currentData }: Props) => {
                                         IconComponent: () => null,
                                         endAdornment: (
                                             <InputAdornment position="end">
-                                                <Icon
+                                                <IconUtil
                                                     src={ArrowDownIconSvg}
                                                     alt={"Dropdown Arrow"}
                                                     sx={{ width: 15, height: 15 }}

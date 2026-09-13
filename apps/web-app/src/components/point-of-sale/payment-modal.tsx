@@ -3,13 +3,13 @@ import { selectCurrentUser } from "@/store/slice/auth-slice";
 import { selectActiveStore } from "@/store/slice/store-slice";
 import type { CartItem } from "@/types/cart-item-type";
 import { createOrderSchema, type CreateOrderType, OrderPaymentMethod, OrderStatus } from "@/types/order-types.ts";
-import { formatCurrency } from "@/shared/utils";
+import { formatCurrency } from "@/shared/utils/custom.util.ts";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DialogActions, FormControl, FormControlLabel, FormHelperText, Radio, RadioGroup } from "@mui/material";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
 
 interface Props {
     open: boolean;

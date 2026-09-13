@@ -1,13 +1,12 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getEnvVariable } from "@/shared/utils";
 
-const VITE_FIREBASE_API_KEY = getEnvVariable("VITE_FIREBASE_API_KEY");
-const VITE_FIREBASE_AUTH_DOMAIN = getEnvVariable("VITE_FIREBASE_AUTH_DOMAIN");
-const VITE_FIREBASE_PROJECT_ID = getEnvVariable("VITE_FIREBASE_PROJECT_ID");
-const VITE_FIREBASE_STORAGE_BUCKET = getEnvVariable("VITE_FIREBASE_STORAGE_BUCKET");
-const VITE_FIREBASE_MESSAGING_SENDER_ID = getEnvVariable("VITE_FIREBASE_MESSAGING_SENDER_ID");
-const VITE_FIREBASE_APP_ID = getEnvVariable("VITE_FIREBASE_APP_ID");
+const VITE_FIREBASE_API_KEY = import.meta.env.VITE_FIREBASE_API_KEY;
+const VITE_FIREBASE_AUTH_DOMAIN = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN;
+const VITE_FIREBASE_PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+const VITE_FIREBASE_STORAGE_BUCKET = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET;
+const VITE_FIREBASE_MESSAGING_SENDER_ID = import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID;
+const VITE_FIREBASE_APP_ID = import.meta.env.VITE_FIREBASE_APP_ID;
 
 const firebaseConfig = {
     apiKey: VITE_FIREBASE_API_KEY,

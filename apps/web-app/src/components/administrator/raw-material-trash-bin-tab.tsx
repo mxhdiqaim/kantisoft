@@ -1,17 +1,20 @@
 import { type MouseEvent, useMemo, useState } from "react";
 import { useSearch } from "@/use-search.ts";
 import type { GridColDef } from "@mui/x-data-grid";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
 import { Box, Grid, Tooltip, Typography, useTheme } from "@mui/material";
-import { formatDateCustom, snakeCaseToTitleCase } from "@/shared/utils";
-import { getTextColor } from "@/shared/components/ui";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
+import {
+    formatDateCustom,
+    StyledBoxTable,
+    snakeCaseToTitleCase,
+    useNotification,
+    CustomButton,
+    DataGridTable,
+    SearchActionTable,
+    getTextColor,
+} from "@/shared";
 import type { DeletedRawMaterialType } from "@/types/raw-material-types.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
-import { useNotification } from "@/shared";
 
 import { MoreVert, Undo as UndoIcon } from "@mui/icons-material";
 import { useRecoverRawMaterialMutation } from "@/store/slice";
@@ -68,9 +71,9 @@ const RawMaterialTrashBinTab = ({ data, loading }: Props) => {
                 headerAlign: "left",
                 cellClassName: "capitalize-cell",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -81,11 +84,11 @@ const RawMaterialTrashBinTab = ({ data, loading }: Props) => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="medium">
                             {formatDateCustom(params.value)}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -96,11 +99,11 @@ const RawMaterialTrashBinTab = ({ data, loading }: Props) => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="medium">
                             {params.value.name} ({params.value.symbol})
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -111,11 +114,11 @@ const RawMaterialTrashBinTab = ({ data, loading }: Props) => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="medium" color={getTextColor(params.value)}>
                             {snakeCaseToTitleCase(params.value)}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -154,7 +157,7 @@ const RawMaterialTrashBinTab = ({ data, loading }: Props) => {
 
     return (
         <Box>
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

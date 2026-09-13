@@ -1,19 +1,21 @@
 import { Box, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import { useDeleteCategoryMutation, useGetAllCategoriesQuery } from "@/store/slice";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
+import {
+    DataGridTable,
+    StyledBoxTable,
+    SearchActionTable,
+    parseApiErrorUtil,
+    useNotification,
+    CustomButton,
+} from "@/shared";
 import type { GridColDef } from "@mui/x-data-grid";
 import { type MouseEvent, useMemo, useState } from "react";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
 import { useSearch } from "@/use-search.ts";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { useNotification } from "@/shared";
-import CustomButton from "@/shared/components/ui/button.tsx";
 import CategoryFormModal from "@/components/menu-items/category-form-modal.tsx";
 import type { CategoryType } from "@/types/categories-types.ts";
-import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 // import {useOfflineCategories} from "@/hooks/use-offline-categories.ts";
 import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
 
@@ -82,11 +84,11 @@ const CategoriesScreen = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="500" textTransform={"capitalize"}>
                             {params.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -98,11 +100,11 @@ const CategoriesScreen = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" textTransform={"capitalize"}>
                             {params.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -173,7 +175,7 @@ const CategoriesScreen = () => {
                 />
             </Box>
 
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

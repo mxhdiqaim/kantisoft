@@ -1,5 +1,4 @@
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
-import { useNotification } from "@/shared";
+import { useNotification, parseApiErrorUtil, CustomButton, StyledTextField } from "@/shared";
 import { useSignupMutation } from "@/store/slice";
 import { registerUserSchema, type RegisterUserType, STORE_TYPES } from "@/modules/iam/types";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -17,10 +16,8 @@ import {
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import CustomButton from "@/shared/components/ui/button.tsx";
 import { signInWithCustomToken } from "firebase/auth";
 import { firebaseAuth } from "@/config";
-import { StyledTextField } from "@/shared/components/ui";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "@/store/slice/auth-slice.ts";
 

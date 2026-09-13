@@ -2,7 +2,7 @@ import { Avatar, Box, Grow, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import type { ReactElement } from "react";
 import CountUp from "react-countup";
-import { formatCurrency } from "@/shared/utils";
+import { formatCurrency } from "@/shared/utils/custom.util.ts";
 import { CustomCardRef } from "../customs/custom-card";
 
 interface Props {

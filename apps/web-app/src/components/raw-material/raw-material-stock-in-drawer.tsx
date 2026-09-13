@@ -1,12 +1,16 @@
 import { type FC, useEffect } from "react";
 import { Box, FormControl, Grid, InputAdornment, MenuItem, Stack } from "@mui/material";
-import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
 import { drawerPaperProps } from "@/components/styles";
 import { useGetAllUnitOfMeasurementsQuery, useStockInRawMaterialInventoryMutation } from "@/store/slice";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
-import { useNotification } from "@/shared";
-import { StyledTextField } from "@/shared/components/ui";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import {
+    useNotification,
+    parseApiErrorUtil,
+    StyledTextField,
+    CustomButton,
+    IconUtil,
+    camelCaseToTitleCase,
+    DataDrawer,
+} from "@/shared";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import {
@@ -16,11 +20,9 @@ import {
     type StockInRawMaterialType,
 } from "@/types/raw-material-types.ts";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import { camelCaseToTitleCase } from "@/shared/utils";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { useUnitFilter } from "@/hooks/use-unit-filter.ts";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -104,7 +106,7 @@ const RawMaterialStockInDrawer: FC<Props> = ({ open, onOpen, onClose, rawMateria
                                                 IconComponent: () => null,
                                                 endAdornment: (
                                                     <InputAdornment position="end">
-                                                        <Icon
+                                                        <IconUtil
                                                             src={ArrowDownIconSvg}
                                                             alt={"Dropdown Arrow"}
                                                             sx={{ width: 15, height: 15 }}

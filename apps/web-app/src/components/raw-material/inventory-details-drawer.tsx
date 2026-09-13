@@ -1,15 +1,15 @@
 import { type FC, useState } from "react";
 import { Box, Chip, Divider, Grid, Stack, Typography } from "@mui/material";
-import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
+import DataDrawerUi from "@/shared/components/ui/data-drawer.ui.tsx";
 import { drawerPaperProps } from "@/components/styles";
 import { useGetRawMaterialInventoryStockQuery } from "@/store/slice";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import ViewRawMaterialSkeleton from "@/shared/components/spinners/view-raw-material-skeleton.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import { camelCaseToTitleCase, formatCurrency, formatNumber } from "@/shared/utils";
+import { camelCaseToTitleCase, formatCurrency, formatNumber } from "@/shared/utils/custom.util.ts";
 import { getInventoryStatusChipColor } from "@/shared/components/ui";
-import { formatDateCustom, formatRelativeDateTime } from "@/shared/utils/get-relative-time.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import { formatDateCustom, formatRelativeDateTime } from "@/shared/utils/time-date.util.ts";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
 import { EditOutlined } from "@mui/icons-material";
 import RawMaterialInventoryForm from "@/components/raw-material/raw-material-inventory-form.tsx";
 
@@ -38,7 +38,7 @@ const InventoryDetailsDrawer: FC<Props> = ({ open, onOpen, onClose, rawMaterialI
     const apiError = parseApiErrorUtil(error, "Failed to load raw material data.");
 
     return (
-        <DataDrawer
+        <DataDrawerUi
             title={"Details"}
             anchor={"right"}
             open={open}
@@ -167,7 +167,7 @@ const InventoryDetailsDrawer: FC<Props> = ({ open, onOpen, onClose, rawMaterialI
             )}
 
             <RawMaterialInventoryForm open={formModalOpen} onClose={handleCloseFormModal} rawMaterialInventory={data} />
-        </DataDrawer>
+        </DataDrawerUi>
     );
 };
 

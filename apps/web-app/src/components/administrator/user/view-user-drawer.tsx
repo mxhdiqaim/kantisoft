@@ -1,6 +1,6 @@
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import ViewUserSkeleton from "@/components/users/loading/view-user-skeleton.tsx";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import { useNotification } from "@/shared";
 import { useAppSelector } from "@/store";
 import { useDeleteUserMutation, useGetUserByIdQuery, useUpdateUserMutation } from "@/store/slice";
@@ -12,10 +12,10 @@ import { type FC, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserRoleChipColor, getUserStatusChipColor } from "@/shared/components/ui";
 import { drawerPaperProps } from "@/components/styles";
-import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
+import DataDrawerUi from "@/shared/components/ui/data-drawer.ui.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import { getInitials } from "@/shared/utils";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import { getInitials } from "@/shared/utils/custom.util.ts";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
 import { BlockOutlined, DeleteOutline, EditOutlined } from "@mui/icons-material";
 
 interface Props {
@@ -96,7 +96,7 @@ const ViewUserDrawer: FC<Props> = ({ userId, open, onOpen, onClose, handleEdit }
     }
 
     return (
-        <DataDrawer
+        <DataDrawerUi
             title={"User Details"}
             anchor={"right"}
             open={open}
@@ -276,7 +276,7 @@ const ViewUserDrawer: FC<Props> = ({ userId, open, onOpen, onClose, handleEdit }
                     </Grid>
                 </Grid>
             )}
-        </DataDrawer>
+        </DataDrawerUi>
     );
 };
 

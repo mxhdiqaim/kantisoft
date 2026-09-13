@@ -4,14 +4,14 @@ import { useTranslation } from "react-i18next";
 import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import type { BusinessType } from "@/modules/iam/types/business.type.ts";
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
+import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
 import { useNotification } from "@/shared";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
+import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
+import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
+import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
 import StoreForm from "@/components/administrator/store-form.tsx";
@@ -87,9 +87,9 @@ const StoresScreen = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -104,14 +104,14 @@ const StoresScreen = () => {
                     const label = isMain ? `Main ${t("store")}` : `Branch ${t("store")}`;
                     const color = isMain ? "primary" : "secondary";
                     return (
-                        <TableStyledBox>
+                        <StyledBoxTable>
                             <Chip
                                 label={label}
                                 size="medium"
                                 color={color}
                                 sx={{ textTransform: "capitalize", borderRadius: theme.borderRadius.small }}
                             />
-                        </TableStyledBox>
+                        </StyledBoxTable>
                     );
                 },
             },
@@ -123,9 +123,9 @@ const StoresScreen = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -136,13 +136,13 @@ const StoresScreen = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={params.value}
                             size="medium"
                             sx={{ textTransform: "capitalize", borderRadius: theme.borderRadius.small }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -158,11 +158,11 @@ const StoresScreen = () => {
                         return "Invalid Date";
                     }
                     return (
-                        <TableStyledBox>
+                        <StyledBoxTable>
                             <Typography variant="body2" fontWeight="500">
                                 {date.toLocaleDateString()}
                             </Typography>
-                        </TableStyledBox>
+                        </StyledBoxTable>
                     );
                 },
             },
@@ -233,7 +233,7 @@ const StoresScreen = () => {
                     onClick={() => setOpenStoreForm(true)}
                 />
             </Box>
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

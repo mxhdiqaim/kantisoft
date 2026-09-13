@@ -4,8 +4,7 @@ import { Box, FormControl, Grid, InputAdornment, MenuItem } from "@mui/material"
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { createWastageScheme, type CreateWastageType } from "@/types/production-types.ts";
-import { useNotification } from "@/shared";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { useNotification, IconUtil, CustomButton, parseApiErrorUtil } from "@/shared";
 import {
     useGetAllRawMaterialInventoryQuery,
     useGetAllUnitOfMeasurementsQuery,
@@ -13,10 +12,8 @@ import {
 } from "@/store/slice";
 import { StyledTextField } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
 import { useUnitFilter } from "@/hooks/use-unit-filter.ts";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -115,7 +112,7 @@ const WastageFormModal: FC<Props> = ({ open, onClose }) => {
                                             IconComponent: () => null,
                                             endAdornment: (
                                                 <InputAdornment position="end">
-                                                    <Icon
+                                                    <IconUtil
                                                         src={ArrowDownIconSvg}
                                                         alt={"Dropdown Arrow"}
                                                         sx={{ width: 15, height: 15 }}
@@ -183,7 +180,7 @@ const WastageFormModal: FC<Props> = ({ open, onClose }) => {
                                         IconComponent: () => null,
                                         endAdornment: (
                                             <InputAdornment position="end">
-                                                <Icon
+                                                <IconUtil
                                                     src={ArrowDownIconSvg}
                                                     alt={"Dropdown Arrow"}
                                                     sx={{ width: 15, height: 15 }}

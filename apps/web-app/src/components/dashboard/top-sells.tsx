@@ -1,6 +1,6 @@
 import { useGetTopSellsQuery } from "@/store/slice";
 import type { Period } from "@/types/order-types";
-import { formatCurrency } from "@/shared/utils";
+import { formatCurrency } from "@/shared/utils/custom.util.ts";
 import { Box, LinearProgress, List, ListItem, ListItemText, Skeleton, Typography, useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import CustomCard from "@/components/customs/custom-card.tsx";

@@ -2,12 +2,12 @@ import { useMemo } from "react";
 import { Box, Grid, Typography } from "@mui/material";
 import { useGetAllUnitOfMeasurementsQuery } from "@/store/slice";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
+import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
+import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
 import type { GridColDef } from "@mui/x-data-grid";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { useNotification } from "@/shared";
 import { useTranslation } from "react-i18next";
@@ -33,11 +33,11 @@ const UnitOfMeasurements = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="500" textTransform={"capitalize"}>
                             {params.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -49,11 +49,11 @@ const UnitOfMeasurements = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" textTransform={"capitalize"}>
                             {params.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -64,9 +64,9 @@ const UnitOfMeasurements = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -77,9 +77,9 @@ const UnitOfMeasurements = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value === true ? "Yes" : "No"}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -90,9 +90,9 @@ const UnitOfMeasurements = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -103,9 +103,9 @@ const UnitOfMeasurements = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
         ],
@@ -120,7 +120,7 @@ const UnitOfMeasurements = () => {
 
     return (
         <Box>
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

@@ -1,8 +1,7 @@
 import CustomCard from "@/components/customs/custom-card";
-import { BlankLayout } from "@/shared";
+import { BlankLayout, CustomButton } from "@/shared";
 import { Box, styled, Typography, useTheme } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import CustomButton from "@/shared/components/ui/button.tsx";
 
 const BoxWrapper = styled(Box)(({ theme }) => ({
     [theme.breakpoints.down("md")]: {

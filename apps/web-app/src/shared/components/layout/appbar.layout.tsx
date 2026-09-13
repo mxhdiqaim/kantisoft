@@ -1,4 +1,3 @@
-import { useNotification, useFullscreen } from "@/shared";
 import { LogoutOutlined, PersonOutline } from "@mui/icons-material";
 import FullscreenExitOutlinedIcon from "@mui/icons-material/FullscreenExitOutlined";
 import FullscreenOutlinedIcon from "@mui/icons-material/FullscreenOutlined";
@@ -20,20 +19,19 @@ import {
 } from "@mui/material";
 import { useState, type FC } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import { findRouteByPath } from "@/shared/utils/routes.ts";
+import { findRouteByPath, CustomButton, useNotification, useFullscreen } from "@/shared";
 import { appRoutes } from "@/app/router";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/modules";
 import { useClerk } from "@clerk/react";
 import { useQueryClient } from "@tanstack/react-query";
 
-export interface Props {
+export interface AppbarProps {
     toggleDrawer?: (open: boolean) => void;
     drawerState?: boolean;
 }
 
-const AppbarComponent: FC<Props> = ({ toggleDrawer, drawerState }) => {
+const AppbarComponent: FC<AppbarProps> = ({ toggleDrawer, drawerState }) => {
     const theme = useTheme();
     const { t } = useTranslation();
     const { isFullscreen, toggleFullscreen } = useFullscreen();

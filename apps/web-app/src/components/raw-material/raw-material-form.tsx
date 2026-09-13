@@ -9,19 +9,15 @@ import {
     useGetAllUnitOfMeasurementsQuery,
     useUpdateRawMaterialMutation,
 } from "@/store/slice";
-import { useNotification } from "@/shared";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import { useNotification, parseApiErrorUtil, CustomButton, StyledTextField, IconUtil } from "@/shared";
 import {
     createRawMaterialSchema,
     type CreateRawMaterialType,
     type RawMaterialType,
 } from "@/types/raw-material-types.ts";
-import { StyledTextField } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { useMeasurementSymbol } from "@/hooks/use-measurement-symbol.ts";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -147,7 +143,7 @@ const RawMaterialForm: FC<Props> = ({ open, onClose, rawMaterial }) => {
                                             IconComponent: () => null,
                                             endAdornment: (
                                                 <InputAdornment position="end">
-                                                    <Icon
+                                                    <IconUtil
                                                         src={ArrowDownIconSvg}
                                                         alt={"Dropdown Arrow"}
                                                         sx={{ width: 15, height: 15 }}

@@ -4,17 +4,17 @@ import { useAppSelector } from "@/store";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
 import { UserRoleEnum } from "@/modules";
 import { useMemo, useState } from "react";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
+import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
 import { type GridColDef } from "@mui/x-data-grid";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import { useNotification } from "@/shared";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
-import { getActionColor } from "@/shared/utils";
+import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
+import { getActionColor } from "@/shared/utils/custom.util.ts";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
-import { formatDateTimeCustom } from "@/shared/utils/get-relative-time.ts";
+import { formatDateTimeCustom } from "@/shared/utils/time-date.util.ts";
 import { useTranslation } from "react-i18next";
 
 const ActivityLogPage = () => {
@@ -47,9 +47,9 @@ const ActivityLogPage = () => {
                 minWidth: 200,
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{formatDateTimeCustom(params.value)}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -59,9 +59,9 @@ const ActivityLogPage = () => {
                 minWidth: 450,
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.row.details}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
 
@@ -72,9 +72,9 @@ const ActivityLogPage = () => {
                 minWidth: 180,
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.row.userName}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -85,13 +85,13 @@ const ActivityLogPage = () => {
                 align: "center",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={params.row.userRole}
                             size="medium"
                             sx={{ textTransform: "capitalize", textAlign: "left" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -101,9 +101,9 @@ const ActivityLogPage = () => {
                 minWidth: 150,
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.row.storeName}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -113,9 +113,9 @@ const ActivityLogPage = () => {
                 minWidth: 150,
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{t(params.row.entityType || "N/A")}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -125,14 +125,14 @@ const ActivityLogPage = () => {
                 headerAlign: "left",
                 minWidth: 300,
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={params.row.action.replace(/_/g, " ")}
                             color={getActionColor(params.row.action)}
                             size="medium"
                             sx={{ fontWeight: 600, textTransform: "capitalize" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
         ],
@@ -158,7 +158,7 @@ const ActivityLogPage = () => {
             <Typography variant="h4" gutterBottom>
                 System Activities
             </Typography>
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

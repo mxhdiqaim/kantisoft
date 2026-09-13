@@ -14,7 +14,7 @@ import InventoryHealthHeader from "@/components/records/inventory-health-header.
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { useNotification } from "@/shared";
 

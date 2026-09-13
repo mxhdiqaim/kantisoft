@@ -1,17 +1,17 @@
 import { useGetSingleRawMaterialQuery } from "@/store/slice";
 // import useNotifier from "@/hooks/useNotifier.ts";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 // import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { Box, Divider, Grid, Stack, Typography } from "@mui/material";
 import { EditOutlined } from "@mui/icons-material";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import { formatCurrency } from "@/shared/utils";
+import { formatCurrency } from "@/shared/utils/custom.util.ts";
 import RawMaterialForm from "@/components/raw-material/raw-material-form.tsx";
 import { type FC, useState } from "react";
 import { drawerPaperProps } from "@/components/styles";
-import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
-import { formatDateCustom, formatRelativeDateTime } from "@/shared/utils/get-relative-time.ts";
+import DataDrawerUi from "@/shared/components/ui/data-drawer.ui.tsx";
+import { formatDateCustom, formatRelativeDateTime } from "@/shared/utils/time-date.util.ts";
 import { ViewRawMaterialSkeleton } from "@/shared";
 
 interface Props {
@@ -45,7 +45,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({ rawMaterialId, open, onOpen, onClose
     const apiError = parseApiErrorUtil(error, "Failed to load raw material data.");
 
     return (
-        <DataDrawer
+        <DataDrawerUi
             title={"Raw Material Details"}
             anchor={"right"}
             open={open}
@@ -153,7 +153,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({ rawMaterialId, open, onOpen, onClose
             )}
 
             <RawMaterialForm open={formModalOpen} onClose={handleCloseFormModal} rawMaterial={rawMaterial} />
-        </DataDrawer>
+        </DataDrawerUi>
     );
 };
 

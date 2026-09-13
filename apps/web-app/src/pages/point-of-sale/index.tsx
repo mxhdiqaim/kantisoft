@@ -3,7 +3,7 @@ import MenuIteFormModal from "@/components/menu-items/menu-item-form-modal.tsx";
 import OrderCart from "@/components/point-of-sale/order-cart";
 import PaymentModal from "@/components/point-of-sale/payment-modal";
 import { MenuItemSkeleton } from "@/shared";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import { useNotification } from "@/shared";
 import { useCreateOrderMutation, useGetMenuItemsQuery } from "@/store/slice";
 import type { CartItem } from "@/types/cart-item-type";
@@ -12,7 +12,7 @@ import type { CreateOrderType } from "@/types/order-types";
 import { Box, Grid, Typography } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
@@ -93,7 +93,7 @@ const PointOfSale = () => {
             <Grid container spacing={3} mb={2}>
                 <Grid size={{ xs: 12, md: 8 }}>
                     <Grid size={{ xs: 12 }}>
-                        <TableSearchActions
+                        <SearchActionTable
                             searchControl={searchControl}
                             searchSubmit={searchSubmit}
                             handleSearch={handleSearch}

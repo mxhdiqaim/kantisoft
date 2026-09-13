@@ -1,6 +1,5 @@
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
-import { useNotification } from "@/shared";
+import { useNotification, parseApiErrorUtil, IconUtil, StyledTextField, CustomButton } from "@/shared";
 import { useCreateMenuItemMutation, useGetAllCategoriesQuery, useUpdateMenuItemMutation } from "@/store/slice";
 import {
     createMenuItemSchema,
@@ -12,10 +11,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { Box, FormControl, Grid, InputAdornment, MenuItem, Typography } from "@mui/material";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import { StyledTextField } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -159,7 +155,7 @@ const MenuItemFormModal = ({ open, onClose, menuItemToEdit }: Props) => {
                                                 IconComponent: () => null,
                                                 endAdornment: (
                                                     <InputAdornment position="end">
-                                                        <Icon
+                                                        <IconUtil
                                                             src={ArrowDownIconSvg}
                                                             alt={"Dropdown Arrow"}
                                                             sx={{ width: 15, height: 15 }}

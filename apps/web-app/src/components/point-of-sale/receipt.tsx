@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { type OrderType } from "@/types/order-types.ts";
 import type { BusinessType } from "@/modules/iam/types/business.type.ts";
-import { formatCurrency } from "@/shared/utils";
+import { formatCurrency } from "@/shared/utils/custom.util.ts";
 import {
     Box,
     Chip,

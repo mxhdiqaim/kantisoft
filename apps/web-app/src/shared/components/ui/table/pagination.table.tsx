@@ -1,8 +1,8 @@
-import type {ChangeEvent} from "react";
-import {Box, Pagination} from "@mui/material";
-import {gridPageCountSelector, gridPageSelector, useGridApiContext, useGridSelector} from "@mui/x-data-grid";
+import type { ChangeEvent } from "react";
+import { Box, Pagination } from "@mui/material";
+import { gridPageCountSelector, gridPageSelector, useGridApiContext, useGridSelector } from "@mui/x-data-grid";
 
-const TablePagination = () => {
+const PaginationTable = () => {
     const apiRef = useGridApiContext();
 
     const page = useGridSelector(apiRef, gridPageSelector);
@@ -13,9 +13,9 @@ const TablePagination = () => {
     };
 
     return (
-        <Box sx={{display: "flex", justifyContent: {xs: "center", md: "flex-end"}, px: 2}}>
+        <Box sx={{ display: "flex", justifyContent: { xs: "center", md: "flex-end" }, px: 2 }}>
             <Pagination
-                sx={(theme) => ({padding: theme.spacing(1.5, 0)})}
+                sx={(theme) => ({ padding: theme.spacing(1.5, 0) })}
                 color="primary"
                 count={pageCount}
                 page={page + 1} // MUI Pagination is 1-based, while DataGrid is 0-based
@@ -25,4 +25,4 @@ const TablePagination = () => {
     );
 };
 
-export default TablePagination;
+export default PaginationTable;

@@ -6,13 +6,9 @@ import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { createInventorySchema, type CreateInventoryType } from "@/types/inventory-types.ts";
 import { useCreateInventoryRecordMutation, useGetMenuItemsQuery } from "@/store/slice";
-import { useNotification } from "@/shared";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import { StyledTextField } from "@/shared/components/ui";
+import { StyledTextField, IconUtil, useNotification, parseApiErrorUtil, CustomButton } from "@/shared";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -85,7 +81,7 @@ const CreateInventoryForm: FC<Props> = ({ open, onClose }) => {
                                             IconComponent: () => null,
                                             endAdornment: (
                                                 <InputAdornment position="end">
-                                                    <Icon
+                                                    <IconUtil
                                                         src={ArrowDownIconSvg}
                                                         alt={"Dropdown Arrow"}
                                                         sx={{ width: 15, height: 15 }}

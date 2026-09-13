@@ -1,5 +1,3 @@
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
-import { useNotification } from "@/shared";
 import { useUpdateUserMutation } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
 import { updateUserSchema, type UpdateUserType, UserRoleEnum, type UserType } from "@/modules";
@@ -8,12 +6,16 @@ import { Box, FormControl, Grid, InputAdornment, MenuItem } from "@mui/material"
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import { StyledTextField } from "@/shared/components/ui";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { getRolePermissions } from "@/shared/utils";
+import {
+    getRolePermissions,
+    CustomButton,
+    StyledTextField,
+    IconUtil,
+    parseApiErrorUtil,
+    useNotification,
+} from "@/shared";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -188,7 +190,7 @@ const UserUpdateForm = ({ open, onClose, currentData }: Props) => {
                                                     IconComponent: () => null,
                                                     endAdornment: (
                                                         <InputAdornment position="end">
-                                                            <Icon
+                                                            <IconUtil
                                                                 src={ArrowDownIconSvg}
                                                                 alt={"Dropdown Arrow"}
                                                                 sx={{ width: 15, height: 15 }}

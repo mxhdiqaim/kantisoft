@@ -1,4 +1,4 @@
-import TablePagination from "./table-pagination.tsx";
+import PaginationTable from "./pagination.table.tsx";
 import { DataGrid, type DataGridProps, type GridColDef, type GridValidRowModel } from "@mui/x-data-grid";
 import { useTheme } from "@mui/material";
 
@@ -31,7 +31,7 @@ const DataGridTable = <T extends GridValidRowModel>({ columns, data, loading, ..
             checkboxSelection
             disableRowSelectionOnClick
             slots={{
-                footer: TablePagination,
+                footer: PaginationTable,
             }}
             sx={{
                 border: `1px solid ${theme.palette.customColors.border}`,

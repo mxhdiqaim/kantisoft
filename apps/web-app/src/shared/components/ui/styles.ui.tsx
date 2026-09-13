@@ -45,14 +45,15 @@ export const getUserStatusChipColor = (status: UserStatus) => {
 };
 
 export const getUserRoleChipColor = (role: UserRoleEnum) => {
-    const colors: Record<UserRoleEnum, string> = {
-        owner: "primary",
-        admin: "primary",
-        manager: "secondary",
-        staff: "info",
-        cashier: "primary",
-        guest: "default",
-    };
+    const colors: Record<UserRoleEnum, "error" | "default" | "success" | "warning" | "info" | "primary" | "secondary"> =
+        {
+            owner: "primary",
+            admin: "primary",
+            manager: "secondary",
+            staff: "info",
+            cashier: "primary",
+            guest: "default",
+        };
     return colors[role] || "default";
 };
 

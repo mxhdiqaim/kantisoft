@@ -1,11 +1,7 @@
 import type { ReactNode } from "react";
 import { Box, Grid, IconButton, type SxProps, type Theme, Typography } from "@mui/material";
-import CustomDrawer from "@/shared/components/ui/drawers/custom.drawer.tsx";
-import type { DrawerAnchor } from "@/shared/types";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
-import { useNotification } from "@/shared";
-import Icon from "@/shared/components/ui/icon.tsx";
+import { useNotification, IconUtil, parseApiErrorUtil, type DrawerAnchor, CustomDrawer } from "@/shared";
 import CancelSvgIcon from "@/assets/icons/cancel.svg";
 
 interface Props {
@@ -21,7 +17,7 @@ interface Props {
     apiError?: { message: string; status?: number };
 }
 
-const DataDrawer = ({
+const DataDrawerUi = ({
     title,
     onClose,
     children,
@@ -63,7 +59,7 @@ const DataDrawer = ({
                 </Grid>
                 <Grid size={3} sx={{ display: "flex", justifyContent: "flex-end" }}>
                     <IconButton onClick={onClose}>
-                        <Icon src={CancelSvgIcon} alt={"Cancel Icon"} sx={{ width: 24, height: 24 }} />
+                        <IconUtil src={CancelSvgIcon} alt={"Cancel Icon"} sx={{ width: 24, height: 24 }} />
                     </IconButton>
                 </Grid>
             </Grid>
@@ -76,4 +72,4 @@ const DataDrawer = ({
     );
 };
 
-export default DataDrawer;
+export default DataDrawerUi;

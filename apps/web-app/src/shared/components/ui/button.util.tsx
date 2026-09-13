@@ -2,7 +2,7 @@ import { Children, cloneElement, isValidElement, type MouseEvent, type ReactNode
 import { Box, Button, type ButtonProps, Menu, type SxProps, type Theme, useTheme } from "@mui/material";
 import { Link } from "react-router-dom";
 
-export interface Props extends ButtonProps {
+export interface CustomButtonProps extends ButtonProps {
     startIcon?: ReactNode;
     endIcon?: ReactNode;
     title?: string;
@@ -22,7 +22,7 @@ const CustomButton = ({
     onClick,
     to,
     ...rest
-}: Props) => {
+}: CustomButtonProps) => {
     const theme = useTheme();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);

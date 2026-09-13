@@ -12,12 +12,8 @@ import {
     TransactionTypeEnum,
 } from "@/types/inventory-types.ts";
 import { useAdjustStockMutation } from "@/store/slice";
-import { useNotification } from "@/shared";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import { StyledTextField } from "@/shared/components/ui";
+import { StyledTextField, IconUtil, CustomButton, useNotification, parseApiErrorUtil } from "@/shared";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -98,7 +94,7 @@ const InventoryAdjustmentForm: FC<Props> = ({ open, onClose, inventoryItem }) =>
                                             IconComponent: () => null,
                                             endAdornment: (
                                                 <InputAdornment position="end">
-                                                    <Icon
+                                                    <IconUtil
                                                         src={ArrowDownIconSvg}
                                                         alt={"Dropdown Arrow"}
                                                         sx={{ width: 15, height: 15 }}

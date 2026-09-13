@@ -2,21 +2,21 @@ import { Box, Chip, Grid, Typography } from "@mui/material";
 import { useGetInventoryTransactionsQuery } from "@/store/slice";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useEffect, useMemo, useState } from "react";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
-import { camelCaseToTitleCase } from "@/shared/utils";
+import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
+import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
+import { camelCaseToTitleCase } from "@/shared/utils/custom.util.ts";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { filterSchema, type FilterSchemaType } from "@/shared/types";
 import { getTransactionChipColor, getTransactionTypeChipColor } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { useSearch } from "@/use-search.ts";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { useNotification } from "@/shared";
-import { formatRelativeDateTime } from "@/shared/utils/get-relative-time.ts";
+import { formatRelativeDateTime } from "@/shared/utils/time-date.util.ts";
 
 const InventoryTransactions = () => {
     const { error: errorMessage } = useNotification();
@@ -57,9 +57,9 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -70,14 +70,14 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={params.value}
                             color={getTransactionChipColor(params.value)}
                             size="small"
                             sx={{ textTransform: "capitalize" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -88,14 +88,14 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={camelCaseToTitleCase(params.value)}
                             color={getTransactionTypeChipColor(params.value)}
                             size="small"
                             sx={{ textTransform: "capitalize" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -106,9 +106,9 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{formatRelativeDateTime(params.value)}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -119,9 +119,9 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -132,9 +132,9 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -145,9 +145,9 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -158,9 +158,9 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
         ],
@@ -186,7 +186,7 @@ const InventoryTransactions = () => {
                 <PeriodSelector control={control} name={"timePeriod"} lastFetched={lastFetched} />
             </Box>
 
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

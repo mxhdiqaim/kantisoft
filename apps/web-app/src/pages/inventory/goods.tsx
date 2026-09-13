@@ -8,27 +8,26 @@ import type { InventoryType } from "@/types/inventory-types.ts";
 import { Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { type MouseEvent, useMemo, useState } from "react";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
+import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
+import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
 import CreateInventoryForm from "@/components/inventory/create-inventory-form.tsx";
 import { useTranslation } from "react-i18next";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
 import { useNotification } from "@/shared";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import InventoryAdjustmentForm from "@/components/inventory/inventory-adjustment-form.tsx";
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "@/use-search.ts";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { UserRoleEnum, UserStatusEnum } from "@/modules";
-import { relativeTime } from "@/shared/utils/get-relative-time.ts";
+import { relativeTime } from "@/shared/utils/time-date.util.ts";
 import { getInventoryStatusChipColor } from "@/shared/components/ui";
-import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
-import { camelCaseToTitleCase } from "@/shared/utils";
+import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
+import { camelCaseToTitleCase } from "@/shared/utils/custom.util.ts";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-// import {useOfflineGoods} from "@/hooks/use-offline-goods.ts";
 import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -140,12 +139,12 @@ const Goods = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox
+                    <StyledBoxTable
                         sx={{ cursor: "pointer", ":hover": { textDecoration: "underline" } }}
                         onClick={() => navigate(`/inventory/goods/${params.row.menuItemId}/transactions`)}
                     >
                         <Typography variant="body2">{params.value.name}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -156,9 +155,9 @@ const Goods = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -170,9 +169,9 @@ const Goods = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -184,9 +183,9 @@ const Goods = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -197,14 +196,14 @@ const Goods = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params: GridRenderCellParams<InventoryType, string>) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={camelCaseToTitleCase(params.value)}
                             color={getInventoryStatusChipColor(params.value ?? "")}
                             size="small"
                             sx={{ textTransform: "capitalize" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -215,9 +214,9 @@ const Goods = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{relativeTime(new Date(params.value))}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -316,7 +315,7 @@ const Goods = () => {
                     />
                 )}
             </Box>
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

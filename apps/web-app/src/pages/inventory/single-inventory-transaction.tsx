@@ -2,18 +2,18 @@ import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Box, Chip, CircularProgress, Grid, Typography } from "@mui/material";
 import { useGetAllInventoryQuery, useGetTransactionsByMenuItemQuery } from "@/store/slice";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
+import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
 import type { GridColDef } from "@mui/x-data-grid";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
-import { relativeTime } from "@/shared/utils/get-relative-time.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
+import { relativeTime } from "@/shared/utils/time-date.util.ts";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
 import { ArrowBackIosNewOutlined } from "@mui/icons-material";
 import { getTransactionChipColor } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import { useNotification } from "@/shared";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
 
 const SingleInventoryTransaction = () => {
@@ -52,9 +52,9 @@ const SingleInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value.name}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -65,14 +65,14 @@ const SingleInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={params.value.replace(/([A-Z])/g, " $1").trim()}
                             color={getTransactionChipColor(params.value)}
                             size="small"
                             sx={{ textTransform: "capitalize" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -84,11 +84,11 @@ const SingleInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" color={params.value > 0 ? "success.main" : "error.main"}>
                             {params.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -100,11 +100,11 @@ const SingleInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" color={params.value > 0 ? "success.main" : "error.main"}>
                             {params.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -115,9 +115,9 @@ const SingleInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{`${params.value.firstName} ${params.value.lastName}`}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -128,9 +128,9 @@ const SingleInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{relativeTime(new Date(params.value))}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -141,9 +141,9 @@ const SingleInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value || "N/A"}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
         ],
@@ -185,7 +185,7 @@ const SingleInventoryTransaction = () => {
                 </Box>
             </Box>
 
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

@@ -5,19 +5,19 @@ import { useNotification } from "@/shared";
 import MenuItemFormModal from "@/components/menu-items/menu-item-form-modal.tsx";
 import type { MenuItemType } from "@/types/menu-item-type.ts";
 import { useTranslation } from "react-i18next";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
 import { useAppSelector } from "@/store";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
+import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
 import type { GridColDef } from "@mui/x-data-grid";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
-import { camelCaseToTitleCase, formatCurrency } from "@/shared/utils";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
+import { camelCaseToTitleCase, formatCurrency } from "@/shared/utils/custom.util.ts";
+import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
 import { UserRoleEnum } from "@/modules";
-import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { getMenuItemsInventoryStatusChip } from "@/shared/components/ui";
 import BillOfMaterialsDrawer from "@/components/menu-items/bom-drawer.tsx";
@@ -106,7 +106,7 @@ const MenuItems = () => {
                 headerName: "Name",
                 minWidth: 220,
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">
                             {params.value}
 
@@ -135,7 +135,7 @@ const MenuItems = () => {
                                 </Tooltip>
                             )}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -147,11 +147,11 @@ const MenuItems = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox sx={{ justifyContent: "left" }}>
+                    <StyledBoxTable sx={{ justifyContent: "left" }}>
                         <Typography variant="body2" fontWeight="medium">
                             {formatCurrency(params.value)}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -162,7 +162,7 @@ const MenuItems = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         {params.value ? (
                             <Chip
                                 label={camelCaseToTitleCase(params.value)}
@@ -173,7 +173,7 @@ const MenuItems = () => {
                         ) : (
                             ""
                         )}
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -184,9 +184,9 @@ const MenuItems = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value ?? ""}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -197,9 +197,9 @@ const MenuItems = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value ?? ""}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -208,11 +208,11 @@ const MenuItems = () => {
                 headerName: "Item Code",
                 minWidth: 150,
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" className="capitalize">
                             {params?.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -223,9 +223,9 @@ const MenuItems = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params?.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -236,9 +236,9 @@ const MenuItems = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography>{params.value?.name}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -327,7 +327,7 @@ const MenuItems = () => {
                 )}
             </Grid>
 
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

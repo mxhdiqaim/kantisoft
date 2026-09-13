@@ -1,11 +1,11 @@
 import { Grid, Typography, useTheme } from "@mui/material";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import { formatCurrency } from "@/shared/utils";
+import { formatCurrency } from "@/shared/utils/custom.util.ts";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
+import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
 import { useMemo } from "react";
 import type { GridColDef } from "@mui/x-data-grid";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
+import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
 import type { ProductionWastageSummaryType } from "@/types/production-types.ts";
 
 interface Props {
@@ -33,9 +33,9 @@ const WastageAnalysisTab = ({ data, loading }: Props) => {
                 headerAlign: "left",
                 cellClassName: "capitalize-cell",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -47,11 +47,11 @@ const WastageAnalysisTab = ({ data, loading }: Props) => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="medium">
                             {formatCurrency(params.value)}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -62,11 +62,11 @@ const WastageAnalysisTab = ({ data, loading }: Props) => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="medium">
                             {formatCurrency(params.value)}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
         ],

@@ -5,12 +5,9 @@ import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { createProductionSchema, type CreateProductionType } from "@/types/production-types.ts";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { StyledTextField } from "@/shared/components/ui";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
+import { parseApiErrorUtil, CustomButton, StyledTextField, IconUtil } from "@/shared";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -76,7 +73,7 @@ const ProductionModal = ({ open, onClose }: Props) => {
                                             IconComponent: () => null,
                                             endAdornment: (
                                                 <InputAdornment position="end">
-                                                    <Icon
+                                                    <IconUtil
                                                         src={ArrowDownIconSvg}
                                                         alt={"Dropdown Arrow"}
                                                         sx={{ width: 15, height: 15 }}

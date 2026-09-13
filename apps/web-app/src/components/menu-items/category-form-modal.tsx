@@ -6,8 +6,8 @@ import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useCreateCategoryMutation, useUpdateCategoryMutation } from "@/store/slice";
 import { useNotification } from "@/shared";
-import { parseApiErrorUtil } from "@/shared/utils/parse-api-error.util.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import { parseApiErrorUtil } from "@/shared/api/parse-api-error.util.ts";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
 import { StyledTextField } from "@/shared/components/ui";
 import { type CategoryType, createCategorySchema, type CreateCategoryType } from "@/types/categories-types.ts";
 

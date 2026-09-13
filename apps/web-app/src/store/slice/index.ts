@@ -41,7 +41,7 @@ import type {
     InventoryType,
     InventoryValuationHealthType,
 } from "@/types/inventory-types.ts";
-import { getEnvVariable } from "@/shared/utils";
+import { getEnvVariable } from "@/shared/utils/custom.util.ts";
 import type { UnitOfMeasurementType } from "@/types/unit-of-measurement-types.ts";
 import type {
     CreateRawMaterialInventoryType,
