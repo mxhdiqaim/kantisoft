@@ -2,16 +2,14 @@ import { useDeleteStoreMutation, useGetAllStoresQuery } from "@/store/slice";
 import { Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
-import type { StoreType } from "@/types/store-types.ts";
+import type { BusinessType } from "@/modules/iam/types/business.type.ts";
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { DataGridTable, SearchActionTable, CustomButton } from "@/shared/components";
 import { useSearch } from "@/use-search.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
 import StoreForm from "@/components/administrator/store-form.tsx";
@@ -23,7 +21,7 @@ import { AddOutlined, DeleteOutline, EditOutlined, MoreVert, VisibilityOutlined 
 const StoresScreen = () => {
     const theme = useTheme();
     const { t } = useTranslation();
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
 
     const { data: storesData, isLoading, isFetching, isError, error } = useGetAllStoresQuery();
     const memoizedStores = useMemoizedArray(storesData);
@@ -35,12 +33,12 @@ const StoresScreen = () => {
         searchKeys: ["name", "storeType", "location"],
     });
 
-    const [selectedRow, setSelectedRow] = useState<StoreType | null>(null);
+    const [selectedRow, setSelectedRow] = useState<BusinessType | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [openStoreForm, setOpenStoreForm] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
 
-    const handleMenuClick = (_event: MouseEvent<HTMLElement>, row: StoreType) => {
+    const handleMenuClick = (_event: MouseEvent<HTMLElement>, row: BusinessType) => {
         setSelectedRow(row);
     };
 
@@ -62,11 +60,11 @@ const StoresScreen = () => {
         if (!selectedRow) return;
         try {
             await deleteStore(selectedRow.id).unwrap();
-            notify("Store deleted successfully", "success");
+            successMessage("Store deleted successfully");
         } catch (error) {
             const defaultMessage = "Failed to delete store";
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiError(error, defaultMessage);
+            errorMessage(apiError.message);
         } finally {
             handleCloseDeleteModal();
         }
@@ -77,7 +75,7 @@ const StoresScreen = () => {
         setSelectedRow(null);
     };
 
-    const columns: GridColDef<StoreType>[] = useMemo(
+    const columns: GridColDef<BusinessType>[] = useMemo(
         () => [
             {
                 flex: 1,
@@ -87,9 +85,9 @@ const StoresScreen = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -99,19 +97,19 @@ const StoresScreen = () => {
                 minWidth: 120,
                 align: "left",
                 headerAlign: "left",
-                renderCell: (params: GridRenderCellParams<StoreType>) => {
+                renderCell: (params: GridRenderCellParams<BusinessType>) => {
                     const isMain = params.row.branchType === "main";
                     const label = isMain ? `Main ${t("store")}` : `Branch ${t("store")}`;
                     const color = isMain ? "primary" : "secondary";
                     return (
-                        <TableStyledBox>
+                        <StyledBoxTable>
                             <Chip
                                 label={label}
                                 size="medium"
                                 color={color}
                                 sx={{ textTransform: "capitalize", borderRadius: theme.borderRadius.small }}
                             />
-                        </TableStyledBox>
+                        </StyledBoxTable>
                     );
                 },
             },
@@ -123,9 +121,9 @@ const StoresScreen = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -136,13 +134,13 @@ const StoresScreen = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={params.value}
                             size="medium"
                             sx={{ textTransform: "capitalize", borderRadius: theme.borderRadius.small }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -152,17 +150,17 @@ const StoresScreen = () => {
                 width: 180,
                 align: "left",
                 headerAlign: "left",
-                renderCell: (params: GridRenderCellParams<StoreType, string>) => {
+                renderCell: (params: GridRenderCellParams<BusinessType, string>) => {
                     const date = new Date(params.value as string);
                     if (isNaN(date.getTime())) {
                         return "Invalid Date";
                     }
                     return (
-                        <TableStyledBox>
+                        <StyledBoxTable>
                             <Typography variant="body2" fontWeight="500">
                                 {date.toLocaleDateString()}
                             </Typography>
-                        </TableStyledBox>
+                        </StyledBoxTable>
                     );
                 },
             },
@@ -217,9 +215,9 @@ const StoresScreen = () => {
     );
 
     if (isError) {
-        notify(`Failed to load ${t("store")}. Please try again later.`, "error");
-        const apiError = getApiError(error, `Failed to load ${t("store")}.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        errorMessage(`Failed to load ${t("store")}. Please try again later.`);
+        const apiError = parseApiError(error, `Failed to load ${t("store")}.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (
@@ -233,7 +231,7 @@ const StoresScreen = () => {
                     onClick={() => setOpenStoreForm(true)}
                 />
             </Box>
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

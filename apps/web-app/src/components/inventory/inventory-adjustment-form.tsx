@@ -12,12 +12,10 @@ import {
     TransactionTypeEnum,
 } from "@/types/inventory-types.ts";
 import { useAdjustStockMutation } from "@/store/slice";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import { StyledTextField } from "@/shared/components/ui";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -27,7 +25,7 @@ interface Props {
 }
 
 const InventoryAdjustmentForm: FC<Props> = ({ open, onClose, inventoryItem }) => {
-    const notify = useNotifier();
+    const { success: notifySuccess, error: notifyError } = useNotification();
     const [adjustStock, { isLoading, isSuccess }] = useAdjustStockMutation();
 
     const {
@@ -68,11 +66,11 @@ const InventoryAdjustmentForm: FC<Props> = ({ open, onClose, inventoryItem }) =>
         if (!inventoryItem) return;
         try {
             await adjustStock(data).unwrap();
-            notify("Stock adjusted successfully!", "success");
+            notifySuccess("Stock adjusted successfully!");
         } catch (error) {
             const defaultMessage = `Failed to adjust stock. Please try again.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiError(error, defaultMessage);
+            notifyError(apiError.message);
         }
     };
 
@@ -98,7 +96,7 @@ const InventoryAdjustmentForm: FC<Props> = ({ open, onClose, inventoryItem }) =>
                                             IconComponent: () => null,
                                             endAdornment: (
                                                 <InputAdornment position="end">
-                                                    <Icon
+                                                    <IconUtil
                                                         src={ArrowDownIconSvg}
                                                         alt={"Dropdown Arrow"}
                                                         sx={{ width: 15, height: 15 }}

@@ -9,19 +9,18 @@ import {
     type GetRawMaterialInventoryStockType,
     type UpdateRawMaterialInventoryType,
 } from "@/types/raw-material-types.ts";
-import { StyledTextField } from "@/shared/components/ui";
-import Icon from "@/shared/components/ui/icon.tsx";
 import {
     useCreateRawMaterialInventoryMutation,
     useGetAllRawMaterialsQuery,
     useGetAllUnitOfMeasurementsQuery,
     useUpdateRawMaterialInventoryMutation,
 } from "@/store/slice";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
-import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
+
+import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
     open: boolean;
@@ -30,7 +29,7 @@ interface Props {
 }
 
 const RawMaterialInventoryForm: FC<Props> = ({ open, onClose, rawMaterialInventory }) => {
-    const notify = useNotifier();
+    const notification = useNotification();
     const isEditMode = !!rawMaterialInventory;
 
     const { data: rawMaterialData, isLoading: isFetchingRawMaterial } = useGetAllRawMaterialsQuery(undefined, {
@@ -147,26 +146,22 @@ const RawMaterialInventoryForm: FC<Props> = ({ open, onClose, rawMaterialInvento
                     minStockLevel: data.minStockLevel,
                 };
                 await updateRawMaterialInventory(payload as UpdateRawMaterialInventoryType).unwrap();
-                notify("Raw Material Inventory Updated Successfully!", "success");
+                notification.success("Raw Material Inventory Updated Successfully!");
             } else {
                 await createRawMaterialInventory(data as CreateRawMaterialInventoryType).unwrap();
-                notify("Raw Material Inventory Added Successfully!", "success");
+                notification.success("Raw Material Inventory Added Successfully!");
             }
         } catch (error) {
             const defaultMessage = `Failed to update Inventory. Please try again.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiError(error, defaultMessage);
+            notification.error(apiError.message);
         }
     };
 
     const isLoading = isCreating || isUpdating;
 
     return (
-        <CustomModal
-            open={open}
-            onClose={handleClose} // Use handleClose instead of onClose directly
-            title={isEditMode ? "Edit Minimum Stock" : "Create Inventory"}
-        >
+        <CustomModal open={open} onClose={handleClose} title={isEditMode ? "Edit Minimum Stock" : "Create Inventory"}>
             <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 3 }}>
                 <Grid container spacing={2}>
                     {!isEditMode && (
@@ -186,7 +181,7 @@ const RawMaterialInventoryForm: FC<Props> = ({ open, onClose, rawMaterialInvento
                                                 IconComponent: () => null,
                                                 endAdornment: (
                                                     <InputAdornment position="end">
-                                                        <Icon
+                                                        <IconUtil
                                                             src={ArrowDownIconSvg}
                                                             alt={"Dropdown Arrow"}
                                                             sx={{ width: 15, height: 15 }}

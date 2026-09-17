@@ -2,24 +2,20 @@ import { Box, Chip, Grid, Typography } from "@mui/material";
 import { useGetInventoryTransactionsQuery } from "@/store/slice";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useEffect, useMemo, useState } from "react";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
-import { camelCaseToTitleCase } from "@/shared/utils";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { filterSchema, type FilterSchemaType } from "@/types";
-import { getTransactionChipColor, getTransactionTypeChipColor } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { useSearch } from "@/use-search.ts";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
-import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { formatRelativeDateTime } from "@/shared/utils/get-relative-time.ts";
+import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
+import { filterSchema, type FilterSchemaType } from "@/shared/types";
+import { getTransactionChipColor, getTransactionTypeChipColor } from "@/shared/components/ui";
+import { StyledBoxTable, DataGridTable, SearchActionTable } from "@/shared/components";
+import { parseApiError, camelCaseToTitleCase, formatRelativeDateTime } from "@/shared/utils";
+import { useNotification } from "@/shared/hooks";
 
 const InventoryTransactions = () => {
-    const notify = useNotifier();
+    const { error: errorMessage } = useNotification();
 
     const { control, watch } = useForm<FilterSchemaType>({
         mode: "onChange",
@@ -57,9 +53,9 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -70,14 +66,14 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={params.value}
                             color={getTransactionChipColor(params.value)}
                             size="small"
                             sx={{ textTransform: "capitalize" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -88,14 +84,14 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={camelCaseToTitleCase(params.value)}
                             color={getTransactionTypeChipColor(params.value)}
                             size="small"
                             sx={{ textTransform: "capitalize" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -106,9 +102,9 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{formatRelativeDateTime(params.value)}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -119,9 +115,9 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -132,9 +128,9 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -145,9 +141,9 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -158,9 +154,9 @@ const InventoryTransactions = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
         ],
@@ -174,9 +170,9 @@ const InventoryTransactions = () => {
     }, [fulfilledTimeStamp]);
 
     if (isError) {
-        notify(`Failed to load transactions. Please try again later.`, "error");
-        const apiError = getApiError(error, `Failed to load transactions.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        errorMessage(`Failed to load transactions. Please try again later.`);
+        const apiError = parseApiError(error, `Failed to load transactions.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (
@@ -186,7 +182,7 @@ const InventoryTransactions = () => {
                 <PeriodSelector control={control} name={"timePeriod"} lastFetched={lastFetched} />
             </Box>
 
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

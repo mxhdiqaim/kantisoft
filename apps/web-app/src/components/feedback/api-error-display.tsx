@@ -1,7 +1,7 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import { ErrorOutline } from "@mui/icons-material";
 import CustomCard from "../customs/custom-card";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
 
 interface Props {
     statusCode?: number | string;

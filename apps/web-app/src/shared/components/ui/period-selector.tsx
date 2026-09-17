@@ -1,10 +1,9 @@
 import { type Control, Controller, type FieldValues, type Path } from "react-hook-form";
 import { Box, FormControl, InputAdornment, Typography } from "@mui/material";
-import { StyledTextField } from "@/shared/components/ui/index.tsx";
-import { relativeTime } from "@/shared/utils/get-relative-time.ts";
-import StyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import { StyledTextField, IconUtil } from "@/shared/components";
+import StyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
+import { relativeTime } from "@/shared/utils";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 type Props<T extends FieldValues> = {
@@ -29,7 +28,7 @@ const PeriodSelector = <T extends FieldValues>({ control, name, lastFetched }: P
                             IconComponent: () => null,
                             endAdornment: (
                                 <InputAdornment position="end">
-                                    <Icon
+                                    <IconUtil
                                         src={ArrowDownIconSvg}
                                         alt={"Dropdown Arrow"}
                                         sx={{ width: 15, height: 15 }}

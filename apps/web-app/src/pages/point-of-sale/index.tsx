@@ -2,9 +2,9 @@ import EachMenuItem from "@/components/point-of-sale/each-menu-item.tsx";
 import MenuIteFormModal from "@/components/menu-items/menu-item-form-modal.tsx";
 import OrderCart from "@/components/point-of-sale/order-cart";
 import PaymentModal from "@/components/point-of-sale/payment-modal";
-import { MenuItemSkeleton } from "@/shared";
-import { getApiError } from "@/helpers/get-api-error";
-import useNotifier from "@/hooks/useNotifier";
+import { MenuItemSkeleton, SearchActionTable } from "@/shared/components";
+import { parseApiError } from "@/shared/utils";
+import { useNotification } from "@/shared/hooks";
 import { useCreateOrderMutation, useGetMenuItemsQuery } from "@/store/slice";
 import type { CartItem } from "@/types/cart-item-type";
 import type { MenuItemType } from "@/types/menu-item-type";
@@ -12,12 +12,11 @@ import type { CreateOrderType } from "@/types/order-types";
 import { Box, Grid, Typography } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
 import { useSearch } from "@/use-search.ts";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
 const PointOfSale = () => {
-    const notify = useNotifier();
+    const { warning, success, error: errorMessage } = useNotification();
     const { t } = useTranslation();
 
     const { data: menuItems, isLoading: isLoadingMenuItems, isError } = useGetMenuItemsQuery({});
@@ -60,7 +59,7 @@ const PointOfSale = () => {
 
     const handleOpenPaymentDialog = () => {
         if (cartItems.length === 0) {
-            notify("Please add items to the cart first.", "warning");
+            warning("Please add items to the cart first.");
             return;
         }
         setPaymentDialogOpen(true);
@@ -73,14 +72,14 @@ const PointOfSale = () => {
     const handleCompleteSale = async (orderData: Omit<CreateOrderType, "amountReceived">) => {
         try {
             await createOrder(orderData).unwrap();
-            notify("Order completed successfully!", "success");
+            success("Order completed successfully!");
             setCartItems([]);
             setPaymentDialogOpen(false);
         } catch (error) {
             console.log(error);
             const defaultMessage = "Failed to complete order.";
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiError(error, defaultMessage);
+            errorMessage(apiError.message);
         }
     };
 
@@ -93,7 +92,7 @@ const PointOfSale = () => {
             <Grid container spacing={3} mb={2}>
                 <Grid size={{ xs: 12, md: 8 }}>
                     <Grid size={{ xs: 12 }}>
-                        <TableSearchActions
+                        <SearchActionTable
                             searchControl={searchControl}
                             searchSubmit={searchSubmit}
                             handleSearch={handleSearch}

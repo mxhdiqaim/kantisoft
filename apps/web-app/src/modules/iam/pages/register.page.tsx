@@ -1,73 +1,10 @@
-import { getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { useSignupMutation } from "@/store/slice";
-import { STORE_TYPES } from "@/types/store-types.ts";
-import { registerUserSchema, type RegisterUserType } from "@/types/user-types.ts";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-import {
-    Box,
-    FormControl,
-    FormHelperText,
-    Grid,
-    IconButton,
-    InputAdornment,
-    MenuItem,
-    Typography,
-} from "@mui/material";
-import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Box, Grid, Typography } from "@mui/material";
+import { SignUp } from "@clerk/react";
+import { CustomButton } from "@/shared/components";
 import { useNavigate } from "react-router-dom";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import { signInWithCustomToken } from "firebase/auth";
-import { auth } from "@/config/firebase.ts";
-import { StyledTextField } from "@/shared/components/ui";
-import { useDispatch } from "react-redux";
-import { setCredentials } from "@/store/slice/auth-slice.ts";
 
 const RegisterPage = () => {
     const navigate = useNavigate();
-    const notify = useNotifier();
-    const dispatch = useDispatch();
-
-    const [signup, { isLoading: isBackendLoading }] = useSignupMutation();
-
-    const [showPassword, setShowPassword] = useState(false);
-
-    const {
-        control,
-        handleSubmit,
-        formState: { errors, isSubmitting },
-    } = useForm({
-        defaultValues: {},
-        mode: "onBlur",
-        // eslint-disable-next-line
-        // @ts-ignore
-        resolver: yupResolver(registerUserSchema),
-    });
-
-    const isLoading = isSubmitting || isBackendLoading;
-
-    const onSubmit = async (data: RegisterUserType) => {
-        try {
-            // eslint-disable-next-line
-            const { confirmPassword, ...rest } = data;
-
-            const response = await signup(rest).unwrap();
-
-            if (response.token) {
-                await signInWithCustomToken(auth, response.token);
-            }
-
-            dispatch(setCredentials({ user: response.user }));
-
-            notify("Registration successful!", "success");
-            navigate("/", { replace: true });
-        } catch (err) {
-            const apiMessage = getApiError(err, "Registration failed. Please try again.");
-            notify(apiMessage.message, "error");
-        }
-    };
 
     return (
         <Grid container spacing={2}>
@@ -87,185 +24,20 @@ const RegisterPage = () => {
                         maxWidth: { xs: "100%", sm: "400px" },
                     }}
                 >
-                    <Box sx={{ textAlign: "center", mb: 5 }}>
-                        <Typography variant="h5" sx={{ fontWeight: 500 }}>
-                            Create an Account
+                    <SignUp
+                        appearance={{
+                            theme: "simple",
+                            elements: {
+                                footerAction: { display: "none" },
+                            },
+                        }}
+                    />
+
+                    <Box sx={{ textAlign: "center", mt: 2 }}>
+                        <Typography variant="body1">
+                            Already have an account?{" "}
+                            <CustomButton title={"Login here"} variant="text" onClick={() => navigate("/login")} />
                         </Typography>
-                    </Box>
-                    {/* eslint-disable-next-line */}
-                    <Box component={"form"} noValidate autoComplete="off" onSubmit={handleSubmit(onSubmit as any)}>
-                        <FormControl fullWidth sx={{ mb: 2 }}>
-                            <Controller
-                                name="firstName"
-                                control={control}
-                                render={({ field }) => (
-                                    <StyledTextField {...field} label="First Name" error={!!errors.firstName} />
-                                )}
-                            />
-                            {errors.firstName && (
-                                <FormHelperText sx={{ color: "error.main" }}>{errors.firstName.message}</FormHelperText>
-                            )}
-                        </FormControl>
-                        <FormControl fullWidth sx={{ mb: 2 }}>
-                            <Controller
-                                name="lastName"
-                                control={control}
-                                render={({ field }) => (
-                                    <StyledTextField {...field} label="Last Name" error={!!errors.lastName} />
-                                )}
-                            />
-                            {errors.lastName && (
-                                <FormHelperText sx={{ color: "error.main" }}>{errors.lastName.message}</FormHelperText>
-                            )}
-                        </FormControl>
-                        <FormControl fullWidth sx={{ mb: 2 }}>
-                            <Controller
-                                name="email"
-                                control={control}
-                                render={({ field }) => (
-                                    <StyledTextField
-                                        {...field}
-                                        label="Email"
-                                        error={!!errors.email}
-                                        type="email"
-                                        placeholder="example@gmail.com"
-                                    />
-                                )}
-                            />
-                            {errors.email && (
-                                <FormHelperText sx={{ color: "error.main" }}>{errors.email.message}</FormHelperText>
-                            )}
-                        </FormControl>
-                        <FormControl fullWidth sx={{ mb: 2 }}>
-                            <Controller
-                                name="password"
-                                control={control}
-                                render={({ field }) => (
-                                    <StyledTextField
-                                        {...field}
-                                        label="Password"
-                                        error={!!errors.password}
-                                        type={showPassword ? "text" : "password"}
-                                        InputProps={{
-                                            endAdornment: (
-                                                <InputAdornment position="end">
-                                                    <IconButton
-                                                        onClick={() => setShowPassword((show) => !show)}
-                                                        edge="end"
-                                                        aria-label="toggle password visibility"
-                                                    >
-                                                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                                                    </IconButton>
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                    />
-                                )}
-                            />
-                            {errors.password && (
-                                <FormHelperText sx={{ color: "error.main" }}>{errors.password.message}</FormHelperText>
-                            )}
-                        </FormControl>
-                        <FormControl fullWidth sx={{ mb: 2 }}>
-                            <Controller
-                                name="confirmPassword"
-                                control={control}
-                                render={({ field }) => (
-                                    <StyledTextField
-                                        {...field}
-                                        label="Confirm Password"
-                                        error={!!errors.confirmPassword}
-                                        type={showPassword ? "text" : "password"}
-                                        InputProps={{
-                                            endAdornment: (
-                                                <InputAdornment position="end">
-                                                    <IconButton
-                                                        onClick={() => setShowPassword((show) => !show)}
-                                                        edge="end"
-                                                        aria-label="toggle confirm password visibility"
-                                                    >
-                                                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                                                    </IconButton>
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                    />
-                                )}
-                            />
-                            {errors.confirmPassword && (
-                                <FormHelperText sx={{ color: "error.main" }}>
-                                    {errors.confirmPassword.message}
-                                </FormHelperText>
-                            )}
-                        </FormControl>
-                        <FormControl fullWidth sx={{ mb: 2 }}>
-                            <Controller
-                                name="phone"
-                                control={control}
-                                render={({ field }) => (
-                                    <StyledTextField
-                                        {...field}
-                                        label="Phone (optional)"
-                                        error={!!errors.phone}
-                                        placeholder="08012345678"
-                                    />
-                                )}
-                            />
-                            {errors.phone && (
-                                <FormHelperText sx={{ color: "error.main" }}>{errors.phone.message}</FormHelperText>
-                            )}
-                        </FormControl>
-                        <FormControl fullWidth sx={{ mb: 2 }}>
-                            <Controller
-                                name="storeName"
-                                control={control}
-                                render={({ field }) => (
-                                    <StyledTextField {...field} label="Store Name" error={!!errors.storeName} />
-                                )}
-                            />
-                            {errors.storeName && (
-                                <FormHelperText sx={{ color: "error.main" }}>{errors.storeName.message}</FormHelperText>
-                            )}
-                        </FormControl>
-                        <FormControl fullWidth sx={{ mb: 2 }}>
-                            <Controller
-                                name="storeType"
-                                control={control}
-                                render={({ field }) => (
-                                    <StyledTextField {...field} select label="Store Type" error={!!errors.storeType}>
-                                        {STORE_TYPES.map((type) => (
-                                            <MenuItem key={type} value={type}>
-                                                {type.charAt(0).toUpperCase() + type.slice(1)}
-                                            </MenuItem>
-                                        ))}
-                                    </StyledTextField>
-                                )}
-                            />
-                            {errors.storeType && (
-                                <FormHelperText sx={{ color: "error.main" }}>{errors.storeType.message}</FormHelperText>
-                            )}
-                        </FormControl>
-                        <Box sx={{ display: "flex", justifyContent: "center" }}>
-                            <CustomButton
-                                title={isLoading ? "Registering..." : "Sign Up"}
-                                type="submit"
-                                variant="contained"
-                                disabled={isLoading}
-                                sx={{
-                                    width: "100%",
-                                    color: "#fff",
-                                    p: 2,
-                                    mb: 2,
-                                    fontWeight: 600,
-                                }}
-                            />
-                        </Box>
-                        <Box sx={{ textAlign: "center" }}>
-                            <Typography variant="body1">
-                                Already have an account?{" "}
-                                <CustomButton title={"Sign in"} variant="text" onClick={() => navigate("/signin")} />
-                            </Typography>
-                        </Box>
                     </Box>
                 </Box>
             </Grid>

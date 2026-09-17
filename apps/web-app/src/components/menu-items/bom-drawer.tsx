@@ -24,23 +24,20 @@ import {
     useGetAllUnitOfMeasurementsQuery,
     useGetBOMQuery,
 } from "@/store/slice";
-import useNotifier from "@/hooks/useNotifier.ts";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
 import { defineBomSchema, type DefineBomSchemaType } from "@/types/bom-types.ts";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { getApiError } from "@/helpers/get-api-error.ts";
-import { StyledTextField } from "@/shared/components/ui";
 import { bigDrawerPaperProps } from "@/components/styles";
-import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
-
 import {
     AddCircleOutline as AddIcon,
     DeleteOutline as DeleteIcon,
     SaveOutlined as SaveIcon,
 } from "@mui/icons-material";
-import Icon from "@/shared/components/ui/icon.tsx";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, DataDrawer, IconUtil, StyledTextField } from "@/shared/components";
+
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -52,7 +49,7 @@ interface Props {
 
 const BillOfMaterialsDrawer: FC<Props> = ({ open, onOpen, onClose, menuItemId }) => {
     const theme = useTheme();
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
 
     const { data: bomData, isLoading: isLoadingBom } = useGetBOMQuery(menuItemId!, { skip: !menuItemId });
     const memoizedBom = useMemoizedArray(bomData);
@@ -104,12 +101,12 @@ const BillOfMaterialsDrawer: FC<Props> = ({ open, onOpen, onClose, menuItemId })
 
         try {
             await defineBom({ menuItemId: menuItemId!, bomItems: data.bomItems }).unwrap();
-            notify("Recipe updated successfully!", "success");
+            successMessage("Recipe updated successfully!");
             onClose();
         } catch (error) {
             const defaultMessage = `Failed to save recipe. Please try again.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiError(error, defaultMessage);
+            errorMessage(apiError.message);
         }
     };
 
@@ -191,7 +188,7 @@ const BillOfMaterialsDrawer: FC<Props> = ({ open, onOpen, onClose, menuItemId })
                                                                         IconComponent: () => null,
                                                                         endAdornment: (
                                                                             <InputAdornment position="end">
-                                                                                <Icon
+                                                                                <IconUtil
                                                                                     src={ArrowDownIconSvg}
                                                                                     alt={"Dropdown Arrow"}
                                                                                     sx={{ width: 15, height: 15 }}

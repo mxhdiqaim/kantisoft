@@ -1,12 +1,12 @@
 import { Box, Grid, Typography } from "@mui/material";
 import type { FinishedGoodsProfitMarginType } from "@/types/production-types.ts";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
+import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
-import { formatCurrency, snakeCaseToTitleCase } from "@/shared/utils";
+import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
+import { formatCurrency, snakeCaseToTitleCase } from "@/shared/utils/custom.util.ts";
 import { useSearch } from "@/use-search.ts";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { getTextColor } from "@/shared/components/ui";
 
 interface Props {
@@ -31,9 +31,9 @@ const ProfitOverviewTab = ({ data, loading }: Props) => {
                 headerAlign: "left",
                 cellClassName: "capitalize-cell",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -45,11 +45,11 @@ const ProfitOverviewTab = ({ data, loading }: Props) => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="medium">
                             {params.value}%
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -61,11 +61,11 @@ const ProfitOverviewTab = ({ data, loading }: Props) => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="medium">
                             {formatCurrency(params.value)}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -76,11 +76,11 @@ const ProfitOverviewTab = ({ data, loading }: Props) => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="medium">
                             {formatCurrency(params.value)}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -91,11 +91,11 @@ const ProfitOverviewTab = ({ data, loading }: Props) => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="medium">
                             {formatCurrency(params.value)}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -106,11 +106,11 @@ const ProfitOverviewTab = ({ data, loading }: Props) => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="medium" color={getTextColor(params.value)}>
                             {snakeCaseToTitleCase(params.value)}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
         ],
@@ -119,7 +119,7 @@ const ProfitOverviewTab = ({ data, loading }: Props) => {
 
     return (
         <Box>
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

@@ -8,27 +8,26 @@ import type { InventoryType } from "@/types/inventory-types.ts";
 import { Box, Chip, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { type MouseEvent, useMemo, useState } from "react";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
 import CreateInventoryForm from "@/components/inventory/create-inventory-form.tsx";
 import { useTranslation } from "react-i18next";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import {
+    CustomButton,
+    getInventoryStatusChipColor,
+    SearchActionTable,
+    DataGridTable,
+    StyledBoxTable,
+} from "@/shared/components";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError, relativeTime, camelCaseToTitleCase } from "@/shared/utils";
 import InventoryAdjustmentForm from "@/components/inventory/inventory-adjustment-form.tsx";
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "@/use-search.ts";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
-import { UserRoleEnum, UserStatusEnum } from "@/types/user-types.ts";
-import { relativeTime } from "@/shared/utils/get-relative-time.ts";
-import { getInventoryStatusChipColor } from "@/shared/components/ui";
-import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
-import { camelCaseToTitleCase } from "@/shared/utils";
+import { UserRoleEnum, UserStatusEnum } from "@/modules/iam";
+import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-// import {useOfflineGoods} from "@/hooks/use-offline-goods.ts";
 import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -38,7 +37,7 @@ const Goods = () => {
     const { t } = useTranslation();
     const theme = useTheme();
     const currentUser = useSelector(selectCurrentUser);
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
     const navigate = useNavigate();
 
     const { data: inventoryData, isLoading, isFetching, isError, error } = useGetAllInventoryQuery();
@@ -96,11 +95,11 @@ const Goods = () => {
 
         try {
             await continueInventory(selectedRow.menuItemId).unwrap();
-            notify("Item has been restored.", "success");
+            successMessage("Item has been restored.");
         } catch (err) {
             const defaultMessage = "Failed to continue item.";
-            const apiError = getApiError(err, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiError(err, defaultMessage);
+            errorMessage(apiError.message);
         }
     };
     const handleDiscontinue = async () => {
@@ -108,11 +107,11 @@ const Goods = () => {
 
         try {
             await discontinueInventory(selectedRow.menuItemId).unwrap();
-            notify("Item has been discontinued.", "success");
+            successMessage("Item has been discontinued.");
         } catch (err) {
             const defaultMessage = "Failed to discontinue item.";
-            const apiError = getApiError(err, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiError(err, defaultMessage);
+            errorMessage(apiError.message);
         }
     };
 
@@ -120,12 +119,12 @@ const Goods = () => {
         if (selectedRow) {
             try {
                 await deleteInventoryRecord(selectedRow.menuItemId).unwrap();
-                notify("Item has been deleted.", "success");
+                successMessage("Item has been deleted.");
                 handleCloseDeleteModal();
             } catch (err) {
                 const defaultMessage = "Failed to delete item.";
-                const apiError = getApiError(err, defaultMessage);
-                notify(apiError.message, "error");
+                const apiError = parseApiError(err, defaultMessage);
+                errorMessage(apiError.message);
             }
         }
     };
@@ -140,12 +139,12 @@ const Goods = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox
+                    <StyledBoxTable
                         sx={{ cursor: "pointer", ":hover": { textDecoration: "underline" } }}
                         onClick={() => navigate(`/inventory/goods/${params.row.menuItemId}/transactions`)}
                     >
                         <Typography variant="body2">{params.value.name}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -156,9 +155,9 @@ const Goods = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -170,9 +169,9 @@ const Goods = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -184,9 +183,9 @@ const Goods = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -197,14 +196,14 @@ const Goods = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params: GridRenderCellParams<InventoryType, string>) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={camelCaseToTitleCase(params.value)}
                             color={getInventoryStatusChipColor(params.value ?? "")}
                             size="small"
                             sx={{ textTransform: "capitalize" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -215,9 +214,9 @@ const Goods = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{relativeTime(new Date(params.value))}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -297,8 +296,8 @@ const Goods = () => {
     );
 
     if (isError) {
-        const apiError = getApiError(error, `Failed to load Goods.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        const apiError = parseApiError(error, `Failed to load Goods.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (
@@ -316,7 +315,7 @@ const Goods = () => {
                     />
                 )}
             </Box>
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

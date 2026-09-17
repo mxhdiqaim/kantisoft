@@ -1,7 +1,7 @@
 import { Box, Stack, Typography, useTheme } from "@mui/material";
 import { SentimentVeryDissatisfied } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import { CustomButton } from "@/shared/components";
 
 const NotFoundScreen = () => {
     const theme = useTheme();

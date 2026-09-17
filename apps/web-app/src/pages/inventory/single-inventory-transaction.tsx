@@ -2,22 +2,23 @@ import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Box, Chip, CircularProgress, Grid, Typography } from "@mui/material";
 import { useGetAllInventoryQuery, useGetTransactionsByMenuItemQuery } from "@/store/slice";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
 import type { GridColDef } from "@mui/x-data-grid";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
-import { relativeTime } from "@/shared/utils/get-relative-time.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
 import { ArrowBackIosNewOutlined } from "@mui/icons-material";
-import { getTransactionChipColor } from "@/shared/components/ui";
+import {
+    getTransactionChipColor,
+    DataGridTable,
+    StyledBoxTable,
+    CustomButton,
+    SearchActionTable,
+} from "@/shared/components";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { parseApiError, relativeTime } from "@/shared/utils";
+import { useNotification } from "@/shared/hooks";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
 import { useSearch } from "@/use-search.ts";
 
 const SingleInventoryTransaction = () => {
-    const notify = useNotifier();
+    const { error: errorMessage } = useNotification();
     const { id: menuItemId } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
@@ -52,9 +53,9 @@ const SingleInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value.name}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -65,14 +66,14 @@ const SingleInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={params.value.replace(/([A-Z])/g, " $1").trim()}
                             color={getTransactionChipColor(params.value)}
                             size="small"
                             sx={{ textTransform: "capitalize" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -84,11 +85,11 @@ const SingleInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" color={params.value > 0 ? "success.main" : "error.main"}>
                             {params.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -100,11 +101,11 @@ const SingleInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" color={params.value > 0 ? "success.main" : "error.main"}>
                             {params.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -115,9 +116,9 @@ const SingleInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{`${params.value.firstName} ${params.value.lastName}`}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -128,9 +129,9 @@ const SingleInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{relativeTime(new Date(params.value))}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -141,9 +142,9 @@ const SingleInventoryTransaction = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value || "N/A"}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
         ],
@@ -155,9 +156,9 @@ const SingleInventoryTransaction = () => {
     }
 
     if (isError) {
-        notify(`Failed to load transactions. Please try again later.`, "error");
-        const apiError = getApiError(error, `Failed to load transactions.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        errorMessage(`Failed to load transactions. Please try again later.`);
+        const apiError = parseApiError(error, `Failed to load transactions.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (
@@ -185,7 +186,7 @@ const SingleInventoryTransaction = () => {
                 </Box>
             </Box>
 
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

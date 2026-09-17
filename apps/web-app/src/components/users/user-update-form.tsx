@@ -1,19 +1,16 @@
-import { getApiError } from "@/helpers/get-api-error";
-import useNotifier from "@/hooks/useNotifier";
 import { useUpdateUserMutation } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
-import { updateUserSchema, type UpdateUserType, UserRoleEnum, type UserType } from "@/types/user-types";
+import { updateUserSchema, type UpdateUserType, UserRoleEnum, type UserType } from "@/modules/iam";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Box, FormControl, Grid, InputAdornment, MenuItem } from "@mui/material";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import { StyledTextField } from "@/shared/components/ui";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { getRolePermissions } from "@/shared/utils";
+import { useNotification } from "@/shared/hooks";
+import { getRolePermissions, parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -23,7 +20,7 @@ interface Props {
 }
 
 const UserUpdateForm = ({ open, onClose, currentData }: Props) => {
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
     const currentUser = useSelector(selectCurrentUser);
 
     const [updateUser, { isLoading: isUpdating, isSuccess: isUpdated }] = useUpdateUserMutation();
@@ -78,13 +75,13 @@ const UserUpdateForm = ({ open, onClose, currentData }: Props) => {
             const payload = { ...data };
 
             await updateUser({ id: currentData.id, ...payload }).unwrap();
-            notify("User updated successfully!", "success");
+            successMessage("User updated successfully!");
 
             onClose();
         } catch (error) {
             const defaultMessage = `Failed to create user.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiError(error, defaultMessage);
+            errorMessage(apiError.message);
         }
     };
 
@@ -188,7 +185,7 @@ const UserUpdateForm = ({ open, onClose, currentData }: Props) => {
                                                     IconComponent: () => null,
                                                     endAdornment: (
                                                         <InputAdornment position="end">
-                                                            <Icon
+                                                            <IconUtil
                                                                 src={ArrowDownIconSvg}
                                                                 alt={"Dropdown Arrow"}
                                                                 sx={{ width: 15, height: 15 }}

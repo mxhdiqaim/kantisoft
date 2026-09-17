@@ -1,18 +1,18 @@
 import { useGetSingleRawMaterialQuery } from "@/store/slice";
 // import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiError } from "@/shared/utils";
 // import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { Box, Divider, Grid, Stack, Typography } from "@mui/material";
 import { EditOutlined } from "@mui/icons-material";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import { formatCurrency } from "@/shared/utils";
+import { formatCurrency } from "@/shared/utils/custom.util.ts";
 import RawMaterialForm from "@/components/raw-material/raw-material-form.tsx";
 import { type FC, useState } from "react";
 import { drawerPaperProps } from "@/components/styles";
-import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
-import { formatDateCustom, formatRelativeDateTime } from "@/shared/utils/get-relative-time.ts";
-import { ViewRawMaterialSkeleton } from "@/shared";
+import DataDrawerUi from "@/shared/components/ui/data-drawer.ui.tsx";
+import { formatDateCustom, formatRelativeDateTime } from "@/shared/utils/time-date.util.ts";
+import { ViewRawMaterialSkeleton } from "@/shared/components";
 
 interface Props {
     open: boolean;
@@ -42,10 +42,10 @@ const ViewRawMaterialDrawer: FC<Props> = ({ rawMaterialId, open, onOpen, onClose
         setFormModalOpen(true);
     };
 
-    const apiError = getApiError(error, "Failed to load raw material data.");
+    const apiError = parseApiError(error, "Failed to load raw material data.");
 
     return (
-        <DataDrawer
+        <DataDrawerUi
             title={"Raw Material Details"}
             anchor={"right"}
             open={open}
@@ -94,7 +94,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({ rawMaterialId, open, onOpen, onClose
                                         Modified on
                                     </Typography>
                                     <Typography variant="body1" fontWeight={500}>
-                                        {formatRelativeDateTime(rawMaterial.lastModified)}
+                                        {formatRelativeDateTime(rawMaterial.updatedAt)}
                                     </Typography>
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 6 }}>
@@ -153,7 +153,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({ rawMaterialId, open, onOpen, onClose
             )}
 
             <RawMaterialForm open={formModalOpen} onClose={handleCloseFormModal} rawMaterial={rawMaterial} />
-        </DataDrawer>
+        </DataDrawerUi>
     );
 };
 

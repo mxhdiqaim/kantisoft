@@ -3,6 +3,7 @@ import { userService } from "../service";
 import { requestContext } from "../../../shared/logger/context";
 import { ilike, SQL, or } from "drizzle-orm";
 import { userSchema } from "../schema";
+import { UnauthorizedError } from "../../../shared/errors/custom.error";
 
 export default class UserController {
     public index = async (req: Request, res: Response, next: NextFunction) => {
@@ -46,6 +47,26 @@ export default class UserController {
             return res.status(200).json({
                 message: "Staff invited successfully.",
                 data: invitation,
+            });
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public getMe = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const context = requestContext.getStore();
+            const userId = context?.userId;
+
+            if (!userId) {
+                throw new UnauthorizedError("User info missing from authentication context.");
+            }
+
+            const data = await userService.getByIdOrError(String(userId));
+
+            return res.status(200).json({
+                message: "User profile retrieved successfully.",
+                data,
             });
         } catch (error) {
             next(error);

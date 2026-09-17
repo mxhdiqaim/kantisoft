@@ -9,20 +9,18 @@ import {
     useGetAllUnitOfMeasurementsQuery,
     useUpdateRawMaterialMutation,
 } from "@/store/slice";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
 import {
     createRawMaterialSchema,
     type CreateRawMaterialType,
     type RawMaterialType,
 } from "@/types/raw-material-types.ts";
-import { StyledTextField } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { useMeasurementSymbol } from "@/hooks/use-measurement-symbol.ts";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
 
 interface Props {
     open: boolean;
@@ -31,7 +29,7 @@ interface Props {
 }
 
 const RawMaterialForm: FC<Props> = ({ open, onClose, rawMaterial }) => {
-    const notify = useNotifier();
+    const notification = useNotification();
     const isEditMode = !!rawMaterial;
 
     const { data: measurementUnit, isLoading: isMeasurementLoading } = useGetAllUnitOfMeasurementsQuery(undefined, {
@@ -98,15 +96,15 @@ const RawMaterialForm: FC<Props> = ({ open, onClose, rawMaterial }) => {
         try {
             if (isEditMode && rawMaterial) {
                 await updateRawMaterial({ id: rawMaterial.id, ...data }).unwrap();
-                notify("Raw Material Updated Successfully!", "success");
+                notification.success("Raw Material Updated Successfully!");
             } else {
                 await createRawMaterial(data).unwrap();
-                notify("Raw Material Added Successfully!", "success");
+                notification.success("Raw Material Added Successfully!");
             }
         } catch (error) {
             const defaultMessage = `Failed to ${isEditMode ? "update" : "create"} Raw Material. Please try again.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiError(error, defaultMessage);
+            notification.error(apiError.message);
         }
     };
 
@@ -147,7 +145,7 @@ const RawMaterialForm: FC<Props> = ({ open, onClose, rawMaterial }) => {
                                             IconComponent: () => null,
                                             endAdornment: (
                                                 <InputAdornment position="end">
-                                                    <Icon
+                                                    <IconUtil
                                                         src={ArrowDownIconSvg}
                                                         alt={"Dropdown Arrow"}
                                                         sx={{ width: 15, height: 15 }}

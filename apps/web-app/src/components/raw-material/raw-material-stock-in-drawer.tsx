@@ -1,12 +1,7 @@
 import { type FC, useEffect } from "react";
 import { Box, FormControl, Grid, InputAdornment, MenuItem, Stack } from "@mui/material";
-import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
 import { drawerPaperProps } from "@/components/styles";
 import { useGetAllUnitOfMeasurementsQuery, useStockInRawMaterialInventoryMutation } from "@/store/slice";
-import { getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { StyledTextField } from "@/shared/components/ui";
-import CustomButton from "@/shared/components/ui/button.tsx";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import {
@@ -16,11 +11,12 @@ import {
     type StockInRawMaterialType,
 } from "@/types/raw-material-types.ts";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import { camelCaseToTitleCase } from "@/shared/utils";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { useUnitFilter } from "@/hooks/use-unit-filter.ts";
+import { useNotification } from "@/shared/hooks";
+import { camelCaseToTitleCase, parseApiError } from "@/shared/utils";
+import { CustomButton, DataDrawer, IconUtil, StyledTextField } from "@/shared/components";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -31,7 +27,7 @@ interface Props {
 }
 
 const RawMaterialStockInDrawer: FC<Props> = ({ open, onOpen, onClose, rawMaterialInventory }) => {
-    const notify = useNotifier();
+    const notification = useNotification();
 
     const { data: measurementUnit, isLoading: isMeasurementLoading } = useGetAllUnitOfMeasurementsQuery();
     const memoizedMeasurement = useMemoizedArray(measurementUnit);
@@ -59,13 +55,13 @@ const RawMaterialStockInDrawer: FC<Props> = ({ open, onOpen, onClose, rawMateria
     const onSubmit = async (data: StockInRawMaterialType) => {
         try {
             await stockInRawMaterialInventory({ ...data, id: rawMaterialInventory.rawMaterialId });
-            notify("Stock in Successfully!", "success");
+            notification.success("Stock in Successfully!");
             onClose();
             reset();
         } catch (error) {
             const defaultMessage = `Failed to stock in. Please try again.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiError(error, defaultMessage);
+            notification.error(apiError.message);
         }
     };
 
@@ -104,7 +100,7 @@ const RawMaterialStockInDrawer: FC<Props> = ({ open, onOpen, onClose, rawMateria
                                                 IconComponent: () => null,
                                                 endAdornment: (
                                                     <InputAdornment position="end">
-                                                        <Icon
+                                                        <IconUtil
                                                             src={ArrowDownIconSvg}
                                                             alt={"Dropdown Arrow"}
                                                             sx={{ width: 15, height: 15 }}

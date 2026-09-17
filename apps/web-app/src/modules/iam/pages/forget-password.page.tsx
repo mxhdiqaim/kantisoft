@@ -2,14 +2,13 @@ import { type FormEvent, useState } from "react";
 import { Box, Typography, Grid } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "@/config/firebase.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import { StyledTextField } from "@/shared/components/ui";
+import { firebaseAuth } from "@/config";
+import { CustomButton, StyledTextField } from "@/shared/components";
+import { useNotification } from "@/shared/hooks";
 
 const ForgetPasswordPage = () => {
     const navigate = useNavigate();
-    const notify = useNotifier();
+    const { warning: warningMessage, success: successMessage, error: errorMessage } = useNotification();
 
     const [email, setEmail] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -18,15 +17,15 @@ const ForgetPasswordPage = () => {
         event.preventDefault();
 
         if (!email) {
-            notify("Please enter your email address", "warning");
+            warningMessage("Please enter your email address");
             return;
         }
 
         setIsLoading(true);
         try {
             // Firebase handles everything: generates the token, sends the email
-            await sendPasswordResetEmail(auth, email);
-            notify("Password reset email sent! Check your inbox.", "success");
+            await sendPasswordResetEmail(firebaseAuth, email);
+            successMessage("Password reset email sent! Check your inbox.");
             setEmail("");
         } catch (error) {
             // Check for specific Firebase error codes
@@ -35,7 +34,7 @@ const ForgetPasswordPage = () => {
                     ? "No account found with this email."
                     : "Failed to send reset email. Please try again.";
 
-            notify(errorMsg, "error");
+            errorMessage(errorMsg);
         } finally {
             setIsLoading(false);
         }
@@ -89,7 +88,7 @@ const ForgetPasswordPage = () => {
                         />
 
                         <Box sx={{ textAlign: "center" }}>
-                            <CustomButton title="Back to signin" variant="text" onClick={() => navigate("/signin")} />
+                            <CustomButton title="Back to log in" variant="text" onClick={() => navigate("/login")} />
                         </Box>
                     </Box>
                 </Box>

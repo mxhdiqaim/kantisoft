@@ -4,8 +4,6 @@ import { Box, FormControl, Grid, InputAdornment, MenuItem } from "@mui/material"
 import CustomModal from "@/components/customs/custom-modal.tsx";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { createWastageScheme, type CreateWastageType } from "@/types/production-types.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
 import {
     useGetAllRawMaterialInventoryQuery,
     useGetAllUnitOfMeasurementsQuery,
@@ -13,10 +11,11 @@ import {
 } from "@/store/slice";
 import { StyledTextField } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
 import { useUnitFilter } from "@/hooks/use-unit-filter.ts";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil } from "@/shared/components";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -25,7 +24,7 @@ interface Props {
 }
 
 const WastageFormModal: FC<Props> = ({ open, onClose }) => {
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
 
     // Fetch Data
     const { data: rawMaterialInventory, isLoading: fetchingRawMaterialInventory } =
@@ -68,15 +67,15 @@ const WastageFormModal: FC<Props> = ({ open, onClose }) => {
     const onSubmit = async (data: CreateWastageType) => {
         try {
             await recordWastage(data).unwrap();
-            notify(`Successfully recorded wastage`, "success");
+            successMessage(`Successfully recorded wastage`);
 
             reset();
             onClose();
         } catch (error) {
             const defaultMessage = `Failed to record wastage.`;
-            const apiError = getApiError(error, defaultMessage);
+            const apiError = parseApiError(error, defaultMessage);
 
-            notify(apiError.message, "error");
+            errorMessage(apiError.message);
             console.log(`Failed to record wastage:`, error);
         }
     };
@@ -115,7 +114,7 @@ const WastageFormModal: FC<Props> = ({ open, onClose }) => {
                                             IconComponent: () => null,
                                             endAdornment: (
                                                 <InputAdornment position="end">
-                                                    <Icon
+                                                    <IconUtil
                                                         src={ArrowDownIconSvg}
                                                         alt={"Dropdown Arrow"}
                                                         sx={{ width: 15, height: 15 }}
@@ -183,7 +182,7 @@ const WastageFormModal: FC<Props> = ({ open, onClose }) => {
                                         IconComponent: () => null,
                                         endAdornment: (
                                             <InputAdornment position="end">
-                                                <Icon
+                                                <IconUtil
                                                     src={ArrowDownIconSvg}
                                                     alt={"Dropdown Arrow"}
                                                     sx={{ width: 15, height: 15 }}

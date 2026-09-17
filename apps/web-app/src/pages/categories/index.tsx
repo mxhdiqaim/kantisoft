@@ -1,19 +1,16 @@
 import { Box, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import { useDeleteCategoryMutation, useGetAllCategoriesQuery } from "@/store/slice";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { DataGridTable, StyledBoxTable, SearchActionTable, CustomButton } from "@/shared/components";
 import type { GridColDef } from "@mui/x-data-grid";
 import { type MouseEvent, useMemo, useState } from "react";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
 import { useSearch } from "@/use-search.ts";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
 import CategoryFormModal from "@/components/menu-items/category-form-modal.tsx";
 import type { CategoryType } from "@/types/categories-types.ts";
-import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 // import {useOfflineCategories} from "@/hooks/use-offline-categories.ts";
 import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
 
@@ -22,7 +19,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 const CategoriesScreen = () => {
     const theme = useTheme();
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
 
     const [formModalOpen, setFormModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -63,11 +60,11 @@ const CategoriesScreen = () => {
         if (selectedRow) {
             try {
                 await deleteCategory(selectedRow.id).unwrap();
-                notify("Factory deleted successfully", "success");
+                successMessage("Factory deleted successfully");
                 handleCloseDeleteModal();
             } catch (error) {
                 console.error("Failed to delete factory:", error);
-                notify("Failed to delete factory", "error");
+                errorMessage("Failed to delete factory");
             }
         }
     };
@@ -82,11 +79,11 @@ const CategoriesScreen = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="500" textTransform={"capitalize"}>
                             {params.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -98,11 +95,11 @@ const CategoriesScreen = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" textTransform={"capitalize"}>
                             {params.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -154,9 +151,9 @@ const CategoriesScreen = () => {
     );
 
     if (isError) {
-        notify(`Failed to load Categories.`, "error");
-        const apiError = getApiError(error, `Failed to load categories.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        errorMessage(`Failed to load Categories.`);
+        const apiError = parseApiError(error, `Failed to load categories.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (
@@ -173,7 +170,7 @@ const CategoriesScreen = () => {
                 />
             </Box>
 
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

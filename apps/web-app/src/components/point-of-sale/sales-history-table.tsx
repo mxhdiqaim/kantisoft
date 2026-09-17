@@ -1,27 +1,27 @@
-import useNotifier from "@/hooks/useNotifier.ts";
+import { useNotification } from "@/shared/hooks";
 import { useAppSelector } from "@/store";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
 import type { OrderType } from "@/types/order-types.ts";
-import { UserRoleEnum } from "@/types/user-types.ts";
-import { formatCurrency } from "@/shared/utils";
-import { relativeTime } from "@/shared/utils/get-relative-time.ts";
+import { UserRoleEnum } from "@/modules/iam/types";
+import { formatCurrency } from "@/shared/utils/custom.util.ts";
+import { relativeTime } from "@/shared/utils/time-date.util.ts";
 import { EditOutlined, MoreVert, PrintOutlined, VisibilityOutlined } from "@mui/icons-material";
 import { Box, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import { type GridColDef } from "@mui/x-data-grid";
 import { type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useReactToPrint } from "react-to-print";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
+import StyledBoxTable from "@/shared/components/ui/table/styled-box.table.tsx";
 import Receipt from "./receipt.tsx";
 import { useGetAllStoresQuery } from "@/store/slice";
 import { useDispatch, useSelector } from "react-redux";
 import { selectActiveStore, setActiveStore } from "@/store/slice/store-slice.ts";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
+import DataGridTable from "@/shared/components/ui/table/data-grid.table.tsx";
+import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
-import { exportToCsv, exportToXlsx, getExportFormattedData } from "@/shared/utils/export-data-utils.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import { exportToCsv, exportToXlsx, getExportFormattedData } from "@/shared/utils/export-data.util.ts";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
+import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
 export interface Props {
@@ -33,7 +33,7 @@ export interface Props {
 const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: Props) => {
     const theme = useTheme();
     const navigate = useNavigate();
-    const notify = useNotifier();
+    const notification = useNotification();
     const dispatch = useDispatch();
     const currentUser = useAppSelector(selectCurrentUser);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -104,7 +104,7 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
         const dataToExport = prepareExportData();
 
         if (dataToExport.length === 0) {
-            notify("No data to export.", "error");
+            notification.error("No data to export.");
             return;
         }
 
@@ -117,7 +117,7 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
         const dataToExport = prepareExportData();
 
         if (dataToExport.length === 0) {
-            notify("No data to export.", "error");
+            notification.error("No data to export.");
             return;
         }
 
@@ -136,9 +136,9 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
                 headerAlign: "left",
                 cellClassName: "capitalize-cell",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value || params.row.id}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -149,11 +149,11 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">
                             {params.value.firstName} {params.value.lastName}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -164,9 +164,9 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
                 headerAlign: "left",
                 width: 150,
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{relativeTime(new Date(params.value))}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -178,11 +178,11 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="medium">
                             {formatCurrency(params.value)}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -194,9 +194,9 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
                 headerAlign: "left",
                 // cellClassName: "capitalize-cell",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography>{params.value.charAt(0).toUpperCase() + params.value.slice(1)}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -207,7 +207,7 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography
                             variant="body2"
                             className="capitalize"
@@ -230,7 +230,7 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
                         >
                             {params.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -255,7 +255,7 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
                         if (orderToFind) {
                             setOrderToPrint(orderToFind);
                         } else {
-                            notify("Order data not found for printing.", "error");
+                            notification.error("Order data not found for printing.");
                             handleMenuClose();
                         }
                     };
@@ -297,7 +297,7 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
                 },
             },
         ],
-        [theme, anchorEl, selectedRowId, currentUser, orders, navigate, notify],
+        [theme, anchorEl, selectedRowId, currentUser, orders, navigate, notification],
     );
 
     useEffect(() => {
@@ -322,7 +322,7 @@ const SalesHistoryTable = ({ orders, loading: isLoadingOrders = true, period }: 
                 )}
             </div>
 
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

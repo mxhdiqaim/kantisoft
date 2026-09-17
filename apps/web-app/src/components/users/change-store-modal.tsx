@@ -1,19 +1,16 @@
 import { type FC, useState } from "react";
 import { Box, FormControl, InputAdornment, MenuItem } from "@mui/material";
-import type { UserType } from "@/types/user-types.ts";
-import type { StoreType } from "@/types/store-types.ts";
+import { type BusinessType, type UserType } from "@/modules/iam";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { StyledTextField } from "@/shared/components/ui";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import { StyledTextField, IconUtil, CustomButton } from "@/shared/components";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
     open: boolean;
     onClose: () => void;
     user: UserType | null;
-    stores: StoreType[];
+    stores: BusinessType[];
     onConfirm: (userId: string, newStoreId: string) => void;
     isLoading: boolean;
 }
@@ -43,7 +40,11 @@ const ChangeStoreModal: FC<Props> = ({ open, onClose, user, stores, onConfirm, i
                         IconComponent: () => null,
                         endAdornment: (
                             <InputAdornment position="end">
-                                <Icon src={ArrowDownIconSvg} alt={"Dropdown Arrow"} sx={{ width: 15, height: 15 }} />
+                                <IconUtil
+                                    src={ArrowDownIconSvg}
+                                    alt={"Dropdown Arrow"}
+                                    sx={{ width: 15, height: 15 }}
+                                />
                             </InputAdornment>
                         ),
                     }}

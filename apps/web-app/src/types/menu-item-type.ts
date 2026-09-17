@@ -1,9 +1,13 @@
 import * as yup from "yup";
-import {type BaseSchema, type LocalSyncStatus} from "@/types";
+import { type BaseSchema, type LocalSyncStatus } from "@/shared/types";
 
 export const createMenuItemSchema = yup.object({
     name: yup.string().required("Name is required").min(2, "Name must be at least 2 characters"),
-    categoryId: yup.string().uuid("Category must be selected").required("Category is required").typeError("Category must be selected"),
+    categoryId: yup
+        .string()
+        .uuid("Category must be selected")
+        .required("Category is required")
+        .typeError("Category must be selected"),
     itemCode: yup.number().optional().min(100, "Item code must be at least 100"),
     sku: yup.string().optional().typeError("SKU must be a string"),
     price: yup
@@ -43,8 +47,8 @@ export interface MenuItemType extends BaseSchema {
         status: MenuItemInventoryType;
         minStockLevel?: number;
         lastCountDate: string;
-    }
-};
+    };
+}
 
 export type LocalMenuItemType = Omit<MenuItemType, "createdAt" | "lastModified"> & {
     syncStatus: LocalSyncStatus;

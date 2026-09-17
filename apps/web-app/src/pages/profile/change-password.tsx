@@ -1,20 +1,20 @@
 import { useState } from "react";
 import { Box, IconButton, InputAdornment, Typography } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
-import useNotifier from "@/hooks/useNotifier";
+import { useNotification } from "@/shared/hooks";
 import { useNavigate } from "react-router-dom";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
 import { StyledTextField } from "@/shared/components/ui";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { updatePasswordSchema, type UpdatePasswordType } from "@/types/user-types.ts";
+import { updatePasswordSchema, type UpdatePasswordType } from "@/modules/iam";
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
-import { auth } from "@/config/firebase";
+import { firebaseAuth } from "@/config";
 
 import { ArrowBackIosNewOutlined, Visibility, VisibilityOff } from "@mui/icons-material";
 
 const ChangePasswordScreen = () => {
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
     const navigate = useNavigate();
 
     const [showOldPassword, setShowOldPassword] = useState(false);
@@ -40,10 +40,10 @@ const ChangePasswordScreen = () => {
     const isLoading = isFirebaseLoading || isSubmitting;
 
     const onSubmit = async (data: UpdatePasswordType) => {
-        const user = auth.currentUser;
+        const user = firebaseAuth.currentUser;
 
         if (!user || !user.email) {
-            notify("You must be logged in to change your password.", "error");
+            errorMessage("You must be logged in to change your password.");
             return;
         }
 
@@ -57,7 +57,7 @@ const ChangePasswordScreen = () => {
             // If successful, update the password
             await updatePassword(user, data.newPassword);
 
-            notify("Password changed successfully!", "success");
+            successMessage("Password changed successfully!");
             reset();
 
             navigate(-1);
@@ -66,13 +66,13 @@ const ChangePasswordScreen = () => {
         } catch (error: any) {
             // Handle specific Firebase errors
             if (error.code === "auth/invalid-credential") {
-                notify("Your current password is incorrect.", "error");
+                errorMessage("Your current password is incorrect.");
             } else if (error.code === "auth/weak-password") {
-                notify("Your new password is too weak.", "error");
+                errorMessage("Your new password is too weak.");
             } else if (error.code === "auth/too-many-requests") {
-                notify("Too many failed attempts. Please try again later.", "error");
+                errorMessage("Too many failed attempts. Please try again later.");
             } else {
-                notify("Failed to change password. Please try again.", "error");
+                errorMessage("Failed to change password. Please try again.");
             }
         } finally {
             // Keep the loading state reset here so the button unlocks on both success and error

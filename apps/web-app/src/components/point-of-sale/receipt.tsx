@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { type OrderType } from "@/types/order-types.ts";
-import type { StoreType } from "@/types/store-types.ts";
-import { formatCurrency } from "@/shared/utils";
+import type { BusinessType } from "@/modules/iam/types/business.type.ts";
+import { formatCurrency } from "@/shared/utils/custom.util.ts";
 import {
     Box,
     Chip,
@@ -22,7 +22,7 @@ import { getPaymentStatusChipColor } from "@/shared/components/ui";
 
 interface Props {
     order: OrderType;
-    storeData: StoreType;
+    storeData: BusinessType;
 }
 
 const Receipt = forwardRef<HTMLDivElement, Props>(({ order, storeData }, ref) => {

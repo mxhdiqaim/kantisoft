@@ -1,23 +1,22 @@
 import SalesHistoryOverviewCard from "@/components/point-of-sale/sales-history-overview-card.tsx";
 import SalesHistoryTable from "@/components/point-of-sale/sales-history-table.tsx";
 import { useGetOrdersByPeriodQuery } from "@/store/slice";
-import { filterSchema, type FilterSchemaType } from "@/types";
-import { formatCurrency } from "@/shared/utils";
+import { filterSchema, type FilterSchemaType } from "@/shared/types";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DinnerDiningOutlined, DomainVerificationOutlined, MonetizationOn, Person2Outlined } from "@mui/icons-material";
 import { Box, Grid, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { UserRoleEnum, UserStatusEnum } from "@/types/user-types.ts";
+import { UserRoleEnum, UserStatusEnum } from "@/modules/iam";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiError, formatCurrency } from "@/shared/utils";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { useNotification } from "@/shared/hooks";
 import PeriodSelector from "@/shared/components/ui/period-selector.tsx";
 
 const SalesHistory = () => {
-    const notify = useNotifier();
+    const { error: errorMessage } = useNotification();
     const currentUser = useSelector(selectCurrentUser);
 
     const { control, watch } = useForm<FilterSchemaType>({
@@ -55,9 +54,9 @@ const SalesHistory = () => {
     }, [fulfilledTimeStamp]);
 
     if (isError) {
-        notify(` Failed to load sales history. Please try again later.`, "error");
-        const apiError = getApiError(error, `Failed to load sales history.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        errorMessage(` Failed to load sales history. Please try again later.`);
+        const apiError = parseApiError(error, `Failed to load sales history.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

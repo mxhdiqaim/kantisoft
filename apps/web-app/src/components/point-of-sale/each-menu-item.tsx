@@ -1,8 +1,8 @@
 import CustomCard from "@/components/customs/custom-card";
 import type { MenuItemType } from "@/types/menu-item-type.ts";
-import { formatCurrency } from "@/shared/utils";
+import { formatCurrency } from "@/shared/utils/custom.util.ts";
 import { Box, Divider, Typography, useTheme } from "@mui/material";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import CustomButton from "@/shared/components/ui/button.util.tsx";
 import type { CartItem } from "@/types/cart-item-type.ts";
 
 interface Props {

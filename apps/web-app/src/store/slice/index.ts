@@ -1,4 +1,4 @@
-import { type ActivityLogEntry, type ActivityLogResponse, type QueryParamType } from "@/types";
+import { type ActivityLogEntry, type ActivityLogResponse, type QueryParamType } from "@/shared/types";
 import type {
     InventoryAlertType,
     SalesTrendType,
@@ -13,8 +13,14 @@ import type {
     Period as TimePeriod,
     SingleOrderType,
 } from "@/types/order-types.ts";
-import type { CreateStoreType, PaginatedStoreResponse, StoreType } from "@/types/store-types";
-import { type CreateUserType, type RegisterUserType, UserRoleEnum, type UserType } from "@/types/user-types";
+import type {
+    CreateBusinessType,
+    PaginatedStoreResponse,
+    BusinessType,
+    UserType,
+    CreateUserType,
+} from "@/modules/iam/types";
+import { UserRoleEnum } from "@/modules/iam/types";
 import {
     type BaseQueryFn,
     createApi,
@@ -23,7 +29,7 @@ import {
     type FetchBaseQueryError,
 } from "@reduxjs/toolkit/query/react";
 import type { RootState } from "..";
-import { logOut, selectCurrentUser, setCredentials } from "./auth-slice";
+import { logOut, selectCurrentUser } from "./auth-slice";
 import { selectActiveStore } from "@/store/slice/store-slice.ts";
 import type {
     AdjustStockResponseType,
@@ -34,7 +40,7 @@ import type {
     InventoryType,
     InventoryValuationHealthType,
 } from "@/types/inventory-types.ts";
-import { getEnvVariable } from "@/shared/utils";
+import { getEnvVariable } from "@/shared/utils/env.util";
 import type { UnitOfMeasurementType } from "@/types/unit-of-measurement-types.ts";
 import type {
     CreateRawMaterialInventoryType,
@@ -63,7 +69,7 @@ import type {
     ProductionWastageSummaryType,
 } from "@/types/production-types.ts";
 import type { CategoryType, CreateCategoryType } from "@/types/categories-types.ts";
-import { auth } from "@/config/firebase";
+import { firebaseAuth } from "@/config";
 
 const baseUrl = getEnvVariable("VITE_APP_API_URL");
 
@@ -72,10 +78,10 @@ const baseQuery = fetchBaseQuery({
     baseUrl,
     prepareHeaders: async (headers) => {
         // Try to get the absolute freshest token from Firebase natively
-        if (auth.currentUser) {
+        if (firebaseAuth.currentUser) {
             try {
                 // getIdToken() automatically refreshes if expired!
-                const freshToken = await auth.currentUser.getIdToken();
+                const freshToken = await firebaseAuth.currentUser.getIdToken();
                 headers.set("authorization", `Bearer ${freshToken}`);
             } catch (error) {
                 console.error("Failed to get Firebase token", error);
@@ -142,12 +148,12 @@ const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQuery
             // Reset the entire API state to clear cache and stop other queries
             api.dispatch(apiSlice.util.resetApiState());
 
-            // Redirect to signin page
-            window.location.href = "/signin";
+            // Redirect to login page
+            window.location.href = "/login";
         }
         // Preventing other queries from failing and causing unhandled exceptions
         // while the signout is in progress, return a promise that never resolves.
-        // The page reload to "/signin" will render this moot.
+        // The page reload to "/login" will render this moot.
         return new Promise(() => {});
     }
 
@@ -193,78 +199,6 @@ export const apiSlice = createApi({
         "Categories",
     ],
     endpoints: (builder) => ({
-        // -------------------------
-        // Health Check Endpoint
-        // -------------------------
-        healthCheck: builder.query<{ status: string }, void>({
-            query: () => "/health",
-        }),
-
-        // -------------------------
-        // Auth Endpoints
-        // -------------------------
-        signin: builder.mutation({
-            query: ({ token }) => ({
-                url: "/auth",
-                method: "POST",
-                // Pass the token in the Authorization header
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }),
-            async onQueryStarted(_args, { dispatch, queryFulfilled }) {
-                try {
-                    const { data } = await queryFulfilled;
-
-                    // On success, dispatch setCredentials to store token and user
-                    dispatch(setCredentials(data));
-                } catch (error) {
-                    console.error("Signin failed:", error);
-                }
-            },
-        }),
-
-        signout: builder.mutation({
-            query: () => ({
-                url: "/auth/signout",
-                method: "POST",
-            }),
-            async onQueryStarted(_args, { dispatch, queryFulfilled }) {
-                try {
-                    await queryFulfilled;
-                    // Dispatch the logOut action to clear credentials and localStorage
-                    dispatch(logOut());
-                    // Clear the RTK Query cache
-                    dispatch(apiSlice.util.resetApiState());
-
-                    // Redirect to signin page
-                    window.location.href = "/signin";
-
-                    // reload
-                    // window.location.reload();
-                } catch (error) {
-                    console.error("Signout failed:", error);
-                    // Even if the server call fails, force a local signout
-                    dispatch(logOut());
-                    dispatch(apiSlice.util.resetApiState());
-
-                    // Redirect to signin page
-                    window.location.href = "/signin";
-
-                    // reload
-                    // window.location.reload();
-                }
-            },
-        }),
-
-        signup: builder.mutation<{ user: UserType; token: string }, Omit<RegisterUserType, "confirmPassword">>({
-            query: (body) => ({
-                url: "/auth/signup",
-                method: "POST",
-                body,
-            }),
-        }),
-
         getActivities: builder.query<ActivityLogEntry[], { limit?: number; offset?: number }>({
             query: ({ limit = 20, offset = 0 } = {}) => ({
                 url: "/activities",
@@ -546,7 +480,7 @@ export const apiSlice = createApi({
         // -------------------------
         // Store Endpoints
         // -------------------------
-        getAllStores: builder.query<StoreType[], void>({
+        getAllStores: builder.query<BusinessType[], void>({
             query: () => "/stores",
             transformResponse: (response: PaginatedStoreResponse) => response.data,
             providesTags: (result) =>
@@ -554,11 +488,11 @@ export const apiSlice = createApi({
                     ? [...result.map(({ id }) => ({ type: "Store" as const, id })), { type: "Store", id: "LIST" }]
                     : [{ type: "Store", id: "LIST" }],
         }),
-        getStoreById: builder.query<StoreType, string>({
+        getStoreById: builder.query<BusinessType, string>({
             query: (id) => `/stores/${id}`,
             providesTags: (_result, _error, id) => [{ type: "Store", id }],
         }),
-        createStore: builder.mutation<StoreType, CreateStoreType>({
+        createStore: builder.mutation<BusinessType, CreateBusinessType>({
             query: (newStore) => ({
                 url: "/stores/create",
                 method: "POST",
@@ -566,7 +500,7 @@ export const apiSlice = createApi({
             }),
             invalidatesTags: [{ type: "Store", id: "LIST" }],
         }),
-        updateStore: builder.mutation<StoreType, Partial<StoreType> & Pick<StoreType, "id">>({
+        updateStore: builder.mutation<BusinessType, Partial<BusinessType> & Pick<BusinessType, "id">>({
             query: ({ id, ...patch }) => ({
                 url: `/stores/${id}`,
                 method: "PATCH",
@@ -1029,13 +963,6 @@ export const apiSlice = createApi({
 
 // Export auto-generated hooks for use in your components
 export const {
-    useHealthCheckQuery,
-
-    // Auth hooks
-    useSigninMutation,
-    useSignoutMutation,
-    useSignupMutation,
-
     // Order hooks
     useGetOrdersByPeriodQuery,
     useGetOrderByIdQuery,

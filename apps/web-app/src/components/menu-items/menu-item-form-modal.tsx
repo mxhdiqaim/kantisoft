@@ -1,6 +1,4 @@
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
 import { useCreateMenuItemMutation, useGetAllCategoriesQuery, useUpdateMenuItemMutation } from "@/store/slice";
 import {
     createMenuItemSchema,
@@ -12,10 +10,11 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { Box, FormControl, Grid, InputAdornment, MenuItem, Typography } from "@mui/material";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import { StyledTextField } from "@/shared/components/ui";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import Icon from "@/shared/components/ui/icon.tsx";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
+
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -25,7 +24,7 @@ interface Props {
 }
 
 const MenuItemFormModal = ({ open, onClose, menuItemToEdit }: Props) => {
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage, warning: warningMessage } = useNotification();
 
     const [createMenuItem, { isLoading: isCreating }] = useCreateMenuItemMutation();
     const [updateMenuItem, { isLoading: isUpdating }] = useUpdateMenuItemMutation();
@@ -81,24 +80,24 @@ const MenuItemFormModal = ({ open, onClose, menuItemToEdit }: Props) => {
                     id: menuItemToEdit.id,
                     ...(payload as EditMenuItemType),
                 }).unwrap();
-                notify("Menu item updated successfully!", "success");
+                successMessage("Menu item updated successfully!");
             } else {
                 await createMenuItem(payload as CreateMenuItemType).unwrap();
-                notify("Menu item added successfully!", "success");
+                successMessage("Menu item added successfully!");
             }
             onClose();
         } catch (error) {
             // Handle Offline Case: Close modal and notify
             if (isOffline || error?.status === "FETCH_ERROR") {
-                notify("Working offline: Item saved locally and will sync later.", "warning");
+                warningMessage("Working offline: Item saved locally and will sync later.");
                 onClose(); // Close the modal because onQueryStarted already saved it to Dexie!
                 return;
             }
 
             // Handle Actual Backend Errors (Validation, etc.)
             const defaultMessage = `Failed to ${isEditMode ? "update" : "add"} menu item.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiError(error, defaultMessage);
+            errorMessage(apiError.message);
             console.log(`Failed to ${isEditMode ? "update" : "add"} menu item:`, error);
         }
     };
@@ -159,7 +158,7 @@ const MenuItemFormModal = ({ open, onClose, menuItemToEdit }: Props) => {
                                                 IconComponent: () => null,
                                                 endAdornment: (
                                                     <InputAdornment position="end">
-                                                        <Icon
+                                                        <IconUtil
                                                             src={ArrowDownIconSvg}
                                                             alt={"Dropdown Arrow"}
                                                             sx={{ width: 15, height: 15 }}

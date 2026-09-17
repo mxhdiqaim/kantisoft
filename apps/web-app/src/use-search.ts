@@ -1,7 +1,7 @@
-import {useEffect, useRef, useState} from "react";
-import {useForm} from "react-hook-form";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {searchSchema, type SearchTermType} from "@/types";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { searchSchema, type SearchTermType } from "@/shared/types";
 
 interface UseSearchParams<T> {
     initialData: T[];
@@ -9,7 +9,7 @@ interface UseSearchParams<T> {
     debounceDelay?: number;
 }
 
-export const useSearch = <T>({initialData, searchKeys, debounceDelay = 500}: UseSearchParams<T>) => {
+export const useSearch = <T>({ initialData, searchKeys, debounceDelay = 500 }: UseSearchParams<T>) => {
     const [filteredData, setFilteredData] = useState<T[]>(initialData);
     const prevJsonRef = useRef<string | null>(null);
 
@@ -24,7 +24,7 @@ export const useSearch = <T>({initialData, searchKeys, debounceDelay = 500}: Use
         setFilteredData(initialData);
     }, [initialData]);
 
-    const {control, handleSubmit, watch} = useForm({
+    const { control, handleSubmit, watch } = useForm({
         defaultValues: {
             search: "",
         },

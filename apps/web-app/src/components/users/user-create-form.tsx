@@ -1,21 +1,17 @@
-import { getApiError } from "@/helpers/get-api-error";
-import useNotifier from "@/hooks/useNotifier";
 import { useCreateUserMutation, useGetAllStoresQuery } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
-import type { StoreType } from "@/types/store-types";
-import { createUserSchema, type CreateUserType, UserRoleEnum } from "@/types/user-types";
+import { createUserSchema, type CreateUserType, UserRoleEnum, type BusinessType } from "@/modules/iam";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { Box, FormControl, Grid, IconButton, InputAdornment, MenuItem, TextField } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import { StyledTextField } from "@/shared/components/ui";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { getRolePermissions } from "@/shared/utils";
+import { useNotification } from "@/shared/hooks";
+import { getRolePermissions, parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
@@ -24,7 +20,7 @@ interface Props {
 }
 
 const UserCreateForm = ({ open, onClose }: Props) => {
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
     const currentUser = useSelector(selectCurrentUser);
     const [showPassword, setShowPassword] = useState(false);
 
@@ -52,7 +48,7 @@ const UserCreateForm = ({ open, onClose }: Props) => {
                 lastName: "",
                 email: "",
                 phone: "",
-                role: UserRoleEnum.USER,
+                role: UserRoleEnum.STAFF,
                 storeId: "",
                 password: "",
                 confirmPassword: "",
@@ -70,13 +66,13 @@ const UserCreateForm = ({ open, onClose }: Props) => {
     const onSubmit = async (data: CreateUserType) => {
         try {
             await createUser(data as CreateUserType).unwrap();
-            notify("User created successfully!", "success");
+            successMessage("User created successfully!");
 
             onClose();
         } catch (error) {
             const defaultMessage = `Failed to create user.`;
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiError(error, defaultMessage);
+            errorMessage(apiError.message);
         }
     };
 
@@ -230,7 +226,7 @@ const UserCreateForm = ({ open, onClose }: Props) => {
                                                         IconComponent: () => null,
                                                         endAdornment: (
                                                             <InputAdornment position="end">
-                                                                <Icon
+                                                                <IconUtil
                                                                     src={ArrowDownIconSvg}
                                                                     alt={"Dropdown Arrow"}
                                                                     sx={{ width: 15, height: 15 }}
@@ -291,7 +287,7 @@ const UserCreateForm = ({ open, onClose }: Props) => {
                                                     IconComponent: () => null,
                                                     endAdornment: (
                                                         <InputAdornment position="end">
-                                                            <Icon
+                                                            <IconUtil
                                                                 src={ArrowDownIconSvg}
                                                                 alt={"Dropdown Arrow"}
                                                                 sx={{ width: 15, height: 15 }}
@@ -305,7 +301,7 @@ const UserCreateForm = ({ open, onClose }: Props) => {
                                                 <MenuItem value={""} disabled>
                                                     Select Store
                                                 </MenuItem>
-                                                {stores?.map((store: StoreType) => (
+                                                {stores?.map((store: BusinessType) => (
                                                     <MenuItem key={store.id} value={store.id}>
                                                         {store.name}
                                                     </MenuItem>

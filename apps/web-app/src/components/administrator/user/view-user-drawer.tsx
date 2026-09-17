@@ -1,22 +1,18 @@
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import ViewUserSkeleton from "@/components/users/loading/view-user-skeleton.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { parseApiError, getInitials } from "@/shared/utils";
+import { useNotification } from "@/shared/hooks";
 import { useAppSelector } from "@/store";
 import { useDeleteUserMutation, useGetUserByIdQuery, useUpdateUserMutation } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
-import { roleHierarchy, type UserRoleType, UserStatusEnum, type UserType } from "@/types/user-types.ts";
+import { roleHierarchy, type UserRoleType, UserStatusEnum, type UserType } from "@/modules/iam/types/user.type.ts";
 import { Avatar, Box, Chip, Divider, Grid, Typography } from "@mui/material";
 import { format } from "date-fns";
 import { type FC, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getUserRoleChipColor, getUserStatusChipColor } from "@/shared/components/ui";
+import { getUserRoleChipColor, getUserStatusChipColor, CustomButton, DataDrawer } from "@/shared/components/ui";
 import { drawerPaperProps } from "@/components/styles";
-import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import { getInitials } from "@/shared/utils";
-import CustomButton from "@/shared/components/ui/button.tsx";
-
 import { BlockOutlined, DeleteOutline, EditOutlined } from "@mui/icons-material";
 
 interface Props {
@@ -29,7 +25,7 @@ interface Props {
 
 const ViewUserDrawer: FC<Props> = ({ userId, open, onOpen, onClose, handleEdit }) => {
     const navigate = useNavigate();
-    const notify = useNotifier();
+    const notification = useNotification();
     const currentUser = useAppSelector(selectCurrentUser);
 
     const [deleteTimer, setDeleteTimer] = useState<NodeJS.Timeout | null>(null);
@@ -51,25 +47,25 @@ const ViewUserDrawer: FC<Props> = ({ userId, open, onOpen, onClose, handleEdit }
         const newStatus = user.status === UserStatusEnum.ACTIVE ? UserStatusEnum.INACTIVE : UserStatusEnum.ACTIVE;
         try {
             await updateUser({ id: user.id, status: newStatus }).unwrap();
-            notify(`User has been ${newStatus}.`, "success");
+            notification.success(`User has been ${newStatus}.`);
         } catch (err) {
-            const apiError = getApiError(err, "Failed to update user status.");
-            notify(apiError.message, "error");
+            const apiError = parseApiError(err, "Failed to update user status.");
+            notification.error(apiError.message);
         }
     };
 
     const handleDelete = async () => {
         if (!user) return;
-        notify("User will be deleted in 5 seconds.", "info");
+        notification.info("User will be deleted in 5 seconds.");
 
         const timer = setTimeout(async () => {
             try {
                 await deleteUser(user.id).unwrap();
-                notify("User deleted successfully", "success");
+                notification.success("User deleted successfully");
                 navigate("/users");
             } catch (err) {
-                const apiError = getApiError(err, "Failed to delete user.");
-                notify(apiError.message, "error");
+                const apiError = parseApiError(err, "Failed to delete user.");
+                notification.error(apiError.message);
             }
         }, 5000);
 
@@ -80,7 +76,7 @@ const ViewUserDrawer: FC<Props> = ({ userId, open, onOpen, onClose, handleEdit }
         if (deleteTimer) {
             clearTimeout(deleteTimer);
             setDeleteTimer(null);
-            notify("Deletion cancelled.", "success");
+            notification.success("Deletion cancelled.");
         }
     };
 
@@ -91,9 +87,9 @@ const ViewUserDrawer: FC<Props> = ({ userId, open, onOpen, onClose, handleEdit }
     }, [deleteTimer]);
 
     if (error) {
-        const apiError = getApiError(error, "Failed to load user data.");
-        notify(apiError.message, "error");
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        const apiError = parseApiError(error, "Failed to load user data.");
+        notification.error(apiError.message);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

@@ -1,21 +1,16 @@
 import { Box, Grid, Tooltip, Typography, useTheme } from "@mui/material";
 import { useDeleteRawMaterialMutation, useGetAllRawMaterialsQuery } from "@/store/slice";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
 import { useSearch } from "@/use-search.ts";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
 import type { GridColDef } from "@mui/x-data-grid";
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
-import { formatCurrency } from "@/shared/utils";
-import { formatDateCustom, formatRelativeDateTime } from "@/shared/utils/get-relative-time.ts";
 import RawMaterialForm from "@/components/raw-material/raw-material-form.tsx";
-import CustomButton from "@/shared/components/ui/button.tsx";
-import TableStyledMenuItem from "@/shared/components/ui/data-grid-table/table-style-menuitem.tsx";
+import { CustomButton, SearchActionTable, StyledBoxTable, DataGridTable } from "@/shared/components";
+import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 import type { RawMaterialType } from "@/types/raw-material-types.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
+import { useNotification } from "@/shared/hooks";
 import ViewRawMaterialDrawer from "@/components/raw-material/view-raw-material-drawer.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiError, formatCurrency, formatDateCustom, formatRelativeDateTime } from "@/shared/utils";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { useTranslation } from "react-i18next";
 import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
@@ -26,7 +21,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 const RawMaterials = () => {
     const theme = useTheme();
     const { t } = useTranslation();
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
     const [formModalOpen, setFormModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [selectedRow, setSelectedRow] = useState<RawMaterialType | null>(null);
@@ -86,11 +81,11 @@ const RawMaterials = () => {
         if (selectedRow) {
             try {
                 await deleteRawMaterial(selectedRow.id).unwrap();
-                notify("Factory deleted successfully", "success");
+                successMessage("Factory deleted successfully");
                 handleCloseDeleteModal();
             } catch (error) {
                 console.error("Failed to delete factory:", error);
-                notify("Failed to delete factory", "error");
+                errorMessage("Failed to delete factory");
             }
         }
     };
@@ -105,11 +100,11 @@ const RawMaterials = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2" fontWeight="500">
                             {params.value}
                         </Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -124,12 +119,12 @@ const RawMaterials = () => {
                     const name = params.value.name;
                     const symbol = params.value.symbol;
                     return (
-                        <TableStyledBox>
+                        <StyledBoxTable>
                             <Typography variant="body2" textTransform={"capitalize"}>
                                 {name}
                             </Typography>
                             <Typography variant="body2">({symbol})</Typography>
-                        </TableStyledBox>
+                        </StyledBoxTable>
                     );
                 },
             },
@@ -142,9 +137,9 @@ const RawMaterials = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{formatCurrency(params.value)}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -155,9 +150,9 @@ const RawMaterials = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{formatDateCustom(params.value)}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -168,9 +163,9 @@ const RawMaterials = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{formatRelativeDateTime(params.value)}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -181,9 +176,9 @@ const RawMaterials = () => {
                 align: "left",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.value}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -241,9 +236,9 @@ const RawMaterials = () => {
     );
 
     if (isError) {
-        notify(`Failed to load ${t("rawMaterial")}.`, "error");
-        const apiError = getApiError(error, `Failed to load ${t("rawMaterial")}.`);
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        errorMessage(`Failed to load ${t("rawMaterial")}.`);
+        const apiError = parseApiError(error, `Failed to load ${t("rawMaterial")}.`);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (
@@ -260,7 +255,7 @@ const RawMaterials = () => {
                 />
             </Box>
 
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

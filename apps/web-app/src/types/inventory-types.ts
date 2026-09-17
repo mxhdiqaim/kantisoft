@@ -1,4 +1,4 @@
-import {extendBaseSchema, type LocalSyncStatus} from "@/types";
+import { extendBaseSchema, type LocalSyncStatus } from "@/shared/types";
 import * as yup from "yup";
 
 export const InventoryStatusEnum = {
@@ -35,15 +35,26 @@ export const STOCK_ADJUSTMENT_TYPE = Object.values(StockAdjustmentTypeEnum);
 export const createInventorySchema = yup.object({
     menuItemId: yup.string().uuid().required("MenuItem not selected"),
     quantity: yup.number().required("Quantity is required").min(0, "Quantity must be at least 0"),
-    minStockLevel: yup.number().required("Minimum stock level is required").min(0, "Minimum stock level must be 0 or greater"),
+    minStockLevel: yup
+        .number()
+        .required("Minimum stock level is required")
+        .min(0, "Minimum stock level must be 0 or greater"),
 });
 
 export const adjustStockSchema = yup.object({
     menuItemId: yup.string().uuid().required("MenuItem not selected"),
-    quantityAdjustment: yup.number().integer().required("Quantity adjustment is required").typeError("Quantity adjustment must be a number"),
-    transactionType: yup.string().oneOf(TRANSACTION_TYPE).default("adjustmentIn").required("Transaction type is required"),
+    quantityAdjustment: yup
+        .number()
+        .integer()
+        .required("Quantity adjustment is required")
+        .typeError("Quantity adjustment must be a number"),
+    transactionType: yup
+        .string()
+        .oneOf(TRANSACTION_TYPE)
+        .default("adjustmentIn")
+        .required("Transaction type is required"),
     notes: yup.string().optional(),
-})
+});
 
 export type InventoryType = {
     menuItemId: string;
@@ -97,7 +108,7 @@ export type InventoryTransactionsType = {
     transactionDate: string;
     type: (typeof TRANSACTION_TYPE)[number];
     createdAt: string;
-}
+};
 
 export type InventoryTransactionResponseType = {
     startDate: string;

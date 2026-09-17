@@ -2,24 +2,20 @@ import { useGetActivitiesQuery } from "@/store/slice";
 import { Box, Chip, Grid, Typography } from "@mui/material";
 import { useAppSelector } from "@/store";
 import { selectCurrentUser } from "@/store/slice/auth-slice.ts";
-import { UserRoleEnum } from "@/types/user-types.ts";
+import { UserRoleEnum } from "@/modules/iam";
 import { useMemo, useState } from "react";
-import TableStyledBox from "@/shared/components/ui/data-grid-table/table-styled-box.tsx";
+import { StyledBoxTable, DataGridTable, SearchActionTable } from "@/shared/components";
 import { type GridColDef } from "@mui/x-data-grid";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
-import { getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
-import DataGridTable from "@/shared/components/ui/data-grid-table";
-import { getActionColor } from "@/shared/utils";
+import { useNotification } from "@/shared/hooks";
+import { getActionColor, formatDateTimeCustom, parseApiError } from "@/shared/utils";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
-import TableSearchActions from "@/shared/components/ui/data-grid-table/table-search-action.tsx";
 import { useSearch } from "@/use-search.ts";
-import { formatDateTimeCustom } from "@/shared/utils/get-relative-time.ts";
 import { useTranslation } from "react-i18next";
 
 const ActivityLogPage = () => {
     const { t } = useTranslation();
-    const notify = useNotifier();
+    const { error: errorMessage } = useNotification();
     const currentUser = useAppSelector(selectCurrentUser);
 
     // Pagination state
@@ -47,9 +43,9 @@ const ActivityLogPage = () => {
                 minWidth: 200,
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{formatDateTimeCustom(params.value)}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -59,9 +55,9 @@ const ActivityLogPage = () => {
                 minWidth: 450,
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.row.details}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
 
@@ -72,9 +68,9 @@ const ActivityLogPage = () => {
                 minWidth: 180,
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.row.userName}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -85,13 +81,13 @@ const ActivityLogPage = () => {
                 align: "center",
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={params.row.userRole}
                             size="medium"
                             sx={{ textTransform: "capitalize", textAlign: "left" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -101,9 +97,9 @@ const ActivityLogPage = () => {
                 minWidth: 150,
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{params.row.storeName}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -113,9 +109,9 @@ const ActivityLogPage = () => {
                 minWidth: 150,
                 headerAlign: "left",
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Typography variant="body2">{t(params.row.entityType || "N/A")}</Typography>
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
             {
@@ -125,14 +121,14 @@ const ActivityLogPage = () => {
                 headerAlign: "left",
                 minWidth: 300,
                 renderCell: (params) => (
-                    <TableStyledBox>
+                    <StyledBoxTable>
                         <Chip
                             label={params.row.action.replace(/_/g, " ")}
                             color={getActionColor(params.row.action)}
                             size="medium"
                             sx={{ fontWeight: 600, textTransform: "capitalize" }}
                         />
-                    </TableStyledBox>
+                    </StyledBoxTable>
                 ),
             },
         ],
@@ -148,9 +144,9 @@ const ActivityLogPage = () => {
     }
 
     if (isError && !data) {
-        const apiError = getApiError(error, "Failed to load users. Please try again later.");
-        notify(apiError.message, "error");
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        const apiError = parseApiError(error, "Failed to load users. Please try again later.");
+        errorMessage(apiError.message);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (
@@ -158,7 +154,7 @@ const ActivityLogPage = () => {
             <Typography variant="h4" gutterBottom>
                 System Activities
             </Typography>
-            <TableSearchActions
+            <SearchActionTable
                 searchControl={searchControl}
                 searchSubmit={searchSubmit}
                 handleSearch={handleSearch}

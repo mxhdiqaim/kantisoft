@@ -3,10 +3,10 @@ import ViewStoreLoading from "@/components/stores/loading/view-store-loading.tsx
 import { useGetStoreByIdQuery } from "@/store/slice";
 import { Chip, Grid, Typography, useTheme } from "@mui/material";
 import { drawerPaperProps } from "@/components/styles";
-import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
+import { DataDrawer } from "@/shared/components";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import useNotifier from "@/hooks/useNotifier.ts";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { useNotification } from "@/shared/hooks";
+import { parseApiError } from "@/shared/utils";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 
@@ -18,7 +18,7 @@ interface Props {
 }
 
 const ViewStoreDrawer: FC<Props> = ({ open, onOpen, onClose, storeId }) => {
-    const notify = useNotifier();
+    const notification = useNotification();
     const theme = useTheme();
 
     const {
@@ -66,9 +66,9 @@ const ViewStoreDrawer: FC<Props> = ({ open, onOpen, onClose, storeId }) => {
     const memoizedStoreDetails = useMemoizedArray(storeDetails);
 
     if (isError) {
-        const apiError = getApiError(error, "Failed to load store data.");
-        notify(apiError.message, "error");
-        return <ApiErrorDisplay statusCode={apiError.type} message={apiError.message} />;
+        const apiError = parseApiError(error, "Failed to load store data.");
+        notification.error(apiError.message);
+        return <ApiErrorDisplay statusCode={apiError.statusCode} message={apiError.message} />;
     }
 
     return (

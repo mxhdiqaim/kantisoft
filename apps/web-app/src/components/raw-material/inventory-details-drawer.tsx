@@ -1,15 +1,12 @@
 import { type FC, useState } from "react";
 import { Box, Chip, Divider, Grid, Stack, Typography } from "@mui/material";
-import DataDrawer from "@/shared/components/ui/data-drawer.tsx";
 import { drawerPaperProps } from "@/components/styles";
 import { useGetRawMaterialInventoryStockQuery } from "@/store/slice";
-import { getApiError } from "@/helpers/get-api-error.ts";
+import { parseApiError, camelCaseToTitleCase, formatCurrency, formatNumber } from "@/shared/utils";
 import ViewRawMaterialSkeleton from "@/shared/components/spinners/view-raw-material-skeleton.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import { camelCaseToTitleCase, formatCurrency, formatNumber } from "@/shared/utils";
-import { getInventoryStatusChipColor } from "@/shared/components/ui";
-import { formatDateCustom, formatRelativeDateTime } from "@/shared/utils/get-relative-time.ts";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import { getInventoryStatusChipColor, DataDrawer, CustomButton } from "@/shared/components";
+import { formatDateCustom, formatRelativeDateTime } from "@/shared/utils/time-date.util.ts";
 import { EditOutlined } from "@mui/icons-material";
 import RawMaterialInventoryForm from "@/components/raw-material/raw-material-inventory-form.tsx";
 
@@ -35,7 +32,7 @@ const InventoryDetailsDrawer: FC<Props> = ({ open, onOpen, onClose, rawMaterialI
         setFormModalOpen(true);
     };
 
-    const apiError = getApiError(error, "Failed to load raw material data.");
+    const apiError = parseApiError(error, "Failed to load raw material data.");
 
     return (
         <DataDrawer

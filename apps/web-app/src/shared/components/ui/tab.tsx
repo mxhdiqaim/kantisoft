@@ -1,4 +1,4 @@
-import { a11yProps } from "@/shared/utils";
+import { a11yProps } from "@/shared/utils/custom.util.ts";
 import { Tab, type TabProps } from "@mui/material";
 
 interface Props extends TabProps {

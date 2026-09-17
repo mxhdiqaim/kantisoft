@@ -2,7 +2,7 @@
 
 This document outlines the architectural philosophy, directory structure, and naming conventions for the Kantisoft frontend. 
 
-We have moved away from a legacy **Type-Driven Architecture** (grouping files by what they are: components, hooks, types) to a **Feature-Driven Architecture** (grouping files by business domain). This directly mirrors our backend Modular Monolith, allowing developers to context-switch between the API and the React app seamlessly.
+We have moved away **from** a legacy **Type-Driven Architecture** (grouping files by what they are: components, hooks, types) to a **Feature-Driven Architecture** (grouping files by business domain). This directly mirrors our backend Modular Monolith, allowing developers to context-switch between the API and the React app seamlessly.
 
 ## The core pillars
 
@@ -54,7 +54,7 @@ src/modules/iam/
 │   └── auth.types.ts     
 ├── validation/           # Yup/Zod schemas
 │   └── auth.schema.ts    
-└── index.ts              # The entry file of the module
+└── base.type.ts              # The entry file of the module
 ```
 
 ## Strict architectural rules

@@ -1,30 +1,33 @@
-import { getApiError } from "@/helpers/get-api-error.ts";
-import useNotifier from "@/hooks/useNotifier.ts";
 import { useCreateStoreMutation, useUpdateStoreMutation } from "@/store/slice";
-import { createStoreSchema, type CreateStoreType, STORE_TYPES, type StoreType } from "@/types/store-types.ts";
+import {
+    createBusinessSchema,
+    type CreateBusinessType,
+    STORE_TYPES,
+    type BusinessType,
+} from "@/modules/iam/types/business.type.ts";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { FormControl, Grid, InputAdornment, MenuItem } from "@mui/material";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 import CustomModal from "@/components/customs/custom-modal.tsx";
-import { StyledTextField } from "@/shared/components/ui";
-import CustomButton from "@/shared/components/ui/button.tsx";
+import { parseApiError } from "@/shared/utils";
+import { CustomButton, IconUtil, StyledTextField } from "@/shared/components";
+import { useNotification } from "@/shared/hooks";
 
-import Icon from "@/shared/components/ui/icon.tsx";
 import ArrowDownIconSvg from "@/assets/icons/arrow-down.svg";
 
 interface Props {
     open: boolean;
     onClose: () => void;
-    currentData: StoreType | null;
+    currentData: BusinessType | null;
 }
 
 const StoreForm = ({ open, onClose, currentData }: Props) => {
     const { id } = useParams<{ id: string }>();
     const isEditMode = !!currentData;
 
-    const notify = useNotifier();
+    const { success: successMessage, error: errorMessage } = useNotification();
 
     const [createStore, { isLoading: isCreating }] = useCreateStoreMutation();
     const [updateStore, { isLoading: isUpdating }] = useUpdateStoreMutation();
@@ -41,7 +44,7 @@ const StoreForm = ({ open, onClose, currentData }: Props) => {
             storeType: "restaurant",
         },
 
-        resolver: yupResolver(createStoreSchema),
+        resolver: yupResolver(createBusinessSchema),
     });
 
     useEffect(() => {
@@ -61,22 +64,22 @@ const StoreForm = ({ open, onClose, currentData }: Props) => {
         }
     }, [open, currentData, reset]);
 
-    const onSubmit = async (formData: CreateStoreType) => {
+    const onSubmit = async (formData: CreateBusinessType) => {
         try {
             if (isEditMode) {
                 await updateStore({ id: id!, ...formData }).unwrap();
-                notify("Store updated successfully!", "success");
+                successMessage("Store updated successfully!");
             } else {
                 await createStore(formData).unwrap();
-                notify("Store created successfully!", "success");
+                successMessage("Store created successfully!");
             }
 
             onClose();
             reset();
         } catch (error) {
             const defaultMessage = isEditMode ? "Failed to update store" : "Failed to create store";
-            const apiError = getApiError(error, defaultMessage);
-            notify(apiError.message, "error");
+            const apiError = parseApiError(error, defaultMessage);
+            errorMessage(apiError.message);
         }
     };
     const isLoading = isCreating || isUpdating;
@@ -132,7 +135,7 @@ const StoreForm = ({ open, onClose, currentData }: Props) => {
                                         IconComponent: () => null,
                                         endAdornment: (
                                             <InputAdornment position="end">
-                                                <Icon
+                                                <IconUtil
                                                     src={ArrowDownIconSvg}
                                                     alt={"Dropdown Arrow"}
                                                     sx={{ width: 15, height: 15 }}
