@@ -1,1 +1,3 @@
-export { default as HomePage } from "./home.page";
+import { lazy } from "react";
+
+export const HomePage = lazy(() => import("./home.page"));

@@ -1,4 +1,3 @@
-// Home screens
 export { default as DashboardScreen } from "./dashboard";
 
 // POS & Sales screens

@@ -1,6 +1,6 @@
 import { useUpdateUserMutation } from "@/store/slice";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
-import { updateUserSchema, type UpdateUserType, UserRoleEnum, type UserType } from "@/modules/iam";
+import { updateUserSchema, type UpdateUserType, UserRoleEnum, type UserType } from "@/modules/iam/types";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Box, FormControl, Grid, InputAdornment, MenuItem } from "@mui/material";
 import { useEffect } from "react";

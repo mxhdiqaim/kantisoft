@@ -24,7 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { useSearch } from "@/use-search.ts";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/store/slice/auth-slice";
-import { UserRoleEnum, UserStatusEnum } from "@/modules/iam";
+import { UserRoleEnum, UserStatusEnum } from "@/modules/iam/types";
 import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";

@@ -7,7 +7,7 @@ import CustomButton from "@/shared/components/ui/button.util.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
 import { StyledTextField } from "@/shared/components/ui";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { updatePasswordSchema, type UpdatePasswordType } from "@/modules/iam";
+import { updatePasswordSchema, type UpdatePasswordType } from "@/modules/iam/types";
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
 import { firebaseAuth } from "@/config";
 

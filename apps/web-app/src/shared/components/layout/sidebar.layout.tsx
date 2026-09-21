@@ -24,7 +24,7 @@ import { IconUtil, CustomButton, type AppbarProps } from "@/shared/components";
 import CancelSvgIcon from "@/assets/icons/cancel.svg";
 import CollapseSvgIcon from "@/assets/icons/collapse.svg";
 import { UserRoleEnum } from "@/modules/iam/types";
-import { useAuthStore } from "@/modules/iam/store/auth.store";
+import { useAuthStore } from "@/modules/iam/store";
 import { useClerk } from "@clerk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useScreenSize } from "@/shared/hooks";

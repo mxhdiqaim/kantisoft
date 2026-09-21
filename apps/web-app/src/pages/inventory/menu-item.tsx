@@ -15,7 +15,7 @@ import { camelCaseToTitleCase, formatCurrency, parseApiError } from "@/shared/ut
 import SearchActionTable from "@/shared/components/ui/table/search-action.table.tsx";
 import { useSearch } from "@/use-search.ts";
 import CustomButton from "@/shared/components/ui/button.util.tsx";
-import { UserRoleEnum } from "@/modules/iam";
+import { UserRoleEnum } from "@/modules/iam/types";
 import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
 import { useMemoizedArray } from "@/hooks/use-memoized-array.ts";
 import { getMenuItemsInventoryStatusChip } from "@/shared/components/ui";

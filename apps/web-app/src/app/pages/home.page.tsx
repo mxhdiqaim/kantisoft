@@ -1,6 +1,6 @@
 import { PageSpinner } from "@/shared/components";
 import { appRoutes } from "@/app/router";
-import { useAuthStore } from "@/modules/iam/store/auth.store.ts";
+import { useAuthStore } from "@/modules/iam/store";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserRoleEnum } from "@/modules/iam/types";
