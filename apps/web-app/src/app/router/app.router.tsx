@@ -55,7 +55,7 @@ export const appRoutes: AppRouteType[] = [
     // ---------------------------------
     {
         to: "/",
-        title: "home",
+        title: "Home",
         element: HomePage,
         hidden: true,
         roles: [...Object.values(UserRoleEnum)],
@@ -66,7 +66,7 @@ export const appRoutes: AppRouteType[] = [
     // ---------------------------------
     {
         to: "/dashboard",
-        title: "dashboard",
+        title: "Dashboard",
         element: DashboardScreen,
         icon: <DashboardOutlined />,
         roles: [...Object.values(UserRoleEnum)],
