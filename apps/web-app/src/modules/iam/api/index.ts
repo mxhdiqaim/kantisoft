@@ -1,2 +1,2 @@
-export * from "./auth.api.ts";
-export * from "./business.api.ts";
+export * from "./auth.api";
+export * from "./business.api";

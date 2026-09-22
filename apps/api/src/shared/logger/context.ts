@@ -7,6 +7,7 @@ export interface RequestContext {
     role: UserRoleEnum;
     businessId?: string;
     branchId?: string;
+    clerkId?: string;
 }
 
 export const requestContext = new AsyncLocalStorage<RequestContext>();

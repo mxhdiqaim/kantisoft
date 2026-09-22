@@ -17,11 +17,17 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
 
             // Actions
-            setCredentials: (user) =>
+            setCredentials: (user) => {
+                // Prevent empty objects {} from corrupting the store
+                if (!user || Object.keys(user).length === 0) {
+                    console.warn("Attempted to set an empty user object. Ignored.");
+                    return;
+                }
                 set({
                     user,
                     isAuthenticated: true,
-                }),
+                });
+            },
 
             logOut: () =>
                 set({

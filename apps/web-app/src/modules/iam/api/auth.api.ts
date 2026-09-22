@@ -11,6 +11,13 @@ export const useGetMeQuery = (enabled: boolean) => {
             return response.data.data;
         },
         enabled,
+        refetchOnWindowFocus: false,
+        // The Webhook Grace Period:
+        // If the backend says the user doesn't exist yet, retry up to 5 times, waiting 1 second between attempts.
+        retry: (failureCount) => {
+            return failureCount < 5;
+        },
+        retryDelay: 1000,
     });
 };
 

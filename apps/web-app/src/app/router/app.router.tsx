@@ -7,7 +7,6 @@ import {
     GoodsScreen,
     InventoryTransactionsScreen,
     MenuItemScreen,
-    NotFoundScreen,
     PointOfSaleScreen,
     ProductionScreen,
     ProfileScreen,
@@ -28,8 +27,9 @@ import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 import RestaurantMenuOutlinedIcon from "@mui/icons-material/RestaurantMenuOutlined";
 import InventoryOutlinedIcon from "@mui/icons-material/InventoryOutlined";
 
-import { LoginPage, RegisterPage, ForgetPasswordPage } from "@/modules/iam/pages";
+import { LoginPage, RegisterPage, ForgetPasswordPage, OnboardingPage } from "@/modules/iam/pages";
 import { HomePage } from "@/app/pages";
+import { NotFoundPage } from "@/pages/feedbacks";
 
 import { type UserRole, UserRoleEnum } from "@/modules/iam/types";
 
@@ -55,7 +55,16 @@ export const appRoutes: AppRouteType[] = [
         title: "Home",
         element: HomePage,
         hidden: true,
+        useLayout: false,
         roles: [...Object.values(UserRoleEnum)],
+    },
+
+    {
+        to: "/onboarding",
+        element: OnboardingPage,
+        useLayout: false,
+        hidden: true,
+        roles: [UserRoleEnum.OWNER],
     },
 
     // ---------------------------------
@@ -280,7 +289,7 @@ export const appRoutes: AppRouteType[] = [
     {
         to: "*",
         title: "notFound",
-        element: NotFoundScreen,
+        element: NotFoundPage,
         hidden: true,
         useLayout: false,
         roles: [...Object.values(UserRoleEnum)],

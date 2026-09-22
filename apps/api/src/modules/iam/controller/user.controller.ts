@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { userService } from "../service";
 import { requestContext } from "../../../shared/logger/context";
-import { ilike, SQL, or } from "drizzle-orm";
+import { ilike, SQL, or, eq } from "drizzle-orm";
 import { userSchema } from "../schema";
-import { UnauthorizedError } from "../../../shared/errors/custom.error";
+import { NotFoundError } from "../../../shared/errors/custom.error";
 
 export default class UserController {
     public index = async (req: Request, res: Response, next: NextFunction) => {
@@ -56,16 +56,25 @@ export default class UserController {
     public getMe = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const context = requestContext.getStore();
-            const userId = context?.userId;
 
-            if (!userId) {
-                throw new UnauthorizedError("User info missing from authentication context.");
+            let data;
+
+            // Try fetching by internal userId
+            if (context?.userId) {
+                data = userService.get(eq(userSchema.id, context.userId));
+            }
+            // Fallback to ClerkId (Syncing/Onboarding Flow)
+            else if (context?.clerkId) {
+                data = userService.get(eq(userSchema.clerkId, context.clerkId));
             }
 
-            const data = await userService.getByIdOrError(String(userId));
+            // Webhook still running? Throw a 404 (NOT 401!) so TanStack Query retries without logging out.
+            if (!data) {
+                throw new NotFoundError("User profile is still syncing.");
+            }
 
             return res.status(200).json({
-                message: "User profile retrieved successfully.",
+                message: "User data retrieved successfully!",
                 data,
             });
         } catch (error) {

@@ -1,13 +1,13 @@
-import ErrorFallback from "@/pages/feedbacks/fallback.tsx";
 import { ThemeProvider } from "../../../../packages/ui/src/theme";
 import { type JSX, Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Outlet, Route, Routes } from "react-router-dom";
 import { FullscreenProvider } from "../context/fullscreen-context.tsx";
 import { appRoutes, GuardedRoute, type AppRouteType } from "@/app/router";
 import { useAuth } from "@clerk/react";
 import { AppLayout, AppSpinner } from "@/shared/components";
 import { ScrollToTop } from "@/shared/utils";
+import { ErrorFallbackPage } from "@/pages/feedbacks";
 
 // Recursive function to render routes and their nested children
 const renderRoutes = (routes: AppRouteType[], parentPath = ""): JSX.Element[] => {
@@ -19,8 +19,8 @@ const renderRoutes = (routes: AppRouteType[], parentPath = ""): JSX.Element[] =>
         const useLayout = route.useLayout ?? true;
         const authGuard = route.authGuard ?? true;
 
-        // Prepare the element with layout and guards if needed
-        let element: JSX.Element = <route.element />;
+        // If the route.element exists, render it. Otherwise, render an Outlet for children to pass through.
+        let element: JSX.Element = route.element ? <route.element /> : <Outlet />;
 
         // Wrap with Layout if useLayout is true
         if (useLayout) {
@@ -54,7 +54,7 @@ const AppContent = () => {
     return (
         <>
             <ScrollToTop />
-            <ErrorBoundary FallbackComponent={ErrorFallback}>
+            <ErrorBoundary FallbackComponent={ErrorFallbackPage}>
                 <Suspense fallback={<AppSpinner />}>
                     <Routes>{renderRoutes(appRoutes)}</Routes>
                 </Suspense>

@@ -1,9 +1,9 @@
-import ServerDown from "@/pages/feedbacks/server-down.tsx";
 import { PageSpinner } from "@/shared/components";
 import { useAuthStatus } from "@/shared/hooks";
-import type { UserRole } from "@/modules/iam/types/user.type.ts";
+import type { UserRole } from "@/modules/iam/types";
 import { memo, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { ServerDownPage } from "@/pages/feedbacks";
 
 type Props = {
     authGuard: boolean;
@@ -20,7 +20,7 @@ const GuardedRoute = memo(function GuardedRoute({ children, authGuard }: Props) 
     if (isLoading) return <PageSpinner />;
 
     // Show server down page if the server isn't responding
-    if (!isServerOk) return <ServerDown />;
+    if (!isServerOk) return <ServerDownPage />;
 
     // If route requires auth and user is NOT authenticated, redirect to sign in page
     if (authGuard && !isAuthenticated) {

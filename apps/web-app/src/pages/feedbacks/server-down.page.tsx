@@ -9,7 +9,7 @@ const BoxWrapper = styled(Box)(({ theme }) => ({
     },
 }));
 
-const ServerDown = () => {
+const ServerDownPage = () => {
     const theme = useTheme();
     const navigate = useNavigate();
 
@@ -98,4 +98,4 @@ const ServerDown = () => {
     );
 };
 
-export default ServerDown;
+export default ServerDownPage;

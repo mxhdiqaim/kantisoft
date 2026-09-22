@@ -1,39 +1,46 @@
 import { useEffect } from "react";
-import { useAuth } from "@clerk/react";
+import { useAuth, useClerk } from "@clerk/react";
 import { useAuthStore } from "@/modules/iam/store/auth.store";
 import { useHealthCheckQuery } from "@/shared/api/system.api";
 import { useGetMeQuery } from "@/modules/iam/api/auth.api";
 
 export const useAuthStatus = () => {
     const { isLoaded: isClerkLoaded, isSignedIn } = useAuth();
+    const { signOut } = useClerk();
 
-    // Zustand holds the Kantisoft user profile for the UI to use
     const user = useAuthStore((state) => state.user);
     const setCredentials = useAuthStore((state) => state.setCredentials);
+    const logOut = useAuthStore((state) => state.logOut);
 
-    // Only fetch the profile if Clerk is signed in, but Zustand is empty
-    const { data: profileData, isLoading: isProfileLoading } = useGetMeQuery(!!isSignedIn && !user);
+    const hasValidUser = user && Object.keys(user).length > 0;
+    const needsProfile = !!isSignedIn && !hasValidUser;
 
-    // Check if the backend server is actually online
+    const { data: profileData, isLoading: isProfileLoading, isError: isProfileError } = useGetMeQuery(needsProfile);
     const {
         isSuccess: isServerOk,
         isLoading: isHealthLoading,
         isError: isServerError,
     } = useHealthCheckQuery(!!isSignedIn);
 
-    // When TanStack successfully fetches the profile, save it to Zustand
     useEffect(() => {
-        if (profileData && !user) {
+        if (profileData && needsProfile) {
             setCredentials(profileData);
         }
-    }, [profileData, user, setCredentials]);
+    }, [profileData, needsProfile, setCredentials]);
 
-    // Calculate the overarching loading state for the GuardedRoute
-    const isLoading = !isClerkLoaded || isHealthLoading || (isSignedIn && !user && isProfileLoading);
+    useEffect(() => {
+        if (isProfileError) {
+            console.error("Backend failed to sync user. Killing Clerk session to prevent loop.");
+            logOut();
+            signOut();
+        }
+    }, [isProfileError, logOut, signOut]);
+
+    const isLoading = !isClerkLoaded || isHealthLoading || (needsProfile && isProfileLoading);
 
     return {
         isLoading,
-        isAuthenticated: !!isSignedIn && !!user && isServerOk,
+        isAuthenticated: !!isSignedIn && hasValidUser && isServerOk,
         isServerOk: !isServerError,
     };
 };

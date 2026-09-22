@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useAuthStore } from "@/modules/iam/store/auth.store.ts";
+import { useAuthStore } from "@/modules/iam/store";
 import { getEnvVariable } from "@/shared/utils/env.util";
 
 // Declare window.Clerk so TypeScript doesn't throw errors
@@ -49,7 +49,7 @@ axiosApi.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            const isAuthRoute = error.config?.url?.includes("/auth");
+            const isAuthRoute = error.config?.url?.includes("/iam/user");
 
             // Don't trigger a global logout if the 401 came from a failed login attempt
             if (!isAuthRoute && !isSigningOut) {
@@ -60,7 +60,7 @@ axiosApi.interceptors.response.use(
                 useAuthStore.getState().logOut();
 
                 // Redirect to sign in
-                window.location.href = "/signin";
+                window.location.href = "/register";
             }
         }
 

@@ -3,7 +3,7 @@ import { SentimentVeryDissatisfied } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { CustomButton } from "@/shared/components";
 
-const NotFoundScreen = () => {
+const NotFoundPage = () => {
     const theme = useTheme();
     const navigate = useNavigate();
 
@@ -48,4 +48,4 @@ const NotFoundScreen = () => {
     );
 };
 
-export default NotFoundScreen;
+export default NotFoundPage;

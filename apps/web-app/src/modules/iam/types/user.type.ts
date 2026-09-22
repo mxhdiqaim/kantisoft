@@ -35,6 +35,8 @@ export type UserStatus = (typeof USER_STATUSES)[number];
 
 // Schema for creating a new user without ID, createdAt & updatedAt fields
 export const baseUserSchema = yup.object({
+    businessId: yup.string().uuid().required("Business is required"),
+    branchId: yup.string().uuid().required("Branch is required"),
     firstName: yup.string().required("First Name is required"),
     lastName: yup.string().required("Last Name is required"),
     email: yup
@@ -63,14 +65,8 @@ export const baseUserSchema = yup.object({
         // Otherwise, the field is optional and not required.
         otherwise: (schema) => schema.notRequired(),
     }),
-    role: yup.string().oneOf(USER_ROLES).default(UserRoleEnum.GUEST),
-
-    storeId: yup.string().uuid().required("Store ID is required"),
-    store: yup.object({
-        id: yup.string().uuid().required("Store ID is required"),
-        name: yup.string().required("Store name is required"),
-        location: yup.string().required("Store location is required"),
-    }),
+    role: yup.string().oneOf(Object.values(UserRoleEnum)).default(UserRoleEnum.GUEST),
+    phoneNumber: yup.string().optional(),
 });
 
 export const createUserSchema = yup.object({
@@ -149,11 +145,8 @@ export const loginUserType = yup.object().shape({
 // Full user schema (including ID and timestamps) for database records
 export const userSchema = extendBaseSchema(baseUserSchema);
 
-// Types
 export type CreateUserType = yup.InferType<typeof createUserSchema>;
 export type UpdateUserType = yup.InferType<typeof updateUserSchema>;
-export type RegisterUserType = yup.InferType<typeof registerUserSchema>;
-export type LoginUserType = yup.InferType<typeof loginUserType>;
 export type UserWithoutPasswords = yup.InferType<typeof userSchema>;
 export type UserType = Omit<UserWithoutPasswords, "password" | "confirmPassword">;
 
