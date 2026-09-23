@@ -62,8 +62,6 @@ export const useAuthStatus = () => {
     // Add isForceSigningOut to the overarching loading state so the UI stays frozen while Clerk clears cookies
     const isLoading = !isClerkLoaded || isHealthLoading || (needsProfile && isProfileLoading) || isForceSigningOut;
 
-    console.log({ isClerkLoaded, isHealthLoading, needsProfile, isProfileError, isForceSigningOut });
-
     return {
         isLoading,
         isAuthenticated: !!isSignedIn && hasValidUser && isServerOk,

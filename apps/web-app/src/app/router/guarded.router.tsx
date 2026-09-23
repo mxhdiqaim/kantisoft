@@ -18,8 +18,6 @@ const GuardedRoute = memo(({ children, authGuard }: Props) => {
     const { isSignedIn } = useAuth();
     const location = useLocation();
 
-    console.log({ isLoading, authGuard, isSignedIn, isAuthenticated });
-
     // Freeze the UI if Clerk is signed in, but the backend profile hasn't synced yet
     if (isLoading || (authGuard && isSignedIn && !isAuthenticated)) {
         return <PageSpinner />;
