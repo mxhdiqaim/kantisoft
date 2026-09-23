@@ -5,7 +5,7 @@ import { branchSchema, InsertBranchSchemaT, userSchema, businessSchema } from ".
 import { UserRoleEnum } from "../interface";
 import { ForbiddenError } from "../../../shared/errors/custom.error";
 import { CreateBranchDTO } from "../interface";
-import { addressSchema } from "../../../shared/database/schema";
+import { addressSchema } from "../../location/schema";
 import { userService, businessService } from "./index";
 
 class BranchService extends BaseService<typeof branchSchema> {

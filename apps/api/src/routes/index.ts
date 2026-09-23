@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { iamRoutes } from "../modules/iam";
+import { locationRoutes } from "../modules/location";
 import systemMiddleware from "../shared/middlewares/system.middleware";
 
 class AppRouter {
@@ -22,6 +23,8 @@ class AppRouter {
         this.router.use(systemMiddleware.formatRequestQuery);
 
         this.router.use("/iam", iamRoutes);
+
+        this.router.use("/location", locationRoutes);
         // this.router.use("/catalog", catalogRoutes);
         // this.router.use("/sales", salesRoutes);
     }
