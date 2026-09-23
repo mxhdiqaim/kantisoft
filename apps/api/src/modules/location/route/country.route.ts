@@ -3,6 +3,7 @@ import { CountryController } from "../controller";
 
 class CountryRoute {
     public readonly router: Router;
+
     private readonly controller: CountryController;
 
     constructor() {
@@ -11,7 +12,9 @@ class CountryRoute {
         this.initializeRoutes();
     }
 
-    private initializeRoutes() {}
+    private initializeRoutes() {
+        this.router.get("/", this.controller.index);
+    }
 }
 
 export default new CountryRoute().router;

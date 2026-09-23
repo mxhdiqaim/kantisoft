@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { addressService, BaseService, countryService } from "../../../shared/service";
+import { BaseService } from "../../../shared/service";
 import { db } from "../../../shared/database";
 import { businessSchema, InsertBusinessSchemaT, userSchema } from "../schema";
 import { ConflictError, NotFoundError } from "../../../shared/errors/custom.error";
@@ -7,6 +7,7 @@ import { OnboardBusinessDTO, UserRoleEnum } from "../interface";
 import { helperUtil } from "../../../shared/utils";
 import { createClerkClient } from "@clerk/express";
 import logger from "../../../shared/logger";
+import { addressService, countryService } from "../../location";
 
 export class BusinessService extends BaseService<typeof businessSchema> {
     constructor() {

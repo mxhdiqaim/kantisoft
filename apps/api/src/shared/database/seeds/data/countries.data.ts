@@ -1,4 +1,4 @@
-import { InsertCountrySchemaT } from "../../../../modules/location/schema";
+import { InsertCountrySchemaT } from "../../../../modules";
 
 export const countriesSeedData: Omit<InsertCountrySchemaT, "id" | "createdAt" | "updatedAt">[] = [
     {
