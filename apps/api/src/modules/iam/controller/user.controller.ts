@@ -61,11 +61,11 @@ export default class UserController {
 
             // Try fetching by internal userId
             if (context?.userId) {
-                data = userService.get(eq(userSchema.id, context.userId));
+                data = await userService.get(eq(userSchema.id, context.userId));
             }
             // Fallback to ClerkId (Syncing/Onboarding Flow)
             else if (context?.clerkId) {
-                data = userService.get(eq(userSchema.clerkId, context.clerkId));
+                data = await userService.get(eq(userSchema.clerkId, context.clerkId));
             }
 
             // Webhook still running? Throw a 404 (NOT 401!) so TanStack Query retries without logging out.

@@ -16,27 +16,23 @@ export const useAuthStore = create<AuthState>()(
             user: null,
             isAuthenticated: false,
 
-            // Actions
             setCredentials: (user) => {
                 // Prevent empty objects {} from corrupting the store
-                if (!user || Object.keys(user).length === 0) {
-                    console.warn("Attempted to set an empty user object. Ignored.");
-                    return;
-                }
-                set({
-                    user,
-                    isAuthenticated: true,
-                });
+                if (!user || Object.keys(user).length === 0) return;
+                set({ user, isAuthenticated: true });
             },
 
-            logOut: () =>
-                set({
-                    user: null,
-                    isAuthenticated: false,
-                }),
+            logOut: () => set({ user: null, isAuthenticated: false }),
         }),
         {
             name: "kantisoft-auth-storage",
+            // Auto-heals corrupted storage on app load
+            onRehydrateStorage: () => (state) => {
+                if (state?.user && Object.keys(state.user).length === 0) {
+                    console.warn("Corrupted empty user found in storage. Wiping state.");
+                    state.logOut();
+                }
+            },
         },
     ),
 );

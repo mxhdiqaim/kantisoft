@@ -8,6 +8,7 @@ export const useGetMeQuery = (enabled: boolean) => {
         queryKey: ["me"],
         queryFn: async () => {
             const response = await axiosApi.get<{ data: UserType }>("/iam/user/me");
+            console.log({ authApi: response.data });
             return response.data.data;
         },
         enabled,

@@ -99,31 +99,37 @@ class UserService extends BaseService<typeof userSchema> {
     public async syncClerkUserCreated(data: SyncClerkUserDTO) {
         const { clerkId, email, firstName, lastName, phoneNumber, avatarUrl, role } = data;
 
-        // Check if this is an INVITED user finalising their account
-        const [pendingUser] = await db.select().from(userSchema).where(eq(userSchema.email, email)).limit(1);
+        // Check if the user already exists in the database
+        const [existingUser] = await db.select().from(userSchema).where(eq(userSchema.email, email)).limit(1);
 
-        if (pendingUser) {
-            if (!pendingUser.clerkId.startsWith("pending-")) {
-                logger.warn(`User with email ${email} already fully exists. Skipping creation.`);
-                return pendingUser;
+        if (existingUser) {
+            // User was INVITED ("pending-") OR is a GHOST USER (old Clerk ID)
+            if (existingUser.clerkId.startsWith("pending-") || existingUser.clerkId !== clerkId) {
+                logger.info(`Healing/Activating existing user ${email} with new Clerk ID: ${clerkId}`);
+
+                const [activatedUser] = await db
+                    .update(userSchema)
+                    .set({
+                        clerkId,
+                        status: UserStatusEnum.ACTIVE,
+                        avatarUrl: avatarUrl || existingUser.avatarUrl,
+                        firstName: firstName || existingUser.firstName,
+                        lastName: lastName || existingUser.lastName,
+                        phoneNumber: phoneNumber || existingUser.phoneNumber,
+                        // DO NOT overwrite role, businessId, or branchId!
+                    })
+                    .where(eq(userSchema.id, existingUser.id))
+                    .returning();
+
+                return activatedUser;
             }
 
-            // The user was invited! Update their pending row with their real Clerk ID and activate them.
-            const [activatedUser] = await db
-                .update(userSchema)
-                .set({
-                    clerkId,
-                    status: UserStatusEnum.ACTIVE,
-                    avatarUrl: avatarUrl || null,
-                    // Notice we DO NOT overwrite role, businessId, or branchId. We keep what the Owner set!
-                })
-                .where(eq(userSchema.id, pendingUser.id))
-                .returning();
-
-            return activatedUser;
+            // Strict Idempotency (Clerk sometimes fires the same webhook twice)
+            logger.info(`User with email ${email} already fully exists with this clerkId. Skipping.`);
+            return existingUser;
         }
 
-        // A brand-new Owner signing up from the homepage
+        // A brand-new Owner signing up directly from the homepage
         const userRole = role || UserRoleEnum.OWNER;
 
         const [newUser] = await db
@@ -140,6 +146,8 @@ class UserService extends BaseService<typeof userSchema> {
             })
             .returning();
 
+        logger.info(`Created brand new user ${email} in database.`);
+
         return newUser;
     }
 
@@ -154,15 +162,28 @@ class UserService extends BaseService<typeof userSchema> {
                 lastName,
                 phoneNumber: phoneNumber || null,
                 avatarUrl: avatarUrl || null,
+                updatedAt: new Date(),
             })
             .where(eq(userSchema.clerkId, clerkId))
             .returning();
+
+        if (!updatedUser) {
+            logger.warn(`Attempted to update Clerk user ${clerkId}, but they do not exist in DB.`);
+        }
 
         return updatedUser;
     }
 
     public async syncClerkUserDeleted(clerkId: string) {
-        return await db.delete(userSchema).where(eq(userSchema.clerkId, clerkId));
+        const [deletedUser] = await db.delete(userSchema).where(eq(userSchema.clerkId, clerkId)).returning();
+
+        if (deletedUser) {
+            logger.info(`Successfully deleted user ${deletedUser.email} from database.`);
+        } else {
+            logger.warn(`Clerk deleted user ${clerkId}, but they were already missing from DB.`);
+        }
+
+        return deletedUser;
     }
 }
 
