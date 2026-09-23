@@ -11,7 +11,6 @@ import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import CategoryFormModal from "@/components/menu-items/category-form-modal.tsx";
 import type { CategoryType } from "@/types/categories-types.ts";
 import TableStyledMenuItem from "@/shared/components/ui/table/table-style-menuitem.tsx";
-// import {useOfflineCategories} from "@/hooks/use-offline-categories.ts";
 import DeleteConfirmationModal from "@/shared/components/ui/delete-confimation-modal.tsx";
 
 import AddIcon from "@mui/icons-material/Add";

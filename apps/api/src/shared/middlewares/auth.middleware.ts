@@ -17,16 +17,13 @@ class AuthMiddleware {
             // eslint-disable-next-line
             const metadata: any = auth.sessionClaims?.metadata || {};
 
-            if (!metadata.userId) {
-                throw new UnauthorizedError("User profile syncing. Please wait a moment.");
-            }
-
             const contextData = {
                 requestId: (req.headers["x-request-id"] as string) || uuidv7(),
-                userId: metadata.userId,
-                role: metadata.role as UserRoleEnum,
-                businessId: metadata.businessId,
-                branchId: metadata.branchId,
+                clerkId: auth.userId,
+                userId: metadata.userId || null,
+                role: (metadata.role as UserRoleEnum) || null,
+                businessId: metadata.businessId || null,
+                branchId: metadata.branchId || null,
             };
 
             requestContext.run(contextData, () => {
@@ -43,6 +40,11 @@ class AuthMiddleware {
 
             if (!context) {
                 throw new UnauthorizedError("Security context missing. Ensure requireAuth runs first.");
+            }
+
+            // Move the strict syncing check here! This protects the rest of the app.
+            if (!context.userId) {
+                throw new UnauthorizedError("User profile syncing. Please wait a moment.");
             }
 
             // Everyone hitting a protected route MUST have a business assigned to them.

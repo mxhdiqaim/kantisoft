@@ -1,4 +1,4 @@
-import { type ComponentType, lazy, type ReactNode } from "react";
+import { type ComponentType, type ReactNode } from "react";
 import {
     ActivityLogScreen,
     CategoriesScreen,
@@ -7,7 +7,6 @@ import {
     GoodsScreen,
     InventoryTransactionsScreen,
     MenuItemScreen,
-    NotFoundScreen,
     PointOfSaleScreen,
     ProductionScreen,
     ProfileScreen,
@@ -28,13 +27,19 @@ import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 import RestaurantMenuOutlinedIcon from "@mui/icons-material/RestaurantMenuOutlined";
 import InventoryOutlinedIcon from "@mui/icons-material/InventoryOutlined";
 
-// IAM & App Pages
-const LoginPage = lazy(() => import("@/modules/iam/pages/login.page"));
-const RegisterPage = lazy(() => import("@/modules/iam/pages/register.page"));
-const ForgetPasswordPage = lazy(() => import("@/modules/iam/pages/forget-password.page"));
-const HomePage = lazy(() => import("@/app/pages/home.page"));
+import {
+    LoginPage,
+    RegisterPage,
+    ForgetPasswordPage,
+    OnboardingLayout,
+    CreateBusinessStep,
+    CreateBranchStep,
+} from "@/modules/iam/pages";
 
-import { type UserRole, UserRoleEnum } from "@/modules/iam";
+import { HomePage } from "@/app/pages";
+import { NotFoundPage } from "@/pages/feedbacks";
+
+import { type UserRole, UserRoleEnum } from "@/modules/iam/types";
 
 export interface AppRouteType {
     to: string;
@@ -55,10 +60,42 @@ export const appRoutes: AppRouteType[] = [
     // ---------------------------------
     {
         to: "/",
-        title: "home",
+        title: "Home",
         element: HomePage,
         hidden: true,
+        useLayout: false,
         roles: [...Object.values(UserRoleEnum)],
+    },
+
+    {
+        to: "/onboarding",
+        element: OnboardingLayout,
+        hidden: true,
+        useLayout: false,
+        roles: [UserRoleEnum.OWNER],
+        children: [
+            {
+                to: "create-business",
+                element: CreateBusinessStep,
+                hidden: true,
+                useLayout: false,
+                roles: [UserRoleEnum.OWNER],
+            },
+            {
+                to: "create-branch",
+                element: CreateBranchStep,
+                hidden: true,
+                useLayout: false,
+                roles: [UserRoleEnum.OWNER],
+            },
+            // {
+            //     to: "invite-users",
+            //     element: InviteUsersStep,
+            //     hidden: true,
+            //     useLayout: false,
+            //     roles: [UserRoleEnum.OWNER],
+            // }
+        ],
     },
 
     // ---------------------------------
@@ -66,7 +103,7 @@ export const appRoutes: AppRouteType[] = [
     // ---------------------------------
     {
         to: "/dashboard",
-        title: "dashboard",
+        title: "Dashboard",
         element: DashboardScreen,
         icon: <DashboardOutlined />,
         roles: [...Object.values(UserRoleEnum)],
@@ -283,7 +320,7 @@ export const appRoutes: AppRouteType[] = [
     {
         to: "*",
         title: "notFound",
-        element: NotFoundScreen,
+        element: NotFoundPage,
         hidden: true,
         useLayout: false,
         roles: [...Object.values(UserRoleEnum)],

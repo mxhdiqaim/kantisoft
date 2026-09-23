@@ -1,5 +1,5 @@
 import { db } from "../../index";
-import { countrySchema } from "../../schema";
+import { countrySchema } from "../../../../modules";
 import { countriesSeedData } from "../data/countries.data";
 import logger from "../../../logger";
 

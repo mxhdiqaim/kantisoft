@@ -1,10 +1,9 @@
 import { appRoutes, type AppRouteType } from "@/app/router";
-import { LogoutOutlined, StorefrontOutlined } from "@mui/icons-material";
+import { StorefrontOutlined } from "@mui/icons-material";
 import ExpandLessOutlinedIcon from "@mui/icons-material/ExpandLessOutlined";
 import ExpandMoreOutlinedIcon from "@mui/icons-material/ExpandMoreOutlined";
 import {
     Box,
-    CircularProgress,
     Collapse,
     Drawer,
     IconButton,
@@ -18,16 +17,14 @@ import {
     useTheme,
 } from "@mui/material";
 import { useState, type FC, Fragment, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { IconUtil, CustomButton, type AppbarProps } from "@/shared/components";
+import { Link, useLocation } from "react-router-dom";
+import { IconUtil, CustomButton, type AppbarProps, LogoutButton } from "@/shared/components";
+import { UserRoleEnum } from "@/modules/iam/types";
+import { useAuthStore } from "@/modules/iam/store";
+import { useScreenSize } from "@/shared/hooks";
+
 import CancelSvgIcon from "@/assets/icons/cancel.svg";
 import CollapseSvgIcon from "@/assets/icons/collapse.svg";
-import { UserRoleEnum } from "@/modules/iam/types";
-import { useAuthStore } from "@/modules/iam/store/auth.store";
-import { useClerk } from "@clerk/react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useScreenSize } from "@/shared/hooks";
 
 interface Props extends AppbarProps {
     sx?: SxProps<Theme>;
@@ -35,33 +32,10 @@ interface Props extends AppbarProps {
 }
 
 const SidebarLayout: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
-    const { t } = useTranslation();
     const theme = useTheme();
     const screenSize = useScreenSize();
     const location = useLocation();
-    const navigate = useNavigate();
-
-    // Zustand & Clerk Hooks
     const currentUser = useAuthStore((state) => state.user);
-    const logOut = useAuthStore((state) => state.logOut);
-
-    const { signOut } = useClerk();
-    const queryClient = useQueryClient();
-    const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-    const handleLogout = async () => {
-        try {
-            setIsLoggingOut(true);
-            await signOut();
-            logOut();
-            queryClient.clear();
-            navigate("/login");
-        } catch (error) {
-            console.error("Signout failed:", error);
-        } finally {
-            setIsLoggingOut(false);
-        }
-    };
 
     const [expandedItems, setExpandedItems] = useState<Record<number, string>>({});
 
@@ -154,7 +128,7 @@ const SidebarLayout: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer })
                             <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>{route.icon}</ListItemIcon>
                         )}
                         <ListItemText
-                            primary={t(route.title as string)}
+                            primary={route.title}
                             slotProps={{
                                 primary: {
                                     variant: "body2",
@@ -271,30 +245,8 @@ const SidebarLayout: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer })
                 </Box>
             </List>
 
-            <Box position={"absolute"} bottom={0} width={"100%"} p={2}>
-                <CustomButton
-                    title={isLoggingOut ? "Logging out..." : t("Logout")}
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    variant="contained"
-                    startIcon={isLoggingOut ? <CircularProgress size={20} color="inherit" /> : <LogoutOutlined />}
-                    sx={{
-                        width: "100%",
-                        backgroundColor: theme.palette.error.main,
-                        color: theme.palette.error.contrastText,
-                        justifyContent: "flex-start",
-                        py: 1.5,
-                        px: 2,
-                        boxShadow: theme.customShadows.button,
-                        transition: theme.transitions.create(["background-color", "transform"], {
-                            duration: theme.transitions.duration.short,
-                        }),
-                        "&:hover": {
-                            backgroundColor: theme.palette.error.dark,
-                            transform: "scale(1.02)",
-                        },
-                    }}
-                />
+            <Box position={"absolute"} bottom={0} left={0} width={theme.layout.sidebarWidth - 25} p={2}>
+                <LogoutButton />
             </Box>
         </Drawer>
     );

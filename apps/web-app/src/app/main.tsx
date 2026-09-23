@@ -53,8 +53,8 @@ createRoot(document.getElementById("root")!).render(
                                 },
                                 signUp: {
                                     start: {
-                                        title: "Start Registration",
-                                        subtitle: "Manage your business",
+                                        title: "Create an Account",
+                                        subtitle: "Join Kantisoft to manage your business.",
                                     },
                                 },
                             }}

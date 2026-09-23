@@ -1,4 +1,3 @@
-// Home screens
 export { default as DashboardScreen } from "./dashboard";
 
 // POS & Sales screens
@@ -15,9 +14,6 @@ export { default as ChangePasswordScreen } from "./profile/change-password";
 export { default as GoodsScreen } from "./inventory/goods.tsx";
 export { default as SingleInventoryTransactionScreen } from "./inventory/single-inventory-transaction.tsx";
 export { default as InventoryTransactionsScreen } from "./inventory/inventory-transactions.tsx";
-
-// Feedback screens
-export { default as NotFoundScreen } from "./feedbacks/not-found";
 
 // Raw Material Inventory Management Sub-screens
 export { default as RawMaterialsScreen } from "./raw-materials"; // Master list of ingredients

@@ -1,18 +1,13 @@
 import { useGetSingleRawMaterialQuery } from "@/store/slice";
-// import useNotifier from "@/hooks/useNotifier.ts";
-import { parseApiError } from "@/shared/utils";
-// import ApiErrorDisplay from "@/components/feedback/api-error-display.tsx";
 import { Box, Divider, Grid, Stack, Typography } from "@mui/material";
 import { EditOutlined } from "@mui/icons-material";
-import CustomButton from "@/shared/components/ui/button.util.tsx";
 import CustomCard from "@/components/customs/custom-card.tsx";
-import { formatCurrency } from "@/shared/utils/custom.util.ts";
+import { formatCurrency, parseApiError } from "@/shared/utils";
 import RawMaterialForm from "@/components/raw-material/raw-material-form.tsx";
 import { type FC, useState } from "react";
 import { drawerPaperProps } from "@/components/styles";
-import DataDrawerUi from "@/shared/components/ui/data-drawer.ui.tsx";
+import { DataDrawer, ViewRawMaterialSkeleton, CustomButton } from "@/shared/components";
 import { formatDateCustom, formatRelativeDateTime } from "@/shared/utils/time-date.util.ts";
-import { ViewRawMaterialSkeleton } from "@/shared/components";
 
 interface Props {
     open: boolean;
@@ -22,8 +17,6 @@ interface Props {
 }
 
 const ViewRawMaterialDrawer: FC<Props> = ({ rawMaterialId, open, onOpen, onClose }) => {
-    // const notify = useNotifier();
-
     const [formModalOpen, setFormModalOpen] = useState(false);
 
     const {
@@ -45,7 +38,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({ rawMaterialId, open, onOpen, onClose
     const apiError = parseApiError(error, "Failed to load raw material data.");
 
     return (
-        <DataDrawerUi
+        <DataDrawer
             title={"Raw Material Details"}
             anchor={"right"}
             open={open}
@@ -153,7 +146,7 @@ const ViewRawMaterialDrawer: FC<Props> = ({ rawMaterialId, open, onOpen, onClose
             )}
 
             <RawMaterialForm open={formModalOpen} onClose={handleCloseFormModal} rawMaterial={rawMaterial} />
-        </DataDrawerUi>
+        </DataDrawer>
     );
 };
 

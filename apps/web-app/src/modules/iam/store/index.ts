@@ -1,1 +1,1 @@
-export * from "./auth.store.ts";
+export * from "./auth.store";

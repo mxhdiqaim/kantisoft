@@ -3,7 +3,7 @@ import { relations } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import { businessSchema } from "./business.schema";
 import { userSchema } from "./user.schema";
-import { addressSchema } from "../../../shared/database/schema";
+import { addressSchema } from "../../location/schema";
 
 export const branchSchema = pgTable(
     "branches",

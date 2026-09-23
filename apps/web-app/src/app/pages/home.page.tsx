@@ -1,45 +1,38 @@
 import { PageSpinner } from "@/shared/components";
 import { appRoutes } from "@/app/router";
-import { useAuthStore } from "@/modules/iam/store/auth.store.ts";
+import { useAuthStore } from "@/modules/iam/store";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserRoleEnum } from "@/modules/iam/types";
 
 const HomePage = () => {
     const navigate = useNavigate();
-
-    // Get the current user directly from Zustand
     const currentUser = useAuthStore((state) => state.user);
 
     useEffect(() => {
-        if (currentUser) {
-            const role = currentUser.role as UserRoleEnum;
+        if (!currentUser?.role) return;
 
-            // Handle restricted roles to prevent redirection to a data-heavy dashboard.
-            // With the new hierarchy, Cashiers and Guests go straight to the POS.
-            if (role === UserRoleEnum.GUEST || role === UserRoleEnum.CASHIER) {
-                navigate("/pos-sale/pos", { replace: true });
-                return;
-            }
+        const role = currentUser.role as UserRoleEnum;
 
-            // Find the first accessible, non-hidden, primary route for the user's role.
-            const destinationRoute = appRoutes.find(
-                (route) =>
-                    !route.hidden &&
-                    route.icon && // A good indicator of a primary navigation item
-                    route.roles?.includes(role),
-            );
+        // OWNER without business ID
+        if (role === UserRoleEnum.OWNER && !currentUser.businessId) {
+            navigate("/onboarding", { replace: true });
+            return;
+        }
 
-            if (destinationRoute) {
-                // If a suitable page is found, redirect the user there.
-                navigate(destinationRoute.to, { replace: true });
-            } else {
-                // As a fallback, send them to their profile page.
-                navigate("/admin/users/profile", { replace: true });
-            }
+        // STAFF/CASHIER/GUEST
+        if ([UserRoleEnum.STAFF, UserRoleEnum.CASHIER, UserRoleEnum.GUEST].includes(role)) {
+            navigate("/pos-sale/pos", { replace: true });
+            return;
+        }
+
+        // Normal routing
+        const destinationRoute = appRoutes.find((route) => !route.hidden && route.icon && route.roles?.includes(role));
+
+        if (destinationRoute) {
+            navigate(destinationRoute.to, { replace: true });
         } else {
-            // If there's no authenticated user, they must log in.
-            navigate("/login", { replace: true });
+            navigate("/admin/users/profile", { replace: true });
         }
     }, [currentUser, navigate]);
 

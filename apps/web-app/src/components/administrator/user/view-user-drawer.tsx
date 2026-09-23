@@ -10,7 +10,7 @@ import { Avatar, Box, Chip, Divider, Grid, Typography } from "@mui/material";
 import { format } from "date-fns";
 import { type FC, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getUserRoleChipColor, getUserStatusChipColor, CustomButton, DataDrawer } from "@/shared/components/ui";
+import { getUserRoleChipColor, getUserStatusChipColor, CustomButton, DataDrawer } from "@/shared/components";
 import { drawerPaperProps } from "@/components/styles";
 import CustomCard from "@/components/customs/custom-card.tsx";
 import { BlockOutlined, DeleteOutline, EditOutlined } from "@mui/icons-material";

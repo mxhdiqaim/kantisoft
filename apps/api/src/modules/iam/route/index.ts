@@ -18,13 +18,13 @@ class IamRoutes {
 
         this.router.use(authMiddleware.requireAuth);
 
+        this.router.use("/user", userRoute);
+
         this.router.use("/business", businessRoute);
 
         this.router.use(authMiddleware.validateAccess);
 
         this.router.use("/branch", branchRoute);
-
-        this.router.use("/user", userRoute);
     }
 }
 

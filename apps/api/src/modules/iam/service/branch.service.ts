@@ -1,11 +1,11 @@
 import { and, eq } from "drizzle-orm";
-import { addressService, BaseService } from "../../../shared/service";
+import { BaseService } from "../../../shared/service";
 import { db } from "../../../shared/database";
 import { branchSchema, InsertBranchSchemaT, userSchema, businessSchema } from "../schema";
 import { UserRoleEnum } from "../interface";
 import { ForbiddenError } from "../../../shared/errors/custom.error";
 import { CreateBranchDTO } from "../interface";
-import { addressSchema } from "../../../shared/database/schema";
+import { addressSchema, addressService } from "../../location";
 import { userService, businessService } from "./index";
 
 class BranchService extends BaseService<typeof branchSchema> {

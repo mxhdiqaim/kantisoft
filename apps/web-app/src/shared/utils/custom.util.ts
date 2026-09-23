@@ -1,5 +1,5 @@
 import type { Period } from "@/types/order-types.ts";
-import { UserRoleEnum, type UserRoleType, type UserType } from "@/modules/iam";
+import { UserRoleEnum, type UserRoleType, type UserType } from "@/modules/iam/types";
 import type { ChipProps } from "@mui/material";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";

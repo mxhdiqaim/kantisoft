@@ -18,12 +18,12 @@ export enum UserStatusEnum {
 }
 
 export type InviteUserDto = {
+    businessId: string;
+    branchId: string;
     firstName: string;
     lastName: string;
-    businessId: string;
     email: string;
     role: UserRoleEnum;
-    branchId: string;
     phoneNumber?: string;
 };
 

@@ -9,6 +9,7 @@ export const useHealthCheckQuery = (enabled: boolean = true) => {
             return response.data;
         },
         enabled,
+        refetchOnWindowFocus: false,
         retry: false,
     });
 };
