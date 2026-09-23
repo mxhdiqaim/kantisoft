@@ -20,7 +20,7 @@ interface Props {
     apiError?: { message: string; status?: number };
 }
 
-const DataDrawerUi = ({
+export const DataDrawer = ({
     title,
     onClose,
     children,
@@ -74,5 +74,3 @@ const DataDrawerUi = ({
         </CustomDrawer>
     );
 };
-
-export default DataDrawerUi;

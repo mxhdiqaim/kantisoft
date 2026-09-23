@@ -13,7 +13,7 @@ interface Props {
     PaperProps?: Partial<PaperProps>;
 }
 
-const CustomDrawer: FC<Props> = ({ anchor, open, onClose, onOpen, children, PaperProps, sx, key }) => {
+export const CustomDrawer: FC<Props> = ({ anchor, open, onClose, onOpen, children, PaperProps, sx, key }) => {
     return (
         <SwipeableDrawer
             key={key}
@@ -28,5 +28,3 @@ const CustomDrawer: FC<Props> = ({ anchor, open, onClose, onOpen, children, Pape
         </SwipeableDrawer>
     );
 };
-
-export default CustomDrawer;

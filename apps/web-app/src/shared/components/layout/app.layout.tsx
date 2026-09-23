@@ -3,8 +3,8 @@ import { Box, useTheme } from "@mui/material";
 import AppbarComponent from "./appbar.layout.tsx";
 import SidebarLayout from "./sidebar.layout.tsx";
 import { useScreenSize } from "@/shared/hooks";
-import CustomDrawer from "@/components/customs/custom-drawer.tsx";
 import OfflineBanner from "@/components/feedback/offline-banner.tsx";
+import { CustomDrawer } from "@/shared/components";
 
 const AppLayout: FC<{ children: ReactNode }> = ({ children }) => {
     const screenSize = useScreenSize();
