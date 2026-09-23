@@ -9,7 +9,6 @@ export const useAuthStatus = () => {
     const { signOut } = useClerk();
 
     const user = useAuthStore((state) => state.user);
-    console.log({ userAuth: user });
 
     const setCredentials = useAuthStore((state) => state.setCredentials);
     const logOut = useAuthStore((state) => state.logOut);

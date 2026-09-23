@@ -18,7 +18,6 @@ import {
     useTheme,
 } from "@mui/material";
 import { useState, type FC, Fragment, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IconUtil, CustomButton, type AppbarProps } from "@/shared/components";
 import CancelSvgIcon from "@/assets/icons/cancel.svg";
@@ -35,7 +34,6 @@ interface Props extends AppbarProps {
 }
 
 const SidebarLayout: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer }) => {
-    const { t } = useTranslation();
     const theme = useTheme();
     const screenSize = useScreenSize();
     const location = useLocation();
@@ -154,7 +152,7 @@ const SidebarLayout: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer })
                             <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>{route.icon}</ListItemIcon>
                         )}
                         <ListItemText
-                            primary={t(route.title as string)}
+                            primary={route.title}
                             slotProps={{
                                 primary: {
                                     variant: "body2",
@@ -273,7 +271,7 @@ const SidebarLayout: FC<Props> = ({ sx, drawerState, toggleDrawer, showDrawer })
 
             <Box position={"absolute"} bottom={0} width={"100%"} p={2}>
                 <CustomButton
-                    title={isLoggingOut ? "Logging out..." : t("Logout")}
+                    title={isLoggingOut ? "Logging out..." : "Logout"}
                     onClick={handleLogout}
                     disabled={isLoggingOut}
                     variant="contained"

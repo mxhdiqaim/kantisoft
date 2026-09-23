@@ -27,7 +27,7 @@ import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 import RestaurantMenuOutlinedIcon from "@mui/icons-material/RestaurantMenuOutlined";
 import InventoryOutlinedIcon from "@mui/icons-material/InventoryOutlined";
 
-import { LoginPage, RegisterPage, ForgetPasswordPage, OnboardingPage } from "@/modules/iam/pages";
+import { LoginPage, RegisterPage, ForgetPasswordPage, OnboardingLayout, CreateBusinessStep } from "@/modules/iam/pages";
 import { HomePage } from "@/app/pages";
 import { NotFoundPage } from "@/pages/feedbacks";
 
@@ -61,10 +61,33 @@ export const appRoutes: AppRouteType[] = [
 
     {
         to: "/onboarding",
-        element: OnboardingPage,
-        useLayout: false,
+        element: OnboardingLayout,
         hidden: true,
+        useLayout: false,
         roles: [UserRoleEnum.OWNER],
+        children: [
+            {
+                to: "create-business",
+                element: CreateBusinessStep,
+                hidden: true,
+                useLayout: false,
+                roles: [UserRoleEnum.OWNER],
+            },
+            // {
+            //     to: "create-branch",
+            //     element: CreateBranchStep,
+            //     hidden: true,
+            //     useLayout: false,
+            //     roles: [UserRoleEnum.OWNER],
+            // },
+            // {
+            //     to: "invite-users",
+            //     element: InviteUsersStep,
+            //     hidden: true,
+            //     useLayout: false,
+            //     roles: [UserRoleEnum.OWNER],
+            // }
+        ],
     },
 
     // ---------------------------------

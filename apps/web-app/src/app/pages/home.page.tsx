@@ -9,14 +9,12 @@ const HomePage = () => {
     const navigate = useNavigate();
     const currentUser = useAuthStore((state) => state.user);
 
-    console.log({ currentUser });
-
     useEffect(() => {
         if (!currentUser?.role) return;
 
         const role = currentUser.role as UserRoleEnum;
 
-        // ONBOARDING CHECK
+        // OWNER without business ID
         if (role === UserRoleEnum.OWNER && !currentUser.businessId) {
             navigate("/onboarding", { replace: true });
             return;
